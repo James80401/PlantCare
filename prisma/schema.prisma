@@ -1,0 +1,252 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanTier {
+  FREE
+  PREMIUM
+}
+
+enum TaskType {
+  WATER
+  FERTILIZE
+  PRUNE
+  MIST
+  PH_TEST
+  PEST_CONTROL
+  REPOT
+}
+
+enum TaskStatus {
+  PENDING
+  DONE
+  SKIPPED
+}
+
+enum PotSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum NotificationChannel {
+  PUSH
+  EMAIL
+  SMS
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+}
+
+model User {
+  id                    String         @id @default(cuid())
+  email                 String         @unique
+  passwordHash          String
+  name                  String?
+  planTier              PlanTier       @default(PREMIUM)
+  stripeCustomerId      String?
+  latitude              Float?
+  longitude             Float?
+  timezone              String         @default("America/New_York")
+  notifyPush            Boolean        @default(true)
+  notifyEmail           Boolean        @default(true)
+  notifySms             Boolean        @default(false)
+  quietHoursStart       Int?
+  quietHoursEnd         Int?
+  identifyCountThisMonth Int           @default(0)
+  identifyCountResetAt  DateTime       @default(now())
+  emailVerified         Boolean        @default(true)
+  emailVerificationToken String?       @unique
+  emailVerificationExpires DateTime?
+  passwordResetToken    String?        @unique
+  passwordResetExpires  DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  plants                Plant[]
+  subscriptions         Subscription[]
+  notificationLogs      NotificationLog[]
+  deviceTokens          DeviceToken[]
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  userId           String
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planName         String
+  status           SubscriptionStatus @default(ACTIVE)
+  stripeId         String?
+  startDate        DateTime           @default(now())
+  endDate          DateTime?
+  createdAt        DateTime           @default(now())
+}
+
+model PlantSpecies {
+  id                String   @id @default(cuid())
+  perenualId        Int?     @unique
+  commonName        String
+  scientificName    String?
+  sunlight          String?
+  wateringFreqDays  Int      @default(7)
+  toxicity          String?
+  phMin             Float?
+  phMax             Float?
+  careNotes         String?
+  defaultImageUrl   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  plants            Plant[]
+  careGuides        CareGuide[]
+
+  @@index([commonName])
+}
+
+model CareGuide {
+  id           String          @id
+  taskType     TaskType
+  speciesId    String?
+  species      PlantSpecies?   @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  title        String
+  summary      String
+  sectionsJson String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  images       CareGuideImage[]
+
+  @@unique([taskType, speciesId])
+  @@index([taskType])
+}
+
+model CareGuideImage {
+  id          String    @id @default(cuid())
+  careGuideId String
+  careGuide   CareGuide @relation(fields: [careGuideId], references: [id], onDelete: Cascade)
+  imageKey    String
+  caption     String
+  altText     String
+  sortOrder   Int       @default(0)
+
+  @@index([careGuideId])
+}
+
+model Plant {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  speciesId   String
+  species     PlantSpecies @relation(fields: [speciesId], references: [id])
+  nickname    String?
+  location    String?
+  potSize     PotSize      @default(MEDIUM)
+  datePlanted DateTime?
+  imageUrl    String?
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  tasks       Task[]
+  journalEntries JournalEntry[]
+  diagnoses              Diagnosis[]
+  diagnosisConversations DiagnosisConversation[]
+
+  @@index([userId])
+}
+
+model Task {
+  id            String     @id @default(cuid())
+  plantId       String
+  plant         Plant      @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  taskType      TaskType
+  dueDate       DateTime
+  completedAt   DateTime?
+  status        TaskStatus @default(PENDING)
+  notifiedAt    DateTime?
+  createdAt     DateTime   @default(now())
+
+  @@index([dueDate, status])
+  @@index([plantId])
+}
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  plantId   String
+  plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  photoUrl  String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([plantId])
+}
+
+model Diagnosis {
+  id            String   @id @default(cuid())
+  plantId       String
+  plant         Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  imageUrl      String?
+  symptomsText  String?
+  resultLabel   String
+  confidence    Float?
+  adviceText    String?
+  source        String   @default("rules")
+  detailJson    String?
+  resolved      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([plantId])
+}
+
+model DiagnosisConversation {
+  id        String             @id @default(cuid())
+  plantId   String
+  plant     Plant              @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  userId    String
+  title     String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  messages  DiagnosisMessage[]
+
+  @@index([plantId])
+  @@index([userId])
+}
+
+model DiagnosisMessage {
+  id             String                @id @default(cuid())
+  conversationId String
+  conversation   DiagnosisConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  imageUrl       String?
+  createdAt      DateTime              @default(now())
+
+  @@index([conversationId])
+}
+
+model NotificationLog {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   NotificationChannel
+  message   String
+  status    String              @default("sent")
+  createdAt DateTime            @default(now())
+
+  @@index([userId])
+}
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String
+  platform  String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, token])
+}

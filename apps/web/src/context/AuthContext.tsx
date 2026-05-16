@@ -1,0 +1,106 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import { authApi, usersApi } from '../services/api';
+
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  planTier: 'FREE' | 'PREMIUM';
+}
+
+interface AuthContextValue {
+  user: User | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    name?: string,
+  ) => Promise<{ requiresVerification?: boolean; message?: string }>;
+  logout: () => void;
+  refreshUser: () => Promise<void>;
+  isPremium: boolean;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refreshUser = useCallback(async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      setUser(null);
+      return;
+    }
+    try {
+      const { data } = await usersApi.me();
+      setUser({
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        planTier: data.planTier,
+      });
+    } catch {
+      localStorage.clear();
+      setUser(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshUser().finally(() => setLoading(false));
+  }, [refreshUser]);
+
+  const login = async (email: string, password: string) => {
+    const { data } = await authApi.login(email, password);
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    setUser(data.user);
+  };
+
+  const register = async (email: string, password: string, name?: string) => {
+    const { data } = await authApi.register(email, password, name);
+    if (data.requiresVerification) {
+      return { requiresVerification: true, message: data.message };
+    }
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    setUser(data.user);
+    return {};
+  };
+
+  const logout = () => {
+    localStorage.clear();
+    setUser(null);
+  };
+
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      login,
+      register,
+      logout,
+      refreshUser,
+      isPremium: true,
+    }),
+    [user, loading, refreshUser],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
+}

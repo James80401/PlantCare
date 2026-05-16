@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="Vine prune at node">
+  <rect width="320" height="200" fill="#ecfdf5"/>
+  <path d="M80 150 Q120 120 160 90 Q200 60 240 50" stroke="#166534" stroke-width="5" fill="none"/>
+  <circle cx="160" cy="90" r="6" fill="#15803d"/>
+  <ellipse cx="150" cy="85" rx="12" ry="7" fill="#22c55e"/>
+  <ellipse cx="170" cy="88" rx="12" ry="7" fill="#22c55e"/>
+  <line x1="160" y1="90" x2="200" y2="55" stroke="#dc2626" stroke-width="2"/>
+  <text x="160" y="185" text-anchor="middle" font-size="12" fill="#065f46">Trim above node for branching</text>
+</svg>

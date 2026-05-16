@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="Healthy root ball">
+  <rect width="320" height="200" fill="#ecfdf5"/>
+  <ellipse cx="160" cy="110" rx="75" ry="45" fill="#92400e"/>
+  <path d="M120 95 Q140 70 160 85 Q180 70 200 95" stroke="#f5f5f4" stroke-width="3" fill="none"/>
+  <path d="M110 115 Q160 130 210 115" stroke="#f5f5f4" stroke-width="3" fill="none"/>
+  <path d="M130 100 Q160 75 190 100" stroke="#e7e5e4" stroke-width="2" fill="none"/>
+  <text x="160" y="185" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#065f46">Loosen circling roots</text>
+</svg>

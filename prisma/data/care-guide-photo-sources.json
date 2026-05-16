@@ -1,0 +1,56 @@
+{
+  "photo-soil-check.jpg": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Potting_soil.jpg/960px-Potting_soil.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "Wikimedia Commons — Potting soil",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Potting_soil.jpg"
+  },
+  "photo-water-drainage.jpg": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Watering_can.jpg/960px-Watering_can.jpg",
+    "license": "CC BY-SA 2.0",
+    "attribution": "Wikimedia Commons — Watering can",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Watering_can.jpg"
+  },
+  "photo-prune-pinch.jpg": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Basil_plant.jpg/960px-Basil_plant.jpg",
+    "license": "CC BY 2.0",
+    "attribution": "Wikimedia Commons — Basil plant",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Basil_plant.jpg"
+  },
+  "photo-prune-cut.jpg": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Pruning_shears.jpg/960px-Pruning_shears.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "Wikimedia Commons — Pruning shears",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Pruning_shears.jpg"
+  },
+  "photo-fertilize.jpg": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Compost_bin.jpg/960px-Compost_bin.jpg",
+    "license": "CC BY-SA 2.0",
+    "attribution": "Wikimedia Commons — Compost bin",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Compost_bin.jpg"
+  },
+  "photo-mist.jpg": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Spray_bottle.jpg/960px-Spray_bottle.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "Wikimedia Commons — Spray bottle",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Spray_bottle.jpg"
+  },
+  "photo-ph-test.jpg": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Soil_pH_meter.jpg/960px-Soil_pH_meter.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "Wikimedia Commons — Soil pH meter",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Soil_pH_meter.jpg"
+  },
+  "photo-pest-underside.jpg": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Aphids_on_hibiscus.jpg/960px-Aphids_on_hibiscus.jpg",
+    "license": "CC BY 2.0",
+    "attribution": "Wikimedia Commons — Aphids on hibiscus",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Aphids_on_hibiscus.jpg"
+  },
+  "photo-repot.jpg": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Repotting_a_houseplant.jpg/960px-Repotting_a_houseplant.jpg",
+    "license": "CC BY-SA 2.0",
+    "attribution": "Wikimedia Commons — Repotting a houseplant",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Repotting_a_houseplant.jpg"
+  }
+}

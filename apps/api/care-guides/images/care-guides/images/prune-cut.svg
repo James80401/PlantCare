@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="Angled cut above node">
+  <rect width="320" height="200" fill="#ecfdf5"/>
+  <line x1="160" y1="170" x2="160" y2="70" stroke="#166534" stroke-width="6"/>
+  <ellipse cx="145" cy="110" rx="16" ry="9" fill="#22c55e" transform="rotate(-25 145 110)"/>
+  <ellipse cx="175" cy="110" rx="16" ry="9" fill="#22c55e" transform="rotate(25 175 110)"/>
+  <circle cx="160" cy="85" r="4" fill="#15803d"/>
+  <line x1="160" y1="85" x2="195" y2="50" stroke="#166534" stroke-width="4"/>
+  <path d="M200 45 L215 55 L205 65 L195 55 Z" fill="#64748b"/>
+  <line x1="160" y1="85" x2="188" y2="58" stroke="#dc2626" stroke-width="2"/>
+  <text x="160" y="190" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#065f46">45° cut above node</text>
+</svg>

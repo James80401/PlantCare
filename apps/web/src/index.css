@@ -1,0 +1,110 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  @apply bg-emerald-50 text-gray-900 min-h-screen antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Task list completion animations */
+@keyframes task-check-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes task-row-flash {
+  0% {
+    background-color: rgb(209 250 229);
+    box-shadow: 0 0 0 0 rgb(16 185 129 / 0.4);
+  }
+  100% {
+    background-color: rgb(236 253 245 / 0.5);
+    box-shadow: 0 0 0 8px rgb(16 185 129 / 0);
+  }
+}
+
+@keyframes task-burst {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes task-strike-in {
+  to {
+    color: rgb(107 114 128);
+    text-decoration-color: rgb(156 163 175);
+  }
+}
+
+.task-row--completing {
+  animation: task-row-flash 0.55s ease-out forwards;
+  border-color: rgb(110 231 183) !important;
+}
+
+.task-row--completing .task-check {
+  background-color: rgb(5 150 105);
+  border-color: rgb(5 150 105);
+  color: white;
+  animation: task-check-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.task-row--completing .task-check::after {
+  content: '✓';
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.task-row__burst {
+  animation: task-burst 0.6s ease-out forwards;
+  background: radial-gradient(circle at 30% 50%, rgb(167 243 208 / 0.6), transparent 70%);
+}
+
+.task-row__title--strike {
+  animation: task-strike-in 0.35s ease-out 0.15s forwards;
+}
+
+.task-row--skipping {
+  opacity: 0.55;
+  transform: scale(0.98);
+}
+
+.task-check--filled {
+  animation: task-check-pop 0.35s ease-out;
+}
+
+.task-row--done {
+  animation: task-row-settle 0.4s ease-out;
+}
+
+@keyframes task-row-settle {
+  from {
+    opacity: 0.7;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
