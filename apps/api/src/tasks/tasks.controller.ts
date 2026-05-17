@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@ne
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
+import { ApplyScheduleSuggestionDto } from './dto/apply-schedule-suggestion.dto';
 import { SkipTaskDto } from './dto/skip-task.dto';
 import { TasksService } from './tasks.service';
 
@@ -30,6 +31,7 @@ export class TasksController {
   applyScheduleSuggestion(
     @CurrentUser() user: JwtPayload,
     @Param('suggestionId') suggestionId: string,
+    @Body() _dto: ApplyScheduleSuggestionDto,
   ) {
     return this.tasksService.applyScheduleSuggestion(user.sub, suggestionId);
   }

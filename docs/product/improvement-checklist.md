@@ -171,8 +171,8 @@ weather, and season.
 
 Acceptance check:
 
-- [ ] Existing scheduler behavior is preserved where no feedback exists.
-- [ ] Adjustments are explainable and reversible.
+- [x] Existing scheduler behavior is preserved where no feedback exists.
+- [x] Adjustments are explainable and reversible.
 
 ### Section 9 - Engagement and shareability
 
@@ -190,9 +190,9 @@ Acceptance check:
 
 ### Current next slice
 
-Continue with **Section 8 - Adaptive scheduling**. The next small slice is
-defining conservative schedule-adjustment rules that use task feedback and
-weather without changing existing schedules unless the user approves.
+Continue with **Section 9 - Engagement and shareability**. The next small slice
+is adding positive, optional progress signals without making core care workflows
+depend on gamification.
 
 ## Phase 1 - Mobile-first shell and dashboard foundation
 

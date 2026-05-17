@@ -54,6 +54,20 @@ describe('SchedulerService', () => {
     ]);
   });
 
+  it('preserves existing scheduling behavior when there is no feedback', async () => {
+    const prisma = {
+      taskFeedback: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      task: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    await expect(service.getScheduleSuggestionsForUser('user-1')).resolves.toEqual([]);
+  });
+
   it('applies a water-extension suggestion by shifting pending tasks', async () => {
     const firstDue = new Date('2026-05-17T00:00:00.000Z');
     const secondDue = new Date('2026-05-24T00:00:00.000Z');
