@@ -135,15 +135,15 @@ Acceptance check:
 
 Goal: make diagnosis feel connected to the plant profile and care history.
 
-- [ ] Improve diagnosis history presentation.
-- [ ] Add recovery/status affordances.
-- [ ] Identify prompt/context changes needed for Dr. Plant.
-- [ ] Add follow-up task creation design, then implementation.
+- [x] Improve diagnosis history presentation.
+- [x] Add recovery/status affordances.
+- [x] Identify prompt/context changes needed for Dr. Plant.
+- [x] Add follow-up task creation design, then implementation. Implemented recovery status and journal follow-up notes now; documented the dedicated follow-up task API/data-model design for the next backend slice.
 
 Acceptance check:
 
 - [ ] Diagnosis history is easy to review from a plant profile.
-- [ ] The next backend/API changes are explicit before implementation.
+- [x] The next backend/API changes are explicit before implementation.
 
 ### Section 7 - Species data and discovery
 

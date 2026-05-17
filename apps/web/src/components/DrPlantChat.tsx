@@ -19,9 +19,10 @@ interface ConversationListItem {
 
 interface DrPlantChatProps {
   plantId: string;
+  plantName?: string;
 }
 
-export default function DrPlantChat({ plantId }: DrPlantChatProps) {
+export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPlantChatProps) {
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -59,6 +60,10 @@ export default function DrPlantChat({ plantId }: DrPlantChatProps) {
     setError('');
     setInput('');
     setPhoto(null);
+  };
+
+  const usePrompt = (prompt: string) => {
+    setInput(prompt);
   };
 
   const send = async (e?: FormEvent) => {
@@ -108,7 +113,9 @@ export default function DrPlantChat({ plantId }: DrPlantChatProps) {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-100 bg-emerald-50/80 px-4 py-3">
         <div>
           <h2 className="font-semibold text-emerald-900">Dr. Plant</h2>
-          <p className="text-xs text-gray-600">Chat about symptoms — follow up anytime</p>
+          <p className="text-xs text-gray-600">
+            Chat about symptoms for {plantName} — follow up anytime
+          </p>
         </div>
         <div className="flex gap-2">
           <button
@@ -146,6 +153,28 @@ export default function DrPlantChat({ plantId }: DrPlantChatProps) {
           {error}
         </div>
       )}
+
+      <div className="border-b border-emerald-50 bg-white px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+          Useful follow-up prompts
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {[
+            'What should I check first today?',
+            'Has this issue improved based on my latest photo?',
+            'What recovery signs should I look for?',
+          ].map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              onClick={() => usePrompt(prompt)}
+              className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="h-72 sm:h-80 overflow-y-auto px-4 py-3 space-y-3 bg-[#f7f6f2]/50">
         {messages.length === 0 && !loading && (

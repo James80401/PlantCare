@@ -14,6 +14,7 @@ Sections:
 - Tasks: pending task cards with care instructions and completion action.
 - Journal: note/photo form, observation prompts, growth-measurement note prompts,
   and a unified timeline of journal entries, care actions, and diagnoses.
-- Diagnosis: DrPlantChat and past diagnosis history.
+- Diagnosis: recovery summary, DrPlantChat with follow-up prompts, diagnosis
+  history cards, and resolved/active status controls.
 
 Location edit → `plantsApi.update` — [tutorial](../../tutorials/changing-plant-location.md).

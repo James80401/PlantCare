@@ -14,7 +14,10 @@ interface DiagnosisResultProps {
     adviceText?: string | null;
     source?: string;
     detailJson?: string | null;
+    resolved?: boolean;
   };
+  onResolvedChange?: (resolved: boolean) => void;
+  updating?: boolean;
 }
 
 function parseDetail(json?: string | null): StructuredDetail | null {
@@ -37,7 +40,11 @@ function sourceLabel(source?: string): string {
   }
 }
 
-export default function DiagnosisResult({ diagnosis }: DiagnosisResultProps) {
+export default function DiagnosisResult({
+  diagnosis,
+  onResolvedChange,
+  updating = false,
+}: DiagnosisResultProps) {
   const detail = parseDetail(diagnosis.detailJson);
   const showStructured =
     detail &&
@@ -46,9 +53,45 @@ export default function DiagnosisResult({ diagnosis }: DiagnosisResultProps) {
       detail.longTermCare?.length);
 
   return (
-    <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-sm space-y-3">
+    <div
+      className={`rounded-2xl border p-4 text-sm space-y-3 ${
+        diagnosis.resolved
+          ? 'border-emerald-100 bg-emerald-50'
+          : 'border-amber-100 bg-amber-50/70'
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold text-emerald-950 text-base">{diagnosis.resultLabel}</p>
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                diagnosis.resolved
+                  ? 'bg-emerald-700 text-white'
+                  : 'bg-amber-600 text-white'
+              }`}
+            >
+              {diagnosis.resolved ? 'Recovering / resolved' : 'Active follow-up'}
+            </span>
+          </div>
+        </div>
+        {onResolvedChange && (
+          <button
+            type="button"
+            onClick={() => onResolvedChange(!diagnosis.resolved)}
+            disabled={updating}
+            className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
+          >
+            {updating
+              ? 'Saving...'
+              : diagnosis.resolved
+                ? 'Reopen issue'
+                : 'Mark recovered'}
+          </button>
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
-        <p className="font-semibold text-emerald-900 text-base">{diagnosis.resultLabel}</p>
         {diagnosis.confidence != null && (
           <span className="text-xs bg-white px-2 py-0.5 rounded-full text-gray-600">
             {Math.round(diagnosis.confidence * 100)}% confidence

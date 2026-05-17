@@ -103,6 +103,8 @@ export const diagnosisApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  updateStatus: (plantId: string, diagnosisId: string, resolved: boolean) =>
+    api.patch(`/plants/${plantId}/diagnose/${diagnosisId}`, { resolved }),
 };
 
 export const diagnosisChatApi = {

@@ -8,6 +8,7 @@ import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { formatLabel, getAdvice } from './diagnosis-advice';
+import { UpdateDiagnosisDto } from './dto/update-diagnosis.dto';
 import { LlmDiagnosisService } from './llm-diagnosis.service';
 import { OpenAiRequestError } from './openai-errors';
 
@@ -112,6 +113,23 @@ export class DiagnosisService {
         source,
         detailJson,
       },
+    });
+  }
+
+  async updateStatus(
+    userId: string,
+    plantId: string,
+    diagnosisId: string,
+    dto: UpdateDiagnosisDto,
+  ) {
+    const diagnosis = await this.prisma.diagnosis.findFirst({
+      where: { id: diagnosisId, plantId, plant: { userId } },
+    });
+    if (!diagnosis) throw new NotFoundException('Diagnosis not found');
+
+    return this.prisma.diagnosis.update({
+      where: { id: diagnosisId },
+      data: { resolved: dto.resolved },
     });
   }
 

@@ -1,6 +1,7 @@
 import {
   Controller,
   Param,
+  Patch,
   Post,
   UploadedFile,
   UseGuards,
@@ -12,6 +13,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { DiagnosisService } from './diagnosis.service';
+import { UpdateDiagnosisDto } from './dto/update-diagnosis.dto';
 
 @ApiTags('diagnoses')
 @ApiBearerAuth()
@@ -29,5 +31,15 @@ export class DiagnosisController {
     @Body('symptomsText') symptomsText?: string,
   ) {
     return this.diagnosisService.diagnose(user.sub, plantId, file, symptomsText);
+  }
+
+  @Patch(':diagnosisId')
+  updateStatus(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('diagnosisId') diagnosisId: string,
+    @Body() dto: UpdateDiagnosisDto,
+  ) {
+    return this.diagnosisService.updateStatus(user.sub, plantId, diagnosisId, dto);
   }
 }

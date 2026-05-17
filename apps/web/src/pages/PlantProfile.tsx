@@ -5,7 +5,7 @@ import DrPlantChat from '../components/DrPlantChat';
 import DiagnosisResult from '../components/DiagnosisResult';
 import TaskInstructionsLink from '../components/TaskInstructionsLink';
 import { PLANT_LOCATIONS } from '../constants/plantLocations';
-import { plantsApi, journalApi, tasksApi } from '../services/api';
+import { plantsApi, journalApi, tasksApi, diagnosisApi } from '../services/api';
 import {
   careSectionToneClasses,
   getCareSectionMeta,
@@ -63,6 +63,7 @@ export default function PlantProfile() {
   const [locationDraft, setLocationDraft] = useState('');
   const [locationSaving, setLocationSaving] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
+  const [updatingDiagnosisId, setUpdatingDiagnosisId] = useState<string | null>(null);
 
   const load = () => {
     if (id) plantsApi.get(id).then((r) => setPlant(r.data));
@@ -111,6 +112,26 @@ export default function PlantProfile() {
     load();
   };
 
+  const updateDiagnosisStatus = async (diagnosisId: string, resolved: boolean) => {
+    if (!id) return;
+    setUpdatingDiagnosisId(diagnosisId);
+    try {
+      const { data } = await diagnosisApi.updateStatus(id, diagnosisId, resolved);
+      setPlant((current) => {
+        if (!current) return current;
+        const currentDiagnoses = (current.diagnoses as PlantRecord[] | undefined) || [];
+        return {
+          ...current,
+          diagnoses: currentDiagnoses.map((diagnosis) =>
+            diagnosis.id === diagnosisId ? { ...diagnosis, ...data } : diagnosis,
+          ),
+        };
+      });
+    } finally {
+      setUpdatingDiagnosisId(null);
+    }
+  };
+
   if (!plant || !id) return <p className="text-gray-500">Loading…</p>;
 
   const species = plant.species as PlantRecord;
@@ -136,6 +157,7 @@ export default function PlantProfile() {
   const plantLabel = (plant.nickname as string) || (species.commonName as string);
   const journalEntries = journal || [];
   const diagnosisEntries = diagnoses || [];
+  const activeDiagnosisCount = diagnosisEntries.filter((diagnosis) => !diagnosis.resolved).length;
   const timelineEvents = buildTimelineEvents({
     journalEntries,
     tasks,
@@ -450,11 +472,26 @@ export default function PlantProfile() {
         description="Ask Dr. Plant about symptoms and review past diagnosis results."
       >
         <div className="space-y-5">
-          <DrPlantChat plantId={id} />
+          <RecoveryPanel
+            activeCount={activeDiagnosisCount}
+            onLogRecovery={() =>
+              appendJournalPrompt(
+                'Recovery check:',
+                setJournalNotes,
+              )
+            }
+          />
+
+          <DrPlantChat plantId={id} plantName={plantLabel} />
 
           {diagnosisEntries.length ? (
             <div>
-              <h3 className="font-semibold text-emerald-950">Past diagnoses</h3>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-semibold text-emerald-950">Past diagnoses</h3>
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                  {activeDiagnosisCount} active
+                </span>
+              </div>
               <ul className="mt-3 space-y-3">
                 {diagnosisEntries.map((diagnosis) => (
                   <li key={diagnosis.id as string}>
@@ -465,7 +502,12 @@ export default function PlantProfile() {
                         adviceText: diagnosis.adviceText as string | null,
                         source: diagnosis.source as string | undefined,
                         detailJson: diagnosis.detailJson as string | null,
+                        resolved: Boolean(diagnosis.resolved),
                       }}
+                      updating={updatingDiagnosisId === diagnosis.id}
+                      onResolvedChange={(resolved) =>
+                        updateDiagnosisStatus(diagnosis.id as string, resolved)
+                      }
                     />
                   </li>
                 ))}
@@ -583,6 +625,43 @@ function PlantTimeline({ events }: { events: TimelineEvent[] }) {
           </li>
         ))}
       </ol>
+    </div>
+  );
+}
+
+function RecoveryPanel({
+  activeCount,
+  onLogRecovery,
+}: {
+  activeCount: number;
+  onLogRecovery: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+            Recovery workflow
+          </p>
+          <h3 className="mt-1 font-semibold text-amber-950">
+            {activeCount
+              ? `${activeCount} active diagnosis${activeCount === 1 ? '' : 'es'} needs follow-up`
+              : 'No active diagnosis issues'}
+          </h3>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-700">
+            Recheck symptoms after care changes, add a recovery note, and mark the issue recovered
+            when the plant is stable. Dedicated follow-up task creation is documented as the next
+            API step.
+          </p>
+        </div>
+        <a
+          href="#journal"
+          onClick={onLogRecovery}
+          className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-amber-900 ring-1 ring-amber-100 hover:bg-amber-100"
+        >
+          Log recovery note
+        </a>
+      </div>
     </div>
   );
 }
