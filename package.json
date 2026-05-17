@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev:api": "npm run dev -w @plant-care/api",
-    "dev:web": "npm run dev -w @plant-care/web",
+    "dev:web": "npm run dev -w @plant-care/web --",
     "test:integrations": "node scripts/test-integrations.mjs",
     "build": "npm run build -w @plant-care/shared && npm run build -w @plant-care/api && npm run build -w @plant-care/web",
     "mobile:copy": "npm run mobile:copy -w @plant-care/web",
