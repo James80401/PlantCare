@@ -1,6 +1,6 @@
 # User acceptance testing (UAT) checklist
 
-> **Owner:** James80401 · **Branch:** `PlantCare`  
+> **Owner:** James80401 · **Branch:** `main` (default)  
 > Last automated run: **2026-05-16** — 17/17 `verify.mjs`, integrations OK, build + tests green.
 
 ## A. Environment and database
