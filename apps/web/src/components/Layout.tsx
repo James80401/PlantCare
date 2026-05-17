@@ -2,10 +2,10 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const nav = [
-  { to: '/garden', label: 'Home' },
-  { to: '/garden/tasks', label: 'Tasks' },
-  { to: '/garden/plants/new', label: 'Add Plant' },
-  { to: '/garden/settings', label: 'Settings' },
+  { to: '/garden', label: 'Dashboard', mobileLabel: 'Home', icon: '🏡', exact: true },
+  { to: '/garden/tasks', label: 'Tasks', mobileLabel: 'Tasks', icon: '✓' },
+  { to: '/garden/plants/new', label: 'Add Plant', mobileLabel: 'Add', icon: '+' },
+  { to: '/garden/settings', label: 'Settings', mobileLabel: 'Settings', icon: '⚙' },
 ];
 
 export default function Layout() {
@@ -14,23 +14,35 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f7f6f2]">
-      <header className="bg-emerald-800 text-white shadow-md">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/garden" className="text-xl font-bold tracking-tight">
-            Plant Care
+      <header className="sticky top-0 z-30 bg-emerald-900 text-white shadow-md">
+        <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+          <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+          <Link to="/garden" className="min-w-0 text-xl font-bold tracking-tight">
+            <span className="block truncate">Plant Care</span>
           </Link>
-          <nav className="hidden sm:flex gap-4 text-sm">
-            {nav.map(({ to, label }) => (
+          <nav className="hidden sm:flex items-center gap-1 text-sm">
+            {nav.map(({ to, label, exact }) => {
+              const active = isActivePath(location.pathname, to, exact);
+              return (
               <Link
                 key={to}
                 to={to}
-                className={`hover:text-emerald-200 ${location.pathname === to ? 'text-emerald-200 font-medium' : ''}`}
+                aria-current={active ? 'page' : undefined}
+                className={`rounded-full px-3 py-2 transition ${
+                  active
+                    ? 'bg-white/12 text-emerald-50 font-semibold'
+                    : 'text-emerald-100 hover:bg-white/10 hover:text-white'
+                }`}
               >
                 {label}
               </Link>
-            ))}
+              );
+            })}
             {!isPremium && (
-              <Link to="/garden/subscription" className="text-amber-300 hover:text-amber-200">
+              <Link
+                to="/garden/subscription"
+                className="rounded-full px-3 py-2 font-semibold text-amber-300 hover:bg-white/10 hover:text-amber-200"
+              >
                 Upgrade
               </Link>
             )}
@@ -45,27 +57,58 @@ export default function Layout() {
             <button
               type="button"
               onClick={logout}
-              className="text-emerald-200 hover:text-white"
+              className="rounded-full px-2 py-1 text-emerald-200 hover:bg-white/10 hover:text-white"
             >
               Log out
             </button>
           </div>
           </div>
+        </div>
       </header>
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-5 sm:py-6">
         <Outlet />
       </main>
-      <nav className="sm:hidden fixed bottom-0 inset-x-0 bg-white border-t border-emerald-100 flex justify-around py-2 text-xs">
-        {nav.map(({ to, label }) => (
+      <nav
+        className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-emerald-100 bg-white/95 px-2 pt-2 text-xs shadow-[0_-12px_30px_rgba(6,78,59,0.08)] backdrop-blur"
+        style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
+        aria-label="Primary"
+      >
+        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+          {nav.map(({ to, mobileLabel, icon, exact }) => {
+            const active = isActivePath(location.pathname, to, exact);
+            return (
+              <Link
+                key={to}
+                to={to}
+                aria-current={active ? 'page' : undefined}
+                className={`flex min-h-14 flex-col items-center justify-center rounded-2xl px-2 py-1.5 transition ${
+                  active
+                    ? 'bg-emerald-800 text-white shadow-sm'
+                    : 'text-gray-500 hover:bg-emerald-50 hover:text-emerald-800'
+                }`}
+              >
+                <span className="text-lg leading-none" aria-hidden>
+                  {icon}
+                </span>
+                <span className="mt-1 font-medium">{mobileLabel}</span>
+              </Link>
+            );
+          })}
+        </div>
+        {!isPremium && (
           <Link
-            key={to}
-            to={to}
-            className={`flex flex-col items-center px-2 ${location.pathname === to ? 'text-emerald-700 font-medium' : 'text-gray-500'}`}
+            to="/garden/subscription"
+            className="mx-auto mt-2 flex max-w-md items-center justify-center rounded-2xl bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-900"
           >
-            {label}
+            Upgrade for premium care
           </Link>
-        ))}
+        )}
       </nav>
     </div>
   );
+}
+
+function isActivePath(pathname: string, target: string, exact?: boolean) {
+  if (exact) return pathname === target;
+  return pathname === target || pathname.startsWith(`${target}/`);
 }

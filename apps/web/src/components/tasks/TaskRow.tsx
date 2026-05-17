@@ -28,9 +28,10 @@ export default function TaskRow({
   const overdue = isPending && isPast(due) && !isToday(due);
   const plantLabel = task.plant.nickname || task.plant.species.commonName;
   const icon = TASK_TYPE_ICONS[task.taskType] ?? '🌿';
+  const dueLabel = isToday(due) ? 'Due today' : `Due ${format(due, 'MMM d')}`;
 
   const rowClass = [
-    'task-row group relative flex gap-3 rounded-xl border px-3 py-3 transition-all duration-300',
+    'task-row group relative flex gap-3 rounded-2xl border px-3 py-3.5 transition-all duration-300 sm:px-4',
     animState === 'completing' && 'task-row--completing',
     animState === 'skipping' && 'task-row--skipping',
     isDone && 'task-row--done border-emerald-200/80 bg-emerald-50/50',
@@ -53,12 +54,12 @@ export default function TaskRow({
             type="button"
             onClick={() => onComplete(task.id)}
             disabled={!!animState}
-            className="task-check flex h-6 w-6 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
+            className="task-check flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
             aria-label={`Mark ${taskTypeLabel(task.taskType)} for ${plantLabel} as done`}
           />
         ) : (
           <span
-            className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
               isDone
                 ? 'bg-emerald-600 text-white task-check--filled'
                 : 'bg-gray-300 text-gray-600'
@@ -105,8 +106,12 @@ export default function TaskRow({
           <p className="mt-0.5 text-xs font-medium text-red-600">Overdue</p>
         )}
 
+        {isPending && !overdue && (
+          <p className="mt-0.5 text-xs font-medium text-emerald-700/80">{dueLabel}</p>
+        )}
+
         {isPending && !animState && (
-          <div className="mt-2 flex flex-wrap items-center gap-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <TaskInstructionsLink
               taskId={task.id}
               taskType={task.taskType}
@@ -115,7 +120,7 @@ export default function TaskRow({
             <button
               type="button"
               onClick={() => onSkip(task.id)}
-              className="text-xs text-gray-500 underline-offset-2 hover:text-gray-700 hover:underline"
+              className="inline-flex items-center justify-center rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-200 hover:text-gray-800"
             >
               Skip
             </button>

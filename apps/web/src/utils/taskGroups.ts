@@ -14,7 +14,12 @@ export interface TaskItem {
   dueDate: string;
   status: string;
   completedAt?: string | null;
-  plant: { nickname?: string; species: { commonName: string } };
+  plant: {
+    id: string;
+    nickname?: string | null;
+    imageUrl?: string | null;
+    species: { commonName: string };
+  };
 }
 
 export interface DayGroup {

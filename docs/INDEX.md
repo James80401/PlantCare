@@ -73,6 +73,7 @@ This document is the **primary tutorial and instructions hub** for Plant Care. U
 | **Care guides** | [care-guides/INDEX.md](care-guides/INDEX.md) | Templates, personalization, assets |
 | **Integrations** | [integrations/INDEX.md](integrations/INDEX.md) | OpenAI, SMTP, Stripe, PlantNet, … |
 | **Operations** | [operations/INDEX.md](operations/INDEX.md) | Deploy, CI, scripts, testing |
+| **Product** | [product/improvement-checklist.md](product/improvement-checklist.md) | Roadmap checklist for UX, care intelligence, data, and engagement improvements |
 | **Reference** | [reference/INDEX.md](reference/INDEX.md) | Scripts, env table, routes, file tree |
 | **Meta** | [meta/INDEX.md](meta/INDEX.md) | Doc map, AI guide, glossary |
 
