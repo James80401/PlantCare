@@ -15,8 +15,23 @@ export class SpeciesController {
   ) {}
 
   @Get('search')
-  search(@Query('q') q: string) {
-    return this.perenual.search(q || '');
+  search(
+    @Query('q') q: string,
+    @Query('petSafe') petSafe?: string,
+    @Query('lowLight') lowLight?: string,
+    @Query('edible') edible?: string,
+    @Query('droughtTolerant') droughtTolerant?: string,
+    @Query('indoor') indoor?: string,
+    @Query('outdoor') outdoor?: string,
+  ) {
+    return this.perenual.search(q || '', {
+      petSafe: petSafe === 'true',
+      lowLight: lowLight === 'true',
+      edible: edible === 'true',
+      droughtTolerant: droughtTolerant === 'true',
+      indoor: indoor === 'true',
+      outdoor: outdoor === 'true',
+    });
   }
 
   @Get(':id')

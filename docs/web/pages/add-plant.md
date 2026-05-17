@@ -5,6 +5,8 @@
 Route: `/garden/plants/new`
 
 - Species search debounce → `speciesApi.search`
+- Discovery filters → `petSafe`, `lowLight`, `edible`, `droughtTolerant`, `indoor`, `outdoor`
+- Result cards show sunlight, watering cadence, toxicity, and discovery tags
 - PlantNet identify → `plantsApi.identify`
 - Locations from `constants/plantLocations.ts`
 - Create → `plantsApi.create`

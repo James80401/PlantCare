@@ -149,10 +149,10 @@ Acceptance check:
 
 Goal: make plant content richer and easier to browse/search.
 
-- [ ] Audit current species catalog fields and coverage.
-- [ ] Pick one plant category to expand first.
-- [ ] Add missing attributes in a structured way.
-- [ ] Improve search/discovery UI after data shape is stable.
+- [x] Audit current species catalog fields and coverage.
+- [x] Pick one plant category to expand first. Section 7 uses discovery facets derived from stable existing fields before adding new schema.
+- [x] Add missing attributes in a structured way. Added repeatable catalog verification for core fields and discovery-filter coverage.
+- [x] Improve search/discovery UI after data shape is stable.
 
 Acceptance check:
 

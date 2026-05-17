@@ -72,7 +72,8 @@ export const plantsApi = {
 };
 
 export const speciesApi = {
-  search: (q: string) => api.get('/species/search', { params: { q } }),
+  search: (q: string, filters?: Record<string, boolean>) =>
+    api.get('/species/search', { params: { q, ...filters } }),
 };
 
 export const tasksApi = {

@@ -2,6 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  speciesDiscoveryTags,
+  speciesMatchesFilters,
+  type SpeciesSearchFilters,
+} from './species-filters';
 
 @Injectable()
 export class PerenualService {
@@ -16,7 +21,8 @@ export class PerenualService {
     this.apiKey = this.config.get<string>('PERENUAL_API_KEY');
   }
 
-  async search(query: string) {
+  async search(query: string, filters: SpeciesSearchFilters = {}) {
+    const hasFilters = Object.values(filters).some(Boolean);
     const local = await this.prisma.plantSpecies.findMany({
       where: {
         OR: [
@@ -24,9 +30,17 @@ export class PerenualService {
           { scientificName: { contains: query } },
         ],
       },
-      take: 30,
+      take: hasFilters ? 500 : 30,
     });
-    if (local.length >= 5 || !this.apiKey) return local;
+    const filteredLocal = hasFilters
+      ? local.filter((species) => speciesMatchesFilters(species, filters))
+      : local;
+    const withTags = (species: typeof filteredLocal) =>
+      species.map((item) => ({ ...item, discoveryTags: speciesDiscoveryTags(item) }));
+
+    if (hasFilters || local.length >= 5 || !this.apiKey) {
+      return withTags(filteredLocal.slice(0, 30));
+    }
 
     try {
       const { data } = await axios.get(`${this.baseUrl}/species-list`, {
@@ -42,10 +56,10 @@ export class PerenualService {
       for (const r of results) {
         if (!merged.find((m) => m.id === r.id)) merged.push(r);
       }
-      return merged.slice(0, 30);
+      return withTags(merged.slice(0, 30));
     } catch (err) {
       this.logger.warn(`Perenual search failed: ${err}`);
-      return local;
+      return withTags(local);
     }
   }
 
