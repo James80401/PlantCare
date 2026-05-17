@@ -21,6 +21,69 @@ export class PerenualService {
     this.apiKey = this.config.get<string>('PERENUAL_API_KEY');
   }
 
+  async browse(
+    query: string,
+    filters: SpeciesSearchFilters = {},
+    page = 1,
+    pageSize = 24,
+  ) {
+    const pageNum = Math.max(1, Math.floor(page) || 1);
+    const limit = Math.min(50, Math.max(1, Math.floor(pageSize) || 24));
+    const hasFilters = Object.values(filters).some(Boolean);
+    const q = query.trim();
+
+    const where = q
+      ? {
+          OR: [
+            { commonName: { contains: q } },
+            { scientificName: { contains: q } },
+          ],
+        }
+      : {};
+
+    const withTags = (species: Awaited<ReturnType<typeof this.prisma.plantSpecies.findMany>>) =>
+      species.map((item) => ({
+        ...item,
+        discoveryTags: speciesDiscoveryTags(item),
+      }));
+
+    if (hasFilters) {
+      const all = await this.prisma.plantSpecies.findMany({
+        where,
+        orderBy: { commonName: 'asc' },
+      });
+      const filtered = all.filter((species) => speciesMatchesFilters(species, filters));
+      const total = filtered.length;
+      const skip = (pageNum - 1) * limit;
+      const slice = filtered.slice(skip, skip + limit);
+      return {
+        items: withTags(slice),
+        page: pageNum,
+        pageSize: limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      };
+    }
+
+    const [total, rows] = await Promise.all([
+      this.prisma.plantSpecies.count({ where }),
+      this.prisma.plantSpecies.findMany({
+        where,
+        orderBy: { commonName: 'asc' },
+        skip: (pageNum - 1) * limit,
+        take: limit,
+      }),
+    ]);
+
+    return {
+      items: withTags(rows),
+      page: pageNum,
+      pageSize: limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
+  }
+
   async search(query: string, filters: SpeciesSearchFilters = {}) {
     const hasFilters = Object.values(filters).some(Boolean);
     const local = await this.prisma.plantSpecies.findMany({

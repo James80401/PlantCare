@@ -3,8 +3,9 @@ import { useAuth } from '../context/AuthContext';
 
 const nav = [
   { to: '/garden', label: 'Dashboard', mobileLabel: 'Home', icon: '🏡', exact: true },
+  { to: '/garden/plants/browse', label: 'Browse', mobileLabel: 'Browse', icon: '🌿', exact: true },
   { to: '/garden/tasks', label: 'Tasks', mobileLabel: 'Tasks', icon: '✓' },
-  { to: '/garden/plants/new', label: 'Add Plant', mobileLabel: 'Add', icon: '+' },
+  { to: '/garden/plants/new', label: 'Add Plant', mobileLabel: 'Add', icon: '+', exact: true },
   { to: '/garden/settings', label: 'Settings', mobileLabel: 'Settings', icon: '⚙' },
 ];
 
@@ -73,7 +74,7 @@ export default function Layout() {
         style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
         aria-label="Primary"
       >
-        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+        <div className="mx-auto grid max-w-lg grid-cols-5 gap-0.5">
           {nav.map(({ to, mobileLabel, icon, exact }) => {
             const active = isActivePath(location.pathname, to, exact);
             return (

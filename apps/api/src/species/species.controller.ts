@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PerenualService } from './perenual.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { parseSpeciesSearchFilters } from './species-filters';
 
 @ApiTags('species')
 @ApiBearerAuth()
@@ -24,14 +25,44 @@ export class SpeciesController {
     @Query('indoor') indoor?: string,
     @Query('outdoor') outdoor?: string,
   ) {
-    return this.perenual.search(q || '', {
-      petSafe: petSafe === 'true',
-      lowLight: lowLight === 'true',
-      edible: edible === 'true',
-      droughtTolerant: droughtTolerant === 'true',
-      indoor: indoor === 'true',
-      outdoor: outdoor === 'true',
-    });
+    return this.perenual.search(
+      q || '',
+      parseSpeciesSearchFilters({
+        petSafe,
+        lowLight,
+        edible,
+        droughtTolerant,
+        indoor,
+        outdoor,
+      }),
+    );
+  }
+
+  @Get('browse')
+  browse(
+    @Query('q') q?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('petSafe') petSafe?: string,
+    @Query('lowLight') lowLight?: string,
+    @Query('edible') edible?: string,
+    @Query('droughtTolerant') droughtTolerant?: string,
+    @Query('indoor') indoor?: string,
+    @Query('outdoor') outdoor?: string,
+  ) {
+    return this.perenual.browse(
+      q || '',
+      parseSpeciesSearchFilters({
+        petSafe,
+        lowLight,
+        edible,
+        droughtTolerant,
+        indoor,
+        outdoor,
+      }),
+      parseInt(page || '1', 10),
+      parseInt(pageSize || '24', 10),
+    );
   }
 
   @Get(':id')

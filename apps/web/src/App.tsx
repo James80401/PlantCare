@@ -10,6 +10,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import AddPlant from './pages/AddPlant';
+import BrowsePlants from './pages/BrowsePlants';
 import PlantProfile from './pages/PlantProfile';
 import Tasks from './pages/Tasks';
 import Settings from './pages/Settings';
@@ -34,6 +35,7 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="plants/browse" element={<BrowsePlants />} />
         <Route path="plants/new" element={<AddPlant />} />
         <Route path="plants/:id" element={<PlantProfile />} />
         <Route path="tasks" element={<Tasks />} />

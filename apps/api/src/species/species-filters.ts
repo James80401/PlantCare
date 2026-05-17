@@ -9,6 +9,24 @@ export interface SpeciesSearchFilters {
   outdoor?: boolean;
 }
 
+export function parseSpeciesSearchFilters(query: {
+  petSafe?: string;
+  lowLight?: string;
+  edible?: string;
+  droughtTolerant?: string;
+  indoor?: string;
+  outdoor?: string;
+}): SpeciesSearchFilters {
+  return {
+    petSafe: query.petSafe === 'true',
+    lowLight: query.lowLight === 'true',
+    edible: query.edible === 'true',
+    droughtTolerant: query.droughtTolerant === 'true',
+    indoor: query.indoor === 'true',
+    outdoor: query.outdoor === 'true',
+  };
+}
+
 const edibleTerms = [
   'basil',
   'mint',

@@ -121,7 +121,7 @@ async function testOpenAI() {
         messages: [
           {
             role: 'user',
-            content: 'Reply with exactly: {"status":"ok"}',
+            content: 'Reply with valid JSON only: {"status":"ok"}',
           },
         ],
         response_format: { type: 'json_object' },

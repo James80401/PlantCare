@@ -47,6 +47,7 @@ async function main() {
     name: 'Verify User',
   });
   let token = reg.data.accessToken;
+  let authUser = reg.data.user;
   if (reg.status === 201 || reg.status === 200) {
     if (reg.data.requiresVerification) {
       await prisma.user.update({
@@ -59,6 +60,7 @@ async function main() {
       });
       if (login.status === 200 || login.status === 201) {
         token = login.data.accessToken;
+        authUser = login.data.user;
         pass('Register', `${email} (verified for test)`);
       } else {
         fail('Register login after verify', JSON.stringify(login.data));
@@ -79,8 +81,10 @@ async function main() {
     await prisma.$disconnect();
     process.exit(1);
   }
-  if (reg.data.user?.planTier === 'PREMIUM') pass('Premium tier on register');
-  else fail('Premium tier', reg.data.user?.planTier);
+  const meForTier = await api('GET', '/users/me', null, token);
+  const planTier = authUser?.planTier ?? meForTier.data?.planTier;
+  if (planTier === 'PREMIUM') pass('Premium tier', 'PREMIUM');
+  else fail('Premium tier', planTier ?? 'unknown');
 
   const search = await api('GET', '/species/search?q=monstera', null, token);
   if (search.status === 200 && Array.isArray(search.data) && search.data.length > 0) {
@@ -121,7 +125,53 @@ async function main() {
     const done = await api('PATCH', `/tasks/${taskId}/complete`, null, token);
     if (done.status === 200) pass('Complete task');
     else fail('Complete task', String(done.status));
+
+    const skipTarget = tasks.data.find((t) => t.status === 'PENDING' && t.id !== taskId) ?? tasks.data[1];
+    if (skipTarget?.id) {
+      const skipped = await api(
+        'PATCH',
+        `/tasks/${skipTarget.id}/skip`,
+        { reason: 'OTHER', note: 'verify script' },
+        token,
+      );
+      if (skipped.status === 200) pass('Skip task with reason');
+      else fail('Skip task with reason', String(skipped.status));
+    }
   } else fail('Tasks');
+
+  const thymeSearch = await api('GET', '/species/search?q=magic+carpet+thyme', null, token);
+  const thymeSpeciesId = thymeSearch.data?.[0]?.id;
+  if (thymeSpeciesId) {
+    const outdoor = await api(
+      'POST',
+      '/plants',
+      { speciesId: thymeSpeciesId, nickname: 'Outdoor Thyme', location: 'Outdoor garden' },
+      token,
+    );
+    if (outdoor.status === 201 || outdoor.status === 200) {
+      const allTasks = await api('GET', '/tasks', null, token);
+      const outdoorTasks = (allTasks.data ?? []).filter((t) => t.plantId === outdoor.data.id);
+      const mistTasks = outdoorTasks.filter((t) => t.taskType === 'MIST');
+      if (mistTasks.length === 0) pass('Outdoor plant: no MIST tasks');
+      else fail('Outdoor plant: no MIST tasks', `${mistTasks.length} MIST`);
+
+      const indoorPatch = await api(
+        'PATCH',
+        `/plants/${outdoor.data.id}`,
+        { location: 'Living Room' },
+        token,
+      );
+      if (indoorPatch.status === 200 && indoorPatch.data?.tasksRescheduled === true) {
+        pass('Location change reschedules tasks');
+      } else {
+        fail('Location change reschedules tasks', JSON.stringify(indoorPatch.data?.tasksRescheduled));
+      }
+    } else {
+      fail('Outdoor plant create', JSON.stringify(outdoor.data));
+    }
+  } else {
+    fail('Species search (Magic Carpet Thyme)');
+  }
 
   const diagForm = new FormData();
   diagForm.append('symptomsText', 'Yellow leaves on lower stems, soil feels wet');
@@ -160,8 +210,7 @@ async function main() {
   if (weather.status === 200) pass('Weather', weather.data?.message || 'ok');
   else fail('Weather', String(weather.status));
 
-  const me = await api('GET', '/users/me', null, token);
-  if (me.status === 200) pass('User profile');
+  if (meForTier.status === 200) pass('User profile');
   else fail('User profile');
 
   await prisma.$disconnect();

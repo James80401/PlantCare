@@ -1,6 +1,11 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { PLANT_LOCATIONS } from '../constants/plantLocations';
+import {
+  defaultSpeciesDiscoveryFilters,
+  SPECIES_DISCOVERY_FILTERS,
+  type SpeciesDiscoveryFilterKey,
+} from '../constants/speciesDiscovery';
 import { plantsApi, speciesApi } from '../services/api';
 import { trackEvent } from '../utils/analytics';
 
@@ -14,28 +19,9 @@ interface Species {
   discoveryTags?: string[];
 }
 
-const discoveryFilters = [
-  { key: 'petSafe', label: 'Pet-safe' },
-  { key: 'lowLight', label: 'Low light' },
-  { key: 'edible', label: 'Edible' },
-  { key: 'droughtTolerant', label: 'Drought-tolerant' },
-  { key: 'indoor', label: 'Indoor' },
-  { key: 'outdoor', label: 'Outdoor' },
-] as const;
-
-type DiscoveryFilterKey = (typeof discoveryFilters)[number]['key'];
-
-const defaultFilters: Record<DiscoveryFilterKey, boolean> = {
-  petSafe: false,
-  lowLight: false,
-  edible: false,
-  droughtTolerant: false,
-  indoor: false,
-  outdoor: false,
-};
-
 export default function AddPlant() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [speciesList, setSpeciesList] = useState<Species[]>([]);
   const [speciesId, setSpeciesId] = useState('');
@@ -48,7 +34,23 @@ export default function AddPlant() {
   const [loading, setLoading] = useState(false);
   const [identifying, setIdentifying] = useState(false);
   const [activeFilters, setActiveFilters] =
-    useState<Record<DiscoveryFilterKey, boolean>>(defaultFilters);
+    useState<Record<SpeciesDiscoveryFilterKey, boolean>>(defaultSpeciesDiscoveryFilters);
+
+  useEffect(() => {
+    const preselectedId = searchParams.get('speciesId');
+    if (!preselectedId) return;
+    let cancelled = false;
+    speciesApi.get(preselectedId).then((r) => {
+      if (cancelled) return;
+      const species = r.data as Species;
+      setSpeciesId(species.id);
+      setQuery(species.commonName);
+      setSpeciesList([]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams]);
 
   useEffect(() => {
     const hasFilters = Object.values(activeFilters).some(Boolean);
@@ -124,7 +126,11 @@ export default function AddPlant() {
         </p>
         <h1 className="text-3xl font-bold text-emerald-950 font-display">Add a plant</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Search by name or use discovery filters to browse plants that fit your home and goals.
+          Search by name,{' '}
+          <Link to="/garden/plants/browse" className="font-medium text-emerald-800 underline">
+            browse the catalog
+          </Link>
+          , or use discovery filters to find plants that fit your home and goals.
         </p>
       </div>
       {error && <p className="text-red-600 text-sm">{error}</p>}
@@ -153,7 +159,7 @@ export default function AddPlant() {
               Discovery filters
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {discoveryFilters.map((filter) => {
+              {SPECIES_DISCOVERY_FILTERS.map((filter) => {
                 const active = activeFilters[filter.key];
                 return (
                   <button
