@@ -18,6 +18,12 @@ server host:
 npm run dev:web -- --host 0.0.0.0
 ```
 
+If the preview/tunnel host is blocked by Vite, allow it for that dev session:
+
+```bash
+VITE_DEV_ALLOWED_HOSTS=example.trycloudflare.com npm run dev:web -- --host 0.0.0.0
+```
+
 ## Restart everything (Windows example)
 
 Stop listeners on 3001 and 5173, then start both dev commands again.
