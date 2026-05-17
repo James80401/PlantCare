@@ -80,8 +80,8 @@ Goal: make plant detail pages easier to navigate on mobile.
 
 Acceptance check:
 
-- [ ] Plant detail remains build-safe.
-- [ ] Existing task completion and journal entry flows still work.
+- [x] Plant detail remains build-safe.
+- [x] Existing task completion and journal entry flows still work.
 - [x] Mobile scroll path is clearer than the current long page.
 
 ### Section 3 - Care guide readability
