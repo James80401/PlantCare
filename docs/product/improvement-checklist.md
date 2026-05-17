@@ -88,17 +88,17 @@ Acceptance check:
 
 Goal: improve care instructions using the data already returned by the API.
 
-- [ ] Standardize care section cards.
-- [ ] Add "what to do now" and "why this matters" presentation where content supports it.
-- [ ] Improve task instruction modal hierarchy.
-- [ ] Add warning/tip styling consistency.
-- [ ] Identify missing care-guide data that needs future content work.
+- [x] Standardize care section cards.
+- [x] Add "what to do now" and "why this matters" presentation where content supports it.
+- [x] Improve task instruction modal hierarchy.
+- [x] Add warning/tip styling consistency.
+- [x] Identify missing care-guide data that needs future content work. Future content work should add explicit structured fields for beginner/expert guidance and separate "why this matters" copy instead of deriving it from section headings.
 
 Acceptance check:
 
 - [ ] Plant profile care guide is easier to scan.
 - [ ] Task instructions modal remains accessible and mobile-friendly.
-- [ ] No backend schema changes required for this slice.
+- [x] No backend schema changes required for this slice.
 
 ### Section 4 - Task feedback MVP
 

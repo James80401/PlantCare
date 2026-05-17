@@ -6,6 +6,11 @@ import DiagnosisResult from '../components/DiagnosisResult';
 import TaskInstructionsLink from '../components/TaskInstructionsLink';
 import { PLANT_LOCATIONS } from '../constants/plantLocations';
 import { plantsApi, journalApi, tasksApi } from '../services/api';
+import {
+  careSectionToneClasses,
+  getCareSectionMeta,
+  sectionLead,
+} from '../utils/careGuideSections';
 import { formatGuideBody, taskTypeLabel } from '../utils/tasks';
 
 interface CareOverviewSection {
@@ -267,16 +272,7 @@ export default function PlantProfile() {
         {careOverview?.sections?.length ? (
           <div className="grid gap-4 lg:grid-cols-2">
             {careOverview.sections.map((section) => (
-              <article
-                key={section.heading}
-                className="rounded-2xl border border-emerald-100 bg-emerald-50/30 p-4"
-              >
-                <h3 className="font-semibold text-emerald-950">{section.heading}</h3>
-                <div
-                  className="mt-2 text-sm leading-6 text-gray-700 prose prose-sm max-w-none prose-p:my-2"
-                  dangerouslySetInnerHTML={{ __html: formatGuideBody(section.body) }}
-                />
-              </article>
+              <CareGuideCard key={section.heading} section={section} />
             ))}
           </div>
         ) : (
@@ -437,6 +433,37 @@ function SummaryTile({
       <p className="text-xs font-semibold uppercase tracking-wide opacity-70">{label}</p>
       <p className="mt-1 text-sm font-semibold leading-5">{value}</p>
     </div>
+  );
+}
+
+function CareGuideCard({ section }: { section: CareOverviewSection }) {
+  const meta = getCareSectionMeta(section.heading);
+  const toneClasses = careSectionToneClasses(meta.tone);
+  const lead = sectionLead(section);
+
+  return (
+    <article className={`rounded-2xl border p-4 ${toneClasses.card}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${toneClasses.badge}`}>
+            {meta.label}
+          </span>
+          <h3 className="mt-3 font-semibold text-emerald-950">{section.heading}</h3>
+        </div>
+      </div>
+      {lead ? (
+        <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-sm font-medium leading-6 text-gray-700">
+          {lead}
+        </p>
+      ) : null}
+      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+        {meta.intent}
+      </p>
+      <div
+        className="mt-3 text-sm leading-6 text-gray-700 prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2"
+        dangerouslySetInnerHTML={{ __html: formatGuideBody(section.body) }}
+      />
+    </article>
   );
 }
 
