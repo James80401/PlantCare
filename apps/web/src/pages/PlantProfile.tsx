@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState, type ReactNode } from 'react';
+import { FormEvent, useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import DrPlantChat from '../components/DrPlantChat';
@@ -26,6 +26,16 @@ interface CareOverview {
 
 type PlantRecord = Record<string, unknown>;
 
+interface TimelineEvent {
+  id: string;
+  date: Date;
+  type: 'journal' | 'care' | 'diagnosis';
+  title: string;
+  description: string;
+  meta?: string;
+  imageUrl?: string | null;
+}
+
 const profileSections = [
   { id: 'overview', label: 'Overview' },
   { id: 'care', label: 'Care' },
@@ -34,10 +44,21 @@ const profileSections = [
   { id: 'diagnosis', label: 'Diagnosis' },
 ];
 
+const journalPrompts = [
+  'New growth:',
+  'Height:',
+  'Leaf count:',
+  'Soil check:',
+  'Pest check:',
+  'After care:',
+];
+
 export default function PlantProfile() {
   const { id } = useParams<{ id: string }>();
   const [plant, setPlant] = useState<PlantRecord | null>(null);
   const [journalNotes, setJournalNotes] = useState('');
+  const [journalPhoto, setJournalPhoto] = useState<File | null>(null);
+  const [journalPhotoInputKey, setJournalPhotoInputKey] = useState(0);
   const [editingLocation, setEditingLocation] = useState(false);
   const [locationDraft, setLocationDraft] = useState('');
   const [locationSaving, setLocationSaving] = useState(false);
@@ -82,9 +103,11 @@ export default function PlantProfile() {
 
   const addJournal = async (e: FormEvent) => {
     e.preventDefault();
-    if (!id || !journalNotes.trim()) return;
-    await journalApi.create(id, journalNotes.trim());
+    if (!id || (!journalNotes.trim() && !journalPhoto)) return;
+    await journalApi.create(id, journalNotes.trim(), journalPhoto ?? undefined);
     setJournalNotes('');
+    setJournalPhoto(null);
+    setJournalPhotoInputKey((key) => key + 1);
     load();
   };
 
@@ -113,9 +136,14 @@ export default function PlantProfile() {
   const plantLabel = (plant.nickname as string) || (species.commonName as string);
   const journalEntries = journal || [];
   const diagnosisEntries = diagnoses || [];
+  const timelineEvents = buildTimelineEvents({
+    journalEntries,
+    tasks,
+    diagnoses: diagnosisEntries,
+  });
   const sectionCounts = {
     tasks: pending.length,
-    journal: journalEntries.length,
+    journal: timelineEvents.length,
     diagnosis: diagnosisEntries.length,
   };
 
@@ -335,42 +363,84 @@ export default function PlantProfile() {
         id="journal"
         eyebrow="History"
         title="Journal"
-        description="Capture photos, observations, and care notes so future advice has better context."
+        description="Capture observations and review notes, care actions, photos, and diagnoses together."
       >
-        <form onSubmit={addJournal} className="flex flex-col gap-2 sm:flex-row">
-          <input
-            value={journalNotes}
-            onChange={(e) => setJournalNotes(e.target.value)}
-            placeholder="Add a note about growth, soil, pests, or symptoms…"
-            className="min-h-11 flex-1 rounded-2xl border border-emerald-100 px-4 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-          />
-          <button
-            type="submit"
-            className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-emerald-800 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-900"
-          >
-            Save note
-          </button>
-        </form>
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div className="space-y-4">
+            <form
+              onSubmit={addJournal}
+              className="rounded-2xl border border-emerald-100 bg-emerald-50/30 p-4"
+            >
+              <label className="block">
+                <span className="text-sm font-semibold text-emerald-950">New observation</span>
+                <textarea
+                  value={journalNotes}
+                  onChange={(e) => setJournalNotes(e.target.value)}
+                  placeholder="Add a note about growth, soil, pests, symptoms, or what changed after care..."
+                  rows={4}
+                  className="mt-2 w-full rounded-2xl border border-emerald-100 px-4 py-3 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                />
+              </label>
 
-        {journalEntries.length ? (
-          <ul className="mt-4 space-y-3 text-sm">
-            {journalEntries.map((entry) => (
-              <li key={entry.id as string} className="rounded-2xl border border-emerald-100 bg-white p-4">
-                <p className="text-xs font-medium text-gray-400">
-                  {format(new Date(entry.createdAt as string), 'PPp')}
+              <div className="mt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                  Helpful prompts
                 </p>
-                <p className="mt-1 text-gray-700">{entry.notes as string}</p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="mt-4">
-            <SectionEmptyState
-              title="No journal notes yet"
-              body="Add a first observation after watering, repotting, or spotting new growth."
-            />
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {journalPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => appendJournalPrompt(prompt, setJournalNotes)}
+                      className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <label className="mt-4 block">
+                <span className="text-sm font-semibold text-emerald-950">Progress photo</span>
+                <input
+                  key={journalPhotoInputKey}
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => setJournalPhoto(event.target.files?.[0] ?? null)}
+                  className="mt-2 block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-800 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+                />
+              </label>
+              {journalPhoto ? (
+                <p className="mt-2 text-xs text-gray-500">Selected: {journalPhoto.name}</p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={!journalNotes.trim() && !journalPhoto}
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-emerald-800 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Save journal entry
+              </button>
+            </form>
+
+            <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
+              <p className="text-sm font-semibold text-sky-950">Growth tracking groundwork</p>
+              <p className="mt-1 text-sm leading-6 text-gray-600">
+                Use prompts like height and leaf count for now. A future section can turn these into
+                structured measurements without losing today&apos;s notes.
+              </p>
+            </div>
           </div>
-        )}
+
+          {timelineEvents.length ? (
+            <PlantTimeline events={timelineEvents} />
+        ) : (
+            <SectionEmptyState
+              title="No timeline events yet"
+              body="Add a note or complete a task to start building this plant's care history."
+            />
+          )}
+        </div>
       </ProfileSection>
 
       <ProfileSection
@@ -465,6 +535,136 @@ function CareGuideCard({ section }: { section: CareOverviewSection }) {
       />
     </article>
   );
+}
+
+function PlantTimeline({ events }: { events: TimelineEvent[] }) {
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="font-semibold text-emerald-950">Plant timeline</h3>
+        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+          {events.length} event{events.length === 1 ? '' : 's'}
+        </span>
+      </div>
+      <ol className="relative space-y-4 border-l border-emerald-100 pl-4">
+        {events.map((event) => (
+          <li key={event.id} className="relative">
+            <span
+              className={`absolute -left-[1.55rem] top-4 flex h-5 w-5 items-center justify-center rounded-full text-xs ${timelineDotClass(event.type)}`}
+              aria-hidden
+            >
+              {timelineIcon(event.type)}
+            </span>
+            <article className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                    {timelineTypeLabel(event.type)}
+                  </p>
+                  <h4 className="mt-1 font-semibold text-emerald-950">{event.title}</h4>
+                </div>
+                <time className="text-xs font-medium text-gray-400" dateTime={event.date.toISOString()}>
+                  {format(event.date, 'MMM d, h:mm a')}
+                </time>
+              </div>
+              {event.meta ? <p className="mt-1 text-xs text-gray-500">{event.meta}</p> : null}
+              {event.description ? (
+                <p className="mt-2 text-sm leading-6 text-gray-700">{event.description}</p>
+              ) : null}
+              {event.imageUrl ? (
+                <img
+                  src={event.imageUrl}
+                  alt=""
+                  className="mt-3 max-h-64 w-full rounded-2xl object-cover"
+                  loading="lazy"
+                />
+              ) : null}
+            </article>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function buildTimelineEvents({
+  journalEntries,
+  tasks,
+  diagnoses,
+}: {
+  journalEntries: PlantRecord[];
+  tasks: PlantRecord[];
+  diagnoses: PlantRecord[];
+}): TimelineEvent[] {
+  const journalEvents: TimelineEvent[] = journalEntries.map((entry) => ({
+    id: `journal-${entry.id as string}`,
+    date: new Date(entry.createdAt as string),
+    type: 'journal',
+    title: entry.photoUrl ? 'Photo journal entry' : 'Journal note',
+    description: (entry.notes as string | null) || 'Photo update',
+    imageUrl: entry.photoUrl as string | null,
+  }));
+
+  const taskEvents: TimelineEvent[] = tasks
+    .filter((task) => task.status !== 'PENDING' && task.completedAt)
+    .map((task) => ({
+      id: `task-${task.id as string}`,
+      date: new Date(task.completedAt as string),
+      type: 'care',
+      title: `${taskTypeLabel(task.taskType as string)} ${
+        task.status === 'DONE' ? 'completed' : 'skipped'
+      }`,
+      description:
+        task.status === 'SKIPPED'
+          ? 'This care task was skipped. Feedback can help future scheduling improve.'
+          : 'This care task was marked complete.',
+      meta: `Originally due ${format(new Date(task.dueDate as string), 'MMM d')}`,
+    }));
+
+  const diagnosisEvents: TimelineEvent[] = diagnoses.map((diagnosis) => ({
+    id: `diagnosis-${diagnosis.id as string}`,
+    date: new Date(diagnosis.createdAt as string),
+    type: 'diagnosis',
+    title: (diagnosis.resultLabel as string) || 'Diagnosis result',
+    description: (diagnosis.adviceText as string | null) || 'Diagnosis saved for this plant.',
+    meta:
+      typeof diagnosis.confidence === 'number'
+        ? `${Math.round((diagnosis.confidence as number) * 100)}% confidence`
+        : undefined,
+    imageUrl: diagnosis.imageUrl as string | null,
+  }));
+
+  return [...journalEvents, ...taskEvents, ...diagnosisEvents].sort(
+    (a, b) => b.date.getTime() - a.date.getTime(),
+  );
+}
+
+function appendJournalPrompt(
+  prompt: string,
+  setJournalNotes: Dispatch<SetStateAction<string>>,
+) {
+  setJournalNotes((current) => {
+    const prefix = current.trim() ? `${current.trim()}\n` : '';
+    return `${prefix}${prompt} `;
+  });
+}
+
+function timelineTypeLabel(type: TimelineEvent['type']) {
+  if (type === 'care') return 'Care action';
+  if (type === 'diagnosis') return 'Diagnosis';
+  return 'Journal';
+}
+
+function timelineIcon(type: TimelineEvent['type']) {
+  if (type === 'care') return '✓';
+  if (type === 'diagnosis') return '!';
+  return '•';
+}
+
+function timelineDotClass(type: TimelineEvent['type']) {
+  if (type === 'care') return 'bg-emerald-700 text-white';
+  if (type === 'diagnosis') return 'bg-amber-500 text-white';
+  return 'bg-sky-600 text-white';
 }
 
 function ProfileSection({

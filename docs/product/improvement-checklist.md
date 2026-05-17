@@ -120,16 +120,16 @@ Acceptance check:
 
 Goal: turn journal entries into a plant progress history.
 
-- [ ] Improve plant journal layout.
-- [ ] Show photos, notes, care actions, and diagnoses in one timeline when data is available.
-- [ ] Add stronger prompts for useful observations.
-- [ ] Add groundwork for growth measurements without requiring them yet.
+- [x] Improve plant journal layout.
+- [x] Show photos, notes, care actions, and diagnoses in one timeline when data is available.
+- [x] Add stronger prompts for useful observations.
+- [x] Add groundwork for growth measurements without requiring them yet. Implemented as guided note prompts; structured fields remain a later data-model enhancement.
 
 Acceptance check:
 
 - [ ] Existing journal creation still works.
-- [ ] Empty and populated journal states are clear.
-- [ ] Timeline can later accept additional event types.
+- [x] Empty and populated journal states are clear.
+- [x] Timeline can later accept additional event types.
 
 ### Section 6 - Diagnosis context and recovery
 

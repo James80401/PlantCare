@@ -12,7 +12,8 @@ Sections:
 - Care: `careOverview` sections rendered as scan-friendly cards with purpose badges,
   lead snippets, and consistent action/why/warning/reference styling.
 - Tasks: pending task cards with care instructions and completion action.
-- Journal: note form plus recent journal entries.
+- Journal: note/photo form, observation prompts, growth-measurement note prompts,
+  and a unified timeline of journal entries, care actions, and diagnoses.
 - Diagnosis: DrPlantChat and past diagnosis history.
 
 Location edit → `plantsApi.update` — [tutorial](../../tutorials/changing-plant-location.md).
