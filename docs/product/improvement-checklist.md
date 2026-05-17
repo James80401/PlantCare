@@ -42,7 +42,7 @@ building more features on top of it.
   - [x] attention plant selection
   - [x] suggested action selection
   - [x] seven-day preview counts
-- [ ] Fix any dashboard edge cases discovered by tests.
+- [x] Fix any dashboard edge cases discovered by tests. No additional issues were found in Section 1 verification.
 - [x] Add a short mobile QA checklist for dashboard states.
 
 Mobile QA checklist:
@@ -55,9 +55,9 @@ Mobile QA checklist:
 
 Acceptance check:
 
-- [ ] `npm run test -w @plant-care/web` passes with dashboard tests.
-- [ ] `npm run build -w @plant-care/web` passes.
-- [ ] Empty garden, active garden, overdue task, and all-caught-up states are covered.
+- [x] `npm run test -w @plant-care/web` passes with dashboard tests.
+- [x] `npm run build -w @plant-care/web` passes.
+- [x] Empty garden, active garden, overdue task, and all-caught-up states are covered.
 
 ### Section 2 - Plant profile information architecture
 
