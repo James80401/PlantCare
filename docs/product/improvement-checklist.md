@@ -112,8 +112,8 @@ Goal: start collecting why users skip or complete care so future schedules can a
 
 Acceptance check:
 
-- [ ] Skip reasons persist.
-- [ ] Existing task complete/skip flows still pass.
+- [x] Skip reasons persist.
+- [x] Existing task complete/skip flows still pass.
 - [x] Dashboard can later use feedback without another schema redesign.
 
 ### Section 5 - Journal timeline upgrade
