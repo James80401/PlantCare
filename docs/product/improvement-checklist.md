@@ -104,17 +104,17 @@ Acceptance check:
 
 Goal: start collecting why users skip or complete care so future schedules can adapt.
 
-- [ ] Design minimal skip reason choices.
-- [ ] Add API/data model for task feedback.
-- [ ] Add skip reason UI.
-- [ ] Preserve current one-tap skip path where appropriate.
-- [ ] Add service/controller tests.
+- [x] Design minimal skip reason choices.
+- [x] Add API/data model for task feedback.
+- [x] Add skip reason UI.
+- [x] Preserve current one-tap skip path where appropriate.
+- [x] Add service/controller tests.
 
 Acceptance check:
 
 - [ ] Skip reasons persist.
 - [ ] Existing task complete/skip flows still pass.
-- [ ] Dashboard can later use feedback without another schema redesign.
+- [x] Dashboard can later use feedback without another schema redesign.
 
 ### Section 5 - Journal timeline upgrade
 

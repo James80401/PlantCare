@@ -3,6 +3,7 @@ import { TaskStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CareGuidesService } from '../care-guides/care-guides.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
+import { SkipTaskDto } from './dto/skip-task.dto';
 
 @Injectable()
 export class TasksService {
@@ -49,16 +50,32 @@ export class TasksService {
     return updated;
   }
 
-  async skip(userId: string, taskId: string) {
+  async skip(userId: string, taskId: string, feedback?: SkipTaskDto) {
     const task = await this.prisma.task.findFirst({
       where: { id: taskId, plant: { userId } },
     });
     if (!task) throw new NotFoundException('Task not found');
 
-    const updated = await this.prisma.task.update({
-      where: { id: taskId },
-      data: { status: TaskStatus.SKIPPED, completedAt: new Date() },
-      include: { plant: { include: { species: true } } },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const skipped = await tx.task.update({
+        where: { id: taskId },
+        data: { status: TaskStatus.SKIPPED, completedAt: new Date() },
+        include: { plant: { include: { species: true } } },
+      });
+
+      if (feedback?.reason) {
+        await tx.taskFeedback.create({
+          data: {
+            taskId,
+            userId,
+            action: 'SKIP',
+            reason: feedback.reason,
+            note: feedback.note?.trim() || undefined,
+          },
+        });
+      }
+
+      return skipped;
     });
 
     await this.scheduler.onTaskCompleted(taskId);

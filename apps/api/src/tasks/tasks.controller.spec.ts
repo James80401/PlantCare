@@ -1,0 +1,15 @@
+import { TasksController } from './tasks.controller';
+
+describe('TasksController', () => {
+  it('passes optional skip feedback to the task service', () => {
+    const tasksService = {
+      skip: jest.fn(),
+    };
+    const controller = new TasksController(tasksService as never);
+    const dto = { reason: 'SOIL_STILL_WET' as const, note: 'Still damp.' };
+
+    controller.skip({ sub: 'user-1', email: 'test@example.com', planTier: 'PREMIUM' }, 'task-1', dto);
+
+    expect(tasksService.skip).toHaveBeenCalledWith('user-1', 'task-1', dto);
+  });
+});

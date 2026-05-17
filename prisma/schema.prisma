@@ -75,6 +75,7 @@ model User {
   subscriptions         Subscription[]
   notificationLogs      NotificationLog[]
   deviceTokens          DeviceToken[]
+  taskFeedback          TaskFeedback[]
 }
 
 model Subscription {
@@ -169,9 +170,26 @@ model Task {
   status        TaskStatus @default(PENDING)
   notifiedAt    DateTime?
   createdAt     DateTime   @default(now())
+  feedback       TaskFeedback[]
 
   @@index([dueDate, status])
   @@index([plantId])
+}
+
+model TaskFeedback {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  reason    String
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([userId, createdAt])
+  @@index([reason])
 }
 
 model JournalEntry {

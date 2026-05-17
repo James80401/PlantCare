@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
+import { SkipTaskDto } from './dto/skip-task.dto';
 import { TasksService } from './tasks.service';
 
 @ApiTags('tasks')
@@ -26,8 +27,8 @@ export class TasksController {
   }
 
   @Patch(':id/skip')
-  skip(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
-    return this.tasksService.skip(user.sub, id);
+  skip(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: SkipTaskDto) {
+    return this.tasksService.skip(user.sub, id, dto);
   }
 
   @Get(':id/instructions')

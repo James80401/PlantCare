@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { TaskSkipFeedback } from '../utils/taskFeedback';
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api/v1';
 
@@ -77,7 +78,7 @@ export const speciesApi = {
 export const tasksApi = {
   list: (from?: string, to?: string) => api.get('/tasks', { params: { from, to } }),
   complete: (id: string) => api.patch(`/tasks/${id}/complete`),
-  skip: (id: string) => api.patch(`/tasks/${id}/skip`),
+  skip: (id: string, feedback?: TaskSkipFeedback) => api.patch(`/tasks/${id}/skip`, feedback ?? {}),
   instructions: (id: string) => api.get(`/tasks/${id}/instructions`),
 };
 

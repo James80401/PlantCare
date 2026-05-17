@@ -1,4 +1,5 @@
 import { format, isToday } from 'date-fns';
+import type { TaskSkipFeedback } from '../../utils/taskFeedback';
 import { groupTasksByType, TASK_TYPE_ICONS, type DayGroup } from '../../utils/taskGroups';
 import { taskTypeLabel } from '../../utils/tasks';
 import TaskRow from './TaskRow';
@@ -9,7 +10,7 @@ interface TaskDayGroupProps {
   group: DayGroup;
   animating: AnimMap;
   onComplete: (id: string) => void;
-  onSkip: (id: string) => void;
+  onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
 }
 
 export default function TaskDayGroup({
