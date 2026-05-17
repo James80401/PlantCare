@@ -9,8 +9,8 @@
 | `build` | shared + api + web |
 | `mobile:copy` | Build web and copy assets into added Capacitor platforms |
 | `mobile:sync` | Build web and sync assets/plugins into added Capacitor platforms |
-| `mobile:add:android` | Add the Capacitor Android project |
-| `mobile:add:ios` | Add the Capacitor iOS project |
+| `mobile:add:android` | Build web and add the Capacitor Android project |
+| `mobile:add:ios` | Build web and add the Capacitor iOS project |
 | `mobile:android` | Build/sync web and open the Android project |
 | `mobile:ios` | Build/sync web and open the iOS project |
 | `test` | API Jest |

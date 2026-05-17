@@ -10,8 +10,8 @@
     "test": "vitest run",
     "mobile:copy": "npm run build && cap copy",
     "mobile:sync": "npm run build && cap sync",
-    "mobile:add:android": "cap add android",
-    "mobile:add:ios": "cap add ios",
+    "mobile:add:android": "npm run build && cap add android",
+    "mobile:add:ios": "npm run build && cap add ios",
     "mobile:android": "npm run mobile:sync && cap open android",
     "mobile:ios": "npm run mobile:sync && cap open ios"
   },
