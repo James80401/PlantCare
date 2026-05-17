@@ -96,8 +96,8 @@ Goal: improve care instructions using the data already returned by the API.
 
 Acceptance check:
 
-- [ ] Plant profile care guide is easier to scan.
-- [ ] Task instructions modal remains accessible and mobile-friendly.
+- [x] Plant profile care guide is easier to scan.
+- [x] Task instructions modal remains accessible and mobile-friendly.
 - [x] No backend schema changes required for this slice.
 
 ### Section 4 - Task feedback MVP
