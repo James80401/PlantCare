@@ -78,6 +78,9 @@ export const speciesApi = {
 
 export const tasksApi = {
   list: (from?: string, to?: string) => api.get('/tasks', { params: { from, to } }),
+  scheduleSuggestions: () => api.get('/tasks/schedule-suggestions'),
+  applyScheduleSuggestion: (suggestionId: string) =>
+    api.post(`/tasks/schedule-suggestions/${encodeURIComponent(suggestionId)}/apply`),
   complete: (id: string) => api.patch(`/tasks/${id}/complete`),
   skip: (id: string, feedback?: TaskSkipFeedback) => api.patch(`/tasks/${id}/skip`, feedback ?? {}),
   instructions: (id: string) => api.get(`/tasks/${id}/instructions`),

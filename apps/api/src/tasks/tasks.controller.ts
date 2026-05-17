@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
@@ -19,6 +19,19 @@ export class TasksController {
     @Query('to') to?: string,
   ) {
     return this.tasksService.findForUser(user.sub, from, to);
+  }
+
+  @Get('schedule-suggestions')
+  scheduleSuggestions(@CurrentUser() user: JwtPayload) {
+    return this.tasksService.getScheduleSuggestions(user.sub);
+  }
+
+  @Post('schedule-suggestions/:suggestionId/apply')
+  applyScheduleSuggestion(
+    @CurrentUser() user: JwtPayload,
+    @Param('suggestionId') suggestionId: string,
+  ) {
+    return this.tasksService.applyScheduleSuggestion(user.sub, suggestionId);
   }
 
   @Patch(':id/complete')

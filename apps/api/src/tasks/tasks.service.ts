@@ -85,4 +85,12 @@ export class TasksService {
   getInstructions(userId: string, taskId: string) {
     return this.careGuides.getInstructionsForTask(userId, taskId);
   }
+
+  getScheduleSuggestions(userId: string) {
+    return this.scheduler.getScheduleSuggestionsForUser(userId);
+  }
+
+  applyScheduleSuggestion(userId: string, suggestionId: string) {
+    return this.scheduler.applyScheduleSuggestion(userId, suggestionId);
+  }
 }

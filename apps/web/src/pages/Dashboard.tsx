@@ -4,7 +4,7 @@ import { format, parseISO } from 'date-fns';
 import TaskDayGroup from '../components/tasks/TaskDayGroup';
 import { useAuth } from '../context/AuthContext';
 import { useTasksInRange } from '../hooks/useTasksInRange';
-import { plantsApi, usersApi } from '../services/api';
+import { plantsApi, tasksApi, usersApi } from '../services/api';
 import {
   buildAttentionPlants,
   buildWeekPreview,
@@ -29,12 +29,28 @@ interface WeatherMessage {
   message?: string;
 }
 
+interface ScheduleSuggestion {
+  id: string;
+  plantId: string;
+  plantName: string;
+  taskType: string;
+  title: string;
+  explanation: string;
+  adjustmentDays: number;
+  affectedTaskCount: number;
+  confidence: 'low' | 'medium' | 'high';
+  reversible: boolean;
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [plants, setPlants] = useState<DashboardPlant[]>([]);
   const [plantsLoading, setPlantsLoading] = useState(true);
   const [plantsError, setPlantsError] = useState('');
   const [weather, setWeather] = useState<WeatherMessage | null>(null);
+  const [scheduleSuggestions, setScheduleSuggestions] = useState<ScheduleSuggestion[]>([]);
+  const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null);
+  const [scheduleMessage, setScheduleMessage] = useState('');
 
   const {
     loading: tasksLoading,
@@ -44,6 +60,7 @@ export default function Dashboard() {
     dayGroups,
     handleComplete,
     handleSkip,
+    load: reloadTasks,
   } = useTasksInRange({ pastDays: 7, futureDays: 14 });
 
   useEffect(() => {
@@ -70,10 +87,32 @@ export default function Dashboard() {
       })
       .catch(() => {});
 
+    tasksApi
+      .scheduleSuggestions()
+      .then((r) => {
+        if (!cancelled) setScheduleSuggestions(r.data);
+      })
+      .catch(() => {});
+
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const applyScheduleSuggestion = async (suggestionId: string) => {
+    setApplyingSuggestionId(suggestionId);
+    setScheduleMessage('');
+    try {
+      const { data } = await tasksApi.applyScheduleSuggestion(suggestionId);
+      setScheduleMessage(data.message || 'Schedule updated.');
+      setScheduleSuggestions((current) => current.filter((item) => item.id !== suggestionId));
+      await reloadTasks();
+    } catch {
+      setScheduleMessage('Could not apply that schedule suggestion. Try again.');
+    } finally {
+      setApplyingSuggestionId(null);
+    }
+  };
 
   const firstName = user?.name?.split(' ')[0] || 'there';
 
@@ -204,6 +243,42 @@ export default function Dashboard() {
               ? 'Rain is expected, so outdoor watering tasks may be adjusted.'
               : weather.message}
           </p>
+        </section>
+      )}
+
+      {(scheduleSuggestions.length > 0 || scheduleMessage) && (
+        <section className="rounded-3xl border border-lime-100 bg-lime-50/70 p-4 shadow-sm shadow-emerald-900/5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">
+                Adaptive scheduling
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-lime-950 font-display">
+                Review schedule suggestions
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-700">
+                Suggestions are based on skipped-task feedback, season, and care context. Nothing
+                changes unless you approve it.
+              </p>
+            </div>
+          </div>
+          {scheduleMessage ? (
+            <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-medium text-lime-900">
+              {scheduleMessage}
+            </p>
+          ) : null}
+          {scheduleSuggestions.length > 0 && (
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              {scheduleSuggestions.map((suggestion) => (
+                <ScheduleSuggestionCard
+                  key={suggestion.id}
+                  suggestion={suggestion}
+                  applying={applyingSuggestionId === suggestion.id}
+                  onApply={() => applyScheduleSuggestion(suggestion.id)}
+                />
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -452,6 +527,53 @@ function DashboardSkeleton() {
         />
       ))}
     </div>
+  );
+}
+
+function ScheduleSuggestionCard({
+  suggestion,
+  applying,
+  onApply,
+}: {
+  suggestion: ScheduleSuggestion;
+  applying: boolean;
+  onApply: () => void;
+}) {
+  return (
+    <article className="rounded-2xl border border-lime-100 bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-lime-700">
+            {suggestion.plantName} · {taskTypeLabel(suggestion.taskType)}
+          </p>
+          <h3 className="mt-1 font-semibold text-emerald-950">{suggestion.title}</h3>
+        </div>
+        <span className="rounded-full bg-lime-100 px-2.5 py-1 text-xs font-semibold text-lime-900">
+          {suggestion.confidence} confidence
+        </span>
+      </div>
+      <p className="mt-2 text-sm leading-6 text-gray-700">{suggestion.explanation}</p>
+      <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600">
+        <span className="rounded-full bg-gray-50 px-2.5 py-1">
+          {suggestion.affectedTaskCount} task{suggestion.affectedTaskCount === 1 ? '' : 's'}
+        </span>
+        <span className="rounded-full bg-gray-50 px-2.5 py-1">
+          {suggestion.adjustmentDays > 0 ? '+' : ''}
+          {suggestion.adjustmentDays} days
+        </span>
+        {suggestion.reversible && (
+          <span className="rounded-full bg-gray-50 px-2.5 py-1">Pending tasks only</span>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onApply}
+        disabled={applying}
+        className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full bg-lime-700 px-4 py-2 text-sm font-semibold text-white hover:bg-lime-800 disabled:opacity-50"
+      >
+        {applying ? 'Applying...' : 'Apply suggestion'}
+      </button>
+    </article>
   );
 }
 

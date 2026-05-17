@@ -8,6 +8,20 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 
 const DAYS_AHEAD = 90;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+export interface ScheduleSuggestion {
+  id: string;
+  plantId: string;
+  plantName: string;
+  taskType: TaskType;
+  title: string;
+  explanation: string;
+  adjustmentDays: number;
+  affectedTaskCount: number;
+  confidence: 'low' | 'medium' | 'high';
+  reversible: boolean;
+}
 
 @Injectable()
 export class SchedulerService {
@@ -170,5 +184,187 @@ export class SchedulerService {
         dueDate: new Date(dayAfter.getTime() + days * 24 * 60 * 60 * 1000),
       },
     });
+  }
+
+  async getScheduleSuggestionsForUser(userId: string): Promise<ScheduleSuggestion[]> {
+    const since = new Date(Date.now() - 60 * MS_PER_DAY);
+    const feedback = await this.prisma.taskFeedback.findMany({
+      where: {
+        userId,
+        action: 'SKIP',
+        createdAt: { gte: since },
+        reason: { in: ['SOIL_STILL_WET', 'RAIN_HANDLED_WATERING'] },
+      },
+      include: {
+        task: { include: { plant: { include: { species: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const suggestions: ScheduleSuggestion[] = [];
+    const plantIds = new Set(feedback.map((item) => item.task.plantId));
+
+    for (const plantId of plantIds) {
+      const plantFeedback = feedback.filter((item) => item.task.plantId === plantId);
+      const plant = plantFeedback[0]?.task.plant;
+      if (!plant) continue;
+
+      const wetWaterSkips = plantFeedback.filter(
+        (item) => item.reason === 'SOIL_STILL_WET' && item.task.taskType === TaskType.WATER,
+      ).length;
+      if (wetWaterSkips >= 2) {
+        const affectedTaskCount = await this.countUpcomingTasks(plantId, TaskType.WATER);
+        if (affectedTaskCount > 0) {
+          suggestions.push({
+            id: `${plantId}:water-extend`,
+            plantId,
+            plantName: plant.nickname || plant.species.commonName,
+            taskType: TaskType.WATER,
+            title: 'Water less often',
+            explanation:
+              'You skipped watering because the soil was still wet multiple times. Shift the next few watering tasks 2 days later.',
+            adjustmentDays: 2,
+            affectedTaskCount,
+            confidence: wetWaterSkips >= 3 ? 'high' : 'medium',
+            reversible: true,
+          });
+        }
+      }
+
+      const rainWaterSkips = plantFeedback.filter(
+        (item) => item.reason === 'RAIN_HANDLED_WATERING' && item.task.taskType === TaskType.WATER,
+      ).length;
+      const env = inferGrowingEnvironment(plant.location);
+      if (rainWaterSkips > 0 && env === 'outdoor') {
+        const affectedTaskCount = await this.countUpcomingTasks(plantId, TaskType.WATER, 1);
+        if (affectedTaskCount > 0) {
+          suggestions.push({
+            id: `${plantId}:water-rain-delay`,
+            plantId,
+            plantName: plant.nickname || plant.species.commonName,
+            taskType: TaskType.WATER,
+            title: 'Delay the next outdoor watering',
+            explanation:
+              'Rain recently covered watering for this outdoor plant. Delay the next water task by 2 days.',
+            adjustmentDays: 2,
+            affectedTaskCount,
+            confidence: 'medium',
+            reversible: true,
+          });
+        }
+      }
+    }
+
+    if (!this.isGrowingSeason(new Date())) {
+      const dormantFertilizerTasks = await this.prisma.task.findMany({
+        where: {
+          status: TaskStatus.PENDING,
+          taskType: TaskType.FERTILIZE,
+          plant: { userId },
+        },
+        include: { plant: { include: { species: true } } },
+        orderBy: { dueDate: 'asc' },
+        take: 10,
+      });
+
+      for (const task of dormantFertilizerTasks) {
+        suggestions.push({
+          id: `${task.plantId}:fertilize-dormant-delay`,
+          plantId: task.plantId,
+          plantName: task.plant.nickname || task.plant.species.commonName,
+          taskType: TaskType.FERTILIZE,
+          title: 'Pause fertilizer during dormancy',
+          explanation:
+            'This fertilizer task falls outside the main growing season. Delay the next fertilizer reminder by 30 days.',
+          adjustmentDays: 30,
+          affectedTaskCount: 1,
+          confidence: 'medium',
+          reversible: true,
+        });
+      }
+    }
+
+    return suggestions.slice(0, 6);
+  }
+
+  async applyScheduleSuggestion(userId: string, suggestionId: string) {
+    const [plantId, kind] = suggestionId.split(':');
+    const plant = await this.prisma.plant.findFirst({ where: { id: plantId, userId } });
+    if (!plant) return { applied: false, updatedTasks: [], message: 'Plant not found.' };
+
+    if (kind === 'water-extend') {
+      const updatedTasks = await this.shiftNextTasks(plantId, TaskType.WATER, 2, 3);
+      return {
+        applied: updatedTasks.length > 0,
+        updatedTasks,
+        message: `Shifted ${updatedTasks.length} watering task${updatedTasks.length === 1 ? '' : 's'} 2 days later.`,
+      };
+    }
+
+    if (kind === 'water-rain-delay') {
+      const updatedTasks = await this.shiftNextTasks(plantId, TaskType.WATER, 2, 1);
+      return {
+        applied: updatedTasks.length > 0,
+        updatedTasks,
+        message: `Delayed the next watering task by 2 days.`,
+      };
+    }
+
+    if (kind === 'fertilize-dormant-delay') {
+      const updatedTasks = await this.shiftNextTasks(plantId, TaskType.FERTILIZE, 30, 1);
+      return {
+        applied: updatedTasks.length > 0,
+        updatedTasks,
+        message: `Delayed the next fertilizer task by 30 days.`,
+      };
+    }
+
+    return { applied: false, updatedTasks: [], message: 'Suggestion is no longer available.' };
+  }
+
+  private async countUpcomingTasks(plantId: string, taskType: TaskType, take = 3) {
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        plantId,
+        taskType,
+        status: TaskStatus.PENDING,
+        dueDate: { gte: new Date() },
+      },
+      select: { id: true },
+      orderBy: { dueDate: 'asc' },
+      take,
+    });
+    return tasks.length;
+  }
+
+  private async shiftNextTasks(
+    plantId: string,
+    taskType: TaskType,
+    days: number,
+    take: number,
+  ) {
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        plantId,
+        taskType,
+        status: TaskStatus.PENDING,
+        dueDate: { gte: new Date() },
+      },
+      orderBy: { dueDate: 'asc' },
+      take,
+    });
+
+    const updated = [];
+    for (const task of tasks) {
+      const nextDue = new Date(task.dueDate);
+      nextDue.setDate(nextDue.getDate() + days);
+      updated.push(
+        await this.prisma.task.update({
+          where: { id: task.id },
+          data: { dueDate: nextDue },
+        }),
+      );
+    }
+    return updated;
   }
 }

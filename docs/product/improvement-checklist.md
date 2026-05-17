@@ -164,10 +164,10 @@ Acceptance check:
 Goal: make recommendations change based on plant context, task history, feedback,
 weather, and season.
 
-- [ ] Define schedule adjustment rules.
-- [ ] Add user-visible explanation for adjustments.
-- [ ] Require user approval for major changes.
-- [ ] Add scheduler tests around rule behavior.
+- [x] Define schedule adjustment rules.
+- [x] Add user-visible explanation for adjustments.
+- [x] Require user approval for major changes.
+- [x] Add scheduler tests around rule behavior.
 
 Acceptance check:
 
