@@ -9,6 +9,182 @@ Plant Care should feel like a personalized daily plant assistant: it should tell
 users what matters today, explain why each action matters, adapt to their
 plants and environment, and make progress visible over time.
 
+## How we will work through this
+
+Use these sections as the implementation queue. Each section should be small
+enough to finish, verify, and review independently before starting the next one.
+
+### Section 0 - Completed foundation
+
+Status: completed in the current branch.
+
+- Mobile packaging and phone-preview workflow.
+- Mobile-safe app shell and bottom navigation.
+- First-pass `/garden` dashboard redesign.
+- First-pass task row action improvements.
+- Roadmap/checklist documentation.
+
+Acceptance check:
+
+- [x] Web build passes.
+- [x] Existing web tests pass.
+- [x] Full monorepo build passes.
+
+### Section 1 - Dashboard polish and reliability
+
+Goal: make the new dashboard reliable, testable, and easier to trust before
+building more features on top of it.
+
+- [ ] Extract dashboard helper logic into small pure functions.
+- [ ] Add focused tests for:
+  - [ ] overdue task calculation
+  - [ ] garden score calculation
+  - [ ] attention plant selection
+  - [ ] suggested action selection
+- [ ] Fix any dashboard edge cases discovered by tests.
+- [ ] Add a short mobile QA checklist for dashboard states.
+
+Acceptance check:
+
+- [ ] `npm run test -w @plant-care/web` passes with dashboard tests.
+- [ ] `npm run build -w @plant-care/web` passes.
+- [ ] Empty garden, active garden, overdue task, and all-caught-up states are covered.
+
+### Section 2 - Plant profile information architecture
+
+Goal: make plant detail pages easier to navigate on mobile.
+
+- [ ] Convert the long plant profile page into clear sections.
+- [ ] Add compact top summary with:
+  - [ ] next task
+  - [ ] location
+  - [ ] base watering cadence
+  - [ ] sunlight
+  - [ ] toxicity warning when present
+- [ ] Add section navigation or tab-like anchors:
+  - [ ] Overview
+  - [ ] Care
+  - [ ] Tasks
+  - [ ] Journal
+  - [ ] Diagnosis
+- [ ] Improve empty states inside each profile section.
+
+Acceptance check:
+
+- [ ] Plant detail remains build-safe.
+- [ ] Existing task completion and journal entry flows still work.
+- [ ] Mobile scroll path is clearer than the current long page.
+
+### Section 3 - Care guide readability
+
+Goal: improve care instructions using the data already returned by the API.
+
+- [ ] Standardize care section cards.
+- [ ] Add "what to do now" and "why this matters" presentation where content supports it.
+- [ ] Improve task instruction modal hierarchy.
+- [ ] Add warning/tip styling consistency.
+- [ ] Identify missing care-guide data that needs future content work.
+
+Acceptance check:
+
+- [ ] Plant profile care guide is easier to scan.
+- [ ] Task instructions modal remains accessible and mobile-friendly.
+- [ ] No backend schema changes required for this slice.
+
+### Section 4 - Task feedback MVP
+
+Goal: start collecting why users skip or complete care so future schedules can adapt.
+
+- [ ] Design minimal skip reason choices.
+- [ ] Add API/data model for task feedback.
+- [ ] Add skip reason UI.
+- [ ] Preserve current one-tap skip path where appropriate.
+- [ ] Add service/controller tests.
+
+Acceptance check:
+
+- [ ] Skip reasons persist.
+- [ ] Existing task complete/skip flows still pass.
+- [ ] Dashboard can later use feedback without another schema redesign.
+
+### Section 5 - Journal timeline upgrade
+
+Goal: turn journal entries into a plant progress history.
+
+- [ ] Improve plant journal layout.
+- [ ] Show photos, notes, care actions, and diagnoses in one timeline when data is available.
+- [ ] Add stronger prompts for useful observations.
+- [ ] Add groundwork for growth measurements without requiring them yet.
+
+Acceptance check:
+
+- [ ] Existing journal creation still works.
+- [ ] Empty and populated journal states are clear.
+- [ ] Timeline can later accept additional event types.
+
+### Section 6 - Diagnosis context and recovery
+
+Goal: make diagnosis feel connected to the plant profile and care history.
+
+- [ ] Improve diagnosis history presentation.
+- [ ] Add recovery/status affordances.
+- [ ] Identify prompt/context changes needed for Dr. Plant.
+- [ ] Add follow-up task creation design, then implementation.
+
+Acceptance check:
+
+- [ ] Diagnosis history is easy to review from a plant profile.
+- [ ] The next backend/API changes are explicit before implementation.
+
+### Section 7 - Species data and discovery
+
+Goal: make plant content richer and easier to browse/search.
+
+- [ ] Audit current species catalog fields and coverage.
+- [ ] Pick one plant category to expand first.
+- [ ] Add missing attributes in a structured way.
+- [ ] Improve search/discovery UI after data shape is stable.
+
+Acceptance check:
+
+- [ ] Data additions have validation/verification scripts.
+- [ ] Search behavior remains fast enough for local testing.
+
+### Section 8 - Adaptive scheduling
+
+Goal: make recommendations change based on plant context, task history, feedback,
+weather, and season.
+
+- [ ] Define schedule adjustment rules.
+- [ ] Add user-visible explanation for adjustments.
+- [ ] Require user approval for major changes.
+- [ ] Add scheduler tests around rule behavior.
+
+Acceptance check:
+
+- [ ] Existing scheduler behavior is preserved where no feedback exists.
+- [ ] Adjustments are explainable and reversible.
+
+### Section 9 - Engagement and shareability
+
+Goal: make progress rewarding without making care feel punitive.
+
+- [ ] Add positive milestones.
+- [ ] Refine garden score into an encouraging signal.
+- [ ] Add gentle streaks.
+- [ ] Add shareable plant cards.
+
+Acceptance check:
+
+- [ ] Engagement states are encouraging and optional.
+- [ ] No core care workflow depends on gamification.
+
+### Current next slice
+
+Start with **Section 1 - Dashboard polish and reliability**. It is the right next
+step because the dashboard is now the main user surface, and tests/helper
+extraction will make future iterations safer.
+
 ## Phase 1 - Mobile-first shell and dashboard foundation
 
 ### Mobile shell
