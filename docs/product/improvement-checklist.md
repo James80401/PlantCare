@@ -156,8 +156,8 @@ Goal: make plant content richer and easier to browse/search.
 
 Acceptance check:
 
-- [ ] Data additions have validation/verification scripts.
-- [ ] Search behavior remains fast enough for local testing.
+- [x] Data additions have validation/verification scripts.
+- [x] Search behavior remains fast enough for local testing.
 
 ### Section 8 - Adaptive scheduling
 
@@ -190,9 +190,9 @@ Acceptance check:
 
 ### Current next slice
 
-Continue with **Section 7 - Species data and discovery**. The next small slice is
-auditing the current species catalog, choosing one category to expand first, and
-improving discovery only after the data shape is clear.
+Continue with **Section 8 - Adaptive scheduling**. The next small slice is
+defining conservative schedule-adjustment rules that use task feedback and
+weather without changing existing schedules unless the user approves.
 
 ## Phase 1 - Mobile-first shell and dashboard foundation
 
