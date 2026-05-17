@@ -1,42 +1,37 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { addDays, compareAsc, format, isToday, parseISO, startOfDay } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import TaskDayGroup from '../components/tasks/TaskDayGroup';
 import { useAuth } from '../context/AuthContext';
 import { useTasksInRange } from '../hooks/useTasksInRange';
 import { plantsApi, usersApi } from '../services/api';
+import {
+  buildAttentionPlants,
+  buildWeekPreview,
+  findNextTaskForPlant,
+  getCompletedTaskCount,
+  getFocusDayGroups,
+  getGardenScore,
+  getOverdueTasks,
+  getPendingTasks,
+  getSeasonalTip,
+  getSuggestedAction,
+  getTodayTasks,
+  scoreLabel,
+  type AttentionPlant,
+  type DashboardPlant,
+} from '../utils/dashboard';
 import { TASK_TYPE_ICONS, type TaskItem } from '../utils/taskGroups';
 import { taskTypeLabel } from '../utils/tasks';
-
-interface Plant {
-  id: string;
-  nickname?: string | null;
-  imageUrl?: string | null;
-  location?: string | null;
-  species: {
-    commonName: string;
-    scientificName?: string | null;
-    sunlight?: string | null;
-    wateringFreqDays: number;
-  };
-  tasks: { dueDate: string; taskType: string; status: string }[];
-}
 
 interface WeatherMessage {
   rainSkipApplied?: boolean;
   message?: string;
 }
 
-interface AttentionPlant {
-  plant: Plant;
-  reason: string;
-  tone: 'urgent' | 'warning' | 'info';
-  nextTask?: { dueDate: string; taskType: string; status: string };
-}
-
 export default function Dashboard() {
   const { user } = useAuth();
-  const [plants, setPlants] = useState<Plant[]>([]);
+  const [plants, setPlants] = useState<DashboardPlant[]>([]);
   const [plantsLoading, setPlantsLoading] = useState(true);
   const [plantsError, setPlantsError] = useState('');
   const [weather, setWeather] = useState<WeatherMessage | null>(null);
@@ -82,63 +77,38 @@ export default function Dashboard() {
 
   const firstName = user?.name?.split(' ')[0] || 'there';
 
-  const pendingTasks = useMemo(
-    () => tasks.filter((task) => task.status === 'PENDING'),
-    [tasks],
+  const currentDate = useMemo(() => new Date(), []);
+
+  const pendingTasks = useMemo(() => getPendingTasks(tasks), [tasks]);
+
+  const overdueTasks = useMemo(
+    () => getOverdueTasks(tasks, currentDate),
+    [currentDate, tasks],
   );
 
-  const overdueTasks = useMemo(() => {
-    const today = startOfDay(new Date());
-    return pendingTasks
-      .filter((task) => startOfDay(parseISO(task.dueDate)) < today)
-      .sort(sortTasksByDue);
-  }, [pendingTasks]);
+  const todayTasks = useMemo(() => getTodayTasks(tasks, currentDate), [currentDate, tasks]);
 
-  const todayTasks = useMemo(
-    () => pendingTasks.filter((task) => isToday(parseISO(task.dueDate))).sort(sortTasksByDue),
-    [pendingTasks],
+  const focusDayGroups = useMemo(
+    () => getFocusDayGroups(dayGroups, currentDate),
+    [currentDate, dayGroups],
   );
 
-  const focusDayGroups = useMemo(() => {
-    const today = startOfDay(new Date());
-    const end = addDays(today, 3);
-    const overdue = dayGroups.filter((group) => group.pending.length > 0 && group.date < today);
-    const nearTerm = dayGroups.filter(
-      (group) => group.pending.length > 0 && group.date >= today && group.date <= end,
-    );
-    return [...overdue.slice(0, 1), ...nearTerm].slice(0, 4);
-  }, [dayGroups]);
-
-  const weekPreview = useMemo(() => {
-    const today = startOfDay(new Date());
-    return Array.from({ length: 7 }, (_, index) => {
-      const date = addDays(today, index);
-      const count = pendingTasks.filter(
-        (task) => startOfDay(parseISO(task.dueDate)).getTime() === date.getTime(),
-      ).length;
-      return {
-        key: format(date, 'yyyy-MM-dd'),
-        label: index === 0 ? 'Today' : format(date, 'EEE'),
-        dateLabel: format(date, 'MMM d'),
-        count,
-      };
-    });
-  }, [pendingTasks]);
+  const weekPreview = useMemo(
+    () => buildWeekPreview(tasks, currentDate),
+    [currentDate, tasks],
+  );
 
   const attentionPlants = useMemo(
-    () => buildAttentionPlants(plants, pendingTasks).slice(0, 4),
-    [plants, pendingTasks],
+    () => buildAttentionPlants(plants, tasks, currentDate).slice(0, 4),
+    [currentDate, plants, tasks],
   );
 
-  const recommendedAction = suggestedAction(plants, overdueTasks, todayTasks);
-  const completedCount = tasks.filter((task) => task.status === 'DONE').length;
-  const gardenScore =
-    plants.length === 0
-      ? 0
-      : Math.max(45, Math.min(100, 100 - overdueTasks.length * 12 - todayTasks.length * 2));
+  const recommendedAction = getSuggestedAction(plants, overdueTasks, todayTasks);
+  const completedCount = getCompletedTaskCount(tasks);
+  const gardenScore = getGardenScore(plants.length, overdueTasks.length, todayTasks.length);
   const needsAttentionCount = attentionPlants.filter((item) => item.tone !== 'info').length;
   const dashboardLoading = tasksLoading || plantsLoading;
-  const seasonalTip = getSeasonalTip(plants.length);
+  const seasonalTip = getSeasonalTip(plants.length, currentDate);
 
   return (
     <div className="space-y-6 pb-24 md:pb-8">
@@ -539,13 +509,11 @@ function SuggestionCard({
   );
 }
 
-function PlantCard({ plant, tasks }: { plant: Plant; tasks: TaskItem[] }) {
+function PlantCard({ plant, tasks }: { plant: DashboardPlant; tasks: TaskItem[] }) {
   const next = findNextTaskForPlant(plant, tasks);
   const name = plant.nickname || plant.species.commonName;
   const plantTasks = tasks.filter((task) => task.plant.id === plant.id);
-  const overdueCount = plantTasks.filter(
-    (task) => startOfDay(parseISO(task.dueDate)) < startOfDay(new Date()),
-  ).length;
+  const overdueCount = getOverdueTasks(plantTasks).length;
 
   return (
     <Link
@@ -584,7 +552,7 @@ function PlantCard({ plant, tasks }: { plant: Plant; tasks: TaskItem[] }) {
   );
 }
 
-function PlantThumb({ plant, size }: { plant: Plant; size: 'sm' | 'lg' }) {
+function PlantThumb({ plant, size }: { plant: DashboardPlant; size: 'sm' | 'lg' }) {
   const dimensions = size === 'sm' ? 'h-12 w-12 rounded-xl text-xl' : 'h-20 w-20 rounded-2xl text-3xl';
 
   return (
@@ -602,127 +570,3 @@ function PlantThumb({ plant, size }: { plant: Plant; size: 'sm' | 'lg' }) {
   );
 }
 
-function buildAttentionPlants(plants: Plant[], tasks: TaskItem[]): AttentionPlant[] {
-  const today = startOfDay(new Date());
-
-  return plants
-    .map((plant): AttentionPlant | null => {
-      const plantTasks = tasks.filter((task) => task.plant.id === plant.id);
-      const nextTask = findNextTaskForPlant(plant, tasks);
-      const overdueCount = plantTasks.filter(
-        (task) => startOfDay(parseISO(task.dueDate)) < today,
-      ).length;
-      const dueTodayCount = plantTasks.filter((task) => isToday(parseISO(task.dueDate))).length;
-
-      if (overdueCount > 0) {
-        return {
-          plant,
-          reason: `${overdueCount} overdue task${overdueCount === 1 ? '' : 's'}`,
-          tone: 'urgent',
-          nextTask,
-        };
-      }
-
-      if (dueTodayCount > 0) {
-        return {
-          plant,
-          reason: `${dueTodayCount} task${dueTodayCount === 1 ? '' : 's'} due today`,
-          tone: 'warning',
-          nextTask,
-        };
-      }
-
-      if (!plant.imageUrl) {
-        return {
-          plant,
-          reason: 'Add a photo to make progress tracking more useful',
-          tone: 'info',
-          nextTask,
-        };
-      }
-
-      if (!nextTask) {
-        return {
-          plant,
-          reason: 'No upcoming task found in the current window',
-          tone: 'info',
-        };
-      }
-
-      return null;
-    })
-    .filter((item): item is AttentionPlant => Boolean(item));
-}
-
-function findNextTaskForPlant(plant: Plant, tasks: TaskItem[]) {
-  const fromTaskList = tasks
-    .filter((task) => task.plant.id === plant.id && task.status === 'PENDING')
-    .sort(sortTasksByDue)[0];
-  const fromPlantPreview = plant.tasks.find((task) => task.status === 'PENDING') ?? plant.tasks[0];
-  return fromTaskList ?? fromPlantPreview;
-}
-
-function suggestedAction(plants: Plant[], overdueTasks: TaskItem[], todayTasks: TaskItem[]) {
-  if (plants.length === 0) {
-    return {
-      title: 'Add your first plant',
-      body: 'Start with a plant you already own. The app will generate a schedule and care profile.',
-      actionLabel: 'Add plant',
-      actionTo: '/garden/plants/new',
-    };
-  }
-
-  if (overdueTasks.length > 0) {
-    return {
-      title: 'Catch up gently',
-      body: 'Start with the oldest overdue task, then open the care instructions if the plant looks stressed.',
-      actionLabel: 'Review overdue',
-      actionTo: '/garden/tasks',
-    };
-  }
-
-  if (todayTasks.length > 0) {
-    return {
-      title: 'Finish today strong',
-      body: 'Complete the tasks due today and use skip only when the plant does not need the care yet.',
-      actionLabel: "Do today's care",
-      actionTo: '/garden/tasks',
-    };
-  }
-
-  return {
-    title: 'Log a quick observation',
-    body: 'Add a note or photo to a plant profile so future diagnoses and care advice have better context.',
-    actionLabel: 'Open garden',
-    actionTo: '#plants',
-  };
-}
-
-function getSeasonalTip(plantCount: number) {
-  if (plantCount === 0) {
-    return 'Once you add plants, this space can surface seasonal tips based on your garden and location.';
-  }
-
-  const month = new Date().getMonth();
-  if (month <= 1 || month === 11) {
-    return 'Winter care usually means slower growth: check soil before watering and reduce fertilizer unless a plant is actively growing.';
-  }
-  if (month >= 2 && month <= 4) {
-    return 'Spring is a good time to inspect roots, refresh soil, prune leggy growth, and restart fertilizer for active growers.';
-  }
-  if (month >= 5 && month <= 7) {
-    return 'Warm weather can dry pots faster. Watch outdoor plants, sun-facing windows, and small containers closely.';
-  }
-  return 'Fall is a transition period: slow fertilizer, inspect for pests before moving plants indoors, and adjust watering as light drops.';
-}
-
-function scoreLabel(score: number) {
-  if (score >= 90) return 'Thriving';
-  if (score >= 75) return 'Steady';
-  if (score >= 60) return 'Needs a check';
-  return 'Needs attention';
-}
-
-function sortTasksByDue(a: TaskItem, b: TaskItem) {
-  return compareAsc(parseISO(a.dueDate), parseISO(b.dueDate));
-}

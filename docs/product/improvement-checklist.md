@@ -35,14 +35,23 @@ Acceptance check:
 Goal: make the new dashboard reliable, testable, and easier to trust before
 building more features on top of it.
 
-- [ ] Extract dashboard helper logic into small pure functions.
-- [ ] Add focused tests for:
-  - [ ] overdue task calculation
-  - [ ] garden score calculation
-  - [ ] attention plant selection
-  - [ ] suggested action selection
+- [x] Extract dashboard helper logic into small pure functions.
+- [x] Add focused tests for:
+  - [x] overdue task calculation
+  - [x] garden score calculation
+  - [x] attention plant selection
+  - [x] suggested action selection
+  - [x] seven-day preview counts
 - [ ] Fix any dashboard edge cases discovered by tests.
-- [ ] Add a short mobile QA checklist for dashboard states.
+- [x] Add a short mobile QA checklist for dashboard states.
+
+Mobile QA checklist:
+
+- [ ] Empty garden: hero copy, add-plant CTA, empty task state, and empty plant state are visible without horizontal scroll.
+- [ ] Active garden: metrics wrap cleanly, today care appears before attention cards, and bottom navigation does not cover final content.
+- [ ] Overdue state: overdue metric and urgent attention card are visually distinct from normal upcoming tasks.
+- [ ] All-caught-up state: dashboard explains that nothing is due and still offers a useful next action.
+- [ ] Weather note state: rain/weather messaging remains readable and does not dominate the dashboard.
 
 Acceptance check:
 
