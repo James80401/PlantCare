@@ -142,7 +142,7 @@ Goal: make diagnosis feel connected to the plant profile and care history.
 
 Acceptance check:
 
-- [ ] Diagnosis history is easy to review from a plant profile.
+- [x] Diagnosis history is easy to review from a plant profile.
 - [x] The next backend/API changes are explicit before implementation.
 
 ### Section 7 - Species data and discovery
@@ -190,9 +190,9 @@ Acceptance check:
 
 ### Current next slice
 
-Continue with **Section 6 - Diagnosis context and recovery**. The journal now
-shows diagnoses in the plant timeline, so the next small slice is making
-diagnosis history itself easier to review and setting up a recovery workflow.
+Continue with **Section 7 - Species data and discovery**. The next small slice is
+auditing the current species catalog, choosing one category to expand first, and
+improving discovery only after the data shape is clear.
 
 ## Phase 1 - Mobile-first shell and dashboard foundation
 
