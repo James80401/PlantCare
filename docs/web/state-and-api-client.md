@@ -10,7 +10,9 @@ Tokens in `localStorage`: `accessToken`, `refreshToken`.
 
 ## api.ts
 
-`apps/web/src/services/api.ts` — axios instance `baseURL: '/api/v1'`
+`apps/web/src/services/api.ts` — axios instance with `baseURL` from `VITE_API_BASE_URL`, defaulting to `/api/v1`.
+
+Use the default for local web development with the Vite proxy. Set `VITE_API_BASE_URL` for native/mobile shells so the bundled app can reach a hosted API.
 
 | Export | Endpoints |
 |--------|-----------|

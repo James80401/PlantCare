@@ -1,0 +1,18 @@
+{
+  "name": "Plant Care",
+  "short_name": "Plant Care",
+  "description": "Keep your plants alive with smart reminders, care guides, and Dr. Plant diagnosis.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ecfdf5",
+  "theme_color": "#ecfdf5",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

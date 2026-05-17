@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Plant Care app icon</title>
+  <desc id="desc">A simple green plant sprout in a rounded square.</desc>
+  <rect width="512" height="512" rx="112" fill="#ecfdf5" />
+  <circle cx="256" cy="288" r="132" fill="#10b981" opacity="0.14" />
+  <path d="M260 374c0-94 0-154 58-212" fill="none" stroke="#047857" stroke-width="28" stroke-linecap="round" />
+  <path d="M250 374c0-80-12-136-72-194" fill="none" stroke="#065f46" stroke-width="28" stroke-linecap="round" />
+  <path d="M279 226c13-82 77-120 144-112-2 70-53 128-144 112Z" fill="#34d399" />
+  <path d="M236 248c-21-78-88-107-151-88 13 67 72 115 151 88Z" fill="#059669" />
+  <path d="M142 390h228" fill="none" stroke="#064e3b" stroke-width="30" stroke-linecap="round" />
+</svg>
