@@ -127,7 +127,7 @@ Goal: turn journal entries into a plant progress history.
 
 Acceptance check:
 
-- [ ] Existing journal creation still works.
+- [x] Existing journal creation still works.
 - [x] Empty and populated journal states are clear.
 - [x] Timeline can later accept additional event types.
 
@@ -190,9 +190,9 @@ Acceptance check:
 
 ### Current next slice
 
-Start with **Section 1 - Dashboard polish and reliability**. It is the right next
-step because the dashboard is now the main user surface, and tests/helper
-extraction will make future iterations safer.
+Continue with **Section 6 - Diagnosis context and recovery**. The journal now
+shows diagnoses in the plant timeline, so the next small slice is making
+diagnosis history itself easier to review and setting up a recovery workflow.
 
 ## Phase 1 - Mobile-first shell and dashboard foundation
 
