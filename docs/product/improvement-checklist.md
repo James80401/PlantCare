@@ -63,26 +63,26 @@ Acceptance check:
 
 Goal: make plant detail pages easier to navigate on mobile.
 
-- [ ] Convert the long plant profile page into clear sections.
-- [ ] Add compact top summary with:
-  - [ ] next task
-  - [ ] location
-  - [ ] base watering cadence
-  - [ ] sunlight
-  - [ ] toxicity warning when present
-- [ ] Add section navigation or tab-like anchors:
-  - [ ] Overview
-  - [ ] Care
-  - [ ] Tasks
-  - [ ] Journal
-  - [ ] Diagnosis
-- [ ] Improve empty states inside each profile section.
+- [x] Convert the long plant profile page into clear sections.
+- [x] Add compact top summary with:
+  - [x] next task
+  - [x] location
+  - [x] base watering cadence
+  - [x] sunlight
+  - [x] toxicity warning when present
+- [x] Add section navigation or tab-like anchors:
+  - [x] Overview
+  - [x] Care
+  - [x] Tasks
+  - [x] Journal
+  - [x] Diagnosis
+- [x] Improve empty states inside each profile section.
 
 Acceptance check:
 
 - [ ] Plant detail remains build-safe.
 - [ ] Existing task completion and journal entry flows still work.
-- [ ] Mobile scroll path is clearer than the current long page.
+- [x] Mobile scroll path is clearer than the current long page.
 
 ### Section 3 - Care guide readability
 
