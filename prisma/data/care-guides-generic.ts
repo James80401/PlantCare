@@ -58,4 +58,34 @@ export const genericCareGuideSeeds: CareGuideSeed[] = [
     'How to repot your plant',
     'Size up only when roots need room; use fresh, well-draining mix for {speciesName}.',
   ),
+  genericGuide(
+    TaskType.ROTATE,
+    'guide-rotate-generic',
+    'How to rotate your plant',
+    'Turn the pot regularly so {speciesName} grows evenly toward the light.',
+  ),
+  genericGuide(
+    TaskType.CLEAN_LEAVES,
+    'guide-clean-generic',
+    'How to clean leaves',
+    'Remove dust from leaves so {speciesName} can use light efficiently.',
+  ),
+  genericGuide(
+    TaskType.INSPECT_PESTS,
+    'guide-inspect-pests-generic',
+    'Pest inspection',
+    'Catch pests early on {speciesName} before they spread.',
+  ),
+  genericGuide(
+    TaskType.CHECK_MOISTURE,
+    'guide-moisture-generic',
+    'Soil moisture check',
+    'Check soil before watering {speciesName}.',
+  ),
+  genericGuide(
+    TaskType.HEALTH_CHECK,
+    'guide-health-generic',
+    'Plant health follow-up',
+    'Track recovery and adjust care for {speciesName}.',
+  ),
 ];

@@ -87,17 +87,27 @@ export const TASK_TYPE_ICONS: Record<string, string> = {
   PH_TEST: '🧪',
   PEST_CONTROL: '🐛',
   REPOT: '🪴',
+  ROTATE: '🔄',
+  CLEAN_LEAVES: '🧽',
+  INSPECT_PESTS: '🔍',
+  CHECK_MOISTURE: '👆',
+  HEALTH_CHECK: '❤️',
 };
 
 /** Display order for grouping to-dos by care category. */
 export const TASK_TYPE_ORDER: string[] = [
   'WATER',
+  'CHECK_MOISTURE',
   'MIST',
   'FERTILIZE',
   'PRUNE',
-  'PH_TEST',
+  'ROTATE',
+  'CLEAN_LEAVES',
+  'INSPECT_PESTS',
   'PEST_CONTROL',
+  'PH_TEST',
   'REPOT',
+  'HEALTH_CHECK',
 ];
 
 export interface TaskTypeGroup {

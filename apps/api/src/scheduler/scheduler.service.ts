@@ -58,7 +58,22 @@ export class SchedulerService {
     return dates;
   }
 
-  async generateTasksForPlant(plantId: string, planTier: PlanTier) {
+  private isEdibleOrHerb(category: ReturnType<typeof classifySpeciesForCare>): boolean {
+    return category === 'herb' || category === 'vegetable' || category === 'fruit' || category === 'citrus';
+  }
+
+  private isPestProneSpecies(category: ReturnType<typeof classifySpeciesForCare>): boolean {
+    return category !== 'cactus' && category !== 'succulent';
+  }
+
+  private canScheduleRepot(plant: { datePlanted: Date | null }): boolean {
+    if (!plant.datePlanted) return true;
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    return plant.datePlanted <= sixMonthsAgo;
+  }
+
+  async generateTasksForPlant(plantId: string, _planTier?: PlanTier) {
     const plant = await this.prisma.plant.findUnique({
       where: { id: plantId },
       include: { species: true, user: true },
@@ -70,6 +85,10 @@ export class SchedulerService {
     });
 
     const now = new Date();
+    const env = inferGrowingEnvironment(plant.location);
+    const category = classifySpeciesForCare(plant.species);
+    const isIndoor = env === 'indoor';
+
     const waterInterval = this.getWaterIntervalDays(
       plant.species.wateringFreqDays,
       plant.potSize,
@@ -89,29 +108,80 @@ export class SchedulerService {
       ...pruneDates.map((dueDate) => ({ plantId, taskType: TaskType.PRUNE, dueDate })),
     );
 
-    if (planTier === PlanTier.PREMIUM) {
-      if (this.isGrowingSeason(now)) {
-        const fertDates = this.generateDates(now, 30, Math.floor(DAYS_AHEAD / 30));
-        tasks.push(
-          ...fertDates.map((dueDate) => ({
-            plantId,
-            taskType: TaskType.FERTILIZE,
-            dueDate,
-          })),
-        );
-      }
-      const env = inferGrowingEnvironment(plant.location);
-      const category = classifySpeciesForCare(plant.species);
-      if (shouldScheduleMist(env, category)) {
-        const mistDates = this.generateDates(now, 3, Math.floor(DAYS_AHEAD / 3));
-        tasks.push(
-          ...mistDates.slice(0, 10).map((dueDate) => ({
-            plantId,
-            taskType: TaskType.MIST,
-            dueDate,
-          })),
-        );
-      }
+    if (this.isGrowingSeason(now)) {
+      const fertDates = this.generateDates(now, 30, Math.floor(DAYS_AHEAD / 30));
+      tasks.push(
+        ...fertDates.map((dueDate) => ({
+          plantId,
+          taskType: TaskType.FERTILIZE,
+          dueDate,
+        })),
+      );
+    }
+
+    if (shouldScheduleMist(env, category)) {
+      const mistDates = this.generateDates(now, 3, Math.floor(DAYS_AHEAD / 3));
+      tasks.push(
+        ...mistDates.slice(0, 10).map((dueDate) => ({
+          plantId,
+          taskType: TaskType.MIST,
+          dueDate,
+        })),
+      );
+    }
+
+    const phInterval = this.isEdibleOrHerb(category) ? 90 : 180;
+    if (phInterval <= DAYS_AHEAD) {
+      const phDates = this.generateDates(now, phInterval, Math.floor(DAYS_AHEAD / phInterval));
+      tasks.push(
+        ...phDates.map((dueDate) => ({ plantId, taskType: TaskType.PH_TEST, dueDate })),
+      );
+    }
+
+    const pestInterval = this.isGrowingSeason(now) ? 14 : 30;
+    const pestDates = this.generateDates(now, pestInterval, Math.floor(DAYS_AHEAD / pestInterval));
+    tasks.push(
+      ...pestDates.map((dueDate) => ({ plantId, taskType: TaskType.PEST_CONTROL, dueDate })),
+    );
+
+    if (this.canScheduleRepot(plant)) {
+      const repotDue = new Date(now);
+      repotDue.setDate(repotDue.getDate() + 60);
+      tasks.push({ plantId, taskType: TaskType.REPOT, dueDate: repotDue });
+    }
+
+    if (isIndoor) {
+      const rotateDates = this.generateDates(now, 14, Math.floor(DAYS_AHEAD / 14));
+      tasks.push(
+        ...rotateDates.map((dueDate) => ({ plantId, taskType: TaskType.ROTATE, dueDate })),
+      );
+
+      const cleanDates = this.generateDates(now, 21, Math.floor(DAYS_AHEAD / 21));
+      tasks.push(
+        ...cleanDates.map((dueDate) => ({ plantId, taskType: TaskType.CLEAN_LEAVES, dueDate })),
+      );
+    }
+
+    if (this.isPestProneSpecies(category)) {
+      const inspectDates = this.generateDates(now, 7, Math.floor(DAYS_AHEAD / 7));
+      tasks.push(
+        ...inspectDates.map((dueDate) => ({
+          plantId,
+          taskType: TaskType.INSPECT_PESTS,
+          dueDate,
+        })),
+      );
+    }
+
+    if (plant.species.wateringFreqDays <= 5) {
+      const moistureDates = this.generateDates(now, 7, Math.floor(DAYS_AHEAD / 7));
+      tasks.push(
+        ...moistureDates.map((dueDate) => ({
+          plantId,
+          taskType: TaskType.CHECK_MOISTURE,
+          dueDate,
+        })),
+      );
     }
 
     await this.prisma.task.createMany({ data: tasks });
@@ -141,6 +211,32 @@ export class SchedulerService {
         break;
       case TaskType.PRUNE:
         intervalDays = 30;
+        break;
+      case TaskType.PH_TEST:
+        intervalDays = this.isEdibleOrHerb(classifySpeciesForCare(task.plant.species))
+          ? 90
+          : 180;
+        break;
+      case TaskType.PEST_CONTROL:
+        intervalDays = this.isGrowingSeason(completedAt) ? 14 : 30;
+        break;
+      case TaskType.REPOT:
+        intervalDays = 540;
+        break;
+      case TaskType.ROTATE:
+        intervalDays = 14;
+        break;
+      case TaskType.CLEAN_LEAVES:
+        intervalDays = 21;
+        break;
+      case TaskType.INSPECT_PESTS:
+        intervalDays = 7;
+        break;
+      case TaskType.CHECK_MOISTURE:
+        intervalDays = 7;
+        break;
+      case TaskType.HEALTH_CHECK:
+        intervalDays = 7;
         break;
       default:
         intervalDays = 14;

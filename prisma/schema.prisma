@@ -21,6 +21,11 @@ enum TaskType {
   PH_TEST
   PEST_CONTROL
   REPOT
+  ROTATE
+  CLEAN_LEAVES
+  INSPECT_PESTS
+  CHECK_MOISTURE
+  HEALTH_CHECK
 }
 
 enum TaskStatus {

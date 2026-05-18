@@ -4,8 +4,13 @@ const TASK_LABELS: Record<string, string> = {
   PRUNE: 'Prune',
   MIST: 'Mist',
   PH_TEST: 'Test soil pH',
-  PEST_CONTROL: 'Pest check',
+  PEST_CONTROL: 'Pest treatment',
   REPOT: 'Repot',
+  ROTATE: 'Rotate',
+  CLEAN_LEAVES: 'Clean leaves',
+  INSPECT_PESTS: 'Inspect for pests',
+  CHECK_MOISTURE: 'Check moisture',
+  HEALTH_CHECK: 'Health check',
 };
 
 export function taskTypeLabel(taskType: string): string {

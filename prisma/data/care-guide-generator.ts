@@ -13,6 +13,11 @@ export const ALL_TASK_TYPES: TaskType[] = [
   TaskType.PH_TEST,
   TaskType.PEST_CONTROL,
   TaskType.REPOT,
+  TaskType.ROTATE,
+  TaskType.CLEAN_LEAVES,
+  TaskType.INSPECT_PESTS,
+  TaskType.CHECK_MOISTURE,
+  TaskType.HEALTH_CHECK,
 ];
 
 function guideId(speciesId: string, taskType: TaskType): string {
@@ -28,6 +33,11 @@ function taskSummary(taskType: TaskType, commonName: string): string {
     [TaskType.PH_TEST]: `Soil pH targets and testing for {speciesName} ({phRange}).`,
     [TaskType.PEST_CONTROL]: `Inspect and treat pests on {speciesName}.`,
     [TaskType.REPOT]: `When and how to repot {speciesName} — soil, steps, recovery.`,
+    [TaskType.ROTATE]: `Rotate {speciesName} for even light and upright growth.`,
+    [TaskType.CLEAN_LEAVES]: `Remove dust from {speciesName} leaves so light reaches the plant.`,
+    [TaskType.INSPECT_PESTS]: `Quick pest check on {speciesName} — catch issues early.`,
+    [TaskType.CHECK_MOISTURE]: `Check soil moisture before watering {speciesName}.`,
+    [TaskType.HEALTH_CHECK]: `Follow-up health check for {speciesName} after treatment.`,
   };
   return map[taskType];
 }
@@ -62,6 +72,11 @@ function taskTitlePlaceholder(taskType: TaskType): string {
     [TaskType.PH_TEST]: 'Soil pH for {speciesName}',
     [TaskType.PEST_CONTROL]: 'Pests on {speciesName}',
     [TaskType.REPOT]: 'Repotting {speciesName}',
+    [TaskType.ROTATE]: 'Rotate {speciesName}',
+    [TaskType.CLEAN_LEAVES]: 'Clean leaves on {speciesName}',
+    [TaskType.INSPECT_PESTS]: 'Pest check for {speciesName}',
+    [TaskType.CHECK_MOISTURE]: 'Moisture check for {speciesName}',
+    [TaskType.HEALTH_CHECK]: 'Health check for {speciesName}',
   };
   return m[taskType];
 }

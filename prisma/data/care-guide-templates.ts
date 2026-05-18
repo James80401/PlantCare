@@ -289,6 +289,78 @@ function repotSections(cat: PlantCategory, speciesId: string): CareGuideSection[
   ];
 }
 
+function rotateSections(speciesId: string): CareGuideSection[] {
+  return [
+    {
+      heading: 'Why rotate',
+      body: 'Even light prevents leaning and encourages balanced growth on {speciesName}.',
+    },
+    {
+      heading: 'How to rotate',
+      body: 'Turn the pot a quarter turn each time. Mark the side facing the window so you rotate consistently.',
+    },
+    {
+      heading: 'Species notes',
+      body: `{careNotes}${snippetBlock(speciesId, TaskType.ROTATE)}`,
+    },
+  ];
+}
+
+function cleanLeavesSections(speciesId: string): CareGuideSection[] {
+  return [
+    {
+      heading: 'When to clean',
+      body: 'Dust blocks light on {speciesName}. Wipe leaves when they look dull or every few weeks indoors.',
+    },
+    {
+      heading: 'How to clean',
+      body: 'Use a damp soft cloth; support the leaf from underneath. Avoid leaf shine products on fuzzy or succulent leaves.',
+    },
+    {
+      heading: 'Species notes',
+      body: `{careNotes}${snippetBlock(speciesId, TaskType.CLEAN_LEAVES)}`,
+    },
+  ];
+}
+
+function inspectPestsSections(cat: PlantCategory, speciesId: string): CareGuideSection[] {
+  return pestSections(cat, speciesId);
+}
+
+function checkMoistureSections(speciesId: string): CareGuideSection[] {
+  return [
+    {
+      heading: 'Finger test',
+      body: 'Stick your finger 1–2 inches into the soil. Water {speciesName} only when the top feels dry for most houseplants.',
+    },
+    {
+      heading: 'Signs to adjust',
+      body: 'Yellowing lower leaves with wet soil may mean overwatering. Crispy tips with dry soil may mean underwatering.',
+    },
+    {
+      heading: 'Species notes',
+      body: `{careNotes}${snippetBlock(speciesId, TaskType.CHECK_MOISTURE)}`,
+    },
+  ];
+}
+
+function healthCheckSections(speciesId: string): CareGuideSection[] {
+  return [
+    {
+      heading: 'Recovery check',
+      body: 'Note new growth, leaf color, and soil moisture for {speciesName}. Compare to before your diagnosis or treatment.',
+    },
+    {
+      heading: 'What to log',
+      body: 'Take a photo, jot symptoms that improved or worsened, and adjust watering or light if needed.',
+    },
+    {
+      heading: 'Species notes',
+      body: `{careNotes}${snippetBlock(speciesId, TaskType.HEALTH_CHECK)}`,
+    },
+  ];
+}
+
 export function buildTemplateSections(
   taskType: TaskType,
   cat: PlantCategory,
@@ -309,6 +381,16 @@ export function buildTemplateSections(
       return pestSections(cat, speciesId);
     case TaskType.REPOT:
       return repotSections(cat, speciesId);
+    case TaskType.ROTATE:
+      return rotateSections(speciesId);
+    case TaskType.CLEAN_LEAVES:
+      return cleanLeavesSections(speciesId);
+    case TaskType.INSPECT_PESTS:
+      return inspectPestsSections(cat, speciesId);
+    case TaskType.CHECK_MOISTURE:
+      return checkMoistureSections(speciesId);
+    case TaskType.HEALTH_CHECK:
+      return healthCheckSections(speciesId);
     default:
       return [];
   }

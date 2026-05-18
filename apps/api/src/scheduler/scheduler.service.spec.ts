@@ -25,6 +25,50 @@ describe('SchedulerService', () => {
     expect(service.isGrowingSeason(new Date('2025-12-15'))).toBe(false);
   });
 
+  it('schedules extended care types including repot within 90 days', async () => {
+    const created: { taskType: TaskType; dueDate: Date }[] = [];
+    const prisma = {
+      plant: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'plant-1',
+          location: 'Living Room',
+          potSize: PotSize.MEDIUM,
+          datePlanted: null,
+          species: {
+            commonName: 'Monstera',
+            scientificName: 'Monstera deliciosa',
+            wateringFreqDays: 7,
+            careNotes: 'Tropical foliage',
+          },
+          user: { defaultLightLevel: 'medium' },
+        }),
+      },
+      task: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        createMany: jest.fn().mockImplementation(({ data }) => {
+          created.push(...data);
+          return { count: data.length };
+        }),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    await service.generateTasksForPlant('plant-1');
+
+    const types = new Set(created.map((t) => t.taskType));
+    expect(types.has(TaskType.WATER)).toBe(true);
+    expect(types.has(TaskType.FERTILIZE)).toBe(true);
+    expect(types.has(TaskType.REPOT)).toBe(true);
+    expect(types.has(TaskType.ROTATE)).toBe(true);
+    expect(types.has(TaskType.INSPECT_PESTS)).toBe(true);
+
+    const repot = created.find((t) => t.taskType === TaskType.REPOT);
+    expect(repot).toBeDefined();
+    const daysUntilRepot =
+      (repot!.dueDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000);
+    expect(daysUntilRepot).toBeLessThanOrEqual(90);
+  });
+
   it('suggests watering less often after repeated wet-soil skips', async () => {
     const prisma = {
       taskFeedback: {

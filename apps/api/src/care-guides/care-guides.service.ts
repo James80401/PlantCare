@@ -338,6 +338,16 @@ export class CareGuidesService {
 
       REPOT: `Repot **${ctx.plantName}** when roots are crowded; size up 1–2 inches only.`,
 
+      ROTATE: `Rotate **${ctx.plantName}** a quarter turn for even light.`,
+
+      CLEAN_LEAVES: `Wipe dust from **${ctx.plantName}** leaves so they can photosynthesize efficiently.`,
+
+      INSPECT_PESTS: `Inspect **${ctx.plantName}** for early signs of pests on new growth and leaf undersides.`,
+
+      CHECK_MOISTURE: `Check soil moisture for **${ctx.plantName}** before watering.`,
+
+      HEALTH_CHECK: `Follow up on **${ctx.plantName}** recovery after diagnosis or treatment.`,
+
     };
 
 
@@ -661,6 +671,16 @@ export class CareGuidesService {
       PEST_CONTROL: `Pest care for ${ctx.speciesName}`,
 
       REPOT: `Repotting ${ctx.speciesName}`,
+
+      ROTATE: `Rotate ${ctx.speciesName}`,
+
+      CLEAN_LEAVES: `Clean leaves on ${ctx.speciesName}`,
+
+      INSPECT_PESTS: `Pest check for ${ctx.speciesName}`,
+
+      CHECK_MOISTURE: `Moisture check for ${ctx.speciesName}`,
+
+      HEALTH_CHECK: `Health check for ${ctx.speciesName}`,
 
     };
 
