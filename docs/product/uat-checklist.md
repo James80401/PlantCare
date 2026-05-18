@@ -1,7 +1,7 @@
 # User acceptance testing (UAT) checklist
 
 > **Owner:** James80401 · **Branch:** `main` (default)  
-> Last run: **2026-05-18** — run `npm run verify` and `npm run uat:e2e` after `db:push` on target DB.
+> Last run: **2026-05-16** — run `npm run verify` and `npm run uat:e2e` after `db:push` on target DB.
 
 ## A. Environment and database
 
@@ -37,6 +37,8 @@
 - [x] Species search: houseplant, herb, outdoor (API + Playwright)
 - [x] Browse plants catalog paginated (`/garden/plants/browse` — Playwright)
 - [x] Browse: beginner-friendly / succulent filters, sort (name, water cadence), species detail page (`/garden/plants/browse/:id` — Playwright + verify)
+- [x] Browse: **Recommended for you** row from onboarding prefs (Playwright + `GET /species/recommended` in verify)
+- [x] Species detail: **Growing profile** (pests, climate, size — Playwright + verify metadata on detail)
 - [x] Outdoor location → no MIST tasks (API)
 - [x] Change location → `tasksRescheduled` (API)
 - [x] Dashboard: metrics and greeting (Playwright)
@@ -64,7 +66,7 @@
 - [x] Local dev: `FRONTEND_URL` / `CORS_ORIGIN` = `http://localhost:5173` (`.env.example`)
 - [x] Docker staging: `FRONTEND_URL` / `CORS_ORIGIN` = `http://localhost:8080` (`.env.staging.example` + `npm run staging:smoke`)
 - [ ] Production: set `FRONTEND_URL` and `CORS_ORIGIN` to your public URL before sharing (see [deployment.md](../operations/deployment.md))
-- [x] Tester instructions below
+- [x] Tester instructions below and [tester-5-minute.md](./tester-5-minute.md)
 - [x] Known limitations listed below
 
 ---
@@ -86,6 +88,7 @@ npm run dev:web    # terminal 2
 npm run verify
 npm run test:integrations
 npm run uat:e2e
+npx playwright test tests/e2e/onboarding.spec.ts   # onboarding-only
 ```
 
 ### Known limitations (not blocking UAT)

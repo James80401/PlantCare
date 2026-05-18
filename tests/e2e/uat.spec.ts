@@ -64,6 +64,7 @@ test.describe('UAT checklist — authenticated flows', () => {
   test('browse plants catalog is paged', async ({ page }) => {
     await page.goto('/garden/plants/browse');
     await expect(page.getByRole('heading', { name: /Browse plants/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Recommended for you/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Add$/i }).first()).toBeVisible();
     await expect(page.getByText(/Showing \d+/)).toBeVisible();
     await expectNoHorizontalScroll(page);
@@ -80,6 +81,8 @@ test.describe('UAT checklist — authenticated flows', () => {
 
     await page.goto('/garden/plants/browse/seed-snake-plant-sansevieria-trifasciata');
     await expect(page.getByRole('heading', { name: /Snake Plant/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Growing profile/i })).toBeVisible();
+    await expect(page.getByText(/Common pests/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /Add to my garden/i })).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
