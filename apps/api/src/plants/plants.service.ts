@@ -4,6 +4,7 @@ import { CareGuidesService } from '../care-guides/care-guides.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
 import { UploadService } from '../upload/upload.service';
+import { sharedPlantInclude, userCanViewPlantTasks } from '../gardens/task-access';
 import { PlantNetService } from './plantnet.service';
 import { PerenualService } from '../species/perenual.service';
 import { CreatePlantDto } from './dto/create-plant.dto';
@@ -37,15 +38,18 @@ export class PlantsService {
 
   async findOne(userId: string, id: string) {
     const plant = await this.prisma.plant.findFirst({
-      where: { id, userId },
+      where: { id },
       include: {
         species: true,
         tasks: { orderBy: { dueDate: 'asc' }, take: 20 },
         journalEntries: { orderBy: { createdAt: 'desc' }, take: 10 },
         diagnoses: { orderBy: { createdAt: 'desc' }, take: 5 },
+        ...sharedPlantInclude,
       },
     });
-    if (!plant) throw new NotFoundException('Plant not found');
+    if (!plant || !userCanViewPlantTasks(userId, plant)) {
+      throw new NotFoundException('Plant not found');
+    }
     const careOverview = this.careGuides.buildPlantCareOverview(plant);
     return { ...plant, careOverview };
   }

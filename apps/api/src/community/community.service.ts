@@ -13,7 +13,7 @@ export class CommunityService {
       take,
       orderBy: { createdAt: 'desc' },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, email: true } },
         species: { select: { id: true, commonName: true } },
         _count: { select: { comments: true, likes: true } },
       },
@@ -29,7 +29,7 @@ export class CommunityService {
         imageUrl: dto.imageUrl?.trim() || null,
       },
       include: {
-        author: { select: { id: true, name: true } },
+        author: { select: { id: true, name: true, email: true } },
         species: { select: { id: true, commonName: true } },
       },
     });

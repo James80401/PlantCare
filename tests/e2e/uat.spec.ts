@@ -44,6 +44,16 @@ test.describe('UAT checklist — authenticated flows', () => {
     await seedAuth(page);
   });
 
+  test('household and community pages load', async ({ page }) => {
+    await page.goto('/garden/household');
+    await expect(page.getByRole('heading', { name: 'Household', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Create$/i })).toBeVisible();
+    await page.goto('/garden/community');
+    await expect(page.getByRole('heading', { name: /Plant tips & wins/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Share with community/i })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
   test('calendar page loads week and month views', async ({ page }) => {
     await page.goto('/garden/calendar');
     await expect(page.getByRole('heading', { name: /Care calendar/i })).toBeVisible();

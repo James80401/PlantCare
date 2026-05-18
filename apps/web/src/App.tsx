@@ -24,6 +24,8 @@ import PlantOverviewTab from './pages/plant-profile/PlantOverviewTab';
 import PlantTasksTab from './pages/plant-profile/PlantTasksTab';
 import Tasks from './pages/Tasks';
 import Settings from './pages/Settings';
+import Household from './pages/Household';
+import Community from './pages/Community';
 import Subscription from './pages/Subscription';
 import OnboardingWizard from './pages/OnboardingWizard';
 
@@ -58,6 +60,8 @@ export default function App() {
           <Route path="tasks" element={<Tasks />} />
           <Route path="tasks/:filter" element={<FilteredTasks />} />
           <Route path="insights/score" element={<GardenScoreInsights />} />
+          <Route path="household" element={<Household />} />
+          <Route path="community" element={<Community />} />
           <Route path="settings" element={<Settings />} />
           <Route path="subscription" element={<Subscription />} />
           </Route>

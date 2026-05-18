@@ -4,7 +4,9 @@ import { format, parseISO } from 'date-fns';
 import TaskRow from '../components/tasks/TaskRow';
 import { useDashboard, type DashboardAttention } from '../hooks/useDashboard';
 import { useTasksInRange } from '../hooks/useTasksInRange';
-import { plantsApi, tasksApi } from '../services/api';
+import { gardensApi, plantsApi, tasksApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { plantsSharedWithUser, type SharedPlantView } from '../utils/household';
 import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
 import {
   findNextTaskForPlant,
@@ -39,8 +41,13 @@ interface ScheduleSuggestion {
   reversible: boolean;
 }
 
+type PlantScope = 'all' | 'mine' | 'shared';
+
 export default function Dashboard() {
+  const { user } = useAuth();
   const [plants, setPlants] = useState<DashboardPlant[]>([]);
+  const [gardens, setGardens] = useState<Awaited<ReturnType<typeof gardensApi.mine>>['data']>([]);
+  const [plantScope, setPlantScope] = useState<PlantScope>('all');
   const [plantsLoading, setPlantsLoading] = useState(true);
   const [plantsError, setPlantsError] = useState('');
   const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null);
@@ -64,10 +71,12 @@ export default function Dashboard() {
     let cancelled = false;
     setPlantsLoading(true);
     setPlantsError('');
-    plantsApi
-      .list()
-      .then((r) => {
-        if (!cancelled) setPlants(r.data);
+    Promise.all([plantsApi.list(), gardensApi.mine()])
+      .then(([plantRes, gardenRes]) => {
+        if (!cancelled) {
+          setPlants(plantRes.data);
+          setGardens(gardenRes.data);
+        }
       })
       .catch(() => {
         if (!cancelled) setPlantsError('Could not load your garden right now.');
@@ -428,6 +437,42 @@ export default function Dashboard() {
           actionTo="/garden/plants/new"
         />
 
+        {(plants.length > 0 || sharedPlants.length > 0) && (
+          <div>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  ['all', 'All plants'],
+                  ['mine', 'My plants'],
+                  ['shared', 'Shared with me'],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setPlantScope(key)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                    plantScope === key
+                      ? 'bg-emerald-800 text-white'
+                      : 'bg-white border border-emerald-100 text-emerald-800 hover:bg-emerald-50'
+                  }`}
+                >
+                  {label}
+                  {key === 'shared' && sharedPlants.length > 0 ? ` (${sharedPlants.length})` : ''}
+                </button>
+              ))}
+            </div>
+            {sharedPlants.length > 0 ? (
+              <p className="text-xs text-gray-500">
+                Shared plants come from households you joined.{' '}
+                <Link to="/garden/household" className="font-semibold text-emerald-700 hover:underline">
+                  Manage Care Share
+                </Link>
+              </p>
+            ) : null}
+          </div>
+        )}
+
         {plantsError && (
           <p className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
             {plantsError}
@@ -443,17 +488,30 @@ export default function Dashboard() {
               />
             ))}
           </div>
-        ) : plants.length === 0 ? (
+        ) : visiblePlants.length === 0 ? (
           <EmptyState
-            title="No plants yet"
-            body="Add a plant and Plant Care will create a schedule, care guide, and profile you can track over time."
-            actionLabel="Add your first plant"
-            actionTo="/garden/plants/new"
+            title={plantScope === 'shared' ? 'No shared plants yet' : 'No plants yet'}
+            body={
+              plantScope === 'shared'
+                ? 'Accept a household invite to see plants others share with you.'
+                : 'Add a plant and Plant Care will create a schedule, care guide, and profile you can track over time.'
+            }
+            actionLabel={plantScope === 'shared' ? 'Household settings' : 'Add your first plant'}
+            actionTo={plantScope === 'shared' ? '/garden/household' : '/garden/plants/new'}
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {plants.map((plant) => (
-              <PlantCard key={plant.id} plant={plant} tasks={pendingTasks} />
+            {visiblePlants.map((plant) => (
+              <PlantCard
+                key={plant.id}
+                plant={plant}
+                tasks={pendingTasks}
+                sharedMeta={
+                  'shared' in plant && plant.shared
+                    ? { gardenName: plant.gardenName, role: plant.memberRole }
+                    : undefined
+                }
+              />
             ))}
           </div>
         )}
@@ -684,7 +742,15 @@ function SuggestionCard({
   );
 }
 
-function PlantCard({ plant, tasks }: { plant: DashboardPlant; tasks: TaskItem[] }) {
+function PlantCard({
+  plant,
+  tasks,
+  sharedMeta,
+}: {
+  plant: DashboardPlant;
+  tasks: TaskItem[];
+  sharedMeta?: { gardenName: string; role: string };
+}) {
   const next = findNextTaskForPlant(plant, tasks);
   const name = plant.nickname || plant.species.commonName;
   const plantTasks = tasks.filter((task) => task.plant.id === plant.id);
@@ -702,6 +768,11 @@ function PlantCard({ plant, tasks }: { plant: DashboardPlant; tasks: TaskItem[] 
             <div className="min-w-0">
               <h3 className="truncate font-semibold text-emerald-950">{name}</h3>
               <p className="truncate text-sm text-gray-500">{plant.species.commonName}</p>
+              {sharedMeta ? (
+                <span className="mt-1 inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-900">
+                  Shared · {sharedMeta.gardenName}
+                </span>
+              ) : null}
             </div>
             {overdueCount > 0 && (
               <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">

@@ -2,13 +2,19 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { navIcons } from './icons/NavIcons';
 import { useAuth } from '../context/AuthContext';
 
-const nav = [
+const mobileNav = [
   { to: '/garden', label: 'Dashboard', mobileLabel: 'Home', icon: 'home' as const, exact: true },
   { to: '/garden/calendar', label: 'Calendar', mobileLabel: 'Cal', icon: 'calendar' as const, exact: true },
   { to: '/garden/plants/browse', label: 'Browse', mobileLabel: 'Browse', icon: 'browse' as const, exact: true },
   { to: '/garden/tasks', label: 'Tasks', mobileLabel: 'Tasks', icon: 'tasks' as const },
   { to: '/garden/plants/new', label: 'Add Plant', mobileLabel: 'Add', icon: 'add' as const, exact: true },
   { to: '/garden/settings', label: 'Settings', mobileLabel: 'Settings', icon: 'settings' as const },
+];
+
+const desktopNav = [
+  ...mobileNav.slice(0, 4),
+  { to: '/garden/community', label: 'Community', mobileLabel: 'Tips', icon: 'community' as const },
+  ...mobileNav.slice(4),
 ];
 
 /** Hide upgrade CTAs during beta — all features enabled */
@@ -27,7 +33,7 @@ export default function Layout() {
               <span className="block truncate">Plant Care</span>
             </Link>
             <nav className="hidden sm:flex items-center gap-1 text-sm">
-              {nav.map(({ to, label, exact }) => {
+              {desktopNav.map(({ to, label, exact }) => {
                 const active = isActivePath(location.pathname, to, exact);
                 return (
                   <Link
@@ -80,7 +86,7 @@ export default function Layout() {
         aria-label="Primary"
       >
         <div className="mx-auto grid max-w-lg grid-cols-6 gap-px">
-          {nav.map(({ to, mobileLabel, icon, exact }) => {
+          {mobileNav.map(({ to, mobileLabel, icon, exact }) => {
             const active = isActivePath(location.pathname, to, exact);
             const Icon = navIcons[icon];
             return (

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import type { TemperatureUnit } from '../utils/temperature';
@@ -125,6 +125,20 @@ export default function Settings() {
   return (
     <div className="max-w-lg space-y-6 pb-20">
       <h1 className="text-2xl font-bold text-emerald-900">Settings</h1>
+
+      <section className="rounded-xl border border-emerald-100 bg-white p-6 space-y-3">
+        <h2 className="font-semibold text-emerald-950">Household (Care Share)</h2>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          Create a household, invite caregivers, and share plants so others can help with watering and
+          tasks.
+        </p>
+        <Link
+          to="/garden/household"
+          className="inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+        >
+          Manage household
+        </Link>
+      </section>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-emerald-100 p-6 space-y-4">
         <h2 className="font-semibold">Notifications</h2>

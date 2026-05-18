@@ -218,4 +218,79 @@ export const devicesApi = {
     api.post('/devices', { token, platform }),
 };
 
+export interface GardenMemberSummary {
+  id: string;
+  userId: string;
+  role: string;
+  user?: { id: string; name?: string | null; email: string };
+}
+
+export interface PlantShareSummary {
+  id: string;
+  plantId: string;
+  canComplete: boolean;
+  canJournal: boolean;
+  plant: {
+    id: string;
+    userId: string;
+    nickname?: string | null;
+    location?: string | null;
+    imageUrl?: string | null;
+    species: {
+      commonName: string;
+      scientificName?: string | null;
+      sunlight?: string | null;
+      wateringFreqDays: number;
+      defaultImageUrl?: string | null;
+    };
+  };
+}
+
+export interface GardenSummary {
+  id: string;
+  name: string;
+  ownerId: string;
+  members: GardenMemberSummary[];
+  plants: PlantShareSummary[];
+  _count?: { invites: number; activity: number };
+}
+
+export interface ActivityEventSummary {
+  id: string;
+  type: string;
+  payload: string;
+  createdAt: string;
+  actor?: { id: string; name?: string | null; email: string };
+}
+
+export interface CommunityPostSummary {
+  id: string;
+  body: string;
+  imageUrl?: string | null;
+  createdAt: string;
+  author?: { id: string; name?: string | null; email?: string };
+  species?: { id: string; commonName: string } | null;
+  _count?: { comments: number; likes: number };
+}
+
+export const gardensApi = {
+  create: (name: string) => api.post<GardenSummary>('/gardens', { name }),
+  mine: () => api.get<GardenSummary[]>('/gardens/mine'),
+  createInvite: (gardenId: string, data: { email?: string; role: 'CAREGIVER' | 'VIEWER' }) =>
+    api.post(`/gardens/${gardenId}/invites`, data),
+  acceptInvite: (token: string) => api.post('/gardens/invites/accept', { token }),
+  sharePlant: (
+    gardenId: string,
+    data: { plantId: string; canComplete?: boolean; canJournal?: boolean },
+  ) => api.post(`/gardens/${gardenId}/plants`, data),
+  activity: (gardenId: string) => api.get<ActivityEventSummary[]>(`/gardens/${gardenId}/activity`),
+};
+
+export const communityApi = {
+  listPosts: (limit = 30) => api.get<CommunityPostSummary[]>('/community/posts', { params: { limit } }),
+  createPost: (data: { body: string; speciesId?: string; imageUrl?: string }) =>
+    api.post<CommunityPostSummary>('/community/posts', data),
+  deletePost: (postId: string) => api.delete(`/community/posts/${postId}`),
+};
+
 export default api;
