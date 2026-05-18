@@ -1,10 +1,10 @@
-// Local dev uses SQLite. Docker staging/production uses prisma/schema.postgresql.prisma.
+// Docker staging / production — keep in sync with schema.prisma (datasource only differs).
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

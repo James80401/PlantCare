@@ -1,0 +1,77 @@
+# Local staging stack: Postgres + API + static web (production-like URLs on localhost).
+# Usage: see scripts/deploy-staging.ps1 or docs/operations/deployment.md
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: plantcare
+      POSTGRES_PASSWORD: plantcare
+      POSTGRES_DB: plantcare
+    ports:
+      - "5433:5432"
+    volumes:
+      - plantcare_staging_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U plantcare -d plantcare']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://plantcare:plantcare@postgres:5432/plantcare?schema=public
+      JWT_SECRET: ${JWT_SECRET:-staging-change-me-jwt}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-staging-change-me-refresh}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      ALL_USERS_PREMIUM: ${ALL_USERS_PREMIUM:-true}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+    volumes:
+      - plantcare_staging_uploads:/app/apps/api/uploads
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '-qO-',
+          'http://127.0.0.1:3001/api/v1/health',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 120s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3001/api/v1}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '8080:80'
+
+volumes:
+  plantcare_staging_pg:
+  plantcare_staging_uploads:

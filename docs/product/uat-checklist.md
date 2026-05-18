@@ -58,8 +58,9 @@
 
 ## F. Pre-release for remote testers
 
-- [x] Local: `FRONTEND_URL` / `CORS_ORIGIN` = `http://localhost:5173` (`.env.example`)
-- [ ] Production/staging: set `FRONTEND_URL` and `CORS_ORIGIN` to your public URL before sharing (see [deployment.md](../operations/deployment.md))
+- [x] Local dev: `FRONTEND_URL` / `CORS_ORIGIN` = `http://localhost:5173` (`.env.example`)
+- [x] Docker staging: `FRONTEND_URL` / `CORS_ORIGIN` = `http://localhost:8080` (`.env.staging.example` + `npm run staging:smoke`)
+- [ ] Production: set `FRONTEND_URL` and `CORS_ORIGIN` to your public URL before sharing (see [deployment.md](../operations/deployment.md))
 - [x] Tester instructions below
 - [x] Known limitations listed below
 

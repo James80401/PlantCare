@@ -6,19 +6,26 @@
 
 ## Docker
 
-Build and run API + Postgres:
+**Full local staging stack** (Postgres + API + web):
+
+```powershell
+npm run staging:smoke
+```
+
+See [operations/deployment.md](operations/deployment.md) for URLs and env vars.
+
+**API only** (with host Postgres on 5433):
 
 ```bash
 docker compose up -d postgres
-docker build -f apps/api/Dockerfile -t plant-care-api .
-docker run --env-file .env -p 3001:3001 plant-care-api
+docker compose -f docker-compose.staging.yml up -d --build api
 ```
 
-Build web static assets:
+**Web static assets** (built into `apps/web/Dockerfile` for staging):
 
 ```bash
 npm run build -w @plant-care/web
-# Serve apps/web/dist via CDN or nginx
+# Or use docker-compose.staging.yml web service
 ```
 
 ## CI

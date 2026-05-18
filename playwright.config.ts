@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.UAT_WEB_URL || 'http://localhost:5173';
+const stagingE2e =
+  process.env.STAGING_E2E === '1' ||
+  (Boolean(process.env.UAT_WEB_URL) && process.env.UAT_WEB_URL !== 'http://localhost:5173');
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -19,18 +22,20 @@ export default defineConfig({
       use: { ...devices['Pixel 5'] },
     },
   ],
-  webServer: [
-    {
-      command: 'npm run dev:api',
-      url: 'http://localhost:3001/api/v1/health',
-      reuseExistingServer: true,
-      timeout: 120_000,
-    },
-    {
-      command: 'npm run dev:web',
-      url: baseURL,
-      reuseExistingServer: true,
-      timeout: 120_000,
-    },
-  ],
+  webServer: stagingE2e
+    ? undefined
+    : [
+        {
+          command: 'npm run dev:api',
+          url: 'http://localhost:3001/api/v1/health',
+          reuseExistingServer: true,
+          timeout: 120_000,
+        },
+        {
+          command: 'npm run dev:web',
+          url: baseURL,
+          reuseExistingServer: true,
+          timeout: 120_000,
+        },
+      ],
 });

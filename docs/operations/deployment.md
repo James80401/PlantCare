@@ -18,6 +18,40 @@ Production: PostgreSQL (`docker-compose.yml` or managed). Update `schema.prisma`
 - Configure OpenAI, SMTP, Stripe as needed
 - S3 for uploads at scale
 
+## Local Docker staging (recommended before a public host)
+
+Runs Postgres + API + nginx web on **localhost** with production-like env vars:
+
+| Service | URL |
+|---------|-----|
+| Web | http://localhost:8080 |
+| API | http://localhost:3001/api/v1 |
+
+```powershell
+# From repo root (Windows)
+copy .env.staging.example .env.staging
+npm run staging:smoke
+```
+
+`staging:smoke` builds containers, waits for health, seeds 320 species, then runs `verify` + Playwright with `STAGING_E2E=1`.
+
+Manual control:
+
+```bash
+copy .env.staging.example .env.staging   # or cp on macOS/Linux
+npm run staging:up
+npm run db:generate:postgres
+set DATABASE_URL=postgresql://plantcare:plantcare@localhost:5433/plantcare?schema=public
+set API_URL=http://localhost:3001/api/v1
+set UAT_WEB_URL=http://localhost:8080
+set STAGING_E2E=1
+npm run verify
+npm run uat:e2e
+npm run staging:down
+```
+
+First API start runs `db push` + `db:seed` inside the container (several minutes).
+
 ## UAT / staging before sharing a link
 
 Set in API `.env` (and redeploy):
@@ -33,7 +67,9 @@ After deploy, run smoke checks against staging:
 
 ```bash
 API_URL=https://api.your-app.example.com/api/v1 npm run verify
-UAT_WEB_URL=https://your-app.example.com npm run uat:e2e
+UAT_WEB_URL=https://your-app.example.com STAGING_E2E=1 npm run uat:e2e
 ```
+
+For remote hosts, point `DATABASE_URL` at the same Postgres as the API when running `verify` / Playwright global setup (or use `npm run db:generate:postgres` first).
 
 Mark UAT checklist section F when URLs are live.

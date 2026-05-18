@@ -30,7 +30,11 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:generate:postgres": "prisma generate --schema=prisma/schema.postgresql.prisma",
+    "staging:up": "docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --build",
+    "staging:down": "docker compose -f docker-compose.staging.yml down",
+    "staging:smoke": "powershell -ExecutionPolicy Bypass -File scripts/deploy-staging.ps1"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.0",
