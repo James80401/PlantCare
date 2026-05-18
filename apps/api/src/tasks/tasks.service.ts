@@ -4,6 +4,7 @@ import { addDays, startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { CareGuidesService } from '../care-guides/care-guides.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
+import { sharedPlantInclude, userCanCompletePlantTask, userCanViewPlantTasks } from '../gardens/task-access';
 import { SkipTaskDto } from './dto/skip-task.dto';
 import { SnoozeTaskDto } from './dto/snooze-task.dto';
 
@@ -23,21 +24,23 @@ export class TasksService {
 
     return this.prisma.task.findMany({
       where: {
-        plant: { userId },
         dueDate: { gte: fromDate, lte: toDate },
+        plant: {
+          OR: [
+            { userId },
+            { shares: { some: { garden: { members: { some: { userId } } } } } },
+          ],
+        },
       },
       include: {
-        plant: { include: { species: true } },
+        plant: { include: { species: true, ...sharedPlantInclude } },
       },
       orderBy: { dueDate: 'asc' },
     });
   }
 
   async complete(userId: string, taskId: string) {
-    const task = await this.prisma.task.findFirst({
-      where: { id: taskId, plant: { userId } },
-    });
-    if (!task) throw new NotFoundException('Task not found');
+    const task = await this.loadTaskForUser(userId, taskId, 'complete');
 
     const updated = await this.prisma.task.update({
       where: { id: taskId },
@@ -53,10 +56,7 @@ export class TasksService {
   }
 
   async skip(userId: string, taskId: string, feedback?: SkipTaskDto) {
-    const task = await this.prisma.task.findFirst({
-      where: { id: taskId, plant: { userId } },
-    });
-    if (!task) throw new NotFoundException('Task not found');
+    const task = await this.loadTaskForUser(userId, taskId, 'complete');
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const skipped = await tx.task.update({
@@ -130,5 +130,24 @@ export class TasksService {
 
   applyScheduleSuggestion(userId: string, suggestionId: string) {
     return this.scheduler.applyScheduleSuggestion(userId, suggestionId);
+  }
+
+  private async loadTaskForUser(
+    userId: string,
+    taskId: string,
+    action: 'view' | 'complete',
+  ) {
+    const task = await this.prisma.task.findFirst({
+      where: { id: taskId },
+      include: { plant: { include: sharedPlantInclude } },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+
+    const allowed =
+      action === 'view'
+        ? userCanViewPlantTasks(userId, task.plant)
+        : userCanCompletePlantTask(userId, task.plant);
+    if (!allowed) throw new NotFoundException('Task not found');
+    return task;
   }
 }

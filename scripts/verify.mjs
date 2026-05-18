@@ -459,6 +459,59 @@ async function main() {
     pass('Plants list (dashboard)', `${plantsList.data.length} plants`);
   } else fail('Plants list');
 
+  const household = await api('POST', '/gardens', { name: 'Verify Household' }, token);
+  if (household.status === 201 || household.status === 200) {
+    pass('Create garden', household.data?.name || 'ok');
+    const gardenId = household.data?.id;
+    if (gardenId && plantId) {
+      const share = await api(
+        'POST',
+        `/gardens/${gardenId}/plants`,
+        { plantId, canComplete: true },
+        token,
+      );
+      if (share.status === 201 || share.status === 200) {
+        pass('Share plant to garden', plantId);
+      } else {
+        fail('Share plant to garden', JSON.stringify(share.data)?.slice(0, 120));
+      }
+      const activity = await api('GET', `/gardens/${gardenId}/activity`, null, token);
+      if (activity.status === 200 && Array.isArray(activity.data)) {
+        pass('Garden activity', `${activity.data.length} events`);
+      } else {
+        fail('Garden activity', JSON.stringify(activity.data)?.slice(0, 120));
+      }
+    }
+  } else {
+    fail('Create garden', JSON.stringify(household.data)?.slice(0, 120));
+  }
+
+  const gardensMine = await api('GET', '/gardens/mine', null, token);
+  if (gardensMine.status === 200 && Array.isArray(gardensMine.data) && gardensMine.data.length > 0) {
+    pass('Gardens mine', `${gardensMine.data.length} garden(s)`);
+  } else {
+    fail('Gardens mine', JSON.stringify(gardensMine.data)?.slice(0, 120));
+  }
+
+  const communityPost = await api(
+    'POST',
+    '/community/posts',
+    { body: 'Verify community post — happy growing!' },
+    token,
+  );
+  if (communityPost.status === 201 || communityPost.status === 200) {
+    pass('Community post create', communityPost.data?.id || 'ok');
+  } else {
+    fail('Community post create', JSON.stringify(communityPost.data)?.slice(0, 120));
+  }
+
+  const communityList = await api('GET', '/community/posts?limit=5', null, token);
+  if (communityList.status === 200 && Array.isArray(communityList.data) && communityList.data.length > 0) {
+    pass('Community posts list', `${communityList.data.length} post(s)`);
+  } else {
+    fail('Community posts list', JSON.stringify(communityList.data)?.slice(0, 120));
+  }
+
   if (meForTier.status === 200) pass('User profile');
   else fail('User profile');
 

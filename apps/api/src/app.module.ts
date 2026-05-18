@@ -17,6 +17,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { WeatherModule } from './weather/weather.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { UploadModule } from './upload/upload.module';
+import { GardensModule } from './gardens/gardens.module';
+import { CommunityModule } from './community/community.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -44,6 +46,8 @@ import { HealthController } from './health.controller';
     WeatherModule,
     DashboardModule,
     UploadModule,
+    GardensModule,
+    CommunityModule,
   ],
   controllers: [HealthController],
 })
