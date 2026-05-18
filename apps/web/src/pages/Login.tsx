@@ -1,5 +1,8 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { AuthShell } from '../components/auth/AuthShell';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
@@ -40,60 +43,57 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-emerald-100 to-emerald-50">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 space-y-4"
-      >
-        <Link to="/" className="text-sm text-emerald-600 hover:text-emerald-800">
-          ← Back to home
-        </Link>
-        <h1 className="text-2xl font-bold text-emerald-800">Welcome back</h1>
-        {notice && <p className="text-emerald-700 text-sm">{notice}</p>}
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        {needsVerification && (
-          <p className="text-sm">
-            <Link to="/resend-verification" className="text-emerald-700 font-medium">
-              Resend verification email
-            </Link>
-          </p>
-        )}
-        <input
+    <AuthShell
+      title="Welcome back"
+      subtitle="Sign in to your garden"
+      footer={
+        <>
+          No account?{' '}
+          <Link to="/register" className="font-semibold text-emerald-800 hover:underline">
+            Register
+          </Link>
+        </>
+      }
+    >
+      <Link to="/" className="text-sm font-medium text-emerald-700 hover:underline">
+        ← Back to home
+      </Link>
+      {notice ? <p className="text-sm text-emerald-700">{notice}</p> : null}
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {needsVerification ? (
+        <p className="text-sm">
+          <Link to="/resend-verification" className="font-semibold text-emerald-800 hover:underline">
+            Resend verification email
+          </Link>
+        </p>
+      ) : null}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="Email"
           type="email"
-          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full border border-gray-200 rounded-lg px-3 py-2"
+          autoComplete="email"
         />
-        <input
+        <Input
+          label="Password"
           type="password"
-          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={8}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2"
+          autoComplete="current-password"
         />
         <p className="text-right text-sm">
-          <Link to="/forgot-password" className="text-emerald-700 font-medium">
+          <Link to="/forgot-password" className="font-semibold text-emerald-800 hover:underline">
             Forgot password?
           </Link>
         </p>
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-emerald-700 text-white py-2 rounded-lg font-medium hover:bg-emerald-800 disabled:opacity-50"
-        >
+        <Button type="submit" fullWidth disabled={loading}>
           {loading ? 'Signing in…' : 'Sign in'}
-        </button>
-        <p className="text-sm text-center text-gray-600">
-          No account?{' '}
-          <Link to="/register" className="text-emerald-700 font-medium">
-            Register
-          </Link>
-        </p>
+        </Button>
       </form>
-    </div>
+    </AuthShell>
   );
 }

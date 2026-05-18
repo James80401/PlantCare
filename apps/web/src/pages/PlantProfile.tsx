@@ -1,6 +1,7 @@
 import {
   FormEvent,
   useEffect,
+  useMemo,
   useState,
   type Dispatch,
   type ReactNode,
@@ -12,8 +13,11 @@ import { format } from 'date-fns';
 import DrPlantChat from '../components/DrPlantChat';
 import DiagnosisResult from '../components/DiagnosisResult';
 import TaskInstructionsLink from '../components/TaskInstructionsLink';
+import TaskRow from '../components/tasks/TaskRow';
+import { useTasksInRange } from '../hooks/useTasksInRange';
+import type { TaskSkipFeedback } from '../utils/taskFeedback';
 import { PLANT_LOCATIONS } from '../constants/plantLocations';
-import { plantsApi, journalApi, tasksApi, diagnosisApi } from '../services/api';
+import { plantsApi, journalApi, diagnosisApi } from '../services/api';
 import {
   careSectionToneClasses,
   getCareSectionMeta,
@@ -74,6 +78,32 @@ export default function PlantProfile() {
   const [updatingDiagnosisId, setUpdatingDiagnosisId] = useState<string | null>(null);
   const [sharingPlant, setSharingPlant] = useState(false);
 
+  const {
+    tasks: rangeTasks,
+    animating,
+    handleComplete: completeFromHook,
+    handleSkip: skipFromHook,
+    handleSnooze,
+  } = useTasksInRange({ pastDays: 0, futureDays: 120 });
+
+  const plantPendingFromHook = useMemo(() => {
+    if (!id) return [];
+    return rangeTasks
+      .filter((t) => t.plant?.id === id && t.status === 'PENDING')
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 10);
+  }, [rangeTasks, id]);
+
+  const handleCompleteTask = (taskId: string) => {
+    completeFromHook(taskId);
+    window.setTimeout(() => load(), 700);
+  };
+
+  const handleSkipTask = (taskId: string, feedback?: TaskSkipFeedback) => {
+    skipFromHook(taskId, feedback);
+    window.setTimeout(() => load(), 700);
+  };
+
   const load = () => {
     if (id) plantsApi.get(id).then((r) => setPlant(r.data));
   };
@@ -104,11 +134,6 @@ export default function PlantProfile() {
     } finally {
       setLocationSaving(false);
     }
-  };
-
-  const completeTask = async (taskId: string) => {
-    await tasksApi.complete(taskId);
-    load();
   };
 
   const addJournal = async (e: FormEvent) => {
@@ -372,37 +397,18 @@ export default function PlantProfile() {
         title="Tasks"
         description="Upcoming care actions for this plant. Open care steps before completing unfamiliar tasks."
       >
-        {pending.length ? (
-          <ul className="space-y-3">
-            {pending.slice(0, 10).map((task) => (
-              <li
-                key={task.id as string}
-                className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="font-semibold text-emerald-950">
-                      {taskTypeLabel(task.taskType as string)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Due {format(new Date(task.dueDate as string), 'EEEE, MMM d')}
-                    </p>
-                    <div className="mt-2">
-                      <TaskInstructionsLink
-                        taskId={task.id as string}
-                        taskType={task.taskType as string}
-                        plantLabel={plantLabel}
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => completeTask(task.id as string)}
-                    className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-900"
-                  >
-                    Mark done
-                  </button>
-                </div>
+        {plantPendingFromHook.length ? (
+          <ul className="space-y-2">
+            {plantPendingFromHook.map((task) => (
+              <li key={task.id}>
+                <TaskRow
+                  task={task}
+                  animState={animating[task.id] ?? null}
+                  onComplete={handleCompleteTask}
+                  onSkip={handleSkipTask}
+                  onSnooze={handleSnooze}
+                  linkPlant={false}
+                />
               </li>
             ))}
           </ul>

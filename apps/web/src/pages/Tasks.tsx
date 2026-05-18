@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { startOfDay } from 'date-fns';
 import TaskDayGroup from '../components/tasks/TaskDayGroup';
+import { PageHeader } from '../components/ui/PageHeader';
+import { SkeletonTaskRows } from '../components/ui/Skeleton';
 import { useTasksInRange } from '../hooks/useTasksInRange';
 import { trackEvent } from '../utils/analytics';
 
@@ -30,26 +32,24 @@ export default function Tasks() {
   };
 
   return (
-    <div className="space-y-6 pb-24 max-w-2xl mx-auto">
-      <header>
-        <h1 className="text-2xl font-bold text-emerald-900 font-display">Care tasks</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Grouped by day; to-dos are sorted by care type (water, fertilize, …).
-        </p>
-        {!loading && (
-          <div className="mt-4 flex flex-wrap gap-2 text-sm">
-            <span className="rounded-full bg-amber-100 text-amber-900 px-3 py-1 font-medium">
-              {summary.todayPending} due today
-            </span>
-            <span className="rounded-full bg-emerald-100 text-emerald-800 px-3 py-1 font-medium">
-              {summary.done} completed
-            </span>
-            <span className="rounded-full bg-gray-100 text-gray-700 px-3 py-1 font-medium">
-              {summary.pending} remaining
-            </span>
-          </div>
-        )}
-      </header>
+    <div className="space-y-6 max-w-2xl mx-auto">
+      <PageHeader
+        title="Care tasks"
+        description="Grouped by day; to-dos are sorted by care type (water, fertilize, …)."
+      />
+      {!loading && (
+        <div className="flex flex-wrap gap-2 text-sm -mt-2">
+          <span className="rounded-full bg-amber-100 text-amber-900 px-3 py-1 font-medium">
+            {summary.todayPending} due today
+          </span>
+          <span className="rounded-full bg-emerald-100 text-emerald-800 px-3 py-1 font-medium">
+            {summary.done} completed
+          </span>
+          <span className="rounded-full bg-gray-100 text-gray-700 px-3 py-1 font-medium">
+            {summary.pending} remaining
+          </span>
+        </div>
+      )}
 
       <div className="flex gap-2 p-1 bg-white/80 rounded-xl border border-emerald-100 w-fit">
         <button
@@ -77,7 +77,7 @@ export default function Tasks() {
       </div>
 
       {loading ? (
-        <p className="text-gray-500 text-center py-12">Loading tasks…</p>
+        <SkeletonTaskRows count={5} />
       ) : filteredGroups.length === 0 ? (
         <p className="text-gray-500 text-center py-12 rounded-2xl bg-white border border-emerald-100">
           No tasks in this range. Add a plant to generate your care schedule.

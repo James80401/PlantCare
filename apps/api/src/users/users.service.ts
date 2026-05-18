@@ -29,12 +29,42 @@ export class UsersService {
         notifySms: true,
         quietHoursStart: true,
         quietHoursEnd: true,
+        onboardingCompletedAt: true,
+        experienceLevel: true,
+        defaultLightLevel: true,
         createdAt: true,
         _count: { select: { plants: true } },
       },
     });
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  async completeOnboarding(
+    userId: string,
+    data: {
+      experienceLevel: string;
+      defaultLightLevel: string;
+      skip?: boolean;
+    },
+  ) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        experienceLevel: data.experienceLevel || 'beginner',
+        defaultLightLevel: data.defaultLightLevel || 'medium',
+        onboardingCompletedAt: new Date(),
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        planTier: true,
+        onboardingCompletedAt: true,
+        experienceLevel: true,
+        defaultLightLevel: true,
+      },
+    });
   }
 
   async updateNotificationSettings(

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Skeleton } from '../components/ui/Skeleton';
 import { speciesApi } from '../services/api';
 
 interface SpeciesDetail {
@@ -44,7 +45,14 @@ export default function SpeciesBrowseDetail() {
   }, [speciesId]);
 
   if (loading) {
-    return <p className="py-12 text-center text-gray-500">Loading…</p>;
+    return (
+      <div className="mx-auto max-w-lg space-y-4">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="aspect-[16/10] w-full rounded-3xl" />
+        <Skeleton className="h-8 w-2/3" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
   }
 
   if (error || !species) {
@@ -113,6 +121,25 @@ export default function SpeciesBrowseDetail() {
                 {tag}
               </span>
             ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-emerald-50/90 p-3">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-700">
+                Water
+              </p>
+              <p className="mt-1 text-sm font-medium text-emerald-950">
+                Every {species.wateringFreqDays ?? 7} days
+              </p>
+            </div>
+            <div className="rounded-2xl bg-emerald-50/90 p-3">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-emerald-700">
+                Light
+              </p>
+              <p className="mt-1 text-sm font-medium text-emerald-950 leading-snug">
+                {species.sunlight || 'Varies'}
+              </p>
+            </div>
           </div>
 
           <dl className="grid gap-3 text-sm">

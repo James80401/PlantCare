@@ -1,0 +1,11 @@
+/* Design tokens — Phase 0A */
+@theme {
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+
+  --color-page: #f7f6f2;
+  --color-surface: #ffffff;
+  --color-brand-800: #065f46;
+  --color-brand-900: #064e3b;
+  --color-brand-950: #022c22;
+}

@@ -43,6 +43,8 @@
 - [x] Tasks page: grouped by type; complete task (Playwright + API)
 - [x] Skip task with reason (API)
 - [x] Task instructions modal (Playwright)
+- [x] Add plant: photo identify or search-by-name wizard (`/garden/plants/new` — Playwright)
+- [x] Onboarding wizard + gate; E2E user skips onboarding in `global-setup`
 - [x] Plant profile: sections, care guide, journal entry (Playwright + API)
 - [x] Dr. Plant chat (API — OpenAI)
 - [x] One-shot diagnosis (API — OpenAI)

@@ -72,6 +72,9 @@ model User {
   emailVerificationExpires DateTime?
   passwordResetToken    String?        @unique
   passwordResetExpires  DateTime?
+  onboardingCompletedAt DateTime?
+  experienceLevel       String?
+  defaultLightLevel     String?
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
   plants                Plant[]

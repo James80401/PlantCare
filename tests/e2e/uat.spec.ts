@@ -24,6 +24,11 @@ async function seedAuth(page: import('@playwright/test').Page) {
   );
 }
 
+async function openAddPlantSearch(page: import('@playwright/test').Page) {
+  await page.goto('/garden/plants/new');
+  await page.getByRole('button', { name: /Search by name instead/i }).click();
+}
+
 async function expectNoHorizontalScroll(page: import('@playwright/test').Page) {
   const overflow = await page.evaluate(() => {
     const el = document.documentElement;
@@ -72,15 +77,15 @@ test.describe('UAT checklist — authenticated flows', () => {
   });
 
   test('add plant search finds Magic Carpet Thyme', async ({ page }) => {
-    await page.goto('/garden/plants/new');
-    await page.getByLabel(/Species/i).fill('magic carpet thyme');
+    await openAddPlantSearch(page);
+    await page.getByLabel(/Species name/i).fill('magic carpet thyme');
     await expect(page.getByText(/Magic Carpet Thyme/i).first()).toBeVisible({ timeout: 10_000 });
     await expectNoHorizontalScroll(page);
   });
 
   test('tasks page shows grouped care types after adding a plant', async ({ page }) => {
-    await page.goto('/garden/plants/new');
-    await page.getByLabel(/Species/i).fill('monstera');
+    await openAddPlantSearch(page);
+    await page.getByLabel(/Species name/i).fill('monstera');
     await page.getByRole('button', { name: /Monstera/i }).first().click();
     await page.getByRole('button', { name: /Save plant/i }).click();
     await page.waitForURL(/\/garden\/plants\//);
@@ -92,8 +97,8 @@ test.describe('UAT checklist — authenticated flows', () => {
   });
 
   test('plant profile has care sections and journal', async ({ page }) => {
-    await page.goto('/garden/plants/new');
-    await page.getByLabel(/Species/i).fill('snake');
+    await openAddPlantSearch(page);
+    await page.getByLabel(/Species name/i).fill('snake');
     await page.getByRole('button', { name: /Snake Plant/i }).first().click();
     await page.getByRole('button', { name: /Save plant/i }).click();
     await page.waitForURL(/\/garden\/plants\//);
@@ -221,9 +226,22 @@ test.describe('UAT checklist — public auth', () => {
     await page.waitForURL(/\/login/, { timeout: 15_000 });
 
     await page.goto('/login');
-    await page.getByPlaceholder('Email').fill(email);
-    await page.getByPlaceholder(/^Password$/i).fill('newpass456');
+    await page.getByLabel(/^Email$/i).fill(email);
+    await page.getByLabel(/^Password$/i).fill('newpass456');
     await page.getByRole('button', { name: /^Sign in$/i }).click();
+    await page.waitForURL(/\/garden/, { timeout: 15_000 });
+    const token = await page.evaluate(() => localStorage.getItem('accessToken'));
+    if (token) {
+      await fetch('http://localhost:3001/api/v1/users/me/onboarding', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ skip: true }),
+      });
+      await page.goto('/garden');
+    }
     await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible({ timeout: 15_000 });
   });
 
@@ -236,13 +254,14 @@ test.describe('UAT checklist — public auth', () => {
   test('register form submits to garden or verification message', async ({ page }) => {
     const email = `uat-ui-${Date.now()}@plantcare.test`;
     await page.goto('/register');
-    await page.getByPlaceholder('Email').fill(email);
-    await page.getByPlaceholder(/Password/i).fill('password123');
-    await page.getByPlaceholder(/Name/i).fill('UAT Browser');
-    await page.getByRole('button', { name: /^Register$/i }).click();
-    const verified = page.getByText(/Please check your email to verify/i);
+    await page.getByLabel(/^Email$/i).fill(email);
+    await page.getByLabel(/^Password$/i).fill('password123');
+    await page.getByLabel(/Name/i).fill('UAT Browser');
+    await page.getByRole('button', { name: /Create account/i }).click();
+    const verified = page.getByText(/check your email|verify/i);
+    const onboarding = page.getByRole('button', { name: /Get started/i });
     const garden = page.getByRole('heading', { name: /Hi,/i });
-    await expect(verified.or(garden)).toBeVisible({ timeout: 30_000 });
+    await expect(verified.or(onboarding).or(garden)).toBeVisible({ timeout: 30_000 });
   });
 });
 
@@ -271,9 +290,20 @@ test.describe('UAT checklist — mobile layout', () => {
       token = login.accessToken;
     }
 
+    await fetch('http://localhost:3001/api/v1/users/me/onboarding', {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ skip: true }),
+    });
+
     await page.addInitScript((t) => localStorage.setItem('accessToken', t), token);
     await page.goto('/garden');
-    await expect(page.getByText(/Start your garden|Add a plant/i).first()).toBeVisible();
+    await expect(
+      page.getByText(/Build your first care plan|Add your first plant/i).first(),
+    ).toBeVisible();
     await expectNoHorizontalScroll(page);
 
     const contentPad = await page.locator('.pb-24').first().evaluate((el) => {

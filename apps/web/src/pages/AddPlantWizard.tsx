@@ -1,0 +1,397 @@
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { PhotoCaptureZone } from '../components/plants/PhotoCaptureZone';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
+import { PageHeader } from '../components/ui/PageHeader';
+import { PLANT_LOCATIONS } from '../constants/plantLocations';
+import {
+  defaultSpeciesDiscoveryFilters,
+  SPECIES_DISCOVERY_FILTERS,
+  type SpeciesDiscoveryFilterKey,
+} from '../constants/speciesDiscovery';
+import { plantsApi, speciesApi } from '../services/api';
+import { trackEvent } from '../utils/analytics';
+
+interface Species {
+  id: string;
+  commonName: string;
+  scientificName?: string;
+  sunlight?: string;
+  wateringFreqDays?: number;
+  toxicity?: string;
+  discoveryTags?: string[];
+  defaultImageUrl?: string;
+}
+
+type Step = 'photo' | 'confirm' | 'search' | 'details';
+
+export default function AddPlantWizard() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [step, setStep] = useState<Step>('photo');
+
+  const [query, setQuery] = useState('');
+  const [speciesList, setSpeciesList] = useState<Species[]>([]);
+  const [speciesId, setSpeciesId] = useState('');
+  const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
+  const [identifyConfidence, setIdentifyConfidence] = useState<number | null>(null);
+
+  const [nickname, setNickname] = useState('');
+  const [location, setLocation] = useState(PLANT_LOCATIONS[0]);
+  const [potSize, setPotSize] = useState('MEDIUM');
+  const [datePlanted, setDatePlanted] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [identifyPreview, setIdentifyPreview] = useState<string | null>(null);
+
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [identifying, setIdentifying] = useState(false);
+  const [activeFilters, setActiveFilters] =
+    useState<Record<SpeciesDiscoveryFilterKey, boolean>>(defaultSpeciesDiscoveryFilters);
+
+  useEffect(() => {
+    const preselectedId = searchParams.get('speciesId');
+    if (!preselectedId) return;
+    let cancelled = false;
+    speciesApi.get(preselectedId).then((r) => {
+      if (cancelled) return;
+      const species = r.data as Species;
+      setSpeciesId(species.id);
+      setSelectedSpecies(species);
+      setQuery(species.commonName);
+      setStep('details');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (step !== 'search') return;
+    const hasFilters = Object.values(activeFilters).some(Boolean);
+    if (query.length < 2 && !hasFilters) {
+      setSpeciesList([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      speciesApi.search(query, activeFilters).then((r) => setSpeciesList(r.data));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [activeFilters, query, step]);
+
+  useEffect(() => {
+    return () => {
+      if (identifyPreview?.startsWith('blob:')) URL.revokeObjectURL(identifyPreview);
+    };
+  }, [identifyPreview]);
+
+  const selectSpecies = (species: Species) => {
+    setSpeciesId(species.id);
+    setSelectedSpecies(species);
+    setQuery(species.commonName);
+    setSpeciesList([]);
+    setStep('details');
+  };
+
+  const handleIdentify = async (file: File) => {
+    if (identifyPreview?.startsWith('blob:')) URL.revokeObjectURL(identifyPreview);
+    setIdentifyPreview(URL.createObjectURL(file));
+    setIdentifying(true);
+    setError('');
+    try {
+      const { data } = await plantsApi.identify(file);
+      const species = data.species as Species;
+      setSpeciesId(species.id);
+      setSelectedSpecies(species);
+      setQuery(species.commonName);
+      setIdentifyConfidence(
+        typeof data.confidence === 'number' ? Math.round(data.confidence * 100) : null,
+      );
+      setStep('confirm');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg || 'Could not identify plant. Try search or browse instead.');
+    } finally {
+      setIdentifying(false);
+    }
+  };
+
+  const handlePlantPhoto = async (file: File) => {
+    try {
+      const { data } = await plantsApi.upload(file);
+      setImageUrl(data.url);
+    } catch {
+      setError('Could not upload photo.');
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!speciesId) {
+      setError('Select a species to continue.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const { data } = await plantsApi.create({
+        speciesId,
+        nickname: nickname || undefined,
+        location,
+        potSize,
+        datePlanted: datePlanted || undefined,
+        imageUrl: imageUrl || undefined,
+      });
+      trackEvent('PlantAdded', { speciesId });
+      navigate(`/garden/plants/${data.id}`);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg || 'Failed to add plant');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const stepTitle = useMemo(() => {
+    switch (step) {
+      case 'photo':
+        return 'Identify or search';
+      case 'confirm':
+        return 'Is this your plant?';
+      case 'search':
+        return 'Find your plant';
+      case 'details':
+        return 'Plant details';
+      default:
+        return 'Add a plant';
+    }
+  }, [step]);
+
+  return (
+    <div className="mx-auto max-w-lg space-y-5">
+      <PageHeader
+        eyebrow="Grow your garden"
+        title="Add a plant"
+        description={stepTitle}
+      />
+
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+
+      {step === 'photo' && (
+        <Card className="space-y-4">
+          <PhotoCaptureZone
+            label="Take or upload a photo"
+            hint="We’ll suggest a species from the image"
+            busy={identifying}
+            previewUrl={identifyPreview}
+            onFile={handleIdentify}
+          />
+          <Button variant="secondary" fullWidth onClick={() => setStep('search')}>
+            Search by name instead
+          </Button>
+          <Link
+            to="/garden/plants/browse"
+            className="block text-center text-sm font-semibold text-emerald-800 hover:underline"
+          >
+            Browse the full catalog
+          </Link>
+        </Card>
+      )}
+
+      {step === 'confirm' && selectedSpecies && (
+        <Card className="space-y-4">
+          <div className="flex gap-4">
+            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-emerald-50">
+              {selectedSpecies.defaultImageUrl ? (
+                <img
+                  src={selectedSpecies.defaultImageUrl}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : identifyPreview ? (
+                <img src={identifyPreview} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center text-3xl">🌿</div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="font-display text-xl font-bold text-emerald-950">
+                {selectedSpecies.commonName}
+              </p>
+              {selectedSpecies.scientificName ? (
+                <p className="text-sm italic text-gray-500">{selectedSpecies.scientificName}</p>
+              ) : null}
+              {identifyConfidence != null ? (
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs font-medium text-gray-600">
+                    <span>Match confidence</span>
+                    <span>{identifyConfidence}%</span>
+                  </div>
+                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-emerald-100">
+                    <div
+                      className="h-full rounded-full bg-emerald-600 transition-all"
+                      style={{ width: `${Math.min(100, identifyConfidence)}%` }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <Button fullWidth onClick={() => setStep('details')}>
+            Yes, add this plant
+          </Button>
+          <Button variant="secondary" fullWidth onClick={() => setStep('search')}>
+            Not quite — search manually
+          </Button>
+          <Button variant="ghost" fullWidth onClick={() => setStep('photo')}>
+            Try another photo
+          </Button>
+        </Card>
+      )}
+
+      {step === 'search' && (
+        <Card className="space-y-4">
+          <Input
+            label="Species name"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSpeciesId('');
+              setSelectedSpecies(null);
+            }}
+            placeholder="e.g. Monstera, Basil, Snake plant"
+          />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Filters</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {SPECIES_DISCOVERY_FILTERS.map((filter) => {
+                const active = activeFilters[filter.key];
+                return (
+                  <button
+                    key={filter.key}
+                    type="button"
+                    onClick={() =>
+                      setActiveFilters((current) => ({
+                        ...current,
+                        [filter.key]: !current[filter.key],
+                      }))
+                    }
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                      active
+                        ? 'bg-emerald-800 text-white'
+                        : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {speciesList.length > 0 && (
+            <ul className="max-h-72 space-y-2 overflow-auto">
+              {speciesList.map((species) => (
+                <li key={species.id}>
+                  <button
+                    type="button"
+                    className="w-full rounded-2xl border border-emerald-100 px-4 py-3 text-left text-sm hover:bg-emerald-50"
+                    onClick={() => selectSpecies(species)}
+                  >
+                    <span className="font-semibold text-emerald-950">{species.commonName}</span>
+                    {species.scientificName ? (
+                      <span className="ml-2 text-gray-400 italic">{species.scientificName}</span>
+                    ) : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Button variant="ghost" fullWidth onClick={() => setStep('photo')}>
+            ← Back to photo
+          </Button>
+        </Card>
+      )}
+
+      {step === 'details' && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Card className="space-y-3">
+            {selectedSpecies ? (
+              <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm">
+                <span className="text-gray-600">Species: </span>
+                <span className="font-semibold text-emerald-950">{selectedSpecies.commonName}</span>
+                <button
+                  type="button"
+                  className="ml-2 text-xs font-semibold text-emerald-800 underline"
+                  onClick={() => setStep('search')}
+                >
+                  Change
+                </button>
+              </div>
+            ) : null}
+            <Input
+              label="Nickname (optional)"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="e.g. Kitchen monstera"
+            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Where it grows</label>
+              <select
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full rounded-2xl border border-emerald-100 px-4 py-3 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              >
+                {PLANT_LOCATIONS.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Outdoor locations skip indoor misting reminders.
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Pot size</label>
+              <select
+                value={potSize}
+                onChange={(e) => setPotSize(e.target.value)}
+                className="w-full rounded-2xl border border-emerald-100 px-4 py-3 text-sm"
+              >
+                <option value="SMALL">Small pot</option>
+                <option value="MEDIUM">Medium pot</option>
+                <option value="LARGE">Large pot</option>
+              </select>
+            </div>
+            <Input
+              label="Date planted (optional)"
+              type="date"
+              value={datePlanted}
+              onChange={(e) => setDatePlanted(e.target.value)}
+            />
+          </Card>
+
+          <Card>
+            <p className="mb-2 text-sm font-medium text-gray-700">Your plant photo (optional)</p>
+            <PhotoCaptureZone
+              label="Add a photo for your garden"
+              previewUrl={imageUrl || null}
+              onFile={handlePlantPhoto}
+            />
+          </Card>
+
+          <Button type="submit" fullWidth disabled={loading}>
+            {loading ? 'Saving…' : 'Save plant'}
+          </Button>
+          {step !== 'photo' && (
+            <Button type="button" variant="ghost" fullWidth onClick={() => setStep('photo')}>
+              ← Start over
+            </Button>
+          )}
+        </form>
+      )}
+    </div>
+  );
+}

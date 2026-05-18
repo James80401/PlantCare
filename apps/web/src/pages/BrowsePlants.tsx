@@ -7,6 +7,9 @@ import {
   type SpeciesBrowseSort,
   type SpeciesDiscoveryFilterKey,
 } from '../constants/speciesDiscovery';
+import { PageHeader } from '../components/ui/PageHeader';
+import { SkeletonGrid } from '../components/ui/Skeleton';
+import { Button } from '../components/ui/Button';
 import { speciesApi } from '../services/api';
 
 interface SpeciesItem {
@@ -167,25 +170,21 @@ export default function BrowsePlants() {
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
   return (
-    <div className="pb-24 md:pb-8 space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            Plant catalog
-          </p>
-          <h1 className="text-3xl font-bold text-emerald-950 font-display">Browse plants</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Explore {total > 0 && !loading ? `${total} species` : 'our catalog'} — filter, search,
-            then add any plant to your garden.
-          </p>
-        </div>
-        <Link
-          to="/garden/plants/new"
-          className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900"
-        >
-          Add plant
-        </Link>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow="Plant catalog"
+        title="Browse plants"
+        description={
+          total > 0 && !loading
+            ? `Explore ${total} species — filter, search, then add any plant to your garden.`
+            : 'Explore our catalog — filter, search, then add any plant to your garden.'
+        }
+        action={
+          <Link to="/garden/plants/new">
+            <Button>Add plant</Button>
+          </Link>
+        }
+      />
 
       <form
         onSubmit={handleSearchSubmit}
@@ -275,7 +274,7 @@ export default function BrowsePlants() {
       )}
 
       {loading ? (
-        <p className="text-sm text-emerald-700">Loading plants…</p>
+        <SkeletonGrid count={6} />
       ) : items.length === 0 ? (
         <p className="rounded-3xl bg-white border border-emerald-100 px-5 py-8 text-center text-sm text-gray-500">
           No plants match your search. Try clearing filters or a shorter name.

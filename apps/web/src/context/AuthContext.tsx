@@ -14,6 +14,9 @@ interface User {
   email: string;
   name?: string;
   planTier: 'FREE' | 'PREMIUM';
+  onboardingCompletedAt?: string | null;
+  experienceLevel?: string | null;
+  defaultLightLevel?: string | null;
 }
 
 interface AuthContextValue {
@@ -49,6 +52,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: data.email,
         name: data.name,
         planTier: data.planTier,
+        onboardingCompletedAt: data.onboardingCompletedAt,
+        experienceLevel: data.experienceLevel,
+        defaultLightLevel: data.defaultLightLevel,
       });
     } catch {
       localStorage.clear();
@@ -64,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await authApi.login(email, password);
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
-    setUser(data.user);
+    await refreshUser();
   };
 
   const register = async (email: string, password: string, name?: string) => {

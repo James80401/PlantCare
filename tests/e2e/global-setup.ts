@@ -39,6 +39,18 @@ async function main() {
     throw new Error(`E2E setup: could not obtain access token (${JSON.stringify(reg)})`);
   }
 
+  const onboardingRes = await fetch(`${apiBase}/users/me/onboarding`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ skip: true }),
+  });
+  if (!onboardingRes.ok) {
+    throw new Error(`E2E setup: onboarding failed (${onboardingRes.status})`);
+  }
+
   const speciesRes = await fetch(`${apiBase}/species/search?q=monstera`, {
     headers: { Authorization: `Bearer ${token}` },
   });

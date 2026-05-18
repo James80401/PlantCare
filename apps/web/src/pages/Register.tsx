@@ -1,5 +1,8 @@
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthShell } from '../components/auth/AuthShell';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 import { trackEvent } from '../utils/analytics';
 
@@ -26,7 +29,7 @@ export default function Register() {
         return;
       }
       trackEvent('UserSignedUp');
-      navigate('/garden');
+      navigate('/garden/onboarding');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Could not create account. Email may already be in use.');
@@ -36,62 +39,61 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-emerald-100 to-emerald-50">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 space-y-4"
-      >
-        <Link to="/" className="text-sm text-emerald-600 hover:text-emerald-800">
-          ← Back to home
-        </Link>
-        <h1 className="text-2xl font-bold text-emerald-800">Create account</h1>
-        {success && (
-          <div className="text-emerald-700 text-sm space-y-2">
-            <p>{success}</p>
-            <Link to="/login" className="font-medium underline">
-              Sign in after verifying
-            </Link>
-          </div>
-        )}
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-        <input
-          type="text"
-          placeholder="Name (optional)"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full border border-gray-200 rounded-lg px-3 py-2"
-        />
-        <input
-          type="password"
-          placeholder="Password (min 8 characters)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={8}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-emerald-700 text-white py-2 rounded-lg font-medium hover:bg-emerald-800 disabled:opacity-50"
-        >
-          {loading ? 'Creating…' : 'Register'}
-        </button>
-        <p className="text-sm text-center text-gray-600">
+    <AuthShell
+      title="Create your account"
+      subtitle="Start caring for your plants with a personalized schedule"
+      footer={
+        <>
           Already have an account?{' '}
-          <Link to="/login" className="text-emerald-700 font-medium">
+          <Link to="/login" className="font-semibold text-emerald-800 hover:underline">
             Sign in
           </Link>
-        </p>
-      </form>
-    </div>
+        </>
+      }
+    >
+      <Link to="/" className="text-sm font-medium text-emerald-700 hover:underline">
+        ← Back to home
+      </Link>
+      {success ? (
+        <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900 space-y-2">
+          <p>{success}</p>
+          <Link to="/login" className="font-semibold text-emerald-800 hover:underline">
+            Go to sign in
+          </Link>
+        </div>
+      ) : null}
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {!success ? (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Name (optional)"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoComplete="name"
+          />
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+          <Input
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+            hint="At least 8 characters"
+            autoComplete="new-password"
+          />
+          <Button type="submit" fullWidth disabled={loading}>
+            {loading ? 'Creating account…' : 'Create account'}
+          </Button>
+        </form>
+      ) : null}
+    </AuthShell>
   );
 }

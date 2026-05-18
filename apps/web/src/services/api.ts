@@ -154,6 +154,11 @@ export const diagnosisChatApi = {
 
 export const usersApi = {
   me: () => api.get('/users/me'),
+  completeOnboarding: (data: {
+    experienceLevel: string;
+    defaultLightLevel: string;
+    skip?: boolean;
+  }) => api.put('/users/me/onboarding', data),
   updateSettings: (data: Record<string, unknown>) =>
     api.put('/users/me/notification-settings', data),
   deleteAccount: () => api.delete('/users/me'),
