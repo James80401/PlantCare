@@ -1,5 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PlanTier, PotSize, TaskStatus, TaskType } from '@prisma/client';
+import { subDays } from 'date-fns';
+import {
+  buildScheduleExplanation,
+  type ScheduleExplanation,
+} from './schedule-explanation';
 import {
   classifySpeciesForCare,
   inferGrowingEnvironment,
@@ -185,6 +190,47 @@ export class SchedulerService {
     }
 
     await this.prisma.task.createMany({ data: tasks });
+  }
+
+  async getScheduleExplanationForTask(
+    userId: string,
+    taskId: string,
+  ): Promise<ScheduleExplanation> {
+    const task = await this.prisma.task.findFirst({
+      where: { id: taskId, plant: { userId } },
+      include: { plant: { include: { species: true } } },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+
+    const recentWetSoilSkips =
+      task.taskType === TaskType.WATER
+        ? await this.prisma.taskFeedback.count({
+            where: {
+              userId,
+              action: 'SKIP',
+              reason: 'SOIL_STILL_WET',
+              createdAt: { gte: subDays(new Date(), 60) },
+              task: { plantId: task.plantId, taskType: TaskType.WATER },
+            },
+          })
+        : 0;
+
+    return buildScheduleExplanation({
+      taskType: task.taskType,
+      dueDate: task.dueDate,
+      plant: {
+        location: task.plant.location ?? 'Living Room',
+        potSize: task.plant.potSize,
+        datePlanted: task.plant.datePlanted,
+      },
+      species: task.plant.species,
+      waterIntervalDays: this.getWaterIntervalDays(
+        task.plant.species.wateringFreqDays,
+        task.plant.potSize,
+      ),
+      isGrowingSeason: this.isGrowingSeason(task.dueDate),
+      recentWetSoilSkips,
+    });
   }
 
   async onTaskCompleted(taskId: string) {

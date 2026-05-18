@@ -44,6 +44,14 @@ test.describe('UAT checklist — authenticated flows', () => {
     await seedAuth(page);
   });
 
+  test('calendar page loads week and month views', async ({ page }) => {
+    await page.goto('/garden/calendar');
+    await expect(page.getByRole('heading', { name: /Care calendar/i })).toBeVisible();
+    await page.getByRole('button', { name: /^Month$/i }).click();
+    await expect(page.getByText(/Sun/i).first()).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
   test('dashboard loads with metrics and navigation', async ({ page }) => {
     await page.goto('/garden');
     await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible();
@@ -178,6 +186,16 @@ test.describe('UAT checklist — authenticated flows', () => {
       await expect(page.getByRole('dialog')).toBeVisible();
       await expect(page.locator('[role="dialog"]')).toContainText(/Water|Light|Step/i);
     }
+  });
+
+  test('schedule explanation modal opens from tasks', async ({ page }) => {
+    await page.goto('/garden/tasks');
+    const why = page.getByRole('button', { name: /Why this date/i }).first();
+    await expect(why).toBeVisible();
+    await why.click();
+    await expect(page.getByRole('dialog', { name: /Why this date/i })).toBeVisible();
+    await expect(page.locator('[role="dialog"]')).toContainText(/What shaped this date/i);
+    await expectNoHorizontalScroll(page);
   });
 });
 

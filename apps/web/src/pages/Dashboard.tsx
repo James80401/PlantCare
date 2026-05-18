@@ -1,23 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
-import TaskDayGroup from '../components/tasks/TaskDayGroup';
-import { useAuth } from '../context/AuthContext';
+import TaskRow from '../components/tasks/TaskRow';
+import { useDashboard, type DashboardAttention } from '../hooks/useDashboard';
 import { useTasksInRange } from '../hooks/useTasksInRange';
 import { plantsApi, tasksApi } from '../services/api';
 import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
 import {
-  buildAttentionPlants,
-  buildWeekPreview,
   findNextTaskForPlant,
   getTasksCompletedToday,
-  getFocusDayGroups,
   getOverdueTasks,
   getPendingTasks,
   getSeasonalTip,
   getSuggestedAction,
   getTodayTasks,
-  type AttentionPlant,
   type DashboardPlant,
 } from '../utils/dashboard';
 import { EngagementProgress } from '../components/engagement/EngagementProgress';
@@ -44,20 +40,20 @@ interface ScheduleSuggestion {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
   const [plants, setPlants] = useState<DashboardPlant[]>([]);
   const [plantsLoading, setPlantsLoading] = useState(true);
   const [plantsError, setPlantsError] = useState('');
-  const [scheduleSuggestions, setScheduleSuggestions] = useState<ScheduleSuggestion[]>([]);
   const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null);
   const [scheduleMessage, setScheduleMessage] = useState('');
+  const [metricsOpen, setMetricsOpen] = useState(false);
+
+  const { data: dash, loading: dashLoading, error: dashError, reload: reloadDash } =
+    useDashboard();
 
   const {
     loading: tasksLoading,
     tasks,
     animating,
-    summary,
-    dayGroups,
     handleComplete,
     handleSkip,
     handleSnooze,
@@ -66,7 +62,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-
     setPlantsLoading(true);
     setPlantsError('');
     plantsApi
@@ -80,18 +75,14 @@ export default function Dashboard() {
       .finally(() => {
         if (!cancelled) setPlantsLoading(false);
       });
-
-    tasksApi
-      .scheduleSuggestions()
-      .then((r) => {
-        if (!cancelled) setScheduleSuggestions(r.data);
-      })
-      .catch(() => {});
-
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const refreshAfterTask = async () => {
+    await Promise.all([reloadTasks(), reloadDash()]);
+  };
 
   const applyScheduleSuggestion = async (suggestionId: string) => {
     setApplyingSuggestionId(suggestionId);
@@ -99,8 +90,7 @@ export default function Dashboard() {
     try {
       const { data } = await tasksApi.applyScheduleSuggestion(suggestionId);
       setScheduleMessage(data.message || 'Schedule updated.');
-      setScheduleSuggestions((current) => current.filter((item) => item.id !== suggestionId));
-      await reloadTasks();
+      await refreshAfterTask();
     } catch {
       setScheduleMessage('Could not apply that schedule suggestion. Try again.');
     } finally {
@@ -108,7 +98,8 @@ export default function Dashboard() {
     }
   };
 
-  const firstName = user?.name?.split(' ')[0] || 'there';
+  const scheduleSuggestions = dash?.scheduleSuggestions ?? [];
+  const firstName = dash?.greeting.name ?? 'there';
 
   const currentDate = useMemo(() => new Date(), []);
 
@@ -121,20 +112,10 @@ export default function Dashboard() {
 
   const todayTasks = useMemo(() => getTodayTasks(tasks, currentDate), [currentDate, tasks]);
 
-  const focusDayGroups = useMemo(
-    () => getFocusDayGroups(dayGroups, currentDate),
-    [currentDate, dayGroups],
-  );
-
-  const weekPreview = useMemo(
-    () => buildWeekPreview(tasks, currentDate),
-    [currentDate, tasks],
-  );
-
-  const attentionPlants = useMemo(
-    () => buildAttentionPlants(plants, tasks, currentDate).slice(0, 4),
-    [currentDate, plants, tasks],
-  );
+  const weekPreview = dash?.weekPreview ?? [];
+  const attentionItems = dash?.attention ?? [];
+  const todayTasksPreview = dash?.todayTasks ?? [];
+  const metrics = dash?.metrics;
 
   const recommendedAction = getSuggestedAction(plants, overdueTasks, todayTasks);
   const completedToday = useMemo(
@@ -167,9 +148,10 @@ export default function Dashboard() {
     () => getMilestoneHighlights(deriveMilestones(engagementContext)),
     [engagementContext],
   );
-  const gardenScore = gardenWellness.score;
-  const needsAttentionCount = attentionPlants.filter((item) => item.tone !== 'info').length;
-  const dashboardLoading = tasksLoading || plantsLoading;
+  const gardenScore = dash?.engagement.score ?? gardenWellness.score;
+  const needsAttentionCount = attentionItems.filter((item) => item.priority !== 'info').length;
+  const dashboardLoading = dashLoading || tasksLoading || plantsLoading;
+  const plantCount = metrics?.totalPlants ?? plants.length;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
 
   return (
@@ -187,15 +169,14 @@ export default function Dashboard() {
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-sm font-medium text-emerald-100">
-                {format(new Date(), 'EEEE, MMM d')}
+                {dash?.greeting.dateLabel ?? format(new Date(), 'EEEE, MMM d')}
               </p>
               <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl font-display">
                 Hi, {firstName}
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-emerald-50/90">
-                {plants.length === 0
-                  ? 'Start your garden by adding a plant and Plant Care will build your daily routine.'
-                  : `Your garden has ${plants.length} plant${plants.length === 1 ? '' : 's'}, ${summary.todayPending} task${summary.todayPending === 1 ? '' : 's'} due today, and ${overdueTasks.length} overdue.`}
+                {dash?.greeting.statusLine ??
+                  'Start your garden by adding a plant and Plant Care will build your daily routine.'}
               </p>
             </div>
             <Link
@@ -216,7 +197,7 @@ export default function Dashboard() {
             />
             <DashboardMetric
               label="Due today"
-              value={summary.todayPending}
+              value={metrics?.dueToday ?? todayTasks.length}
               helper={todayTasks.length ? 'Ready for care' : 'Nothing urgent today'}
               accent="amber"
               to="/garden/tasks/today"
@@ -254,15 +235,20 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {plants.length > 0 && (
-        <EngagementProgress
-          wellness={gardenWellness}
-          streak={engagementContext.streak}
-          milestones={milestoneHighlights}
-        />
-      )}
+      {dash?.weather.hasLocation && dash.weather.cachedSummary ? (
+        <section className="rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm text-sky-950">
+          <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">Weather</p>
+          <p className="mt-1 leading-6">{dash.weather.cachedSummary}</p>
+        </section>
+      ) : null}
 
       <WeatherAdvicePanel />
+
+      {dashError ? (
+        <p className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {dashError}
+        </p>
+      ) : null}
 
       {(scheduleSuggestions.length > 0 || scheduleMessage) && (
         <section className="rounded-3xl border border-lime-100 bg-lime-50/70 p-4 shadow-sm shadow-emerald-900/5">
@@ -305,7 +291,7 @@ export default function Dashboard() {
           <SectionHeader
             eyebrow="Start here"
             title="Today's care"
-            actionLabel="All tasks"
+            actionLabel="View all"
             actionTo="/garden/tasks"
           />
 
@@ -326,18 +312,27 @@ export default function Dashboard() {
               actionTo="#plants"
             />
           ) : (
-            <div className="space-y-4">
-              {focusDayGroups.map((group) => (
-                <TaskDayGroup
-                  key={group.dateKey}
-                  group={group}
-                  animating={animating}
-                  onComplete={handleComplete}
-                  onSkip={handleSkip}
-                  onSnooze={handleSnooze}
+            <ul className="space-y-2">
+              {todayTasksPreview.map((task) => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  animating={animating[task.id] ?? null}
+                  onComplete={(id) => {
+                    handleComplete(id);
+                    window.setTimeout(() => void refreshAfterTask(), 700);
+                  }}
+                  onSkip={(id, feedback) => {
+                    handleSkip(id, feedback);
+                    window.setTimeout(() => void refreshAfterTask(), 700);
+                  }}
+                  onSnooze={async (id, days) => {
+                    await handleSnooze(id, days);
+                    await refreshAfterTask();
+                  }}
                 />
               ))}
-            </div>
+            </ul>
           )}
         </div>
 
@@ -353,12 +348,18 @@ export default function Dashboard() {
             </p>
 
             <div className="mt-4 space-y-3">
-              {attentionPlants.length === 0 ? (
+              {attentionItems.length === 0 ? (
                 <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                   Add more photos, notes, and care feedback over time to make this smarter.
                 </p>
               ) : (
-                attentionPlants.map((item) => <AttentionPlantCard key={item.plant.id} item={item} />)
+                attentionItems.map((item) => (
+                  <AttentionItemCard
+                    key={item.plantId}
+                    item={item}
+                    plant={plants.find((p) => p.id === item.plantId)}
+                  />
+                ))
               )}
             </div>
           </section>
@@ -369,9 +370,10 @@ export default function Dashboard() {
             </h2>
             <div className="mt-4 grid grid-cols-7 gap-1.5">
               {weekPreview.map((day) => (
-                <div
-                  key={day.key}
-                  className={`rounded-2xl px-1.5 py-2 text-center ${
+                <Link
+                  key={day.date}
+                  to="/garden/calendar"
+                  className={`rounded-2xl px-1.5 py-2 text-center transition hover:ring-2 hover:ring-emerald-200 ${
                     day.count
                       ? 'bg-emerald-800 text-white'
                       : 'bg-emerald-50 text-emerald-900'
@@ -382,7 +384,7 @@ export default function Dashboard() {
                   </p>
                   <p className="mt-0.5 text-[0.65rem] opacity-80">{day.dateLabel}</p>
                   <p className="mt-1 text-lg font-bold">{day.count}</p>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
@@ -409,6 +411,14 @@ export default function Dashboard() {
           actionTo="#plants"
         />
       </section>
+
+      {plantCount > 0 && (
+        <EngagementProgress
+          wellness={gardenWellness}
+          streak={dash?.engagement.streak ?? engagementContext.streak}
+          milestones={milestoneHighlights}
+        />
+      )}
 
       <section id="plants" className="space-y-4 scroll-mt-24">
         <SectionHeader
@@ -620,29 +630,29 @@ function ScheduleSuggestionCard({
   );
 }
 
-function AttentionPlantCard({ item }: { item: AttentionPlant }) {
+function AttentionItemCard({
+  item,
+  plant,
+}: {
+  item: DashboardAttention;
+  plant?: DashboardPlant;
+}) {
   const toneClasses = {
     urgent: 'border-red-100 bg-red-50 text-red-900',
     warning: 'border-amber-100 bg-amber-50 text-amber-950',
     info: 'border-emerald-100 bg-emerald-50 text-emerald-950',
   };
-  const name = item.plant.nickname || item.plant.species.commonName;
 
   return (
     <Link
-      to={`/garden/plants/${item.plant.id}`}
-      className={`block rounded-2xl border p-3 transition hover:-translate-y-0.5 hover:shadow-sm ${toneClasses[item.tone]}`}
+      to={`/garden/plants/${item.plantId}`}
+      className={`block rounded-2xl border p-3 transition hover:-translate-y-0.5 hover:shadow-sm ${toneClasses[item.priority]}`}
     >
       <div className="flex gap-3">
-        <PlantThumb plant={item.plant} size="sm" />
+        {plant ? <PlantThumb plant={plant} size="sm" /> : null}
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{name}</p>
+          <p className="truncate font-semibold">{item.plantName}</p>
           <p className="mt-0.5 text-xs opacity-80">{item.reason}</p>
-          {item.nextTask && (
-            <p className="mt-1 text-xs font-medium">
-              {taskTypeLabel(item.nextTask.taskType)} · {format(parseISO(item.nextTask.dueDate), 'MMM d')}
-            </p>
-          )}
         </div>
       </div>
     </Link>

@@ -15,6 +15,7 @@ import { DiagnosisModule } from './diagnosis/diagnosis.module';
 import { BillingModule } from './billing/billing.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WeatherModule } from './weather/weather.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { UploadModule } from './upload/upload.module';
 import { HealthController } from './health.controller';
 
@@ -41,6 +42,7 @@ import { HealthController } from './health.controller';
     BillingModule,
     NotificationsModule,
     WeatherModule,
+    DashboardModule,
     UploadModule,
   ],
   controllers: [HealthController],

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, isPast, isToday, parseISO } from 'date-fns';
 import TaskInstructionsLink from '../TaskInstructionsLink';
+import TaskScheduleExplanationLink from '../TaskScheduleExplanationLink';
 import {
   TASK_SKIP_REASONS,
   type TaskSkipFeedback,
@@ -155,6 +156,11 @@ export default function TaskRow({
           <div className="mt-3 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <TaskInstructionsLink
+                taskId={task.id}
+                taskType={task.taskType}
+                plantLabel={plantLabel}
+              />
+              <TaskScheduleExplanationLink
                 taskId={task.id}
                 taskType={task.taskType}
                 plantLabel={plantLabel}

@@ -190,6 +190,18 @@ async function main() {
   else fail('Create plant', JSON.stringify(plant.data));
 
   const plantId = plant.data?.id;
+  const dashboard = await api('GET', '/dashboard', null, token);
+  if (
+    dashboard.status === 200 &&
+    dashboard.data?.greeting?.name &&
+    dashboard.data?.metrics &&
+    Array.isArray(dashboard.data.todayTasks)
+  ) {
+    pass('Dashboard aggregate', `${dashboard.data.metrics.totalPlants} plants`);
+  } else {
+    fail('Dashboard aggregate', JSON.stringify(dashboard.data)?.slice(0, 120));
+  }
+
   const tasks = await api('GET', '/tasks', null, token);
   if (tasks.status === 200 && Array.isArray(tasks.data) && tasks.data.length > 0) {
     pass('Tasks generated', `${tasks.data.length} tasks`);
@@ -209,6 +221,35 @@ async function main() {
         fail('Task instructions depth', `sections=${sections.length} specific=${instr.data.isSpeciesSpecific}`);
       }
     } else fail('Task instructions', String(instr.status));
+
+    const explain = await api('GET', `/tasks/${taskId}/explanation`, null, token);
+    if (
+      explain.status === 200 &&
+      explain.data?.summary &&
+      Array.isArray(explain.data?.factors) &&
+      explain.data.factors.length > 0
+    ) {
+      pass('Task schedule explanation', `${explain.data.factors.length} factors`);
+    } else {
+      fail('Task schedule explanation', JSON.stringify(explain.data)?.slice(0, 120));
+    }
+
+    const to90 = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+    const tasks90 = await api('GET', `/tasks?to=${encodeURIComponent(to90)}`, null, token);
+    const repotTask = (tasks90.data ?? tasks.data).find(
+      (t) => t.taskType === 'REPOT' && t.plantId === plantId,
+    );
+    if (repotTask?.dueDate) {
+      const daysUntil =
+        (new Date(repotTask.dueDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000);
+      if (daysUntil <= 90) {
+        pass('Repot within 90 days', `due in ${Math.round(daysUntil)}d`);
+      } else {
+        fail('Repot within 90 days', `due in ${Math.round(daysUntil)}d`);
+      }
+    } else {
+      fail('Repot within 90 days', 'no REPOT task generated');
+    }
 
     const done = await api('PATCH', `/tasks/${taskId}/complete`, null, token);
     if (done.status === 200) pass('Complete task');

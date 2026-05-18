@@ -52,6 +52,11 @@ export class TasksController {
     return this.tasksService.snooze(user.sub, id, dto);
   }
 
+  @Get(':id/explanation')
+  explanation(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.tasksService.getExplanation(user.sub, id);
+  }
+
   @Get(':id/instructions')
   instructions(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.tasksService.getInstructions(user.sub, id);

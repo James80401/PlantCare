@@ -120,6 +120,10 @@ export class TasksService {
     return this.careGuides.getInstructionsForTask(userId, taskId);
   }
 
+  getExplanation(userId: string, taskId: string) {
+    return this.scheduler.getScheduleExplanationForTask(userId, taskId);
+  }
+
   getScheduleSuggestions(userId: string) {
     return this.scheduler.getScheduleSuggestionsForUser(userId);
   }

@@ -47,6 +47,15 @@ export function IconPlus(props: IconProps) {
   );
 }
 
+export function IconCalendar(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  );
+}
+
 export function IconSettings(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -59,6 +68,7 @@ export function IconSettings(props: IconProps) {
 export const navIcons = {
   home: IconHome,
   browse: IconLeaf,
+  calendar: IconCalendar,
   tasks: IconChecklist,
   add: IconPlus,
   settings: IconSettings,

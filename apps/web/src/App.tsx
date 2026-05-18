@@ -10,6 +10,7 @@ import ResendVerification from './pages/ResendVerification';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
+import Calendar from './pages/Calendar';
 import GardenScoreInsights from './pages/GardenScoreInsights';
 import FilteredTasks from './pages/FilteredTasks';
 import AddPlant from './pages/AddPlant';
@@ -36,6 +37,7 @@ export default function App() {
         <Route element={<OnboardingGate />}>
           <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
+          <Route path="calendar" element={<Calendar />} />
           <Route path="plants/browse/:speciesId" element={<SpeciesBrowseDetail />} />
           <Route path="plants/browse" element={<BrowsePlants />} />
           <Route path="plants/new" element={<AddPlant />} />

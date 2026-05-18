@@ -91,6 +91,11 @@ export const speciesApi = {
   get: (id: string) => api.get(`/species/${id}`),
 };
 
+export const dashboardApi = {
+  get: (from?: string, to?: string) =>
+    api.get('/dashboard', { params: { from, to } }),
+};
+
 export const tasksApi = {
   list: (from?: string, to?: string) => api.get('/tasks', { params: { from, to } }),
   scheduleSuggestions: () => api.get('/tasks/schedule-suggestions'),
@@ -100,6 +105,7 @@ export const tasksApi = {
   skip: (id: string, feedback?: TaskSkipFeedback) => api.patch(`/tasks/${id}/skip`, feedback ?? {}),
   snooze: (id: string, days: 1 | 3 | 7) => api.patch(`/tasks/${id}/snooze`, { days }),
   instructions: (id: string) => api.get(`/tasks/${id}/instructions`),
+  explanation: (id: string) => api.get(`/tasks/${id}/explanation`),
 };
 
 export const journalApi = {
