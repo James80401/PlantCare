@@ -4,7 +4,8 @@ import { format, parseISO } from 'date-fns';
 import TaskDayGroup from '../components/tasks/TaskDayGroup';
 import { useAuth } from '../context/AuthContext';
 import { useTasksInRange } from '../hooks/useTasksInRange';
-import { plantsApi, tasksApi, usersApi } from '../services/api';
+import { plantsApi, tasksApi } from '../services/api';
+import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
 import {
   buildAttentionPlants,
   buildWeekPreview,
@@ -29,11 +30,6 @@ import {
 import { TASK_TYPE_ICONS, type TaskItem } from '../utils/taskGroups';
 import { taskTypeLabel } from '../utils/tasks';
 
-interface WeatherMessage {
-  rainSkipApplied?: boolean;
-  message?: string;
-}
-
 interface ScheduleSuggestion {
   id: string;
   plantId: string;
@@ -52,7 +48,6 @@ export default function Dashboard() {
   const [plants, setPlants] = useState<DashboardPlant[]>([]);
   const [plantsLoading, setPlantsLoading] = useState(true);
   const [plantsError, setPlantsError] = useState('');
-  const [weather, setWeather] = useState<WeatherMessage | null>(null);
   const [scheduleSuggestions, setScheduleSuggestions] = useState<ScheduleSuggestion[]>([]);
   const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null);
   const [scheduleMessage, setScheduleMessage] = useState('');
@@ -84,13 +79,6 @@ export default function Dashboard() {
       .finally(() => {
         if (!cancelled) setPlantsLoading(false);
       });
-
-    usersApi
-      .weather()
-      .then((r) => {
-        if (!cancelled) setWeather(r.data);
-      })
-      .catch(() => {});
 
     tasksApi
       .scheduleSuggestions()
@@ -265,24 +253,7 @@ export default function Dashboard() {
         />
       )}
 
-      {(weather?.rainSkipApplied || weather?.message) && (
-        <section
-          className={`rounded-2xl border p-4 text-sm ${
-            weather.rainSkipApplied
-              ? 'border-blue-100 bg-blue-50 text-blue-900'
-              : 'border-emerald-100 bg-white text-gray-700'
-          }`}
-        >
-          <p className="font-medium">
-            {weather.rainSkipApplied ? 'Rain-smart care update' : 'Weather note'}
-          </p>
-          <p className="mt-1">
-            {weather.rainSkipApplied
-              ? 'Rain is expected, so outdoor watering tasks may be adjusted.'
-              : weather.message}
-          </p>
-        </section>
-      )}
+      <WeatherAdvicePanel />
 
       {(scheduleSuggestions.length > 0 || scheduleMessage) && (
         <section className="rounded-3xl border border-lime-100 bg-lime-50/70 p-4 shadow-sm shadow-emerald-900/5">

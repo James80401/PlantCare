@@ -6,6 +6,6 @@
 
 - Profile name
 - Notification preferences (push, email, SMS flags)
-- Location for weather (`latitude` / `longitude` on user)
+- **Optional** location for weather (city search, device location, or lat/lon)
 
-Weather card uses `GET /users/me/weather` — [integrations/weather.md](../integrations/weather.md).
+Forecast runs only when you tap **Advise by weather** on the dashboard (once per day). See [integrations/weather.md](../integrations/weather.md).

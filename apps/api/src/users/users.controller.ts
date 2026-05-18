@@ -29,6 +29,8 @@ export class UsersController {
       timezone?: string;
       latitude?: number;
       longitude?: number;
+      locationLabel?: string | null;
+      locationQuery?: string;
     },
   ) {
     return this.usersService.updateNotificationSettings(user.sub, body);

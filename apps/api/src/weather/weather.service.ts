@@ -1,69 +1,150 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { SchedulerService } from '../scheduler/scheduler.service';
+import { fetchOpenMeteoForecast, searchLocations, type GeocodeResult } from './open-meteo.client';
+import { buildPlantWeatherAdvice } from './plant-weather-advice';
+import type { WeatherAdvicePayload, WeatherAdviceStatusResponse } from './weather-advice.types';
+import {
+  buildLocationKey,
+  getLocalDateKey,
+  getNextLocalDayStart,
+} from './weather-cache.util';
 
 @Injectable()
 export class WeatherService {
   private readonly logger = new Logger(WeatherService.name);
-  private readonly apiKey: string | undefined;
 
-  constructor(
-    private config: ConfigService,
-    private prisma: PrismaService,
-    private scheduler: SchedulerService,
-  ) {
-    this.apiKey = this.config.get<string>('OPENWEATHER_API_KEY');
+  constructor(private prisma: PrismaService) {}
+
+  searchLocations(query: string) {
+    return searchLocations(query);
   }
 
-  async getForecastForUser(userId: string) {
+  async geocodeLocation(query: string): Promise<GeocodeResult | null> {
+    const results = await searchLocations(query, 1);
+    return results[0] ?? null;
+  }
+
+  async getAdviceStatus(userId: string): Promise<WeatherAdviceStatusResponse> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user?.latitude || !user?.longitude) {
-      return { message: 'Set your location in notification settings for weather features.' };
-    }
-
-    if (!this.apiKey) {
       return {
-        demo: true,
-        forecast: [
-          { date: new Date().toISOString(), rainProbability: 0.2, temp: 22 },
-        ],
+        hasLocation: false,
+        canFetchToday: false,
+        fetchedAt: null,
+        nextAvailableAt: null,
+        locationLabel: null,
+        cachedAdvice: null,
       };
     }
 
+    const timezone = user.timezone || 'UTC';
+    const locationKey = buildLocationKey(user.latitude, user.longitude);
+    const localDateKey = getLocalDateKey(timezone);
+    const cache = await this.prisma.weatherAdviceCache.findUnique({ where: { userId } });
+    const cacheValid =
+      cache &&
+      cache.localDateKey === localDateKey &&
+      cache.locationKey === locationKey;
+
+    const cachedAdvice = cacheValid ? this.parsePayload(cache.payload) : null;
+
+    return {
+      hasLocation: true,
+      canFetchToday: !cacheValid,
+      fetchedAt: cacheValid ? cache!.fetchedAt.toISOString() : null,
+      nextAvailableAt: cacheValid ? getNextLocalDayStart(timezone) : null,
+      locationLabel: user.locationLabel,
+      cachedAdvice,
+    };
+  }
+
+  async fetchPlantAdvice(
+    userId: string,
+    options: { confirmed: boolean },
+  ): Promise<WeatherAdvicePayload> {
+    if (!options.confirmed) {
+      throw new BadRequestException('Confirm to use your daily weather check.');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.latitude || !user?.longitude) {
+      throw new BadRequestException(
+        'Add your city or address in Settings before requesting weather advice.',
+      );
+    }
+
+    const timezone = user.timezone || 'UTC';
+    const locationKey = buildLocationKey(user.latitude, user.longitude);
+    const localDateKey = getLocalDateKey(timezone);
+    const existing = await this.prisma.weatherAdviceCache.findUnique({ where: { userId } });
+
+    if (
+      existing &&
+      existing.localDateKey === localDateKey &&
+      existing.locationKey === locationKey
+    ) {
+      const cached = this.parsePayload(existing.payload);
+      return { ...cached, fromCache: true };
+    }
+
+    const plants = await this.prisma.plant.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        nickname: true,
+        location: true,
+        species: { select: { commonName: true } },
+      },
+    });
+
     try {
-      const { data } = await axios.get(
-        'https://api.openweathermap.org/data/2.5/forecast',
-        {
-          params: {
-            lat: user.latitude,
-            lon: user.longitude,
-            appid: this.apiKey,
-            units: 'metric',
-          },
-          timeout: 8000,
-        },
+      const { hourly, daily, timezone: resolvedTz } = await fetchOpenMeteoForecast(
+        user.latitude,
+        user.longitude,
+        timezone,
       );
 
-      const daily = (data.list || []).slice(0, 8).map((item: { dt: number; pop: number; main: { temp: number } }) => ({
-        date: new Date(item.dt * 1000).toISOString(),
-        rainProbability: item.pop,
-        temp: item.main.temp,
-      }));
+      const built = buildPlantWeatherAdvice(hourly, daily, plants);
+      const fetchedAt = new Date().toISOString();
+      const payload: WeatherAdvicePayload = {
+        fromCache: false,
+        fetchedAt,
+        locationLabel: user.locationLabel,
+        timezone: resolvedTz,
+        overviewAlerts: built.overviewAlerts,
+        summary: built.summary,
+        plants: built.plants,
+      };
 
-      const rainyTomorrow = daily[1]?.rainProbability > 0.5;
-      if (rainyTomorrow) {
-        const plants = await this.prisma.plant.findMany({ where: { userId } });
-        for (const plant of plants) {
-          await this.scheduler.postponeWateringForRain(plant.id, 2);
-        }
-      }
+      await this.prisma.weatherAdviceCache.upsert({
+        where: { userId },
+        create: {
+          userId,
+          fetchedAt: new Date(fetchedAt),
+          localDateKey,
+          locationKey,
+          payload: JSON.stringify(payload),
+        },
+        update: {
+          fetchedAt: new Date(fetchedAt),
+          localDateKey,
+          locationKey,
+          payload: JSON.stringify(payload),
+        },
+      });
 
-      return { forecast: daily, rainSkipApplied: rainyTomorrow };
+      return payload;
     } catch (err) {
-      this.logger.warn(`Weather API failed: ${err}`);
-      return { error: 'Could not fetch weather' };
+      this.logger.warn(`Open-Meteo plant advice failed: ${err}`);
+      throw new BadRequestException('Could not fetch weather right now. Try again later.');
     }
+  }
+
+  async invalidateAdviceCache(userId: string) {
+    await this.prisma.weatherAdviceCache.deleteMany({ where: { userId } });
+  }
+
+  private parsePayload(raw: string): WeatherAdvicePayload {
+    return JSON.parse(raw) as WeatherAdvicePayload;
   }
 }

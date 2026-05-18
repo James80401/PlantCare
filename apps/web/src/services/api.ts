@@ -153,7 +153,10 @@ export const usersApi = {
   updateSettings: (data: Record<string, unknown>) =>
     api.put('/users/me/notification-settings', data),
   deleteAccount: () => api.delete('/users/me'),
-  weather: () => api.get('/users/me/weather'),
+  weatherAdviceStatus: () => api.get('/users/me/weather/advice/status'),
+  fetchWeatherAdvice: () => api.post('/users/me/weather/advice', { confirmed: true }),
+  searchWeatherLocations: (q: string) =>
+    api.get('/users/me/weather/locations', { params: { q } }),
 };
 
 export const billingApi = {

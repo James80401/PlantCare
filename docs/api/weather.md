@@ -4,8 +4,12 @@
 
 | Method | Path |
 |--------|------|
-| GET | `/users/me/weather` |
+| GET | `/users/me/weather/locations?q=` |
+| GET | `/users/me/weather/advice/status` |
+| POST | `/users/me/weather/advice` |
 
-Uses user `latitude` / `longitude`. OpenWeather when key set; mock otherwise.
+POST body: `{ "confirmed": true }` (required).
 
-May trigger `scheduler.postponeWateringForRain` from client integration.
+Uses user `latitude` / `longitude` from [notification settings](users.md).
+
+See [integrations/weather.md](../integrations/weather.md).

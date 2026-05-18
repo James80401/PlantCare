@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
+import { WeatherService } from '../weather/weather.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private prisma: PrismaService,
     private upload: UploadService,
+    private weather: WeatherService,
   ) {}
 
   async getMe(userId: string) {
@@ -19,6 +21,7 @@ export class UsersService {
         planTier: true,
         latitude: true,
         longitude: true,
+        locationLabel: true,
         timezone: true,
         notifyPush: true,
         notifyEmail: true,
@@ -44,11 +47,26 @@ export class UsersService {
       timezone?: string;
       latitude?: number;
       longitude?: number;
+      locationLabel?: string | null;
+      locationQuery?: string;
     },
   ) {
+    const existing = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { latitude: true, longitude: true },
+    });
+    const resolved = await this.resolveLocationFields(data);
+    const locationChanged =
+      (resolved.latitude !== undefined &&
+        resolved.latitude !== existing?.latitude) ||
+      (resolved.longitude !== undefined &&
+        resolved.longitude !== existing?.longitude);
+    if (locationChanged) {
+      await this.weather.invalidateAdviceCache(userId);
+    }
     return this.prisma.user.update({
       where: { id: userId },
-      data,
+      data: resolved,
       select: {
         notifyPush: true,
         notifyEmail: true,
@@ -58,8 +76,33 @@ export class UsersService {
         timezone: true,
         latitude: true,
         longitude: true,
+        locationLabel: true,
       },
     });
+  }
+
+  private async resolveLocationFields(data: {
+    latitude?: number;
+    longitude?: number;
+    locationLabel?: string | null;
+    locationQuery?: string;
+    timezone?: string;
+  }) {
+    const { locationQuery, ...rest } = data;
+    if (locationQuery?.trim()) {
+      const match = await this.weather.geocodeLocation(locationQuery);
+      if (!match) {
+        throw new NotFoundException('Could not find that city or address. Try a nearby city name.');
+      }
+      return {
+        ...rest,
+        latitude: match.latitude,
+        longitude: match.longitude,
+        locationLabel: match.label,
+        timezone: rest.timezone || match.timezone,
+      };
+    }
+    return rest;
   }
 
   async deleteAccount(userId: string) {

@@ -71,7 +71,7 @@
 3. **Without SMTP:** leave `SMTP_USER` / `SMTP_PASS` empty — accounts are auto-verified on register.
 4. **Premium:** enabled for everyone in dev (`ALL_USERS_PREMIUM` / auth service).
 5. **Dr. Plant / diagnosis:** require `OPENAI_API_KEY` in server `.env`.
-6. **Weather on dashboard:** set location in notification/settings after login.
+6. **Weather advice:** set location in Settings (optional), then use **Advise by weather** on the dashboard (once per day).
 
 ### Run automated UAT locally
 

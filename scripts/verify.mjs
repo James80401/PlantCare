@@ -241,9 +241,33 @@ async function main() {
   if (settings.status === 200) pass('Notification settings (location)');
   else fail('Notification settings', String(settings.status));
 
-  const weather = await api('GET', '/users/me/weather', null, token);
-  if (weather.status === 200) pass('Weather', weather.data?.message || 'ok');
-  else fail('Weather', String(weather.status));
+  const weatherStatus = await api('GET', '/users/me/weather/advice/status', null, token);
+  if (weatherStatus.status === 200 && weatherStatus.data?.hasLocation) {
+    pass('Weather advice status', 'location set');
+  } else if (weatherStatus.status === 200) {
+    pass('Weather advice status', 'no location (optional)');
+  } else fail('Weather advice status', String(weatherStatus.status));
+
+  const weatherAdvice = await api(
+    'POST',
+    '/users/me/weather/advice',
+    { confirmed: true },
+    token,
+  );
+  if (weatherAdvice.status === 201 || weatherAdvice.status === 200) {
+    const plants = weatherAdvice.data?.plants?.length ?? 0;
+    pass('Weather plant advice', `${plants} plant line(s)`);
+    const cached = await api('POST', '/users/me/weather/advice', { confirmed: true }, token);
+    if (cached.status === 200 && cached.data?.fromCache === true) {
+      pass('Weather advice cache', 'same-day replay');
+    } else {
+      fail('Weather advice cache', JSON.stringify(cached.data));
+    }
+  } else if (weatherAdvice.status === 400 && !weatherStatus.data?.hasLocation) {
+    pass('Weather plant advice', 'skipped (no location)');
+  } else {
+    fail('Weather plant advice', `${weatherAdvice.status} ${JSON.stringify(weatherAdvice.data)}`);
+  }
 
   const suggestions = await api('GET', '/tasks/schedule-suggestions', null, token);
   if (suggestions.status === 200 && Array.isArray(suggestions.data)) {

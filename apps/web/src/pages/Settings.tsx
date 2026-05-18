@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+interface LocationOption {
+  latitude: number;
+  longitude: number;
+  label: string;
+  timezone: string;
+}
+
 export default function Settings() {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -10,11 +17,16 @@ export default function Settings() {
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [notifySms, setNotifySms] = useState(false);
   const [timezone, setTimezone] = useState('America/New_York');
+  const [locationQuery, setLocationQuery] = useState('');
+  const [locationLabel, setLocationLabel] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
+  const [locationOptions, setLocationOptions] = useState<LocationOption[]>([]);
+  const [locationSearching, setLocationSearching] = useState(false);
   const [quietStart, setQuietStart] = useState('');
   const [quietEnd, setQuietEnd] = useState('');
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     usersApi.me().then(({ data }) => {
@@ -22,6 +34,7 @@ export default function Settings() {
       setNotifyEmail(data.notifyEmail);
       setNotifySms(data.notifySms);
       setTimezone(data.timezone || 'America/New_York');
+      if (data.locationLabel) setLocationLabel(data.locationLabel);
       if (data.latitude) setLatitude(String(data.latitude));
       if (data.longitude) setLongitude(String(data.longitude));
       if (data.quietHoursStart != null) setQuietStart(String(data.quietHoursStart));
@@ -29,20 +42,46 @@ export default function Settings() {
     });
   }, []);
 
+  useEffect(() => {
+    if (locationQuery.trim().length < 2) {
+      setLocationOptions([]);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setLocationSearching(true);
+      usersApi
+        .searchWeatherLocations(locationQuery.trim())
+        .then(({ data }) => setLocationOptions(data))
+        .catch(() => setLocationOptions([]))
+        .finally(() => setLocationSearching(false));
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [locationQuery]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    await usersApi.updateSettings({
-      notifyPush,
-      notifyEmail,
-      notifySms,
-      timezone,
-      latitude: latitude ? parseFloat(latitude) : undefined,
-      longitude: longitude ? parseFloat(longitude) : undefined,
-      quietHoursStart: quietStart !== '' ? parseInt(quietStart, 10) : null,
-      quietHoursEnd: quietEnd !== '' ? parseInt(quietEnd, 10) : null,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setError('');
+    try {
+      await usersApi.updateSettings({
+        notifyPush,
+        notifyEmail,
+        notifySms,
+        timezone,
+        latitude: latitude ? parseFloat(latitude) : undefined,
+        longitude: longitude ? parseFloat(longitude) : undefined,
+        locationQuery: locationQuery.trim() || undefined,
+        locationLabel: locationLabel || undefined,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        'Could not save settings.';
+      setError(message);
+    }
   };
 
   const handleDelete = async () => {
@@ -56,7 +95,18 @@ export default function Settings() {
     navigator.geolocation.getCurrentPosition((pos) => {
       setLatitude(String(pos.coords.latitude));
       setLongitude(String(pos.coords.longitude));
+      setLocationQuery('');
+      setLocationLabel('Current device location');
     });
+  };
+
+  const pickLocation = (option: LocationOption) => {
+    setLocationQuery(option.label);
+    setLocationLabel(option.label);
+    setLatitude(String(option.latitude));
+    setLongitude(String(option.longitude));
+    setTimezone(option.timezone);
+    setLocationOptions([]);
   };
 
   return (
@@ -100,33 +150,73 @@ export default function Settings() {
           />
         </div>
 
-        <h2 className="font-semibold pt-2">Location (for weather)</h2>
+        <h2 className="font-semibold pt-2">Location (optional, for weather)</h2>
+        <p className="text-sm text-gray-600">
+          Weather advice is optional. We only fetch a 7-day forecast when you tap Advise by weather
+          on your dashboard (once per calendar day). Location is not used for ads.
+        </p>
         <button type="button" onClick={detectGeoLocation} className="text-sm text-emerald-700 hover:underline">
-          Use my location
+          Use my device location
         </button>
-        <input
-          placeholder="Latitude"
-          value={latitude}
-          onChange={(e) => setLatitude(e.target.value)}
-          className="w-full border rounded-lg px-3 py-2"
-        />
-        <input
-          placeholder="Longitude"
-          value={longitude}
-          onChange={(e) => setLongitude(e.target.value)}
-          className="w-full border rounded-lg px-3 py-2"
-        />
+        <div className="relative">
+          <input
+            placeholder="City or address (e.g. Seattle, WA)"
+            value={locationQuery}
+            onChange={(e) => setLocationQuery(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2"
+            autoComplete="address-level2"
+          />
+          {locationSearching ? (
+            <p className="mt-1 text-xs text-gray-500">Searching…</p>
+          ) : null}
+          {locationOptions.length > 0 && (
+            <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-emerald-100 bg-white shadow-lg">
+              {locationOptions.map((option) => (
+                <li key={`${option.latitude}-${option.longitude}`}>
+                  <button
+                    type="button"
+                    onClick={() => pickLocation(option)}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-emerald-50"
+                  >
+                    {option.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {locationLabel && !locationQuery ? (
+          <p className="text-sm text-emerald-800">Saved: {locationLabel}</p>
+        ) : null}
+        <details className="text-sm text-gray-600">
+          <summary className="cursor-pointer text-emerald-700">Advanced: latitude / longitude</summary>
+          <div className="mt-2 space-y-2">
+            <input
+              placeholder="Latitude"
+              value={latitude}
+              onChange={(e) => setLatitude(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+            <input
+              placeholder="Longitude"
+              value={longitude}
+              onChange={(e) => setLongitude(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+        </details>
         <input
           value={timezone}
           onChange={(e) => setTimezone(e.target.value)}
           className="w-full border rounded-lg px-3 py-2"
-          placeholder="Timezone"
+          placeholder="Timezone (e.g. America/New_York)"
         />
 
         <button type="submit" className="w-full bg-emerald-700 text-white py-2 rounded-lg font-medium">
           Save settings
         </button>
         {saved && <p className="text-emerald-600 text-sm text-center">Saved!</p>}
+        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
       </form>
 
       <button
