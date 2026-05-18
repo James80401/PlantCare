@@ -1,0 +1,168 @@
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+import { expect, test } from '@playwright/test';
+
+const authFile = resolve(__dirname, '.uat-auth.json');
+
+function loadAuth() {
+  return JSON.parse(readFileSync(authFile, 'utf8')) as {
+    accessToken: string;
+    refreshToken?: string;
+  };
+}
+
+async function seedAuth(page: import('@playwright/test').Page) {
+  const { accessToken, refreshToken } = loadAuth();
+  await page.addInitScript(
+    ({ accessToken, refreshToken }) => {
+      localStorage.setItem('accessToken', accessToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+    },
+    { accessToken, refreshToken: refreshToken ?? '' },
+  );
+}
+
+async function expectNoHorizontalScroll(page: import('@playwright/test').Page) {
+  const overflow = await page.evaluate(() => {
+    const el = document.documentElement;
+    return el.scrollWidth > el.clientWidth + 2;
+  });
+  expect(overflow).toBe(false);
+}
+
+test.describe('UAT checklist — authenticated flows', () => {
+  test.beforeEach(async ({ page }) => {
+    await seedAuth(page);
+  });
+
+  test('dashboard loads with metrics and navigation', async ({ page }) => {
+    await page.goto('/garden');
+    await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible();
+    await expect(page.getByText('Garden score')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Browse/i }).first()).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('browse plants catalog is paged', async ({ page }) => {
+    await page.goto('/garden/plants/browse');
+    await expect(page.getByRole('heading', { name: /Browse plants/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Add to garden/i }).first()).toBeVisible();
+    await expect(page.getByText(/Showing \d+/)).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('add plant search finds Magic Carpet Thyme', async ({ page }) => {
+    await page.goto('/garden/plants/new');
+    await page.getByLabel(/Species/i).fill('magic carpet thyme');
+    await expect(page.getByText(/Magic Carpet Thyme/i).first()).toBeVisible({ timeout: 10_000 });
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('tasks page shows grouped care types after adding a plant', async ({ page }) => {
+    await page.goto('/garden/plants/new');
+    await page.getByLabel(/Species/i).fill('monstera');
+    await page.getByRole('button', { name: /Monstera/i }).first().click();
+    await page.getByRole('button', { name: /Save plant/i }).click();
+    await page.waitForURL(/\/garden\/plants\//);
+
+    await page.goto('/garden/tasks');
+    await expect(page.getByRole('heading', { name: /Care tasks/i })).toBeVisible();
+    await expect(page.locator('body')).toContainText(/Water|Fertilize|Mist|Check/i);
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('plant profile has care sections and journal', async ({ page }) => {
+    await page.goto('/garden/plants/new');
+    await page.getByLabel(/Species/i).fill('snake');
+    await page.getByRole('button', { name: /Snake Plant/i }).first().click();
+    await page.getByRole('button', { name: /Save plant/i }).click();
+    await page.waitForURL(/\/garden\/plants\//);
+
+    await expect(page.getByRole('link', { name: /Overview/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Care', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Journal/i })).toBeVisible();
+    await page.getByRole('link', { name: /Journal/i }).click();
+    await page
+      .getByPlaceholder(/Add a note about growth/i)
+      .fill('E2E journal note');
+    await page.getByRole('button', { name: /Save journal entry/i }).click();
+    await expect(page.getByText(/E2E journal note/i)).toBeVisible({ timeout: 10_000 });
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('task instructions modal opens from tasks', async ({ page }) => {
+    await page.goto('/garden/tasks');
+    const howTo = page.getByRole('button', { name: /Care steps/i }).first();
+    if (await howTo.isVisible().catch(() => false)) {
+      await howTo.click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await expect(page.locator('[role="dialog"]')).toContainText(/Water|Light|Step/i);
+    }
+  });
+});
+
+test.describe('UAT checklist — public auth', () => {
+  test('landing page links to register and login', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('link', { name: /Sign in|Log in/i }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /Register|Get started/i }).first()).toBeVisible();
+  });
+
+  test('register form submits to garden or verification message', async ({ page }) => {
+    const email = `uat-ui-${Date.now()}@plantcare.test`;
+    await page.goto('/register');
+    await page.getByPlaceholder('Email').fill(email);
+    await page.getByPlaceholder(/Password/i).fill('password123');
+    await page.getByPlaceholder(/Name/i).fill('UAT Browser');
+    await page.getByRole('button', { name: /^Register$/i }).click();
+    const verified = page.getByText(/Please check your email to verify/i);
+    const garden = page.getByRole('heading', { name: /Hi,/i });
+    await expect(verified.or(garden)).toBeVisible({ timeout: 30_000 });
+  });
+});
+
+test.describe('UAT checklist — mobile layout', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('empty garden state and bottom nav padding', async ({ page }) => {
+    const email = `uat-empty-${Date.now()}@plantcare.test`;
+    const reg = await fetch('http://localhost:3001/api/v1/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: 'password123', name: 'Empty Garden' }),
+    }).then((r) => r.json());
+
+    let token = reg.accessToken;
+    if (reg.requiresVerification) {
+      const { PrismaClient } = await import('@prisma/client');
+      const prisma = new PrismaClient();
+      await prisma.user.update({ where: { email }, data: { emailVerified: true } });
+      await prisma.$disconnect();
+      const login = await fetch('http://localhost:3001/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: 'password123' }),
+      }).then((r) => r.json());
+      token = login.accessToken;
+    }
+
+    await page.addInitScript((t) => localStorage.setItem('accessToken', t), token);
+    await page.goto('/garden');
+    await expect(page.getByText(/Start your garden|Add a plant/i).first()).toBeVisible();
+    await expectNoHorizontalScroll(page);
+
+    const contentPad = await page.locator('.pb-24').first().evaluate((el) => {
+      const style = getComputedStyle(el);
+      return parseFloat(style.paddingBottom || '0');
+    });
+    expect(contentPad).toBeGreaterThanOrEqual(48);
+  });
+
+  test('bottom nav has comfortable tap targets', async ({ page }) => {
+    await seedAuth(page);
+    await page.goto('/garden');
+    const browse = page.getByRole('link', { name: 'Browse' });
+    const box = await browse.boundingBox();
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  });
+});

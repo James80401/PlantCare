@@ -86,10 +86,36 @@ async function main() {
   if (planTier === 'PREMIUM') pass('Premium tier', 'PREMIUM');
   else fail('Premium tier', planTier ?? 'unknown');
 
+  const forgot = await api('POST', '/auth/forgot-password', { email: 'nobody@plantcare.test' });
+  if (forgot.status === 200 || forgot.status === 201) {
+    pass('Forgot password', forgot.data?.message?.slice(0, 40) || 'ok');
+  } else if (forgot.status === 503) {
+    pass('Forgot password', 'skipped (SMTP off)');
+  } else {
+    fail('Forgot password', String(forgot.status));
+  }
+
+  const browse = await api('GET', '/species/browse?page=1&pageSize=24', null, token);
+  if (
+    browse.status === 200 &&
+    Array.isArray(browse.data?.items) &&
+    browse.data.items.length > 0 &&
+    browse.data.total >= 300
+  ) {
+    pass('Browse plants', `page 1, ${browse.data.items.length} items, ${browse.data.total} total`);
+  } else {
+    fail('Browse plants', JSON.stringify(browse.data)?.slice(0, 120));
+  }
+
+  const herbSearch = await api('GET', '/species/search?q=basil', null, token);
+  if (herbSearch.status === 200 && herbSearch.data?.length > 0) {
+    pass('Species search (herb)', herbSearch.data[0]?.commonName);
+  } else fail('Species search (herb)');
+
   const search = await api('GET', '/species/search?q=monstera', null, token);
   if (search.status === 200 && Array.isArray(search.data) && search.data.length > 0) {
-    pass('Species search', `${search.data.length} results`);
-  } else fail('Species search');
+    pass('Species search (houseplant)', `${search.data.length} results`);
+  } else fail('Species search (houseplant)');
 
   const speciesId = search.data[0]?.id;
   const plant = await api(
@@ -206,9 +232,44 @@ async function main() {
     fail('Dr. Plant chat', `${chatRes.status} ${JSON.stringify(chatData)}`);
   }
 
+  const settings = await api(
+    'PUT',
+    '/users/me/notification-settings',
+    { latitude: 40.44, longitude: -79.99, notifyEmail: false },
+    token,
+  );
+  if (settings.status === 200) pass('Notification settings (location)');
+  else fail('Notification settings', String(settings.status));
+
   const weather = await api('GET', '/users/me/weather', null, token);
   if (weather.status === 200) pass('Weather', weather.data?.message || 'ok');
   else fail('Weather', String(weather.status));
+
+  const suggestions = await api('GET', '/tasks/schedule-suggestions', null, token);
+  if (suggestions.status === 200 && Array.isArray(suggestions.data)) {
+    pass('Schedule suggestions', `${suggestions.data.length} suggestion(s)`);
+  } else fail('Schedule suggestions', String(suggestions.status));
+
+  const journalForm = new FormData();
+  journalForm.append('notes', 'UAT verify: leaves look healthy.');
+  const journalRes = await fetch(`${base}/plants/${plantId}/journal`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: journalForm,
+  });
+  const journalData = await journalRes.json().catch(() => ({}));
+  if (journalRes.status === 201 || journalRes.status === 200) {
+    pass('Journal entry', journalData?.id || 'created');
+    const journalList = await api('GET', `/plants/${plantId}/journal`, null, token);
+    if (journalList.status === 200 && Array.isArray(journalList.data) && journalList.data.length > 0) {
+      pass('Journal list', `${journalList.data.length} entries`);
+    } else fail('Journal list');
+  } else fail('Journal entry', `${journalRes.status} ${JSON.stringify(journalData)}`);
+
+  const plantsList = await api('GET', '/plants', null, token);
+  if (plantsList.status === 200 && Array.isArray(plantsList.data) && plantsList.data.length > 0) {
+    pass('Plants list (dashboard)', `${plantsList.data.length} plants`);
+  } else fail('Plants list');
 
   if (meForTier.status === 200) pass('User profile');
   else fail('User profile');

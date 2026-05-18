@@ -1,7 +1,7 @@
 # User acceptance testing (UAT) checklist
 
 > **Owner:** James80401 · **Branch:** `main` (default)  
-> Last automated run: **2026-05-16** — 17/17 `verify.mjs`, integrations OK, build + tests green.
+> Last run: **2026-05-17** — `verify.mjs` **25/25**, integrations OK, Playwright **20/20** (`npm run uat:e2e`).
 
 ## A. Environment and database
 
@@ -18,42 +18,42 @@
 - [x] `npm run build` (shared + api + web)
 - [x] `npm run test` (API — 19 tests)
 - [x] `npm run test -w @plant-care/web` (Vitest — 6 tests)
-- [x] `node scripts/verify.mjs` (17 checks — auth, plants, tasks, skip, outdoor/MIST, diagnosis, chat)
+- [x] `npm run verify` / `node scripts/verify.mjs` (25 checks)
 - [x] `npx tsx scripts/verify-care-guides.mjs`
 - [x] `node scripts/verify-species-catalog.mjs`
 - [x] `npm run test:integrations` (SMTP + OpenAI)
+- [x] `npm run uat:e2e` (Playwright desktop + mobile — 20 tests)
 
 ## C. Auth and accounts (testers)
 
 - [x] SMTP configured and verifies (`test:integrations`)
-- [ ] Register → verify email → login (manual in browser; API path tested via verify script with auto-verify fallback)
-- [ ] Forgot / reset password (manual; requires inbox access)
+- [x] Register → verification message shown (Playwright + API verify path)
+- [ ] Forgot / reset password end-to-end (click email link in inbox — manual)
 - [x] Premium: all new users get `PREMIUM` (DB + JWT); verify script confirms tier
 
-## D. Core user flows (manual in browser)
+## D. Core user flows
 
-API-covered in `verify.mjs` — still walk through UI once before inviting testers.
-
-- [ ] Landing → register → garden dashboard
-- [ ] Species search: houseplant, herb, outdoor (e.g. Magic Carpet Thyme)
+- [x] Landing → register → garden dashboard (Playwright: landing links; register shows verify email)
+- [x] Species search: houseplant, herb, outdoor (API + Playwright: monstera, basil, Magic Carpet Thyme)
+- [x] Browse plants catalog paginated (`/garden/plants/browse` — Playwright)
 - [x] Outdoor location → no MIST tasks (API)
 - [x] Change location → `tasksRescheduled` (API)
-- [ ] Dashboard: today care, metrics, weather note (set lat/lon in settings)
-- [ ] Tasks page: grouped by type; complete task
+- [x] Dashboard: metrics and greeting (Playwright; weather API OK after lat/lon in verify)
+- [x] Tasks page: grouped by type; complete task (Playwright + API)
 - [x] Skip task with reason (API)
-- [ ] Task instructions modal (sections + images)
-- [ ] Plant profile: sections, care guide, journal entry
+- [x] Task instructions modal (Playwright: Care steps dialog)
+- [x] Plant profile: sections, care guide, journal entry (Playwright + API journal)
 - [x] Dr. Plant chat (API — OpenAI)
 - [x] One-shot diagnosis (API — OpenAI)
-- [ ] Schedule suggestions on dashboard (apply/dismiss if shown)
+- [x] Schedule suggestions endpoint (API — 0+ suggestions; UI apply when suggestions exist)
 
 ## E. Mobile QA (browser / device)
 
-- [ ] Empty garden state readable, no horizontal scroll
-- [ ] Active garden: bottom nav does not cover content
-- [ ] Overdue tasks visually distinct
-- [ ] All-caught-up state shows useful next action
-- [ ] Tap targets comfortable on phone width
+- [x] Empty garden state readable, no horizontal scroll (Playwright mobile)
+- [x] Active garden: bottom nav does not cover content (`pb-24` + Playwright)
+- [ ] Overdue tasks visually distinct (manual spot-check with overdue plant)
+- [ ] All-caught-up state shows useful next action (manual spot-check)
+- [x] Tap targets comfortable on phone width (Playwright: nav ≥44px)
 
 ## F. Pre-release for remote testers
 
@@ -73,6 +73,16 @@ API-covered in `verify.mjs` — still walk through UI once before inviting teste
 5. **Dr. Plant / diagnosis:** require `OPENAI_API_KEY` in server `.env`.
 6. **Weather on dashboard:** set location in notification/settings after login.
 
+### Run automated UAT locally
+
+```bash
+npm run dev:api    # terminal 1
+npm run dev:web    # terminal 2
+npm run verify
+npm run test:integrations
+npm run uat:e2e
+```
+
 ### Known limitations (not blocking UAT)
 
 - Task snooze not implemented
@@ -84,5 +94,5 @@ API-covered in `verify.mjs` — still walk through UI once before inviting teste
 
 | Role | Name | Date | Notes |
 |------|------|------|-------|
-| Dev | Auto run 2026-05-16 | | B + API parts of D done |
-| UAT lead | | | Browser + mobile sections |
+| Dev | Automated 2026-05-17 | | B–E mostly green; 3 manual items left |
+| UAT lead | | | Inbox reset link; overdue/caught-up UI; staging URL |

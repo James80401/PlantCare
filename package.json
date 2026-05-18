@@ -9,6 +9,8 @@
     "dev:api": "npm run dev -w @plant-care/api",
     "dev:web": "npm run dev -w @plant-care/web --",
     "test:integrations": "node scripts/test-integrations.mjs",
+    "verify": "node scripts/verify.mjs",
+    "uat:e2e": "playwright test",
     "species:verify": "tsx scripts/verify-species-catalog.mjs",
     "build": "npm run build -w @plant-care/shared && npm run build -w @plant-care/api && npm run build -w @plant-care/web",
     "mobile:copy": "npm run mobile:copy -w @plant-care/web",
@@ -25,6 +27,7 @@
     "db:studio": "prisma studio"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.0",
     "prisma": "^6.2.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
