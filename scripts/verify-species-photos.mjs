@@ -22,12 +22,10 @@ async function main() {
       select: { id: true, commonName: true, defaultImageUrl: true },
     });
     for (const s of species) {
-      const file = join(photosDir, `${s.id}.jpg`);
+      const fromUrl = s.defaultImageUrl?.match(/\/([^/]+\.jpg)$/)?.[1];
+      const file = join(photosDir, fromUrl ?? `${s.id}.jpg`);
       if (existsSync(file) && readFileSync(file).length >= MIN_BYTES) {
         filesOk++;
-        if (!s.defaultImageUrl?.includes(s.id)) {
-          console.log(`✗ DB URL mismatch for ${s.commonName} (${s.id})`);
-        }
       } else if (s.defaultImageUrl) {
         console.log(`✗ Missing file for ${s.commonName} (${s.id})`);
         filesMissing++;
@@ -44,9 +42,9 @@ async function main() {
   console.log(`✓ Photo files on disk: ${filesOk}`);
   console.log(`✓ Manifest entries: ${manifestCount}`);
 
-  const target = Math.floor(total * 0.75);
-  if (withUrl < target) {
-    console.error(`\nNeed at least ~90% coverage (${target}); run npm run species:photos && npm run db:seed`);
+  const target = Math.floor(total * 0.9);
+  if (withUrl < target || filesMissing > 0) {
+    console.error(`\nNeed ≥90% coverage and all files present; run npm run species:photos && npm run db:seed`);
     process.exit(1);
   }
 

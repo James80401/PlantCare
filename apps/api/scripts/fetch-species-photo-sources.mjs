@@ -78,43 +78,69 @@ function inaturalistLargeUrl(photo) {
   return photo?.url;
 }
 
-async function findINaturalistPhoto(scientificName) {
-  const url = `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(scientificName)}&rank=species&per_page=8`;
-  const data = await fetchJson(url);
+function scoreTaxonMatch(taxon, scientificName, commonName) {
+  const name = (taxon.name || '').trim().toLowerCase();
   const target = scientificName.trim().toLowerCase();
+  const base = target.replace(/\s+var\.\s+.*$/i, '').trim();
+  const genus = target.split(/\s+/)[0];
+  const commonWords = commonName.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
 
-  for (const taxon of data.results || []) {
-    const name = (taxon.name || '').trim().toLowerCase();
-    if (name !== target) continue;
-    const photo = taxon.default_photo;
-    if (!photo?.url) continue;
-    const imageUrl = inaturalistLargeUrl(photo);
-    return {
-      provider: 'iNaturalist',
-      inatPhotoId: photo.id,
-      url: imageUrl,
-      license: photo.license_code || 'see iNaturalist',
-      attribution: photo.attribution || 'iNaturalist community',
-      sourcePage: `https://www.inaturalist.org/taxa/${taxon.id}`,
-      score: 100,
-    };
+  if (name === target || name === base) return 100;
+  if (name.startsWith(base)) return 85;
+  if (name.startsWith(genus) && target.split(/\s+/).length === 1) return 70;
+  if (commonWords.every((w) => name.includes(w) || (taxon.preferred_common_name || '').toLowerCase().includes(w))) {
+    return 55;
+  }
+  if (name.startsWith(genus)) return 45;
+  return 0;
+}
+
+async function findINaturalistPhoto(scientificName, commonName, { rankSpecies = true } = {}) {
+  const queries = [
+    scientificName,
+    scientificName.replace(/\s+var\.\s+.*$/i, '').trim(),
+    commonName,
+    `${commonName} ${scientificName.split(/\s+/)[0]}`,
+  ];
+
+  let best = null;
+
+  for (const query of [...new Set(queries)]) {
+    const rankParam = rankSpecies ? '&rank=species' : '';
+    const url = `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(query)}${rankParam}&per_page=12`;
+    let data;
+    try {
+      data = await fetchJson(url);
+    } catch {
+      continue;
+    }
+
+    for (const taxon of data.results || []) {
+      const photo = taxon.default_photo;
+      if (!photo?.url) continue;
+      const score = scoreTaxonMatch(taxon, scientificName, commonName);
+      if (score < 45) continue;
+      const candidate = {
+        provider: 'iNaturalist',
+        inatPhotoId: photo.id,
+        url: inaturalistLargeUrl(photo),
+        license: photo.license_code || 'see iNaturalist',
+        attribution: photo.attribution || 'iNaturalist community',
+        sourcePage: `https://www.inaturalist.org/taxa/${taxon.id}`,
+        score,
+      };
+      if (!best || candidate.score > best.score) best = candidate;
+    }
+
+    if (best?.score >= 85) return best;
+    await sleep(400);
   }
 
-  for (const taxon of data.results || []) {
-    const photo = taxon.default_photo;
-    if (!photo?.url) continue;
-    if (!(taxon.name || '').toLowerCase().startsWith(target.split(' ')[0])) continue;
-    return {
-      provider: 'iNaturalist',
-      inatPhotoId: photo.id,
-      url: inaturalistLargeUrl(photo),
-      license: photo.license_code || 'see iNaturalist',
-      attribution: photo.attribution || 'iNaturalist community',
-      sourcePage: `https://www.inaturalist.org/taxa/${taxon.id}`,
-      score: 60,
-    };
-  }
+  if (best) return best;
 
+  if (rankSpecies) {
+    return findINaturalistPhoto(scientificName, commonName, { rankSpecies: false });
+  }
   return null;
 }
 
@@ -130,54 +156,75 @@ function licenseFromMeta(extmetadata = {}) {
   return { license, attribution: artist };
 }
 
-async function findCommonsPhoto(scientificName) {
-  const url = new URL('https://commons.wikimedia.org/w/api.php');
-  url.searchParams.set('action', 'query');
-  url.searchParams.set('format', 'json');
-  url.searchParams.set('origin', '*');
-  url.searchParams.set('generator', 'search');
-  url.searchParams.set('gsrsearch', `"${scientificName}"`);
-  url.searchParams.set('gsrnamespace', '6');
-  url.searchParams.set('gsrlimit', '8');
-  url.searchParams.set('prop', 'imageinfo');
-  url.searchParams.set('iiprop', 'url|thumburl|size|mime|extmetadata');
-  url.searchParams.set('iiurlwidth', '960');
-
-  const data = await fetchJson(url.toString());
-  const pages = data.query?.pages;
-  if (!pages) return null;
-
-  const genus = scientificName.split(' ')[0].toLowerCase();
+async function findCommonsPhoto(scientificName, commonName) {
+  const genus = scientificName.split(/\s+/)[0].toLowerCase();
+  const searches = [
+    `"${scientificName}"`,
+    `"${scientificName.replace(/\s+var\.\s+.*$/i, '').trim()}"`,
+    `${commonName} plant`,
+    `${scientificName} plant`,
+  ];
   let best = null;
 
-  for (const page of Object.values(pages)) {
-    const info = page.imageinfo?.[0];
-    if (!info?.url || !info.mime?.startsWith('image/')) continue;
-    if ((info.size || 0) < 12_000) continue;
-    const title = (page.title || '').toLowerCase();
-    if (!title.includes(genus)) continue;
-    if (title.includes('icon') || title.includes('logo')) continue;
+  for (const gsrsearch of [...new Set(searches)]) {
+    const url = new URL('https://commons.wikimedia.org/w/api.php');
+    url.searchParams.set('action', 'query');
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('origin', '*');
+    url.searchParams.set('generator', 'search');
+    url.searchParams.set('gsrsearch', gsrsearch);
+    url.searchParams.set('gsrnamespace', '6');
+    url.searchParams.set('gsrlimit', '8');
+    url.searchParams.set('prop', 'imageinfo');
+    url.searchParams.set('iiprop', 'url|thumburl|size|mime|extmetadata');
+    url.searchParams.set('iiurlwidth', '960');
 
-    const candidate = {
-      provider: 'Wikimedia Commons',
-      url: info.thumburl || info.url,
-      sourcePage: `https://commons.wikimedia.org/wiki/${encodeURIComponent(page.title)}`,
-      score: title.includes(genus.replace(/ /g, '_')) ? 40 : 20,
-      ...licenseFromMeta(info.extmetadata),
-    };
-    if (!best || candidate.score > best.score) best = candidate;
+    let data;
+    try {
+      data = await fetchJson(url.toString());
+    } catch {
+      continue;
+    }
+    const pages = data.query?.pages;
+    if (!pages) continue;
+
+    for (const page of Object.values(pages)) {
+      const info = page.imageinfo?.[0];
+      if (!info?.url || !info.mime?.startsWith('image/')) continue;
+      if ((info.size || 0) < 8_000) continue;
+      const title = (page.title || '').toLowerCase();
+      if (title.includes('icon') || title.includes('logo') || title.includes('diagram')) continue;
+
+      let score = 15;
+      if (title.includes(genus)) score += 25;
+      if (commonName.toLowerCase().split(/\s+/).some((w) => w.length > 3 && title.includes(w))) {
+        score += 15;
+      }
+
+      const candidate = {
+        provider: 'Wikimedia Commons',
+        url: info.url || info.thumburl,
+        sourcePage: `https://commons.wikimedia.org/wiki/${encodeURIComponent(page.title)}`,
+        score,
+        ...licenseFromMeta(info.extmetadata),
+      };
+      if (!best || candidate.score > best.score) best = candidate;
+    }
+    if (best?.score >= 35) return best;
+    await sleep(1200);
   }
 
   return best;
 }
 
-async function findWikipediaPhoto(scientificName) {
-  const title = encodeURIComponent(scientificName.replace(/ /g, '_'));
-  const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&titles=${title}&prop=pageimages&piprop=original`;
+async function findWikipediaPhoto(title) {
+  const encoded = encodeURIComponent(title.replace(/ /g, '_'));
+  const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&titles=${encoded}&prop=pageimages&piprop=original`;
   const data = await fetchJson(url);
   const pages = data.query?.pages;
   if (!pages) return null;
   for (const page of Object.values(pages)) {
+    if (page.missing !== undefined) continue;
     const src = page.original?.source;
     if (!src?.startsWith('http')) continue;
     return {
@@ -185,7 +232,7 @@ async function findWikipediaPhoto(scientificName) {
       url: src,
       license: 'See Wikipedia file page',
       attribution: 'Wikipedia',
-      sourcePage: `https://en.wikipedia.org/wiki/${title}`,
+      sourcePage: `https://en.wikipedia.org/wiki/${encoded}`,
       score: 35,
     };
   }
@@ -194,7 +241,7 @@ async function findWikipediaPhoto(scientificName) {
 
 async function findPhoto(commonName, scientificName) {
   await sleep(INAT_DELAY_MS);
-  const inat = await findINaturalistPhoto(scientificName);
+  const inat = await findINaturalistPhoto(scientificName, commonName);
   if (inat) {
     const ok = await validatePhotoHit(inat);
     if (ok) return ok;
@@ -202,7 +249,7 @@ async function findPhoto(commonName, scientificName) {
 
   await sleep(COMMONS_DELAY_MS);
   try {
-    const commons = await findCommonsPhoto(scientificName);
+    const commons = await findCommonsPhoto(scientificName, commonName);
     if (commons) {
       const ok = await validatePhotoHit(commons);
       if (ok) return ok;
@@ -211,11 +258,18 @@ async function findPhoto(commonName, scientificName) {
     console.warn('  Commons:', e.message);
   }
 
-  await sleep(800);
-  const wiki = await findWikipediaPhoto(scientificName);
-  if (wiki) {
-    const ok = await validatePhotoHit(wiki);
-    if (ok) return ok;
+  const wikiTitles = [
+    scientificName,
+    scientificName.replace(/\s+var\.\s+.*$/i, '').trim(),
+    commonName,
+  ];
+  for (const title of [...new Set(wikiTitles)]) {
+    await sleep(800);
+    const wiki = await findWikipediaPhoto(title);
+    if (wiki) {
+      const ok = await validatePhotoHit(wiki);
+      if (ok) return ok;
+    }
   }
   return null;
 }

@@ -31,7 +31,7 @@ async function downloadToFile(meta, dest) {
   let lastError = 'no urls';
   for (const url of urls) {
     for (let attempt = 0; attempt < 3; attempt++) {
-      await sleep(500 + attempt * 800);
+      await sleep(1500 + attempt * 2000);
       try {
         const res = await fetch(url, {
           redirect: 'follow',

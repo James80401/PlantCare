@@ -7,6 +7,15 @@ export function photoIdFromMeta(meta) {
   return idMatch?.[1] ?? null;
 }
 
+export function commonsDirectUrl(url) {
+  if (!url) return url;
+  const base = url.split('?')[0];
+  if (!base.includes('/commons/thumb/')) return base;
+  const match = base.match(/\/commons\/thumb\/(.+)\/\d+px-[^/]+$/i);
+  if (match) return `https://upload.wikimedia.org/wikipedia/commons/${match[1]}`;
+  return base;
+}
+
 export function candidateUrls(meta) {
   const id = photoIdFromMeta(meta);
   const urls = [];
@@ -17,6 +26,7 @@ export function candidateUrls(meta) {
     urls.push(`https://static.inaturalist.org/photos/${id}/medium.jpg`);
   }
   if (meta.url) {
+    urls.push(commonsDirectUrl(meta.url));
     urls.push(meta.url);
     if (meta.url.includes('static.inaturalist.org')) {
       urls.push(
@@ -27,7 +37,7 @@ export function candidateUrls(meta) {
       );
     }
   }
-  return [...new Set(urls)];
+  return [...new Set(urls.filter(Boolean))];
 }
 
 export async function validatePhotoHit(hit) {

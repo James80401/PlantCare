@@ -1526,6 +1526,90 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 - Hatem Moushir
 - https://commons.wikimedia.org/wiki/File%3AAnthurium%20andraeanum%20hatem%20moushir.JPG
 
+## Ponytail Palm
+- Scientific: *Beaucarnea recurvata*
+- License: CC BY-SA 4.0
+- juancruzado
+- https://commons.wikimedia.org/wiki/File%3ABeaucarnea%20recurvata%2C%20Sierra%20del%20Abra%20Tanchipa%2C%20San%20Luis%20Potos%C3%AD%2C%20Mexico%202.jpg
+
+## Cebu Blue Pothos
+- Scientific: *Epipremnum pinnatum*
+- License: CC BY-SA 3.0
+- Mokkie
+- https://commons.wikimedia.org/wiki/File%3ADragon-Tail%20Plant%20(Epipremnum%20pinnatum)%201.jpg
+
+## Rabbit Foot Fern
+- Scientific: *Davallia fejeensis*
+- License: Public domain
+- Chhe (talk)
+- https://commons.wikimedia.org/wiki/File%3ADavalliaFejeensis.jpg
+
+## Kalanchoe
+- Scientific: *Kalanchoe blossfeldiana*
+- License: CC BY-SA 3.0
+- Cdpanic at English Wikipedia
+- https://commons.wikimedia.org/wiki/File%3AKalanchoe.blossfeldiana.jpg
+
+## Catnip
+- Scientific: *Nepeta cataria*
+- License: Public domain
+- Johann Georg Sturm (Painter: Jacob Sturm)
+- https://commons.wikimedia.org/wiki/File%3ANepeta%20cataria%20Sturm24.jpg
+
+## Jalapeño
+- Scientific: *Capsicum annuum*
+- License: Public domain
+- Franz Eugen Köhler, Köhler's Medizinal-Pflanzen
+- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum%20-%20K%C3%B6hler%E2%80%93s%20Medizinal-Pflanzen-027.jpg
+
+## Arugula
+- Scientific: *Eruca vesicaria*
+- License: CC BY-SA 4.0
+- Megustanlasframbuesas
+- https://commons.wikimedia.org/wiki/File%3AEruca%20vesicaria%20BYN.jpg
+
+## Poblano Pepper
+- Scientific: *Capsicum annuum*
+- License: Public domain
+- Franz Eugen Köhler, Köhler's Medizinal-Pflanzen
+- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum%20-%20K%C3%B6hler%E2%80%93s%20Medizinal-Pflanzen-027.jpg
+
+## Marigold
+- Scientific: *Tagetes*
+- License: CC BY-SA 3.0
+- Wikimedia Commons
+- https://commons.wikimedia.org/wiki/File%3ATagetes%20x%20erecta1.jpg
+
+## Gardenia
+- Scientific: *Gardenia jasminoides*
+- License: CC BY-SA 3.0
+- KENPEI
+- https://commons.wikimedia.org/wiki/File%3AGardenia%20jasminoides%20cv1.jpg
+
+## Columbine
+- Scientific: *Aquilegia canadensis*
+- License: CC0
+- Cbaile19
+- https://commons.wikimedia.org/wiki/File%3AAquilegia%20canadensis%2C%20Fallingwater%2C%202025-05-29-2.jpg
+
+## Begonia Maculata
+- Scientific: *Begonia maculata*
+- License: CC BY 2.0
+- Cliff from I now live in Arlington, VA (Outside Washington DC), USA
+- https://commons.wikimedia.org/wiki/File%3ABegonia%20maculata3073316230.jpg
+
+## Senecio Blue Chalk
+- Scientific: *Curio repens*
+- License: CC BY-SA 4.0
+- Agnieszka Kwiecień, Nova
+- https://commons.wikimedia.org/wiki/File%3ACurio%20repens%20syn.%20Senecio%20serpens%202019-04-14%2001.jpg
+
+## African Milk Tree
+- Scientific: *Euphorbia trigona*
+- License: CC BY-SA 3.0
+- El Denis Conrado, en Universidade Federal de Lavras, Brazilo.
+- https://commons.wikimedia.org/wiki/File%3AEuphorbia%20trigona%20forma%20rubra.jpg
+
 ## Elephant Ear
 - Scientific: *Colocasia esculenta*
 - License: CC BY-SA 3.0
@@ -1549,12 +1633,6 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 - License: CC BY-SA 4.0
 - Cillas
 - https://commons.wikimedia.org/wiki/File%3AYucca%20elephantipes%20HRM2.JPG
-
-## Ponytail Palm
-- Scientific: *Beaucarnea recurvata*
-- License: CC BY-SA 4.0
-- juancruzado
-- https://commons.wikimedia.org/wiki/File%3ABeaucarnea%20recurvata%2C%20Sierra%20del%20Abra%20Tanchipa%2C%20San%20Luis%20Potos%C3%AD%2C%20Mexico%202.jpg
 
 ## Polka Dot Plant
 - Scientific: *Hypoestes phyllostachya*
@@ -1580,12 +1658,6 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 - Kor!An (Корзун Андрей)
 - https://commons.wikimedia.org/wiki/File%3AScindapsus%20pictus%2001.jpg
 
-## Cebu Blue Pothos
-- Scientific: *Epipremnum pinnatum*
-- License: CC BY-SA 3.0
-- Mokkie
-- https://commons.wikimedia.org/wiki/File%3ADragon-Tail%20Plant%20(Epipremnum%20pinnatum)%201.jpg
-
 ## Staghorn Fern
 - Scientific: *Platycerium*
 - License: GFDL 1.2
@@ -1599,23 +1671,11 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 - Krzysztof Ziarnek, Kenraiz
 - https://commons.wikimedia.org/wiki/File%3ANephrolepis%20obliterata%20Kimberly%20Queen%20kz1.jpg
 
-## Rabbit Foot Fern
-- Scientific: *Davallia fejeensis*
-- License: Public domain
-- Chhe (talk)
-- https://commons.wikimedia.org/wiki/File%3ADavalliaFejeensis.jpg
-
 ## Aloe Vera
 - Scientific: *Aloe barbadensis*
 - License: Public domain
 - Wouter Hagens
 - https://commons.wikimedia.org/wiki/File%3AAloe%20vera%20A.jpg
-
-## Kalanchoe
-- Scientific: *Kalanchoe blossfeldiana*
-- License: CC BY-SA 3.0
-- Cdpanic at English Wikipedia
-- https://commons.wikimedia.org/wiki/File%3AKalanchoe.blossfeldiana.jpg
 
 ## Panda Plant
 - Scientific: *Kalanchoe tomentosa*
@@ -1647,11 +1707,11 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 - Tepeyac
 - https://commons.wikimedia.org/wiki/File%3AAnethum%20graveolens%2002.jpg
 
-## Catnip
-- Scientific: *Nepeta cataria*
-- License: Public domain
-- Johann Georg Sturm (Painter: Jacob Sturm)
-- https://commons.wikimedia.org/wiki/File%3ANepeta%20cataria%20Sturm24.jpg
+## Thai Basil
+- Scientific: *Ocimum basilicum var. thyrsiflora*
+- License: cc-by-nc
+- (c) Sune Holt, some rights reserved (CC BY-NC), uploaded by Sune Holt
+- https://www.inaturalist.org/taxa/61398
 
 ## Summer Savory
 - Scientific: *Satureja hortensis*
@@ -1661,9 +1721,9 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 
 ## Anise Hyssop
 - Scientific: *Agastache foeniculum*
-- License: CC BY-SA 4.0
-- Guettarda
-- https://commons.wikimedia.org/wiki/File%3AAgastache%20foeniculum.jpg
+- License: CC0
+- Jasper Shide
+- https://commons.wikimedia.org/wiki/File%3AAgastache%20foeniculum%20-%20Anise%20Hyssop%2001.jpg
 
 ## Epazote
 - Scientific: *Dysphania ambrosioides*
@@ -1673,21 +1733,15 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 
 ## Bell Pepper
 - Scientific: *Capsicum annuum*
-- License: Public domain
-- Franz Eugen Köhler, Köhler's Medizinal-Pflanzen
-- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum%20-%20K%C3%B6hler%E2%80%93s%20Medizinal-Pflanzen-027.jpg
-
-## Jalapeño
-- Scientific: *Capsicum annuum*
-- License: Public domain
-- Franz Eugen Köhler, Köhler's Medizinal-Pflanzen
-- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum%20-%20K%C3%B6hler%E2%80%93s%20Medizinal-Pflanzen-027.jpg
+- License: CC BY-SA 4.0
+- Sabina Bajracharya
+- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum-Red%20Chilli%20Pepper%2001.jpg
 
 ## Carrot
 - Scientific: *Daucus carota*
-- License: Public domain
-- Carl Axel Magnus Lindman
-- https://commons.wikimedia.org/wiki/File%3ADaucus%20Carota.jpg
+- License: CC BY-SA 4.0
+- Zeynel Cebeci
+- https://commons.wikimedia.org/wiki/File%3ADaucus%20carota%20-%20Wild%20carrot%2002.jpg
 
 ## Potato
 - Scientific: *Solanum tuberosum*
@@ -1698,50 +1752,38 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 ## Sweet Potato
 - Scientific: *Ipomoea batatas*
 - License: CC BY-SA 3.0
-- Wikimedia Commons
-- https://commons.wikimedia.org/wiki/File%3AIpomoea%20batatas.jpg
+- Earth100
+- https://commons.wikimedia.org/wiki/File%3AIpomoea%20batatas%20(Sweet%20Potato)%20Flower.jpg
 
 ## Celery
 - Scientific: *Apium graveolens*
-- License: Public domain
-- Wikimedia Commons
-- https://commons.wikimedia.org/wiki/File%3AIllustration%20Apium%20graveolens0.jpg
-
-## Arugula
-- Scientific: *Eruca vesicaria*
 - License: CC BY-SA 4.0
-- Megustanlasframbuesas
-- https://commons.wikimedia.org/wiki/File%3AEruca%20vesicaria%20BYN.jpg
+- MPF
+- https://commons.wikimedia.org/wiki/File%3A2023-06-22%20Apium%20graveolens%20(Wild%20Celery)%2C%20Elswick%2C%20Northumberland%203.jpg
 
 ## Tomatillo
 - Scientific: *Physalis philadelphica*
-- License: CC BY 3.0
-- myself
-- https://commons.wikimedia.org/wiki/File%3APhysalis-philadelphica-1010897.JPG
+- License: CC BY-SA 3.0
+- Frank Vincentz
+- https://commons.wikimedia.org/wiki/File%3AKluse%20-%20Physalis%20philadelphica%20-%20Tomatillo%2006%20ies.jpg
 
 ## Hot Pepper
 - Scientific: *Capsicum annuum*
-- License: Public domain
-- Franz Eugen Köhler, Köhler's Medizinal-Pflanzen
-- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum%20-%20K%C3%B6hler%E2%80%93s%20Medizinal-Pflanzen-027.jpg
+- License: CC BY-SA 4.0
+- Sabina Bajracharya
+- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum-Red%20Chilli%20Pepper%2001.jpg
 
 ## Serrano Pepper
 - Scientific: *Capsicum annuum*
-- License: Public domain
-- Franz Eugen Köhler, Köhler's Medizinal-Pflanzen
-- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum%20-%20K%C3%B6hler%E2%80%93s%20Medizinal-Pflanzen-027.jpg
+- License: CC BY-SA 4.0
+- Sabina Bajracharya
+- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum-Red%20Chilli%20Pepper%2001.jpg
 
 ## Anaheim Pepper
 - Scientific: *Capsicum annuum*
-- License: Public domain
-- Franz Eugen Köhler, Köhler's Medizinal-Pflanzen
-- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum%20-%20K%C3%B6hler%E2%80%93s%20Medizinal-Pflanzen-027.jpg
-
-## Poblano Pepper
-- Scientific: *Capsicum annuum*
-- License: Public domain
-- Franz Eugen Köhler, Köhler's Medizinal-Pflanzen
-- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum%20-%20K%C3%B6hler%E2%80%93s%20Medizinal-Pflanzen-027.jpg
+- License: CC BY-SA 4.0
+- Sabina Bajracharya
+- https://commons.wikimedia.org/wiki/File%3ACapsicum%20annuum-Red%20Chilli%20Pepper%2001.jpg
 
 ## Artichoke
 - Scientific: *Cynara cardunculus*
@@ -1751,9 +1793,9 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 
 ## Malabar Spinach
 - Scientific: *Basella alba*
-- License: CC BY-SA 3.0
-- Wikimedia Commons
-- https://commons.wikimedia.org/wiki/File%3ABasella%20alba-2.JPG
+- License: Public domain
+- Reede tot Drakestein, Hendrik van
+- https://commons.wikimedia.org/wiki/File%3ABasella%20rubra-Hortus%20Malabaricus-V7-47-T24.png
 
 ## Edamame
 - Scientific: *Glycine max*
@@ -1766,12 +1808,6 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 - License: Public domain
 - Franz Eugen Köhler, Köhler's Medizinal-Pflanzen
 - https://commons.wikimedia.org/wiki/File%3AVitis%20vinifera%20-%20K%C3%B6hler%E2%80%93s%20Medizinal-Pflanzen-145.jpg
-
-## Marigold
-- Scientific: *Tagetes*
-- License: CC BY-SA 3.0
-- Wikimedia Commons
-- https://commons.wikimedia.org/wiki/File%3ATagetes%20x%20erecta1.jpg
 
 ## Impatiens
 - Scientific: *Impatiens walleriana*
@@ -1797,12 +1833,6 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 - Eiffel
 - https://commons.wikimedia.org/wiki/File%3ARhododendron-by-eiffel-public-domain-20040617.jpg
 
-## Gardenia
-- Scientific: *Gardenia jasminoides*
-- License: CC BY-SA 3.0
-- KENPEI
-- https://commons.wikimedia.org/wiki/File%3AGardenia%20jasminoides%20cv1.jpg
-
 ## Snapdragon
 - Scientific: *Antirrhinum majus*
 - License: CC BY 2.5
@@ -1811,9 +1841,9 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 
 ## Ornamental Grass
 - Scientific: *Miscanthus sinensis*
-- License: See Wikipedia file page
-- Wikipedia
-- https://en.wikipedia.org/wiki/Miscanthus_sinensis
+- License: CC BY-SA 4.0
+- Emőke Dénes
+- https://commons.wikimedia.org/wiki/File%3APoales%20-%20Miscanthus%20sinensis%20-%203.jpg
 
 ## Penstemon
 - Scientific: *Penstemon digitalis*
@@ -1827,11 +1857,11 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 - Mason Brock (Masebrock)
 - https://commons.wikimedia.org/wiki/File%3AEutrochium%20purpureum.jpg
 
-## Columbine
-- Scientific: *Aquilegia canadensis*
-- License: CC0
-- Cbaile19
-- https://commons.wikimedia.org/wiki/File%3AAquilegia%20canadensis%2C%20Fallingwater%2C%202025-05-29-2.jpg
+## Moss Terrarium
+- Scientific: *Bryophyta*
+- License: CC BY-SA 4.0
+- Mænsard vokser
+- https://commons.wikimedia.org/wiki/File%3AMuschio%20Bryophyta%20in%20Val%20Vigezzo%20-%20Toceno%20VCO%2C%20Piedmont%2C%20Italy%202020-09-12.jpg
 
 ## Ficus Ginseng
 - Scientific: *Ficus microcarpa*
@@ -1851,17 +1881,23 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 - M.S. del., J.N.Fitch lith.
 - https://commons.wikimedia.org/wiki/File%3ACornus%20florida%20rubra%20136-8315.jpg
 
+## Umbrella Tree
+- Scientific: *Schefflera actinophylla*
+- License: CC BY-SA 4.0
+- Dandy1022
+- https://commons.wikimedia.org/wiki/File%3ADwarf%20umbrella%20tree%20(Schefflera%20arboricola).jpg
+
 ## Stromanthe Triostar
 - Scientific: *Stromanthe sanguinea*
 - License: CC BY-SA 3.0
 - Patrice78500
 - https://commons.wikimedia.org/wiki/File%3AStromanthe%20sanguinea%20-%20Serres%20d'Auteuil.JPG
 
-## Begonia Maculata
-- Scientific: *Begonia maculata*
-- License: CC BY 2.0
-- Cliff from I now live in Arlington, VA (Outside Washington DC), USA
-- https://commons.wikimedia.org/wiki/File%3ABegonia%20maculata3073316230.jpg
+## Monstera Peru
+- Scientific: *Monstera karstenianum*
+- License: CC BY-SA 4.0
+- Plant Yeah
+- https://commons.wikimedia.org/wiki/File%3AVariegated%20Monstera%20Lechleriana.png
 
 ## Ficus Audrey
 - Scientific: *Ficus benghalensis*
@@ -1875,23 +1911,11 @@ Per-species reference images from Wikimedia Commons (see manifest for license).
 - Poyt448 Peter Woodard
 - https://commons.wikimedia.org/wiki/File%3AFour-leaved%20Peperomia%20Minnamurra.jpg
 
-## Senecio Blue Chalk
-- Scientific: *Curio repens*
-- License: CC BY-SA 4.0
-- Agnieszka Kwiecień, Nova
-- https://commons.wikimedia.org/wiki/File%3ACurio%20repens%20syn.%20Senecio%20serpens%202019-04-14%2001.jpg
-
 ## Gasteria
 - Scientific: *Gasteria*
 - License: CC BY-SA 3.0
 - HelenaH
 - https://commons.wikimedia.org/wiki/File%3AGasteria%20carinata%20hh.jpg
-
-## African Milk Tree
-- Scientific: *Euphorbia trigona*
-- License: CC BY-SA 3.0
-- El Denis Conrado, en Universidade Federal de Lavras, Brazilo.
-- https://commons.wikimedia.org/wiki/File%3AEuphorbia%20trigona%20forma%20rubra.jpg
 
 ## Moon Cactus
 - Scientific: *Gymnocalycium mihanovichii*

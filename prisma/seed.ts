@@ -1,8 +1,7 @@
-import { existsSync } from 'fs';
 import { join } from 'path';
 import { PrismaClient } from '@prisma/client';
 import { speciesCatalog, speciesSeedId } from './data/species-catalog';
-import { speciesPhotoUrl } from './data/species-photo-utils';
+import { legacySpeciesSeedId, resolveSpeciesPhotoFileKey, speciesPhotoUrl } from './data/species-photo-utils';
 import { seedCareGuides } from './seed-care-guides';
 
 const prisma = new PrismaClient();
@@ -17,9 +16,6 @@ const speciesPhotosDir = join(
   'species',
 );
 
-function legacySeedId(commonName: string): string {
-  return `seed-${commonName.toLowerCase().replace(/\s+/g, '-')}`;
-}
 
 async function main() {
   // Remove old seed rows that nothing references (avoids duplicate search hits)
@@ -35,16 +31,16 @@ async function main() {
 
   for (const s of speciesCatalog) {
     const id = speciesSeedId(s.commonName, s.scientificName);
-    const legacyId = legacySeedId(s.commonName);
+    const legacyId = legacySpeciesSeedId(s.commonName);
     const legacyInUse = await prisma.plant.count({ where: { speciesId: legacyId } });
 
     const targetId = legacyInUse > 0 && legacyId !== id ? legacyId : id;
     const existing = await prisma.plantSpecies.findUnique({ where: { id: targetId } });
 
     const speciesData = { ...s } as typeof s & { defaultImageUrl?: string };
-    const photoPath = join(speciesPhotosDir, `${targetId}.jpg`);
-    if (existsSync(photoPath)) {
-      speciesData.defaultImageUrl = speciesPhotoUrl(targetId);
+    const photoKey = resolveSpeciesPhotoFileKey(targetId, s, speciesPhotosDir);
+    if (photoKey) {
+      speciesData.defaultImageUrl = speciesPhotoUrl(photoKey);
     }
 
     await prisma.plantSpecies.upsert({
