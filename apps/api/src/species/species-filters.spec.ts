@@ -58,6 +58,7 @@ function species(overrides: Record<string, unknown>) {
     phMax: null,
     careNotes: null,
     defaultImageUrl: null,
+    metadataJson: null,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

@@ -3,12 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  buildSpeciesCatalogMeta,
   compareSpeciesForSort,
   speciesMatchesFilters,
   type SpeciesBrowseSort,
   type SpeciesSearchFilters,
 } from './species-filters';
+import { enrichSpeciesRecord } from './species-enrich';
 
 @Injectable()
 export class PerenualService {
@@ -45,16 +45,7 @@ export class PerenualService {
       : {};
 
     const enrich = (species: Awaited<ReturnType<typeof this.prisma.plantSpecies.findMany>>) =>
-      species.map((item) => {
-        const meta = buildSpeciesCatalogMeta(item);
-        return {
-          ...item,
-          discoveryTags: meta.discoveryTags,
-          difficulty: meta.difficulty,
-          toxicitySummary: meta.toxicitySummary,
-          phRangeLabel: meta.phRangeLabel,
-        };
-      });
+      species.map((item) => enrichSpeciesRecord(item));
 
     if (hasFilters) {
       const all = await this.prisma.plantSpecies.findMany({ where });
@@ -114,16 +105,7 @@ export class PerenualService {
       ? local.filter((species) => speciesMatchesFilters(species, filters))
       : local;
     const enrichSearch = (species: typeof filteredLocal) =>
-      species.map((item) => {
-        const meta = buildSpeciesCatalogMeta(item);
-        return {
-          ...item,
-          discoveryTags: meta.discoveryTags,
-          difficulty: meta.difficulty,
-          toxicitySummary: meta.toxicitySummary,
-          phRangeLabel: meta.phRangeLabel,
-        };
-      });
+      species.map((item) => enrichSpeciesRecord(item));
 
     if (hasFilters || local.length >= 5 || !this.apiKey) {
       return enrichSearch(filteredLocal.slice(0, 30));
@@ -153,14 +135,7 @@ export class PerenualService {
   async getOrFetchById(speciesId: string) {
     const existing = await this.prisma.plantSpecies.findUnique({ where: { id: speciesId } });
     if (!existing) throw new Error('Species not found');
-    const meta = buildSpeciesCatalogMeta(existing);
-    return {
-      ...existing,
-      discoveryTags: meta.discoveryTags,
-      difficulty: meta.difficulty,
-      toxicitySummary: meta.toxicitySummary,
-      phRangeLabel: meta.phRangeLabel,
-    };
+    return enrichSpeciesRecord(existing);
   }
 
   private async upsertFromApi(item: {

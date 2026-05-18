@@ -18,6 +18,7 @@ describe('species catalog metadata', () => {
     careNotes: 'Very drought tolerant; water sparingly.',
     perenualId: null,
     defaultImageUrl: null,
+    metadataJson: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

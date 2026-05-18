@@ -162,11 +162,28 @@ async function main() {
   const speciesDetailId = browse.data?.items?.[0]?.id;
   if (speciesDetailId) {
     const detail = await api('GET', `/species/${speciesDetailId}`, null, token);
-    if (detail.status === 200 && detail.data?.difficulty && detail.data?.discoveryTags?.length) {
+    if (
+      detail.status === 200 &&
+      detail.data?.difficulty &&
+      detail.data?.discoveryTags?.length &&
+      detail.data?.metadata?.pests?.length
+    ) {
       pass('Species detail metadata', detail.data.commonName);
     } else {
       fail('Species detail metadata', JSON.stringify(detail.data)?.slice(0, 120));
     }
+  }
+
+  const recommended = await api('GET', '/species/recommended?limit=8', null, token);
+  if (
+    recommended.status === 200 &&
+    Array.isArray(recommended.data?.items) &&
+    recommended.data.items.length > 0 &&
+    recommended.data.reason
+  ) {
+    pass('Species recommended', `${recommended.data.items.length} picks`);
+  } else {
+    fail('Species recommended', JSON.stringify(recommended.data)?.slice(0, 120));
   }
 
   const herbSearch = await api('GET', '/species/search?q=basil', null, token);

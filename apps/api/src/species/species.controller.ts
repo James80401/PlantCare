@@ -1,8 +1,9 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { PerenualService } from './perenual.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { SpeciesRecommendationsService } from './species-recommendations.service';
 import { parseSpeciesSearchFilters } from './species-filters';
 
 @ApiTags('species')
@@ -12,8 +13,17 @@ import { parseSpeciesSearchFilters } from './species-filters';
 export class SpeciesController {
   constructor(
     private perenual: PerenualService,
-    private prisma: PrismaService,
+    private recommendations: SpeciesRecommendationsService,
   ) {}
+
+  @Get('recommended')
+  recommended(@CurrentUser() user: JwtPayload, @Query('limit') limit?: string) {
+    const parsed = parseInt(limit || '12', 10);
+    return this.recommendations.getRecommendedForUser(
+      user.sub,
+      Number.isFinite(parsed) ? parsed : 12,
+    );
+  }
 
   @Get('search')
   search(

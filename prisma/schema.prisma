@@ -123,6 +123,7 @@ model PlantSpecies {
   phMax             Float?
   careNotes         String?
   defaultImageUrl   String?
+  metadataJson      String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   plants            Plant[]

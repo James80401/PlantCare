@@ -67,6 +67,10 @@ export default function BrowsePlants() {
   const [activeFilters, setActiveFilters] = useState(() => filtersFromParams(searchParams));
   const [sort, setSort] = useState<SpeciesBrowseSort>(() => sortFromParams(searchParams));
   const [result, setResult] = useState<BrowseResponse | null>(null);
+  const [recommended, setRecommended] = useState<{
+    items: SpeciesItem[];
+    reason: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -86,6 +90,21 @@ export default function BrowsePlants() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync URL when debounced search changes
   }, [debouncedQuery]);
+
+  useEffect(() => {
+    let cancelled = false;
+    speciesApi
+      .recommended(8)
+      .then((r) => {
+        if (!cancelled) setRecommended(r.data);
+      })
+      .catch(() => {
+        if (!cancelled) setRecommended(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -185,6 +204,51 @@ export default function BrowsePlants() {
           </Link>
         }
       />
+
+      {recommended?.items?.length ? (
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold text-emerald-900">Recommended for you</h2>
+            <p className="text-xs text-gray-500">{recommended.reason}</p>
+          </div>
+          <ul className="-mx-1 flex gap-3 overflow-x-auto pb-1 px-1 snap-x snap-mandatory">
+            {recommended.items.map((species) => (
+              <li key={species.id} className="w-44 shrink-0 snap-start">
+                <article className="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm">
+                  <Link
+                    to={`/garden/plants/browse/${species.id}`}
+                    className="block aspect-square bg-emerald-50"
+                  >
+                    {species.defaultImageUrl ? (
+                      <img
+                        src={species.defaultImageUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="flex h-full items-center justify-center text-3xl">🌿</span>
+                    )}
+                  </Link>
+                  <div className="p-2.5">
+                    <Link
+                      to={`/garden/plants/browse/${species.id}`}
+                      className="line-clamp-2 text-xs font-semibold text-emerald-950 hover:text-emerald-700"
+                    >
+                      {species.commonName}
+                    </Link>
+                    {species.difficulty ? (
+                      <p className="mt-1 text-[0.65rem] font-medium text-lime-800">
+                        {species.difficulty}
+                      </p>
+                    ) : null}
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <form
         onSubmit={handleSearchSubmit}

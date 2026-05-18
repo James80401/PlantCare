@@ -89,6 +89,8 @@ export const speciesApi = {
     outdoor?: string;
   }) => api.get('/species/browse', { params }),
   get: (id: string) => api.get(`/species/${id}`),
+  recommended: (limit = 12) =>
+    api.get('/species/recommended', { params: { limit } }),
 };
 
 export const dashboardApi = {

@@ -1,5 +1,9 @@
 import { join } from 'path';
 import { PrismaClient } from '@prisma/client';
+import {
+  buildMetadataForSpecies,
+  serializeSpeciesMetadata,
+} from '../apps/api/src/species/species-metadata';
 import { speciesCatalog, speciesSeedId } from './data/species-catalog';
 import { legacySpeciesSeedId, resolveSpeciesPhotoFileKey, speciesPhotoUrl } from './data/species-photo-utils';
 import { seedCareGuides } from './seed-care-guides';
@@ -37,11 +41,12 @@ async function main() {
     const targetId = legacyInUse > 0 && legacyId !== id ? legacyId : id;
     const existing = await prisma.plantSpecies.findUnique({ where: { id: targetId } });
 
-    const speciesData = { ...s } as typeof s & { defaultImageUrl?: string };
+    const speciesData = { ...s } as typeof s & { defaultImageUrl?: string; metadataJson?: string };
     const photoKey = resolveSpeciesPhotoFileKey(targetId, s, speciesPhotosDir);
     if (photoKey) {
       speciesData.defaultImageUrl = speciesPhotoUrl(photoKey);
     }
+    speciesData.metadataJson = serializeSpeciesMetadata(buildMetadataForSpecies(s));
 
     await prisma.plantSpecies.upsert({
       where: { id: targetId },

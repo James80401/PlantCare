@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Skeleton } from '../components/ui/Skeleton';
+import {
+  SpeciesMetadataPanel,
+  type SpeciesMetadata,
+} from '../components/species/SpeciesMetadataPanel';
 import { speciesApi } from '../services/api';
 
 interface SpeciesDetail {
@@ -16,6 +20,7 @@ interface SpeciesDetail {
   difficulty?: string;
   toxicitySummary?: string;
   phRangeLabel?: string;
+  metadata?: SpeciesMetadata;
 }
 
 export default function SpeciesBrowseDetail() {
@@ -170,6 +175,8 @@ export default function SpeciesBrowseDetail() {
               {species.careNotes}
             </p>
           ) : null}
+
+          {species.metadata ? <SpeciesMetadataPanel metadata={species.metadata} /> : null}
 
           <button
             type="button"
