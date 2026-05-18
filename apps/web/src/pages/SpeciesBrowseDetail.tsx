@@ -25,10 +25,10 @@ export default function SpeciesBrowseDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
+    if (!speciesId) return;
     let cancelled = false;
     speciesApi
-      .get(id)
+      .get(speciesId)
       .then(({ data }) => {
         if (!cancelled) setSpecies(data);
       })

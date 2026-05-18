@@ -1,13 +1,14 @@
 import type { PlantSpecies } from '@prisma/client';
 import {
   buildSpeciesCatalogMeta,
+  compareSpeciesForSort,
   inferDifficulty,
   isSucculentSpecies,
   speciesDiscoveryTags,
 } from './species-catalog-meta';
 
 export type { SpeciesCatalogMeta, SpeciesDifficulty, SpeciesToxicitySummary } from './species-catalog-meta';
-export { buildSpeciesCatalogMeta, speciesDiscoveryTags };
+export { buildSpeciesCatalogMeta, compareSpeciesForSort, speciesDiscoveryTags };
 
 export interface SpeciesSearchFilters {
   petSafe?: boolean;

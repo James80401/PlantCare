@@ -142,6 +142,33 @@ async function main() {
     fail('Browse plants', JSON.stringify(browse.data)?.slice(0, 120));
   }
 
+  const beginnerBrowse = await api(
+    'GET',
+    '/species/browse?beginnerFriendly=true&pageSize=50',
+    null,
+    token,
+  );
+  const beginnerItems = beginnerBrowse.data?.items ?? [];
+  if (
+    beginnerBrowse.status === 200 &&
+    beginnerItems.length > 0 &&
+    beginnerItems.every((s) => s.difficulty === 'Beginner')
+  ) {
+    pass('Browse beginner filter', `${beginnerItems.length} beginner species`);
+  } else {
+    fail('Browse beginner filter', JSON.stringify(beginnerBrowse.data)?.slice(0, 120));
+  }
+
+  const speciesDetailId = browse.data?.items?.[0]?.id;
+  if (speciesDetailId) {
+    const detail = await api('GET', `/species/${speciesDetailId}`, null, token);
+    if (detail.status === 200 && detail.data?.difficulty && detail.data?.discoveryTags?.length) {
+      pass('Species detail metadata', detail.data.commonName);
+    } else {
+      fail('Species detail metadata', JSON.stringify(detail.data)?.slice(0, 120));
+    }
+  }
+
   const herbSearch = await api('GET', '/species/search?q=basil', null, token);
   if (herbSearch.status === 200 && herbSearch.data?.length > 0) {
     pass('Species search (herb)', herbSearch.data[0]?.commonName);
