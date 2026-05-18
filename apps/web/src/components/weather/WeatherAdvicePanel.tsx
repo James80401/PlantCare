@@ -266,7 +266,12 @@ function AdviceResults({ advice }: { advice: WeatherAdvicePayload }) {
                     : 'bg-white text-gray-700 ring-sky-100'
                 }`}
               >
-                <p className="font-semibold text-emerald-950">{plant.plantName}</p>
+                <Link
+                  to={`/garden/plants/${plant.plantId}`}
+                  className="font-semibold text-emerald-950 hover:underline"
+                >
+                  {plant.plantName}
+                </Link>
                 <p className="mt-0.5 leading-6">{plant.advice}</p>
               </li>
             ))

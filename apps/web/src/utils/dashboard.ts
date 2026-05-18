@@ -68,16 +68,85 @@ export function getCompletedTaskCount(tasks: TaskItem[]) {
   return tasks.filter((task) => task.status === 'DONE').length;
 }
 
+/** Tasks marked done with completedAt (or due date) falling on the given calendar day. */
+export function getTasksCompletedToday(tasks: TaskItem[], currentDate = new Date()) {
+  return tasks
+    .filter((task) => {
+      if (task.status !== 'DONE') return false;
+      const when = task.completedAt ? parseISO(task.completedAt) : parseISO(task.dueDate);
+      return startOfDay(when).getTime() === startOfDay(currentDate).getTime();
+    })
+    .sort((a, b) => {
+      const aAt = a.completedAt ? parseISO(a.completedAt).getTime() : 0;
+      const bAt = b.completedAt ? parseISO(b.completedAt).getTime() : 0;
+      return bAt - aAt;
+    });
+}
+
+export interface GardenScoreBreakdown {
+  plantCount: number;
+  overdueCount: number;
+  todayCount: number;
+  recentCompletions: number;
+  completionBoost: number;
+  overduePenalty: number;
+  todayPenalty: number;
+  rawScore: number;
+  finalScore: number;
+}
+
+export function getGardenScoreBreakdown(
+  plantCount: number,
+  overdueCount: number,
+  todayCount: number,
+  completedInRange: number,
+): GardenScoreBreakdown {
+  if (plantCount === 0) {
+    return {
+      plantCount: 0,
+      overdueCount,
+      todayCount,
+      recentCompletions: 0,
+      completionBoost: 0,
+      overduePenalty: 0,
+      todayPenalty: 0,
+      rawScore: 0,
+      finalScore: 0,
+    };
+  }
+
+  const recentCompletions = Math.min(4, completedInRange);
+  const completionBoost = Math.min(8, recentCompletions * 2);
+  const overduePenalty = overdueCount * 10;
+  const todayPenalty = todayCount * 2;
+  const rawScore = 100 - overduePenalty - todayPenalty + completionBoost;
+  const finalScore = Math.max(50, Math.min(100, rawScore));
+
+  return {
+    plantCount,
+    overdueCount,
+    todayCount,
+    recentCompletions,
+    completionBoost,
+    overduePenalty,
+    todayPenalty,
+    rawScore,
+    finalScore,
+  };
+}
+
 export function getGardenScore(
   plantCount: number,
   overdueCount: number,
   todayCount: number,
   recentCompletions = 0,
 ) {
-  if (plantCount === 0) return 0;
-  const completionBoost = Math.min(8, recentCompletions * 2);
-  const raw = 100 - overdueCount * 10 - todayCount * 2 + completionBoost;
-  return Math.max(50, Math.min(100, raw));
+  return getGardenScoreBreakdown(
+    plantCount,
+    overdueCount,
+    todayCount,
+    recentCompletions,
+  ).finalScore;
 }
 
 export function getFocusDayGroups(dayGroups: DayGroup[], currentDate = new Date()) {
@@ -199,7 +268,7 @@ export function getSuggestedAction(
       title: 'Catch up gently',
       body: 'Start with the oldest overdue task, then open the care instructions if the plant looks stressed.',
       actionLabel: 'Review overdue',
-      actionTo: '/garden/tasks',
+      actionTo: '/garden/tasks/overdue',
     };
   }
 
@@ -208,7 +277,7 @@ export function getSuggestedAction(
       title: 'Finish today strong',
       body: 'Complete the tasks due today and use skip only when the plant does not need the care yet.',
       actionLabel: "Do today's care",
-      actionTo: '/garden/tasks',
+      actionTo: '/garden/tasks/today',
     };
   }
 

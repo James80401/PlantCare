@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { format, isPast, isToday, parseISO } from 'date-fns';
 import TaskInstructionsLink from '../TaskInstructionsLink';
 import {
@@ -18,6 +19,8 @@ interface TaskRowProps {
   onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
   /** When true, type icon/label is omitted (parent section shows category). */
   groupedByType?: boolean;
+  /** When true, plant name links to the plant profile. */
+  linkPlant?: boolean;
 }
 
 export default function TaskRow({
@@ -26,6 +29,7 @@ export default function TaskRow({
   onComplete,
   onSkip,
   groupedByType = false,
+  linkPlant = true,
 }: TaskRowProps) {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [selectedReason, setSelectedReason] = useState<TaskSkipReason>('SOIL_STILL_WET');
@@ -82,25 +86,49 @@ export default function TaskRow({
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span
-            className={`text-base leading-snug ${
-              isDone || isSkipped
-                ? 'text-gray-500 line-through decoration-gray-400/80'
-                : 'font-medium text-emerald-950'
-            } ${animState === 'completing' ? 'task-row__title--strike' : ''}`}
-          >
-            {!groupedByType && (
-              <span className="mr-1.5" aria-hidden>
-                {icon}
-              </span>
-            )}
-            {groupedByType ? plantLabel : taskTypeLabel(task.taskType)}
-          </span>
-          {!groupedByType && (
-            <span className={`text-sm ${isDone || isSkipped ? 'text-gray-400' : 'text-gray-600'}`}>
+          {groupedByType && linkPlant ? (
+            <Link
+              to={`/garden/plants/${task.plant.id}`}
+              className={`text-base leading-snug hover:underline ${
+                isDone || isSkipped
+                  ? 'text-gray-500 line-through decoration-gray-400/80'
+                  : 'font-medium text-emerald-950'
+              } ${animState === 'completing' ? 'task-row__title--strike' : ''}`}
+            >
               {plantLabel}
+            </Link>
+          ) : (
+            <span
+              className={`text-base leading-snug ${
+                isDone || isSkipped
+                  ? 'text-gray-500 line-through decoration-gray-400/80'
+                  : 'font-medium text-emerald-950'
+              } ${animState === 'completing' ? 'task-row__title--strike' : ''}`}
+            >
+              {!groupedByType && (
+                <span className="mr-1.5" aria-hidden>
+                  {icon}
+                </span>
+              )}
+              {groupedByType ? plantLabel : taskTypeLabel(task.taskType)}
             </span>
           )}
+          {!groupedByType &&
+            (linkPlant ? (
+              <Link
+                to={`/garden/plants/${task.plant.id}`}
+                className={`text-sm font-medium hover:underline ${
+                  isDone || isSkipped ? 'text-gray-400' : 'text-emerald-700'
+                }`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {plantLabel}
+              </Link>
+            ) : (
+              <span className={`text-sm ${isDone || isSkipped ? 'text-gray-400' : 'text-gray-600'}`}>
+                {plantLabel}
+              </span>
+            ))}
         </div>
 
         {isDone && task.completedAt && (

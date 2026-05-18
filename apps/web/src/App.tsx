@@ -9,6 +9,8 @@ import ResendVerification from './pages/ResendVerification';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
+import GardenScoreInsights from './pages/GardenScoreInsights';
+import FilteredTasks from './pages/FilteredTasks';
 import AddPlant from './pages/AddPlant';
 import BrowsePlants from './pages/BrowsePlants';
 import PlantProfile from './pages/PlantProfile';
@@ -39,6 +41,8 @@ export default function App() {
         <Route path="plants/new" element={<AddPlant />} />
         <Route path="plants/:id" element={<PlantProfile />} />
         <Route path="tasks" element={<Tasks />} />
+        <Route path="tasks/:filter" element={<FilteredTasks />} />
+        <Route path="insights/score" element={<GardenScoreInsights />} />
         <Route path="settings" element={<Settings />} />
         <Route path="subscription" element={<Subscription />} />
       </Route>

@@ -3,7 +3,9 @@ import {
   buildAttentionPlants,
   buildWeekPreview,
   getGardenScore,
+  getGardenScoreBreakdown,
   getOverdueTasks,
+  getTasksCompletedToday,
   getSuggestedAction,
   getTodayTasks,
   type DashboardPlant,
@@ -30,6 +32,23 @@ describe('dashboard utilities', () => {
 
     expect(getOverdueTasks(tasks, currentDate).map((item) => item.id)).toEqual(['late']);
     expect(getTodayTasks(tasks, currentDate).map((item) => item.id)).toEqual(['today']);
+  });
+
+  it('lists tasks completed on the given calendar day', () => {
+    const currentDate = new Date('2026-05-18T12:00:00');
+    const tasks = [
+      task('done-today', 'plant-today', '2026-05-18', 'DONE', '2026-05-18T15:00:00'),
+      task('done-yesterday', 'plant-today', '2026-05-17', 'DONE', '2026-05-17T15:00:00'),
+    ];
+    expect(getTasksCompletedToday(tasks, currentDate).map((t) => t.id)).toEqual(['done-today']);
+  });
+
+  it('explains garden score breakdown components', () => {
+    const breakdown = getGardenScoreBreakdown(4, 2, 3, 5);
+    expect(breakdown.overduePenalty).toBe(20);
+    expect(breakdown.todayPenalty).toBe(6);
+    expect(breakdown.completionBoost).toBe(8);
+    expect(breakdown.finalScore).toBe(82);
   });
 
   it('keeps garden score encouraging but responsive to overdue and due-today work', () => {
@@ -112,6 +131,7 @@ function task(
   plantId: string,
   dueDate: string,
   status: 'PENDING' | 'DONE' | 'SKIPPED',
+  completedAt?: string,
 ): TaskItem {
   const plantRecord = plants.find((item) => item.id === plantId);
   const commonName = plantRecord?.species.commonName ?? 'Plant';
@@ -121,7 +141,8 @@ function task(
     taskType: 'WATER',
     dueDate,
     status,
-    completedAt: status === 'DONE' ? `${dueDate}T12:00:00.000Z` : null,
+    completedAt:
+      completedAt ?? (status === 'DONE' ? `${dueDate}T12:00:00.000Z` : null),
     plant: {
       id: plantId,
       nickname: commonName,

@@ -89,6 +89,10 @@ export class UsersService {
     timezone?: string;
   }) {
     const { locationQuery, ...rest } = data;
+    // Dropdown / device location already provides coordinates; do not re-geocode the label.
+    if (this.hasValidCoordinates(rest.latitude, rest.longitude)) {
+      return rest;
+    }
     if (locationQuery?.trim()) {
       const match = await this.weather.geocodeLocation(locationQuery);
       if (!match) {
@@ -103,6 +107,19 @@ export class UsersService {
       };
     }
     return rest;
+  }
+
+  private hasValidCoordinates(latitude?: number, longitude?: number): boolean {
+    return (
+      latitude !== undefined &&
+      longitude !== undefined &&
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude) &&
+      latitude >= -90 &&
+      latitude <= 90 &&
+      longitude >= -180 &&
+      longitude <= 180
+    );
   }
 
   async deleteAccount(userId: string) {

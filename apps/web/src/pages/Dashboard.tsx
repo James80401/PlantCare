@@ -10,7 +10,7 @@ import {
   buildAttentionPlants,
   buildWeekPreview,
   findNextTaskForPlant,
-  getCompletedTaskCount,
+  getTasksCompletedToday,
   getFocusDayGroups,
   getOverdueTasks,
   getPendingTasks,
@@ -136,7 +136,11 @@ export default function Dashboard() {
   );
 
   const recommendedAction = getSuggestedAction(plants, overdueTasks, todayTasks);
-  const completedCount = getCompletedTaskCount(tasks);
+  const completedToday = useMemo(
+    () => getTasksCompletedToday(tasks, currentDate),
+    [currentDate, tasks],
+  );
+  const completedTodayCount = completedToday.length;
   const engagementContext = useMemo(
     () =>
       buildEngagementContext(
@@ -207,24 +211,28 @@ export default function Dashboard() {
               value={plants.length === 0 ? 'New' : gardenScore}
               helper={plants.length === 0 ? 'Add a plant to begin' : gardenWellness.label}
               accent="emerald"
+              to={plants.length === 0 ? undefined : '/garden/insights/score'}
             />
             <DashboardMetric
               label="Due today"
               value={summary.todayPending}
               helper={todayTasks.length ? 'Ready for care' : 'Nothing urgent today'}
               accent="amber"
+              to="/garden/tasks/today"
             />
             <DashboardMetric
               label="Overdue"
               value={overdueTasks.length}
               helper={overdueTasks.length ? 'Needs attention' : 'All caught up'}
               accent="rose"
+              to="/garden/tasks/overdue"
             />
             <DashboardMetric
               label="Completed"
-              value={completedCount}
-              helper="In the recent range"
+              value={completedTodayCount}
+              helper="Finished today"
               accent="sky"
+              to="/garden/tasks/completed-today"
             />
           </div>
 
@@ -447,11 +455,13 @@ function DashboardMetric({
   value,
   helper,
   accent,
+  to,
 }: {
   label: string;
   value: string | number;
   helper: string;
   accent: 'emerald' | 'amber' | 'rose' | 'sky';
+  to?: string;
 }) {
   const accentClasses = {
     emerald: 'bg-emerald-300/20 text-emerald-50',
@@ -460,13 +470,29 @@ function DashboardMetric({
     sky: 'bg-sky-300/20 text-sky-50',
   };
 
-  return (
-    <div className={`rounded-2xl border border-white/10 p-4 backdrop-blur ${accentClasses[accent]}`}>
+  const className = `block rounded-2xl border border-white/10 p-4 backdrop-blur transition ${accentClasses[accent]} ${
+    to
+      ? 'hover:border-white/30 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white'
+      : ''
+  }`;
+
+  const content = (
+    <>
       <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{label}</p>
       <p className="mt-1 text-2xl font-bold">{value}</p>
       <p className="mt-1 text-xs opacity-80">{helper}</p>
-    </div>
+    </>
   );
+
+  if (to) {
+    return (
+      <Link to={to} className={className} aria-label={`${label}: ${value}. ${helper}`}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
 }
 
 function SectionHeader({
@@ -553,7 +579,13 @@ function ScheduleSuggestionCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-lime-700">
-            {suggestion.plantName} · {taskTypeLabel(suggestion.taskType)}
+            <Link
+              to={`/garden/plants/${suggestion.plantId}`}
+              className="hover:underline"
+            >
+              {suggestion.plantName}
+            </Link>{' '}
+            · {taskTypeLabel(suggestion.taskType)}
           </p>
           <h3 className="mt-1 font-semibold text-emerald-950">{suggestion.title}</h3>
         </div>

@@ -63,17 +63,24 @@ export default function Settings() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    const lat = latitude ? parseFloat(latitude) : undefined;
+    const lng = longitude ? parseFloat(longitude) : undefined;
+    const hasCoords =
+      lat !== undefined && !Number.isNaN(lat) && lng !== undefined && !Number.isNaN(lng);
     try {
       await usersApi.updateSettings({
         notifyPush,
         notifyEmail,
         notifySms,
         timezone,
-        latitude: latitude ? parseFloat(latitude) : undefined,
-        longitude: longitude ? parseFloat(longitude) : undefined,
-        locationQuery: locationQuery.trim() || undefined,
+        latitude: hasCoords ? lat : undefined,
+        longitude: hasCoords ? lng : undefined,
+        locationQuery: !hasCoords && locationQuery.trim() ? locationQuery.trim() : undefined,
         locationLabel: locationLabel || undefined,
       });
+      if (hasCoords && locationLabel) {
+        setLocationQuery('');
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: unknown) {
