@@ -46,7 +46,10 @@
 - [x] Skip task with reason (API)
 - [x] Task instructions modal (Playwright)
 - [x] Add plant: photo identify or search-by-name wizard (`/garden/plants/new` — Playwright)
-- [x] Onboarding wizard + gate; E2E user skips onboarding in `global-setup`
+- [x] Onboarding wizard + gate (`tests/e2e/onboarding.spec.ts` full flow; other E2E users skip in `global-setup`)
+- [x] Household Care Share (`/garden/household` — Playwright)
+- [x] Community feed (`/garden/community` — Playwright)
+- [x] Dashboard shared plants filter + badge
 - [x] Plant profile: sections, care guide, journal entry (Playwright + API)
 - [x] Dr. Plant chat (API — OpenAI)
 - [x] One-shot diagnosis (API — OpenAI)
