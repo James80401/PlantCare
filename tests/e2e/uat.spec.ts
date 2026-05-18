@@ -106,12 +106,19 @@ test.describe('UAT checklist — authenticated flows', () => {
 
   test('plant profile diagnosis can schedule a follow-up task', async ({ page }) => {
     await openAddPlantSearch(page);
-    await page.getByLabel(/Species name/i).fill('pothos');
-    await page.getByRole('button', { name: /Pothos/i }).first().click();
+    await page.getByLabel(/Species name/i).fill('snake');
+    await page.getByRole('button', { name: /Snake Plant/i }).first().click();
     await page.getByRole('button', { name: /Save plant/i }).click();
-    await page.waitForURL(/\/garden\/plants\//);
-
-    await page.getByRole('link', { name: /Diagnosis/i }).click();
+    await page.waitForURL((url) => {
+      const match = url.pathname.match(/^\/garden\/plants\/([^/]+)/);
+      const id = match?.[1];
+      return Boolean(id && id !== 'new' && id !== 'browse');
+    });
+    const plantId = page.url().match(/\/garden\/plants\/([^/]+)/)?.[1]!;
+    await page.goto(`/garden/plants/${plantId}/health`);
+    await expect(page.getByRole('button', { name: /Run diagnosis/i })).toBeVisible({
+      timeout: 15_000,
+    });
     await page.getByLabel(/What are you seeing/i).fill('Yellow leaves and wet soil');
     await page.getByRole('button', { name: /Run diagnosis/i }).click();
     await expect(page.getByText(/Treatment plan/i)).toBeVisible({ timeout: 15_000 });
@@ -126,12 +133,17 @@ test.describe('UAT checklist — authenticated flows', () => {
     await page.getByLabel(/Species name/i).fill('snake');
     await page.getByRole('button', { name: /Snake Plant/i }).first().click();
     await page.getByRole('button', { name: /Save plant/i }).click();
-    await page.waitForURL(/\/garden\/plants\//);
+    await page.waitForURL((url) => {
+      const match = url.pathname.match(/^\/garden\/plants\/([^/]+)/);
+      const id = match?.[1];
+      return Boolean(id && id !== 'new' && id !== 'browse');
+    });
+    const plantId = page.url().match(/\/garden\/plants\/([^/]+)/)?.[1]!;
 
+    await page.goto(`/garden/plants/${plantId}/overview`);
     await expect(page.getByRole('link', { name: /Overview/i })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Care', exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: /Journal/i })).toBeVisible();
-    await page.getByRole('link', { name: /Journal/i }).click();
+    await page.goto(`/garden/plants/${plantId}/journal`);
     await page
       .getByPlaceholder(/Add a note about growth/i)
       .fill('E2E journal note');

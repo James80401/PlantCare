@@ -222,7 +222,11 @@ model JournalEntry {
   plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
   photoUrl  String?
   notes     String?
+  heightCm  Float?
+  widthCm   Float?
+  leafCount Int?
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([plantId])
 }

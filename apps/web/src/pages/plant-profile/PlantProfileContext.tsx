@@ -1,0 +1,433 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { format } from 'date-fns';
+import { PLANT_LOCATIONS } from '../../constants/plantLocations';
+import { useTasksInRange } from '../../hooks/useTasksInRange';
+import { plantsApi, journalApi, diagnosisApi } from '../../services/api';
+import type { TaskSkipFeedback } from '../../utils/taskFeedback';
+import { taskTypeLabel } from '../../utils/tasks';
+import { appendJournalPrompt, buildTimelineEvents } from './shared';
+import type { CareOverview, PlantRecord } from './types';
+
+interface PlantProfileContextValue {
+  id: string;
+  plant: PlantRecord | null;
+  plantLabel: string;
+  species: PlantRecord;
+  tasks: PlantRecord[];
+  pending: PlantRecord[];
+  journalEntries: PlantRecord[];
+  diagnosisEntries: PlantRecord[];
+  careOverview?: CareOverview;
+  currentLocation: string;
+  locationOptions: readonly string[];
+  locationDraft: string;
+  setLocationDraft: (value: string) => void;
+  editingLocation: boolean;
+  setEditingLocation: (value: boolean) => void;
+  locationSaving: boolean;
+  locationMessage: string;
+  saveLocation: () => Promise<void>;
+  nextTask?: PlantRecord;
+  latestCompleted?: PlantRecord;
+  plantPendingFromHook: ReturnType<typeof useTasksInRange>['tasks'];
+  animating: ReturnType<typeof useTasksInRange>['animating'];
+  handleCompleteTask: (taskId: string) => void;
+  handleSkipTask: (taskId: string, feedback?: TaskSkipFeedback) => void;
+  handleSnooze: ReturnType<typeof useTasksInRange>['handleSnooze'];
+  journalNotes: string;
+  setJournalNotes: (value: string) => void;
+  journalPhoto: File | null;
+  setJournalPhoto: (file: File | null) => void;
+  journalPhotoInputKey: number;
+  journalHeightCm: string;
+  setJournalHeightCm: (value: string) => void;
+  journalWidthCm: string;
+  setJournalWidthCm: (value: string) => void;
+  journalLeafCount: string;
+  setJournalLeafCount: (value: string) => void;
+  editingJournalId: string | null;
+  setEditingJournalId: (id: string | null) => void;
+  busyJournalId: string | null;
+  addJournal: (e: FormEvent) => Promise<void>;
+  saveJournalEdit: (e: FormEvent) => Promise<void>;
+  deleteJournalEntry: (entryId: string) => Promise<void>;
+  appendJournalPrompt: (prompt: string) => void;
+  timelineEvents: ReturnType<typeof buildTimelineEvents>;
+  sectionCounts: { tasks: number; journal: number; diagnosis: number };
+  activeDiagnosisCount: number;
+  latestUnresolved?: PlantRecord;
+  diagnosisHasFollowUp: (diagnosisId: string) => boolean;
+  updatingDiagnosisId: string | null;
+  followUpCreatingId: string | null;
+  submitDiagnosis: (symptomsText: string, image?: File) => Promise<void>;
+  createFollowUpTask: (diagnosisId: string, dueInDays: number) => Promise<void>;
+  updateDiagnosisStatus: (diagnosisId: string, resolved: boolean) => Promise<void>;
+  sharingPlant: boolean;
+  setSharingPlant: (value: boolean) => void;
+  load: () => void;
+  goToJournalTab: () => void;
+  photoCompareUrls: { before: string; after: string } | null;
+  setPhotoCompareUrls: (value: { before: string; after: string } | null) => void;
+}
+
+const PlantProfileContext = createContext<PlantProfileContextValue | null>(null);
+
+export function PlantProfileProvider({ children }: { children: ReactNode }) {
+  const { id = '' } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [plant, setPlant] = useState<PlantRecord | null>(null);
+  const [journalNotes, setJournalNotes] = useState('');
+  const [journalPhoto, setJournalPhoto] = useState<File | null>(null);
+  const [journalPhotoInputKey, setJournalPhotoInputKey] = useState(0);
+  const [journalHeightCm, setJournalHeightCm] = useState('');
+  const [journalWidthCm, setJournalWidthCm] = useState('');
+  const [journalLeafCount, setJournalLeafCount] = useState('');
+  const [editingJournalId, setEditingJournalId] = useState<string | null>(null);
+  const [busyJournalId, setBusyJournalId] = useState<string | null>(null);
+  const [editingLocation, setEditingLocation] = useState(false);
+  const [locationDraft, setLocationDraft] = useState('');
+  const [locationSaving, setLocationSaving] = useState(false);
+  const [locationMessage, setLocationMessage] = useState('');
+  const [updatingDiagnosisId, setUpdatingDiagnosisId] = useState<string | null>(null);
+  const [followUpCreatingId, setFollowUpCreatingId] = useState<string | null>(null);
+  const [sharingPlant, setSharingPlant] = useState(false);
+  const [photoCompareUrls, setPhotoCompareUrls] = useState<{ before: string; after: string } | null>(
+    null,
+  );
+
+  const {
+    tasks: rangeTasks,
+    animating,
+    handleComplete: completeFromHook,
+    handleSkip: skipFromHook,
+    handleSnooze,
+  } = useTasksInRange({ pastDays: 0, futureDays: 120 });
+
+  const load = useCallback(() => {
+    if (id) plantsApi.get(id).then((r) => setPlant(r.data));
+  }, [id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (plant) {
+      setLocationDraft((plant.location as string) || PLANT_LOCATIONS[0]);
+    }
+  }, [plant?.location]);
+
+  const resetJournalForm = () => {
+    setJournalNotes('');
+    setJournalPhoto(null);
+    setJournalHeightCm('');
+    setJournalWidthCm('');
+    setJournalLeafCount('');
+    setJournalPhotoInputKey((key) => key + 1);
+    setEditingJournalId(null);
+  };
+
+  const journalPayload = () => ({
+    notes: journalNotes.trim() || undefined,
+    heightCm: journalHeightCm ? Number(journalHeightCm) : undefined,
+    widthCm: journalWidthCm ? Number(journalWidthCm) : undefined,
+    leafCount: journalLeafCount ? Number(journalLeafCount) : undefined,
+  });
+
+  const addJournal = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!id || (!journalNotes.trim() && !journalPhoto)) return;
+    await journalApi.create(id, journalPayload(), journalPhoto ?? undefined);
+    resetJournalForm();
+    load();
+  };
+
+  const saveJournalEdit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!id || !editingJournalId) return;
+    await journalApi.update(id, editingJournalId, journalPayload(), journalPhoto ?? undefined);
+    resetJournalForm();
+    load();
+  };
+
+  const deleteJournalEntry = async (entryId: string) => {
+    if (!id) return;
+    setBusyJournalId(entryId);
+    try {
+      await journalApi.remove(id, entryId);
+      if (editingJournalId === entryId) resetJournalForm();
+      load();
+    } finally {
+      setBusyJournalId(null);
+    }
+  };
+
+  const startEditJournal = useCallback(
+    (entryId: string) => {
+      const entry = ((plant?.journalEntries as PlantRecord[]) || []).find((e) => e.id === entryId);
+      if (!entry) return;
+      setEditingJournalId(entryId);
+      setJournalNotes((entry.notes as string) || '');
+      setJournalHeightCm(entry.heightCm != null ? String(entry.heightCm) : '');
+      setJournalWidthCm(entry.widthCm != null ? String(entry.widthCm) : '');
+      setJournalLeafCount(entry.leafCount != null ? String(entry.leafCount) : '');
+      setJournalPhoto(null);
+      setJournalPhotoInputKey((key) => key + 1);
+    },
+    [plant],
+  );
+
+  const saveLocation = async () => {
+    if (!id) return;
+    setLocationSaving(true);
+    setLocationMessage('');
+    try {
+      const { data } = await plantsApi.update(id, { location: locationDraft });
+      setPlant(data);
+      setEditingLocation(false);
+      setLocationMessage(
+        data.tasksRescheduled
+          ? 'Location saved. Upcoming care tasks were updated for this spot.'
+          : 'Location saved.',
+      );
+    } catch {
+      setLocationMessage('Could not save location. Try again.');
+    } finally {
+      setLocationSaving(false);
+    }
+  };
+
+  const submitDiagnosis = async (symptomsText: string, image?: File) => {
+    if (!id) return;
+    const { data } = await diagnosisApi.submit(id, symptomsText, image);
+    setPlant((current) => {
+      if (!current) return current;
+      const currentDiagnoses = (current.diagnoses as PlantRecord[] | undefined) || [];
+      return {
+        ...current,
+        diagnoses: [data, ...currentDiagnoses].slice(0, 5),
+      };
+    });
+  };
+
+  const createFollowUpTask = async (diagnosisId: string, dueInDays: number) => {
+    if (!id) return;
+    setFollowUpCreatingId(diagnosisId);
+    try {
+      const { data: task } = await diagnosisApi.createFollowUpTask(id, diagnosisId, dueInDays);
+      setPlant((current) => {
+        if (!current) return current;
+        const currentTasks = (current.tasks as PlantRecord[] | undefined) || [];
+        return {
+          ...current,
+          tasks: [...currentTasks, task].sort(
+            (a, b) =>
+              new Date(a.dueDate as string).getTime() - new Date(b.dueDate as string).getTime(),
+          ),
+        };
+      });
+    } finally {
+      setFollowUpCreatingId(null);
+    }
+  };
+
+  const updateDiagnosisStatus = async (diagnosisId: string, resolved: boolean) => {
+    if (!id) return;
+    setUpdatingDiagnosisId(diagnosisId);
+    try {
+      const { data } = await diagnosisApi.updateStatus(id, diagnosisId, resolved);
+      setPlant((current) => {
+        if (!current) return current;
+        const currentDiagnoses = (current.diagnoses as PlantRecord[] | undefined) || [];
+        return {
+          ...current,
+          diagnoses: currentDiagnoses.map((diagnosis) =>
+            diagnosis.id === diagnosisId ? { ...diagnosis, ...data } : diagnosis,
+          ),
+        };
+      });
+    } finally {
+      setUpdatingDiagnosisId(null);
+    }
+  };
+
+  const handleCompleteTask = (taskId: string) => {
+    completeFromHook(taskId);
+    window.setTimeout(() => load(), 700);
+  };
+
+  const handleSkipTask = (taskId: string, feedback?: TaskSkipFeedback) => {
+    skipFromHook(taskId, feedback);
+    window.setTimeout(() => load(), 700);
+  };
+
+  const plantPendingFromHook = useMemo(() => {
+    if (!id) return [];
+    return rangeTasks
+      .filter((t) => t.plant?.id === id && t.status === 'PENDING')
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 10);
+  }, [rangeTasks, id]);
+
+  const value = useMemo((): PlantProfileContextValue | null => {
+    if (!plant || !id) return null;
+
+    const species = plant.species as PlantRecord;
+    const tasks = ((plant.tasks as PlantRecord[]) || []).sort(
+      (a, b) => new Date(a.dueDate as string).getTime() - new Date(b.dueDate as string).getTime(),
+    );
+    const journalEntries = (plant.journalEntries as PlantRecord[] | undefined) || [];
+    const diagnosisEntries = (plant.diagnoses as PlantRecord[] | undefined) || [];
+    const pending = tasks.filter((t) => t.status === 'PENDING');
+    const completed = tasks.filter((t) => t.status === 'DONE');
+    const nextTask = pending[0];
+    const latestCompleted = completed
+      .filter((t) => t.completedAt)
+      .sort(
+        (a, b) =>
+          new Date(b.completedAt as string).getTime() -
+          new Date(a.completedAt as string).getTime(),
+      )[0];
+    const careOverview = plant.careOverview as CareOverview | undefined;
+    const currentLocation = (plant.location as string) || PLANT_LOCATIONS[0];
+    const locationOptions = (PLANT_LOCATIONS as readonly string[]).includes(currentLocation)
+      ? PLANT_LOCATIONS
+      : ([...PLANT_LOCATIONS, currentLocation] as const);
+    const plantLabel = (plant.nickname as string) || (species.commonName as string);
+    const activeDiagnosisCount = diagnosisEntries.filter((d) => !d.resolved).length;
+    const latestUnresolved = diagnosisEntries.find((d) => !d.resolved);
+    const diagnosisHasFollowUp = (diagnosisId: string) =>
+      tasks.some(
+        (task) =>
+          task.sourceDiagnosisId === diagnosisId &&
+          task.taskType === 'HEALTH_CHECK' &&
+          task.status === 'PENDING',
+      );
+    const timelineEvents = buildTimelineEvents({
+      journalEntries,
+      tasks,
+      diagnoses: diagnosisEntries,
+    });
+
+    return {
+      id,
+      plant,
+      plantLabel,
+      species,
+      tasks,
+      pending,
+      journalEntries,
+      diagnosisEntries,
+      careOverview,
+      currentLocation,
+      locationOptions,
+      locationDraft,
+      setLocationDraft,
+      editingLocation,
+      setEditingLocation,
+      locationSaving,
+      locationMessage,
+      saveLocation,
+      nextTask,
+      latestCompleted,
+      plantPendingFromHook,
+      animating,
+      handleCompleteTask,
+      handleSkipTask,
+      handleSnooze,
+      journalNotes,
+      setJournalNotes,
+      journalPhoto,
+      setJournalPhoto,
+      journalPhotoInputKey,
+      journalHeightCm,
+      setJournalHeightCm,
+      journalWidthCm,
+      setJournalWidthCm,
+      journalLeafCount,
+      setJournalLeafCount,
+      editingJournalId,
+      setEditingJournalId: (entryId) => {
+        if (entryId) startEditJournal(entryId);
+        else resetJournalForm();
+      },
+      busyJournalId,
+      addJournal,
+      saveJournalEdit,
+      deleteJournalEntry,
+      appendJournalPrompt: (prompt) => appendJournalPrompt(prompt, setJournalNotes),
+      timelineEvents,
+      sectionCounts: {
+        tasks: pending.length,
+        journal: timelineEvents.length,
+        diagnosis: diagnosisEntries.length,
+      },
+      activeDiagnosisCount,
+      latestUnresolved,
+      diagnosisHasFollowUp,
+      updatingDiagnosisId,
+      followUpCreatingId,
+      submitDiagnosis,
+      createFollowUpTask,
+      updateDiagnosisStatus,
+      sharingPlant,
+      setSharingPlant,
+      load,
+      goToJournalTab: () => navigate(`/garden/plants/${id}/journal`),
+      photoCompareUrls,
+      setPhotoCompareUrls,
+    };
+  }, [
+    plant,
+    id,
+    locationDraft,
+    editingLocation,
+    locationSaving,
+    locationMessage,
+    journalNotes,
+    journalPhoto,
+    journalPhotoInputKey,
+    journalHeightCm,
+    journalWidthCm,
+    journalLeafCount,
+    editingJournalId,
+    busyJournalId,
+    updatingDiagnosisId,
+    followUpCreatingId,
+    sharingPlant,
+    photoCompareUrls,
+    plantPendingFromHook,
+    animating,
+    navigate,
+    load,
+    startEditJournal,
+  ]);
+
+  return (
+    <PlantProfileContext.Provider value={value}>
+      {value ? children : <p className="text-gray-500">Loading…</p>}
+    </PlantProfileContext.Provider>
+  );
+}
+
+export function usePlantProfile() {
+  const ctx = useContext(PlantProfileContext);
+  if (!ctx) {
+    throw new Error('Plant profile is still loading.');
+  }
+  return ctx;
+}
+
+export function usePlantProfileOptional() {
+  return useContext(PlantProfileContext);
+}

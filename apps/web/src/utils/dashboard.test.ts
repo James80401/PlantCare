@@ -76,6 +76,19 @@ describe('dashboard utilities', () => {
     ]);
   });
 
+  it('surfaces unresolved diagnoses before photo nudges', () => {
+    const sickPlant: DashboardPlant = {
+      ...plant('plant-sick', 'Fern', '/uploads/fern.jpg'),
+      unresolvedDiagnosis: {
+        resultLabel: 'Overwatering',
+        createdAt: '2026-05-16T12:00:00.000Z',
+      },
+    };
+    const tasks = [task('future', 'plant-sick', '2026-05-22', 'PENDING')];
+    const attention = buildAttentionPlants([sickPlant], tasks, currentDate);
+    expect(attention[0]?.reason).toContain('Unresolved diagnosis');
+  });
+
   it('selects the suggested action for empty, overdue, active, and calm gardens', () => {
     const todayTasks = [task('today', 'plant-today', '2026-05-17', 'PENDING')];
     const overdueTasks = [task('late', 'plant-overdue', '2026-05-15', 'PENDING')];

@@ -411,6 +411,30 @@ async function main() {
     if (journalList.status === 200 && Array.isArray(journalList.data) && journalList.data.length > 0) {
       pass('Journal list', `${journalList.data.length} entries`);
     } else fail('Journal list');
+
+    const journalPatch = await api(
+      'PATCH',
+      `/plants/${plantId}/journal/${journalData.id}`,
+      { notes: 'UAT verify: updated note', heightCm: 12 },
+      token,
+    );
+    if (journalPatch.status === 200 && journalPatch.data?.notes?.includes('updated')) {
+      pass('Journal update', 'notes saved');
+    } else {
+      fail('Journal update', `${journalPatch.status} ${JSON.stringify(journalPatch.data)}`);
+    }
+
+    const journalDelete = await api(
+      'DELETE',
+      `/plants/${plantId}/journal/${journalData.id}`,
+      null,
+      token,
+    );
+    if (journalDelete.status === 200 && journalDelete.data?.deleted) {
+      pass('Journal delete', 'removed');
+    } else {
+      fail('Journal delete', `${journalDelete.status} ${JSON.stringify(journalDelete.data)}`);
+    }
   } else fail('Journal entry', `${journalRes.status} ${JSON.stringify(journalData)}`);
 
   const plantsList = await api('GET', '/plants', null, token);

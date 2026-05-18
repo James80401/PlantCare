@@ -108,16 +108,39 @@ export const tasksApi = {
   explanation: (id: string) => api.get(`/tasks/${id}/explanation`),
 };
 
+export interface JournalPayload {
+  notes?: string;
+  heightCm?: number;
+  widthCm?: number;
+  leafCount?: number;
+}
+
 export const journalApi = {
   list: (plantId: string) => api.get(`/plants/${plantId}/journal`),
-  create: (plantId: string, notes: string, photo?: File) => {
+  create: (plantId: string, payload: JournalPayload, photo?: File) => {
     const form = new FormData();
-    if (notes) form.append('notes', notes);
+    if (payload.notes) form.append('notes', payload.notes);
+    if (payload.heightCm != null) form.append('heightCm', String(payload.heightCm));
+    if (payload.widthCm != null) form.append('widthCm', String(payload.widthCm));
+    if (payload.leafCount != null) form.append('leafCount', String(payload.leafCount));
     if (photo) form.append('photo', photo);
     return api.post(`/plants/${plantId}/journal`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  update: (plantId: string, entryId: string, payload: JournalPayload, photo?: File) => {
+    const form = new FormData();
+    if (payload.notes !== undefined) form.append('notes', payload.notes);
+    if (payload.heightCm != null) form.append('heightCm', String(payload.heightCm));
+    if (payload.widthCm != null) form.append('widthCm', String(payload.widthCm));
+    if (payload.leafCount != null) form.append('leafCount', String(payload.leafCount));
+    if (photo) form.append('photo', photo);
+    return api.patch(`/plants/${plantId}/journal/${entryId}`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  remove: (plantId: string, entryId: string) =>
+    api.delete(`/plants/${plantId}/journal/${entryId}`),
 };
 
 export const diagnosisApi = {

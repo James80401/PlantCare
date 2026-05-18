@@ -20,6 +20,10 @@ export interface DashboardPlant {
     wateringFreqDays: number;
   };
   tasks: DashboardTaskPreview[];
+  unresolvedDiagnosis?: {
+    resultLabel: string;
+    createdAt: string;
+  } | null;
 }
 
 export interface AttentionPlant {
@@ -217,6 +221,19 @@ export function buildAttentionPlants(
           tone: 'warning',
           nextTask,
         };
+      }
+
+      if (plant.unresolvedDiagnosis) {
+        const created = startOfDay(parseISO(plant.unresolvedDiagnosis.createdAt));
+        const cutoff = addDays(today, -14);
+        if (created >= cutoff) {
+          return {
+            plant,
+            reason: `Unresolved diagnosis: ${plant.unresolvedDiagnosis.resultLabel}`,
+            tone: 'warning',
+            nextTask,
+          };
+        }
       }
 
       if (!plant.imageUrl) {

@@ -16,7 +16,12 @@ import FilteredTasks from './pages/FilteredTasks';
 import AddPlant from './pages/AddPlant';
 import BrowsePlants from './pages/BrowsePlants';
 import SpeciesBrowseDetail from './pages/SpeciesBrowseDetail';
-import PlantProfile from './pages/PlantProfile';
+import PlantProfileLayout from './pages/plant-profile/PlantProfileLayout';
+import PlantCareTab from './pages/plant-profile/PlantCareTab';
+import PlantHealthTab from './pages/plant-profile/PlantHealthTab';
+import PlantJournalTab from './pages/plant-profile/PlantJournalTab';
+import PlantOverviewTab from './pages/plant-profile/PlantOverviewTab';
+import PlantTasksTab from './pages/plant-profile/PlantTasksTab';
 import Tasks from './pages/Tasks';
 import Settings from './pages/Settings';
 import Subscription from './pages/Subscription';
@@ -41,7 +46,15 @@ export default function App() {
           <Route path="plants/browse/:speciesId" element={<SpeciesBrowseDetail />} />
           <Route path="plants/browse" element={<BrowsePlants />} />
           <Route path="plants/new" element={<AddPlant />} />
-          <Route path="plants/:id" element={<PlantProfile />} />
+          <Route path="plants/:id" element={<PlantProfileLayout />}>
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<PlantOverviewTab />} />
+            <Route path="care" element={<PlantCareTab />} />
+            <Route path="tasks" element={<PlantTasksTab />} />
+            <Route path="journal" element={<PlantJournalTab />} />
+            <Route path="health" element={<PlantHealthTab />} />
+            <Route path="diagnosis" element={<Navigate to="../health" replace />} />
+          </Route>
           <Route path="tasks" element={<Tasks />} />
           <Route path="tasks/:filter" element={<FilteredTasks />} />
           <Route path="insights/score" element={<GardenScoreInsights />} />
