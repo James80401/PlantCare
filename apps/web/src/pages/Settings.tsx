@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import type { TemperatureUnit } from '../utils/temperature';
 
 interface LocationOption {
   latitude: number;
@@ -25,6 +26,7 @@ export default function Settings() {
   const [locationSearching, setLocationSearching] = useState(false);
   const [quietStart, setQuietStart] = useState('');
   const [quietEnd, setQuietEnd] = useState('');
+  const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('C');
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,6 +41,9 @@ export default function Settings() {
       if (data.longitude) setLongitude(String(data.longitude));
       if (data.quietHoursStart != null) setQuietStart(String(data.quietHoursStart));
       if (data.quietHoursEnd != null) setQuietEnd(String(data.quietHoursEnd));
+      if (data.temperatureUnit === 'F' || data.temperatureUnit === 'C') {
+        setTemperatureUnit(data.temperatureUnit);
+      }
     });
   }, []);
 
@@ -77,6 +82,7 @@ export default function Settings() {
         longitude: hasCoords ? lng : undefined,
         locationQuery: !hasCoords && locationQuery.trim() ? locationQuery.trim() : undefined,
         locationLabel: locationLabel || undefined,
+        temperatureUnit,
       });
       if (hasCoords && locationLabel) {
         setLocationQuery('');
@@ -212,6 +218,29 @@ export default function Settings() {
             />
           </div>
         </details>
+        <h2 className="font-semibold pt-2">Temperature</h2>
+        <p className="text-sm text-gray-600">Used in weather forecasts and advice.</p>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="temperatureUnit"
+              checked={temperatureUnit === 'C'}
+              onChange={() => setTemperatureUnit('C')}
+            />
+            Celsius (°C)
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="temperatureUnit"
+              checked={temperatureUnit === 'F'}
+              onChange={() => setTemperatureUnit('F')}
+            />
+            Fahrenheit (°F)
+          </label>
+        </div>
+
         <input
           value={timezone}
           onChange={(e) => setTimezone(e.target.value)}

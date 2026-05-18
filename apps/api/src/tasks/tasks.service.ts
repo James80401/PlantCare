@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { TaskStatus } from '@prisma/client';
+import { addDays, startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { CareGuidesService } from '../care-guides/care-guides.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
 import { SkipTaskDto } from './dto/skip-task.dto';
+import { SnoozeTaskDto } from './dto/snooze-task.dto';
 
 @Injectable()
 export class TasksService {
@@ -80,6 +82,38 @@ export class TasksService {
 
     await this.scheduler.onTaskCompleted(taskId);
     return updated;
+  }
+
+  async snooze(userId: string, taskId: string, dto: SnoozeTaskDto) {
+    const task = await this.prisma.task.findFirst({
+      where: { id: taskId, plant: { userId } },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+    if (task.status !== TaskStatus.PENDING) {
+      throw new BadRequestException('Only pending tasks can be snoozed');
+    }
+
+    const newDueDate = addDays(startOfDay(new Date()), dto.days);
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.task.update({
+        where: { id: taskId },
+        data: { dueDate: newDueDate },
+        include: { plant: { include: { species: true } } },
+      });
+
+      await tx.taskFeedback.create({
+        data: {
+          taskId,
+          userId,
+          action: 'SNOOZE',
+          reason: `SNOOZE_${dto.days}D`,
+          note: `Snoozed until ${newDueDate.toISOString().slice(0, 10)}`,
+        },
+      });
+
+      return updated;
+    });
   }
 
   getInstructions(userId: string, taskId: string) {

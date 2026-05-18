@@ -235,7 +235,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [x] Make "how to do this" feel like a primary help action.
 - [x] Make skip a button with an obvious affordance.
 - [ ] Add skip reasons in a later API iteration.
-- [ ] Add snooze/reschedule in a later API iteration.
+- [x] Add snooze/reschedule in a later API iteration.
 
 ## Phase 2 - Plant profile and care guide upgrades
 

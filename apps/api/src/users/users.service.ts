@@ -23,6 +23,7 @@ export class UsersService {
         longitude: true,
         locationLabel: true,
         timezone: true,
+        temperatureUnit: true,
         notifyPush: true,
         notifyEmail: true,
         notifySms: true,
@@ -49,6 +50,7 @@ export class UsersService {
       longitude?: number;
       locationLabel?: string | null;
       locationQuery?: string;
+      temperatureUnit?: string;
     },
   ) {
     const existing = await this.prisma.user.findUnique({
@@ -74,6 +76,7 @@ export class UsersService {
         quietHoursStart: true,
         quietHoursEnd: true,
         timezone: true,
+        temperatureUnit: true,
         latitude: true,
         longitude: true,
         locationLabel: true,

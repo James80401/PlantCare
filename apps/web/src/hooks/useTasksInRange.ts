@@ -78,6 +78,15 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
     void runWithAnimation(id, 'skipping', () => tasksApi.skip(id, feedback));
   };
 
+  const handleSnooze = async (id: string, days: 1 | 3 | 7) => {
+    try {
+      const { data } = await tasksApi.snooze(id, days);
+      patchTask(id, { dueDate: data.dueDate });
+    } catch {
+      load();
+    }
+  };
+
   return {
     tasks,
     loading,
@@ -87,6 +96,7 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
     load,
     handleComplete,
     handleSkip,
+    handleSnooze,
     COMPLETE_ANIM_MS,
   };
 }

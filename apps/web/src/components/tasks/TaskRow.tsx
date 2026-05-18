@@ -8,6 +8,7 @@ import {
   type TaskSkipReason,
 } from '../../utils/taskFeedback';
 import { taskTypeLabel } from '../../utils/tasks';
+import { SNOOZE_OPTIONS } from '../../utils/taskSnooze';
 import { TASK_TYPE_ICONS, type TaskItem } from '../../utils/taskGroups';
 
 type AnimState = 'completing' | 'skipping' | null;
@@ -17,6 +18,7 @@ interface TaskRowProps {
   animState: AnimState;
   onComplete: (id: string) => void;
   onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
+  onSnooze?: (id: string, days: 1 | 3 | 7) => void;
   /** When true, type icon/label is omitted (parent section shows category). */
   groupedByType?: boolean;
   /** When true, plant name links to the plant profile. */
@@ -28,10 +30,12 @@ export default function TaskRow({
   animState,
   onComplete,
   onSkip,
+  onSnooze,
   groupedByType = false,
   linkPlant = true,
 }: TaskRowProps) {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [snoozeOpen, setSnoozeOpen] = useState(false);
   const [selectedReason, setSelectedReason] = useState<TaskSkipReason>('SOIL_STILL_WET');
   const [note, setNote] = useState('');
   const due = parseISO(task.dueDate);
@@ -170,7 +174,40 @@ export default function TaskRow({
               >
                 Skip reason
               </button>
+              {onSnooze ? (
+                <button
+                  type="button"
+                  onClick={() => setSnoozeOpen((open) => !open)}
+                  className="inline-flex items-center justify-center rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 transition hover:bg-sky-100"
+                  aria-expanded={snoozeOpen}
+                >
+                  Snooze
+                </button>
+              ) : null}
             </div>
+
+            {snoozeOpen && onSnooze ? (
+              <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
+                  Remind me
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {SNOOZE_OPTIONS.map((option) => (
+                    <button
+                      key={option.days}
+                      type="button"
+                      onClick={() => {
+                        onSnooze(task.id, option.days);
+                        setSnoozeOpen(false);
+                      }}
+                      className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-900 ring-1 ring-sky-100 hover:bg-sky-100"
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             {feedbackOpen && (
               <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3">

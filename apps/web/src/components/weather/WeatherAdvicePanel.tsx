@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { usersApi } from '../../services/api';
+import { formatTemperatureRange, type TemperatureUnit } from '../../utils/temperature';
+import { RainSkipOutdoorWatering } from './RainSkipOutdoorWatering';
 
 interface WeatherAdvicePayload {
   fromCache: boolean;
@@ -49,6 +51,7 @@ export function WeatherAdvicePanel() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState(false);
+  const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('C');
 
   const loadStatus = () => {
     setLoadingStatus(true);
@@ -67,6 +70,11 @@ export function WeatherAdvicePanel() {
 
   useEffect(() => {
     loadStatus();
+    usersApi.me().then(({ data }) => {
+      if (data.temperatureUnit === 'F' || data.temperatureUnit === 'C') {
+        setTemperatureUnit(data.temperatureUnit);
+      }
+    });
   }, []);
 
   const runAdvice = async () => {
@@ -165,7 +173,12 @@ export function WeatherAdvicePanel() {
         </p>
       ) : null}
 
-      {expanded && advice ? <AdviceResults advice={advice} /> : null}
+      {expanded && advice ? (
+        <AdviceResults
+          advice={advice}
+          temperatureUnit={temperatureUnit}
+        />
+      ) : null}
 
       {showConfirm ? (
         <dialog
@@ -210,9 +223,19 @@ export function WeatherAdvicePanel() {
   );
 }
 
-function AdviceResults({ advice }: { advice: WeatherAdvicePayload }) {
+function AdviceResults({
+  advice,
+  temperatureUnit,
+}: {
+  advice: WeatherAdvicePayload;
+  temperatureUnit: TemperatureUnit;
+}) {
+  const hasRainAlert = advice.overviewAlerts.some((alert) => alert.type === 'rain');
+
   return (
     <div className="mt-4 space-y-4">
+      <RainSkipOutdoorWatering hasRainAlert={hasRainAlert} />
+
       {advice.overviewAlerts.length > 0 && (
         <div className="space-y-2">
           {advice.overviewAlerts.map((alert) => (
@@ -242,7 +265,7 @@ function AdviceResults({ advice }: { advice: WeatherAdvicePayload }) {
               <p className="font-semibold text-sky-900">{format(parseISO(day.date), 'EEE')}</p>
               <p className="mt-0.5 text-gray-500">{format(parseISO(day.date), 'MMM d')}</p>
               <p className="mt-1 font-bold text-emerald-900">
-                {Math.round(day.tempMinC)}–{Math.round(day.tempMaxC)}°
+                {formatTemperatureRange(day.tempMinC, day.tempMaxC, temperatureUnit)}
               </p>
             </div>
           ))}

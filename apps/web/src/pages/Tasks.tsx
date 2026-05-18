@@ -13,6 +13,7 @@ export default function Tasks() {
     dayGroups,
     handleComplete,
     handleSkip,
+    handleSnooze,
   } = useTasksInRange({ pastDays: 14, futureDays: 45 });
 
   const filteredGroups = useMemo(() => {
@@ -90,6 +91,7 @@ export default function Tasks() {
               animating={animating}
               onComplete={onComplete}
               onSkip={handleSkip}
+              onSnooze={handleSnooze}
             />
           ))}
         </div>

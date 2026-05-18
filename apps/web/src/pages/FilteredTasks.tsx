@@ -33,7 +33,7 @@ const FILTER_META: Record<
 export default function FilteredTasks() {
   const { filter } = useParams<{ filter: string }>();
   const meta = filter ? FILTER_META[filter] : undefined;
-  const { loading, tasks, animating, handleComplete, handleSkip } = useTasksInRange({
+  const { loading, tasks, animating, handleComplete, handleSkip, handleSnooze } = useTasksInRange({
     pastDays: 45,
     futureDays: 14,
   });
@@ -101,6 +101,7 @@ export default function FilteredTasks() {
               animating={animating[task.id] ?? null}
               onComplete={showActions ? onComplete : () => {}}
               onSkip={showActions ? handleSkip : () => {}}
+              onSnooze={showActions ? handleSnooze : undefined}
               linkPlant
             />
           ))}

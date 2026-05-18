@@ -60,6 +60,7 @@ export default function Dashboard() {
     dayGroups,
     handleComplete,
     handleSkip,
+    handleSnooze,
     load: reloadTasks,
   } = useTasksInRange({ pastDays: 45, futureDays: 14 });
 
@@ -333,6 +334,7 @@ export default function Dashboard() {
                   animating={animating}
                   onComplete={handleComplete}
                   onSkip={handleSkip}
+                  onSnooze={handleSnooze}
                 />
               ))}
             </div>

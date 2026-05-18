@@ -59,6 +59,7 @@ model User {
   longitude             Float?
   locationLabel         String?
   timezone              String         @default("America/New_York")
+  temperatureUnit       String         @default("C")
   notifyPush            Boolean        @default(true)
   notifyEmail           Boolean        @default(true)
   notifySms             Boolean        @default(false)

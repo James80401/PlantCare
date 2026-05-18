@@ -31,6 +31,7 @@ export class UsersController {
       longitude?: number;
       locationLabel?: string | null;
       locationQuery?: string;
+      temperatureUnit?: 'C' | 'F';
     },
   ) {
     return this.usersService.updateNotificationSettings(user.sub, body);

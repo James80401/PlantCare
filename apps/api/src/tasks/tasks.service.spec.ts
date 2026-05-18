@@ -77,6 +77,43 @@ describe('TasksService', () => {
     });
   });
 
+  it('snoozes a pending task to today plus N days', async () => {
+    const tx = {
+      task: {
+        update: jest.fn().mockResolvedValue({
+          ...task,
+          dueDate: new Date('2026-05-20'),
+          plant: { species: { commonName: 'Monstera' } },
+        }),
+      },
+      taskFeedback: {
+        create: jest.fn().mockResolvedValue({ id: 'feedback-snooze' }),
+      },
+    };
+    const prisma = {
+      task: { findFirst: jest.fn().mockResolvedValue(task) },
+      $transaction: jest.fn((callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
+    };
+    const scheduler = { onTaskCompleted: jest.fn() };
+    const service = new TasksService(prisma as never, scheduler as never, {} as never);
+
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-05-17T15:00:00.000Z'));
+
+    const result = await service.snooze('user-1', 'task-1', { days: 3 });
+
+    expect(result.dueDate).toEqual(new Date('2026-05-20'));
+    expect(tx.taskFeedback.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: 'SNOOZE',
+        reason: 'SNOOZE_3D',
+      }),
+    });
+    expect(scheduler.onTaskCompleted).not.toHaveBeenCalled();
+
+    jest.useRealTimers();
+  });
+
   it('rejects skipping a task owned by another user', async () => {
     const { service } = createService(null);
 

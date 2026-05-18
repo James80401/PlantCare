@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { ApplyScheduleSuggestionDto } from './dto/apply-schedule-suggestion.dto';
 import { SkipTaskDto } from './dto/skip-task.dto';
+import { SnoozeTaskDto } from './dto/snooze-task.dto';
 import { TasksService } from './tasks.service';
 
 @ApiTags('tasks')
@@ -44,6 +45,11 @@ export class TasksController {
   @Patch(':id/skip')
   skip(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: SkipTaskDto) {
     return this.tasksService.skip(user.sub, id, dto);
+  }
+
+  @Patch(':id/snooze')
+  snooze(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: SnoozeTaskDto) {
+    return this.tasksService.snooze(user.sub, id, dto);
   }
 
   @Get(':id/instructions')

@@ -11,6 +11,7 @@ interface TaskDayGroupProps {
   animating: AnimMap;
   onComplete: (id: string) => void;
   onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
+  onSnooze?: (id: string, days: 1 | 3 | 7) => void;
 }
 
 export default function TaskDayGroup({
@@ -18,6 +19,7 @@ export default function TaskDayGroup({
   animating,
   onComplete,
   onSkip,
+  onSnooze,
 }: TaskDayGroupProps) {
   const { pending, done, skipped, total } = group;
   const allDone = pending.length === 0 && total > 0;
@@ -98,6 +100,7 @@ export default function TaskDayGroup({
                         animState={animating[task.id] ?? null}
                         onComplete={onComplete}
                         onSkip={onSkip}
+                        onSnooze={onSnooze}
                       />
                     ))}
                   </ul>

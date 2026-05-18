@@ -87,7 +87,6 @@ npm run uat:e2e
 
 ### Known limitations (not blocking UAT)
 
-- Task snooze not implemented
 - Capacitor native build needs `VITE_API_BASE_URL` pointing at a reachable API
 - Password reset requires SMTP (token flow is tested in CI when SMTP is configured)
 
