@@ -13,6 +13,7 @@ import GardenScoreInsights from './pages/GardenScoreInsights';
 import FilteredTasks from './pages/FilteredTasks';
 import AddPlant from './pages/AddPlant';
 import BrowsePlants from './pages/BrowsePlants';
+import SpeciesBrowseDetail from './pages/SpeciesBrowseDetail';
 import PlantProfile from './pages/PlantProfile';
 import Tasks from './pages/Tasks';
 import Settings from './pages/Settings';
@@ -37,6 +38,7 @@ export default function App() {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="plants/browse/:speciesId" element={<SpeciesBrowseDetail />} />
         <Route path="plants/browse" element={<BrowsePlants />} />
         <Route path="plants/new" element={<AddPlant />} />
         <Route path="plants/:id" element={<PlantProfile />} />

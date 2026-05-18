@@ -2,7 +2,9 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   defaultSpeciesDiscoveryFilters,
+  SPECIES_BROWSE_SORT_OPTIONS,
   SPECIES_DISCOVERY_FILTERS,
+  type SpeciesBrowseSort,
   type SpeciesDiscoveryFilterKey,
 } from '../constants/speciesDiscovery';
 import { speciesApi } from '../services/api';
@@ -16,6 +18,8 @@ interface SpeciesItem {
   toxicity?: string;
   defaultImageUrl?: string;
   discoveryTags?: string[];
+  difficulty?: string;
+  toxicitySummary?: string;
 }
 
 interface BrowseResponse {
@@ -46,12 +50,19 @@ function filtersToParams(
   return out;
 }
 
+function sortFromParams(params: URLSearchParams): SpeciesBrowseSort {
+  const sort = params.get('sort');
+  if (sort === 'waterAsc' || sort === 'waterDesc') return sort;
+  return 'name';
+}
+
 export default function BrowsePlants() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get('q') || '');
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [activeFilters, setActiveFilters] = useState(() => filtersFromParams(searchParams));
+  const [sort, setSort] = useState<SpeciesBrowseSort>(() => sortFromParams(searchParams));
   const [result, setResult] = useState<BrowseResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -83,6 +94,7 @@ export default function BrowsePlants() {
         q: debouncedQuery,
         page,
         pageSize: PAGE_SIZE,
+        sort: sort !== 'name' ? sort : undefined,
         ...filterParams,
       })
       .then((r) => {
@@ -101,12 +113,18 @@ export default function BrowsePlants() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, page, filterParams]);
+  }, [debouncedQuery, page, filterParams, sort]);
 
-  const syncUrl = (nextPage: number, q: string, filters: Record<SpeciesDiscoveryFilterKey, boolean>) => {
+  const syncUrl = (
+    nextPage: number,
+    q: string,
+    filters: Record<SpeciesDiscoveryFilterKey, boolean>,
+    nextSort: SpeciesBrowseSort = sort,
+  ) => {
     const params = new URLSearchParams();
     if (q) params.set('q', q);
     if (nextPage > 1) params.set('page', String(nextPage));
+    if (nextSort !== 'name') params.set('sort', nextSort);
     for (const [key, value] of Object.entries(filtersToParams(filters))) {
       params.set(key, value);
     }
@@ -117,6 +135,19 @@ export default function BrowsePlants() {
     setActiveFilters(filters);
     syncUrl(1, debouncedQuery, filters);
   };
+
+  const applySort = (nextSort: SpeciesBrowseSort) => {
+    setSort(nextSort);
+    syncUrl(1, debouncedQuery, activeFilters, nextSort);
+  };
+
+  const clearFilters = () => {
+    const cleared = { ...defaultSpeciesDiscoveryFilters };
+    setActiveFilters(cleared);
+    syncUrl(1, debouncedQuery, cleared);
+  };
+
+  const hasActiveFilters = Object.values(activeFilters).some(Boolean);
 
   const goToPage = (nextPage: number) => {
     syncUrl(nextPage, debouncedQuery, activeFilters);
@@ -205,6 +236,33 @@ export default function BrowsePlants() {
               );
             })}
           </div>
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-2 text-xs font-semibold text-emerald-700 hover:underline"
+            >
+              Clear all filters
+            </button>
+          ) : null}
+        </div>
+
+        <div>
+          <label htmlFor="browse-sort" className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            Sort by
+          </label>
+          <select
+            id="browse-sort"
+            value={sort}
+            onChange={(e) => applySort(e.target.value as SpeciesBrowseSort)}
+            className="mt-2 w-full rounded-2xl border border-emerald-100 bg-white px-3 py-2.5 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 sm:w-auto"
+          >
+            {SPECIES_BROWSE_SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       </form>
 
@@ -227,7 +285,10 @@ export default function BrowsePlants() {
           {items.map((species) => (
             <li key={species.id}>
               <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5">
-                <div className="aspect-[4/3] bg-emerald-50 flex items-center justify-center overflow-hidden">
+                <Link
+                  to={`/garden/plants/browse/${species.id}`}
+                  className="aspect-[4/3] bg-emerald-50 flex items-center justify-center overflow-hidden"
+                >
                   {species.defaultImageUrl ? (
                     <img
                       src={species.defaultImageUrl}
@@ -241,11 +302,14 @@ export default function BrowsePlants() {
                       🌿
                     </span>
                   )}
-                </div>
+                </Link>
                 <div className="flex flex-1 flex-col p-4">
-                  <h2 className="font-semibold text-emerald-950 leading-snug">
+                  <Link
+                    to={`/garden/plants/browse/${species.id}`}
+                    className="font-semibold text-emerald-950 leading-snug hover:text-emerald-700"
+                  >
                     {species.commonName}
-                  </h2>
+                  </Link>
                   {species.scientificName ? (
                     <p className="mt-0.5 text-sm italic text-gray-400">{species.scientificName}</p>
                   ) : null}
@@ -253,6 +317,28 @@ export default function BrowsePlants() {
                     {species.sunlight || 'Light not specified'} · Water every{' '}
                     {species.wateringFreqDays ?? 7} days
                   </p>
+                  {(species.difficulty || species.toxicitySummary) && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {species.difficulty ? (
+                        <span className="rounded-full bg-lime-100 px-2 py-0.5 text-[0.65rem] font-semibold text-lime-900">
+                          {species.difficulty}
+                        </span>
+                      ) : null}
+                      {species.toxicitySummary ? (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${
+                            species.toxicitySummary === 'Pet-safe'
+                              ? 'bg-emerald-100 text-emerald-900'
+                              : species.toxicitySummary === 'Toxic'
+                                ? 'bg-amber-100 text-amber-950'
+                                : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {species.toxicitySummary}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
                   {species.discoveryTags?.length ? (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {species.discoveryTags.slice(0, 4).map((tag) => (
@@ -265,15 +351,23 @@ export default function BrowsePlants() {
                       ))}
                     </div>
                   ) : null}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(`/garden/plants/new?speciesId=${encodeURIComponent(species.id)}`)
-                    }
-                    className="mt-4 w-full rounded-2xl bg-emerald-800 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900"
-                  >
-                    Add to garden
-                  </button>
+                  <div className="mt-4 flex gap-2">
+                    <Link
+                      to={`/garden/plants/browse/${species.id}`}
+                      className="flex-1 rounded-2xl border border-emerald-200 py-2.5 text-center text-sm font-semibold text-emerald-900 hover:bg-emerald-50"
+                    >
+                      Details
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(`/garden/plants/new?speciesId=${encodeURIComponent(species.id)}`)
+                      }
+                      className="flex-1 rounded-2xl bg-emerald-800 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
               </article>
             </li>

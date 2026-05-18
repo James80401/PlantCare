@@ -78,8 +78,11 @@ export const speciesApi = {
     q?: string;
     page?: number;
     pageSize?: number;
+    sort?: string;
+    beginnerFriendly?: string;
     petSafe?: string;
     lowLight?: string;
+    succulent?: string;
     edible?: string;
     droughtTolerant?: string;
     indoor?: string;

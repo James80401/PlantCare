@@ -24,6 +24,8 @@ export class SpeciesController {
     @Query('droughtTolerant') droughtTolerant?: string,
     @Query('indoor') indoor?: string,
     @Query('outdoor') outdoor?: string,
+    @Query('beginnerFriendly') beginnerFriendly?: string,
+    @Query('succulent') succulent?: string,
   ) {
     return this.perenual.search(
       q || '',
@@ -34,6 +36,8 @@ export class SpeciesController {
         droughtTolerant,
         indoor,
         outdoor,
+        beginnerFriendly,
+        succulent,
       }),
     );
   }
@@ -49,7 +53,12 @@ export class SpeciesController {
     @Query('droughtTolerant') droughtTolerant?: string,
     @Query('indoor') indoor?: string,
     @Query('outdoor') outdoor?: string,
+    @Query('beginnerFriendly') beginnerFriendly?: string,
+    @Query('succulent') succulent?: string,
+    @Query('sort') sort?: string,
   ) {
+    const sortMode =
+      sort === 'waterAsc' || sort === 'waterDesc' || sort === 'name' ? sort : 'name';
     return this.perenual.browse(
       q || '',
       parseSpeciesSearchFilters({
@@ -59,9 +68,12 @@ export class SpeciesController {
         droughtTolerant,
         indoor,
         outdoor,
+        beginnerFriendly,
+        succulent,
       }),
       parseInt(page || '1', 10),
       parseInt(pageSize || '24', 10),
+      sortMode,
     );
   }
 

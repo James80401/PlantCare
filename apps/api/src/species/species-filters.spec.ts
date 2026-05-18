@@ -32,8 +32,16 @@ describe('species discovery filters', () => {
       expect.arrayContaining(['Pet-safe', 'Edible', 'Outdoor-friendly']),
     );
     expect(speciesDiscoveryTags(snakePlant)).toEqual(
-      expect.arrayContaining(['Low light', 'Drought-tolerant', 'Indoor-friendly']),
+      expect.arrayContaining([
+        'Low light',
+        'Drought-tolerant',
+        'Indoor-friendly',
+        'Beginner-friendly',
+        'Succulent',
+      ]),
     );
+    expect(speciesMatchesFilters(snakePlant, { beginnerFriendly: true })).toBe(true);
+    expect(speciesMatchesFilters(snakePlant, { succulent: true })).toBe(true);
   });
 });
 

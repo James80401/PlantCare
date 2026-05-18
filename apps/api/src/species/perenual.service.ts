@@ -3,8 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  speciesDiscoveryTags,
+  buildSpeciesCatalogMeta,
+  compareSpeciesForSort,
   speciesMatchesFilters,
+  type SpeciesBrowseSort,
   type SpeciesSearchFilters,
 } from './species-filters';
 
@@ -26,6 +28,7 @@ export class PerenualService {
     filters: SpeciesSearchFilters = {},
     page = 1,
     pageSize = 24,
+    sort: SpeciesBrowseSort = 'name',
   ) {
     const pageNum = Math.max(1, Math.floor(page) || 1);
     const limit = Math.min(50, Math.max(1, Math.floor(pageSize) || 24));
@@ -41,23 +44,28 @@ export class PerenualService {
         }
       : {};
 
-    const withTags = (species: Awaited<ReturnType<typeof this.prisma.plantSpecies.findMany>>) =>
-      species.map((item) => ({
-        ...item,
-        discoveryTags: speciesDiscoveryTags(item),
-      }));
+    const enrich = (species: Awaited<ReturnType<typeof this.prisma.plantSpecies.findMany>>) =>
+      species.map((item) => {
+        const meta = buildSpeciesCatalogMeta(item);
+        return {
+          ...item,
+          discoveryTags: meta.discoveryTags,
+          difficulty: meta.difficulty,
+          toxicitySummary: meta.toxicitySummary,
+          phRangeLabel: meta.phRangeLabel,
+        };
+      });
 
     if (hasFilters) {
-      const all = await this.prisma.plantSpecies.findMany({
-        where,
-        orderBy: { commonName: 'asc' },
-      });
-      const filtered = all.filter((species) => speciesMatchesFilters(species, filters));
+      const all = await this.prisma.plantSpecies.findMany({ where });
+      const filtered = all
+        .filter((species) => speciesMatchesFilters(species, filters))
+        .sort((a, b) => compareSpeciesForSort(a, b, sort));
       const total = filtered.length;
       const skip = (pageNum - 1) * limit;
       const slice = filtered.slice(skip, skip + limit);
       return {
-        items: withTags(slice),
+        items: enrich(slice),
         page: pageNum,
         pageSize: limit,
         total,
@@ -65,18 +73,25 @@ export class PerenualService {
       };
     }
 
+    const orderBy =
+      sort === 'waterAsc'
+        ? { wateringFreqDays: 'desc' as const }
+        : sort === 'waterDesc'
+          ? { wateringFreqDays: 'asc' as const }
+          : { commonName: 'asc' as const };
+
     const [total, rows] = await Promise.all([
       this.prisma.plantSpecies.count({ where }),
       this.prisma.plantSpecies.findMany({
         where,
-        orderBy: { commonName: 'asc' },
+        orderBy,
         skip: (pageNum - 1) * limit,
         take: limit,
       }),
     ]);
 
     return {
-      items: withTags(rows),
+      items: enrich(rows),
       page: pageNum,
       pageSize: limit,
       total,
@@ -98,11 +113,20 @@ export class PerenualService {
     const filteredLocal = hasFilters
       ? local.filter((species) => speciesMatchesFilters(species, filters))
       : local;
-    const withTags = (species: typeof filteredLocal) =>
-      species.map((item) => ({ ...item, discoveryTags: speciesDiscoveryTags(item) }));
+    const enrichSearch = (species: typeof filteredLocal) =>
+      species.map((item) => {
+        const meta = buildSpeciesCatalogMeta(item);
+        return {
+          ...item,
+          discoveryTags: meta.discoveryTags,
+          difficulty: meta.difficulty,
+          toxicitySummary: meta.toxicitySummary,
+          phRangeLabel: meta.phRangeLabel,
+        };
+      });
 
     if (hasFilters || local.length >= 5 || !this.apiKey) {
-      return withTags(filteredLocal.slice(0, 30));
+      return enrichSearch(filteredLocal.slice(0, 30));
     }
 
     try {
@@ -119,17 +143,24 @@ export class PerenualService {
       for (const r of results) {
         if (!merged.find((m) => m.id === r.id)) merged.push(r);
       }
-      return withTags(merged.slice(0, 30));
+      return enrichSearch(merged.slice(0, 30));
     } catch (err) {
       this.logger.warn(`Perenual search failed: ${err}`);
-      return withTags(local);
+      return enrichSearch(local);
     }
   }
 
   async getOrFetchById(speciesId: string) {
     const existing = await this.prisma.plantSpecies.findUnique({ where: { id: speciesId } });
-    if (existing) return existing;
-    throw new Error('Species not found');
+    if (!existing) throw new Error('Species not found');
+    const meta = buildSpeciesCatalogMeta(existing);
+    return {
+      ...existing,
+      discoveryTags: meta.discoveryTags,
+      difficulty: meta.difficulty,
+      toxicitySummary: meta.toxicitySummary,
+      phRangeLabel: meta.phRangeLabel,
+    };
   }
 
   private async upsertFromApi(item: {

@@ -1,4 +1,13 @@
 import type { PlantSpecies } from '@prisma/client';
+import {
+  buildSpeciesCatalogMeta,
+  inferDifficulty,
+  isSucculentSpecies,
+  speciesDiscoveryTags,
+} from './species-catalog-meta';
+
+export type { SpeciesCatalogMeta, SpeciesDifficulty, SpeciesToxicitySummary } from './species-catalog-meta';
+export { buildSpeciesCatalogMeta, speciesDiscoveryTags };
 
 export interface SpeciesSearchFilters {
   petSafe?: boolean;
@@ -7,7 +16,11 @@ export interface SpeciesSearchFilters {
   droughtTolerant?: boolean;
   indoor?: boolean;
   outdoor?: boolean;
+  beginnerFriendly?: boolean;
+  succulent?: boolean;
 }
+
+export type SpeciesBrowseSort = 'name' | 'waterAsc' | 'waterDesc';
 
 export function parseSpeciesSearchFilters(query: {
   petSafe?: string;
@@ -16,6 +29,8 @@ export function parseSpeciesSearchFilters(query: {
   droughtTolerant?: string;
   indoor?: string;
   outdoor?: string;
+  beginnerFriendly?: string;
+  succulent?: string;
 }): SpeciesSearchFilters {
   return {
     petSafe: query.petSafe === 'true',
@@ -24,6 +39,8 @@ export function parseSpeciesSearchFilters(query: {
     droughtTolerant: query.droughtTolerant === 'true',
     indoor: query.indoor === 'true',
     outdoor: query.outdoor === 'true',
+    beginnerFriendly: query.beginnerFriendly === 'true',
+    succulent: query.succulent === 'true',
   };
 }
 
@@ -68,7 +85,7 @@ export function speciesMatchesFilters(species: PlantSpecies, filters: SpeciesSea
   const toxicity = species.toxicity?.toLowerCase() ?? '';
   const searchable = text(species);
 
-  if (filters.petSafe && !toxicity.includes('non-toxic') && !toxicity.includes('safe')) {
+  if (filters.petSafe && !toxicity.includes('non-toxic')) {
     return false;
   }
 
@@ -107,27 +124,13 @@ export function speciesMatchesFilters(species: PlantSpecies, filters: SpeciesSea
     return false;
   }
 
+  if (filters.beginnerFriendly && inferDifficulty(species) !== 'Beginner') {
+    return false;
+  }
+
+  if (filters.succulent && !isSucculentSpecies(species)) {
+    return false;
+  }
+
   return true;
-}
-
-export function speciesDiscoveryTags(species: PlantSpecies) {
-  const tags: string[] = [];
-  const sunlight = species.sunlight?.toLowerCase() ?? '';
-  const toxicity = species.toxicity?.toLowerCase() ?? '';
-  const searchable = text(species);
-
-  if (toxicity.includes('non-toxic') || toxicity.includes('safe')) tags.push('Pet-safe');
-  if (sunlight.includes('low')) tags.push('Low light');
-  if (edibleTerms.some((term) => searchable.includes(term))) tags.push('Edible');
-  if (species.wateringFreqDays >= 10 || searchable.includes('drought')) {
-    tags.push('Drought-tolerant');
-  }
-  if (sunlight.includes('indirect') || sunlight.includes('low') || sunlight.includes('medium')) {
-    tags.push('Indoor-friendly');
-  }
-  if (sunlight.includes('full sun') || sunlight.includes('partial') || searchable.includes('garden')) {
-    tags.push('Outdoor-friendly');
-  }
-
-  return tags.slice(0, 4);
 }

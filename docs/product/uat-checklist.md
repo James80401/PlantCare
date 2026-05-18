@@ -36,6 +36,7 @@
 - [x] Landing → register → garden dashboard (Playwright)
 - [x] Species search: houseplant, herb, outdoor (API + Playwright)
 - [x] Browse plants catalog paginated (`/garden/plants/browse` — Playwright)
+- [ ] Browse: beginner-friendly / succulent filters, sort (name, water cadence), species detail page (`/garden/plants/browse/:id`)
 - [x] Outdoor location → no MIST tasks (API)
 - [x] Change location → `tasksRescheduled` (API)
 - [x] Dashboard: metrics and greeting (Playwright)
