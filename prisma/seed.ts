@@ -1,8 +1,21 @@
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { PrismaClient } from '@prisma/client';
 import { speciesCatalog, speciesSeedId } from './data/species-catalog';
+import { speciesPhotoUrl } from './data/species-photo-utils';
 import { seedCareGuides } from './seed-care-guides';
 
 const prisma = new PrismaClient();
+
+const speciesPhotosDir = join(
+  process.cwd(),
+  'apps',
+  'api',
+  'src',
+  'care-guides',
+  'photos',
+  'species',
+);
 
 function legacySeedId(commonName: string): string {
   return `seed-${commonName.toLowerCase().replace(/\s+/g, '-')}`;
@@ -28,10 +41,16 @@ async function main() {
     const targetId = legacyInUse > 0 && legacyId !== id ? legacyId : id;
     const existing = await prisma.plantSpecies.findUnique({ where: { id: targetId } });
 
+    const speciesData = { ...s } as typeof s & { defaultImageUrl?: string };
+    const photoPath = join(speciesPhotosDir, `${targetId}.jpg`);
+    if (existsSync(photoPath)) {
+      speciesData.defaultImageUrl = speciesPhotoUrl(targetId);
+    }
+
     await prisma.plantSpecies.upsert({
       where: { id: targetId },
-      update: s,
-      create: { id: targetId, ...s },
+      update: speciesData,
+      create: { id: targetId, ...speciesData },
     });
 
     if (existing) updated++;

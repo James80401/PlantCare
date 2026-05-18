@@ -231,7 +231,8 @@ export default function BrowsePlants() {
                   {species.defaultImageUrl ? (
                     <img
                       src={species.defaultImageUrl}
-                      alt=""
+                      alt={species.commonName}
+                      title={species.scientificName || species.commonName}
                       className="h-full w-full object-cover"
                       loading="lazy"
                     />
