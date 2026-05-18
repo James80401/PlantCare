@@ -8,6 +8,15 @@ describe('DiagnosisService', () => {
         findFirst: jest.fn().mockResolvedValue(diagnosis),
         update: jest.fn().mockResolvedValue({ id: 'diagnosis-1', resolved: true }),
       },
+      task: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({
+          id: 'task-1',
+          taskType: 'HEALTH_CHECK',
+          plantId: 'plant-1',
+          sourceDiagnosisId: 'diagnosis-1',
+        }),
+      },
     };
 
     const service = new DiagnosisService(
@@ -43,5 +52,27 @@ describe('DiagnosisService', () => {
     await expect(
       service.updateStatus('user-1', 'plant-1', 'diagnosis-1', { resolved: true }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('creates a health check follow-up task linked to the diagnosis', async () => {
+    const { service, prisma } = createService();
+
+    const result = await service.createFollowUpTask(
+      'user-1',
+      'plant-1',
+      'diagnosis-1',
+      { dueInDays: 5 },
+    );
+
+    expect(result.taskType).toBe('HEALTH_CHECK');
+    expect(prisma.task.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          plantId: 'plant-1',
+          taskType: 'HEALTH_CHECK',
+          sourceDiagnosisId: 'diagnosis-1',
+        }),
+      }),
+    );
   });
 });

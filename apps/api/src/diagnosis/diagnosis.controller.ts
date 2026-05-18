@@ -13,6 +13,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { DiagnosisService } from './diagnosis.service';
+import { FollowUpTaskDto } from './dto/follow-up-task.dto';
 import { UpdateDiagnosisDto } from './dto/update-diagnosis.dto';
 
 @ApiTags('diagnoses')
@@ -31,6 +32,21 @@ export class DiagnosisController {
     @Body('symptomsText') symptomsText?: string,
   ) {
     return this.diagnosisService.diagnose(user.sub, plantId, file, symptomsText);
+  }
+
+  @Post(':diagnosisId/follow-up-task')
+  createFollowUpTask(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('diagnosisId') diagnosisId: string,
+    @Body() dto: FollowUpTaskDto,
+  ) {
+    return this.diagnosisService.createFollowUpTask(
+      user.sub,
+      plantId,
+      diagnosisId,
+      dto,
+    );
   }
 
   @Patch(':diagnosisId')

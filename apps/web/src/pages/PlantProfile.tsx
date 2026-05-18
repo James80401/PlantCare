@@ -11,7 +11,9 @@ import { SharePlantCard } from '../components/engagement/SharePlantCard';
 import { Link, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import DrPlantChat from '../components/DrPlantChat';
+import DiagnosisForm from '../components/DiagnosisForm';
 import DiagnosisResult from '../components/DiagnosisResult';
+import TreatmentPlanCard from '../components/TreatmentPlanCard';
 import TaskInstructionsLink from '../components/TaskInstructionsLink';
 import TaskRow from '../components/tasks/TaskRow';
 import { useTasksInRange } from '../hooks/useTasksInRange';
@@ -76,6 +78,7 @@ export default function PlantProfile() {
   const [locationSaving, setLocationSaving] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
   const [updatingDiagnosisId, setUpdatingDiagnosisId] = useState<string | null>(null);
+  const [followUpCreatingId, setFollowUpCreatingId] = useState<string | null>(null);
   const [sharingPlant, setSharingPlant] = useState(false);
 
   const {
@@ -146,6 +149,40 @@ export default function PlantProfile() {
     load();
   };
 
+  const submitDiagnosis = async (symptomsText: string, image?: File) => {
+    if (!id) return;
+    const { data } = await diagnosisApi.submit(id, symptomsText, image);
+    setPlant((current) => {
+      if (!current) return current;
+      const currentDiagnoses = (current.diagnoses as PlantRecord[] | undefined) || [];
+      return {
+        ...current,
+        diagnoses: [data, ...currentDiagnoses].slice(0, 5),
+      };
+    });
+  };
+
+  const createFollowUpTask = async (diagnosisId: string, dueInDays: number) => {
+    if (!id) return;
+    setFollowUpCreatingId(diagnosisId);
+    try {
+      const { data } = await diagnosisApi.createFollowUpTask(id, diagnosisId, dueInDays);
+      setPlant((current) => {
+        if (!current) return current;
+        const currentTasks = (current.tasks as PlantRecord[] | undefined) || [];
+        return {
+          ...current,
+          tasks: [...currentTasks, data].sort(
+            (a, b) =>
+              new Date(a.dueDate as string).getTime() - new Date(b.dueDate as string).getTime(),
+          ),
+        };
+      });
+    } finally {
+      setFollowUpCreatingId(null);
+    }
+  };
+
   const updateDiagnosisStatus = async (diagnosisId: string, resolved: boolean) => {
     if (!id) return;
     setUpdatingDiagnosisId(diagnosisId);
@@ -192,6 +229,14 @@ export default function PlantProfile() {
   const journalEntries = journal || [];
   const diagnosisEntries = diagnoses || [];
   const activeDiagnosisCount = diagnosisEntries.filter((diagnosis) => !diagnosis.resolved).length;
+  const latestUnresolved = diagnosisEntries.find((diagnosis) => !diagnosis.resolved);
+  const diagnosisHasFollowUp = (diagnosisId: string) =>
+    tasks.some(
+      (task) =>
+        task.sourceDiagnosisId === diagnosisId &&
+        task.taskType === 'HEALTH_CHECK' &&
+        task.status === 'PENDING',
+    );
   const timelineEvents = buildTimelineEvents({
     journalEntries,
     tasks,
@@ -521,6 +566,32 @@ export default function PlantProfile() {
             }
           />
 
+          {latestUnresolved ? (
+            <TreatmentPlanCard
+              diagnosis={{
+                id: latestUnresolved.id as string,
+                resultLabel: latestUnresolved.resultLabel as string,
+                confidence: latestUnresolved.confidence as number | null,
+                adviceText: latestUnresolved.adviceText as string | null,
+                source: latestUnresolved.source as string | undefined,
+                detailJson: latestUnresolved.detailJson as string | null,
+                resolved: Boolean(latestUnresolved.resolved),
+                symptomsText: latestUnresolved.symptomsText as string | null,
+              }}
+              updating={updatingDiagnosisId === latestUnresolved.id}
+              followUpCreating={followUpCreatingId === latestUnresolved.id}
+              hasFollowUpTask={diagnosisHasFollowUp(latestUnresolved.id as string)}
+              onResolvedChange={(resolved) =>
+                updateDiagnosisStatus(latestUnresolved.id as string, resolved)
+              }
+              onCreateFollowUp={(dueInDays) =>
+                createFollowUpTask(latestUnresolved.id as string, dueInDays)
+              }
+            />
+          ) : null}
+
+          <DiagnosisForm plantName={plantLabel} onSubmit={submitDiagnosis} />
+
           <DrPlantChat plantId={id} plantName={plantLabel} />
 
           {diagnosisEntries.length ? (
@@ -544,8 +615,16 @@ export default function PlantProfile() {
                         resolved: Boolean(diagnosis.resolved),
                       }}
                       updating={updatingDiagnosisId === diagnosis.id}
+                      followUpCreating={followUpCreatingId === diagnosis.id}
+                      hasFollowUpTask={diagnosisHasFollowUp(diagnosis.id as string)}
                       onResolvedChange={(resolved) =>
                         updateDiagnosisStatus(diagnosis.id as string, resolved)
+                      }
+                      onCreateFollowUp={
+                        diagnosis.id === latestUnresolved?.id
+                          ? undefined
+                          : (dueInDays) =>
+                              createFollowUpTask(diagnosis.id as string, dueInDays)
                       }
                     />
                   </li>
@@ -688,9 +767,8 @@ function RecoveryPanel({
               : 'No active diagnosis issues'}
           </h3>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-700">
-            Recheck symptoms after care changes, add a recovery note, and mark the issue recovered
-            when the plant is stable. Dedicated follow-up task creation is documented as the next
-            API step.
+            Recheck symptoms after care changes, schedule a health-check reminder, and mark the
+            issue recovered when the plant is stable.
           </p>
         </div>
         <a

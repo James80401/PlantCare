@@ -131,6 +131,16 @@ export const diagnosisApi = {
   },
   updateStatus: (plantId: string, diagnosisId: string, resolved: boolean) =>
     api.patch(`/plants/${plantId}/diagnose/${diagnosisId}`, { resolved }),
+  createFollowUpTask: (
+    plantId: string,
+    diagnosisId: string,
+    dueInDays = 3,
+    note?: string,
+  ) =>
+    api.post(`/plants/${plantId}/diagnose/${diagnosisId}/follow-up-task`, {
+      dueInDays,
+      note,
+    }),
 };
 
 export const diagnosisChatApi = {

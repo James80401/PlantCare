@@ -3,8 +3,10 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { addDays, format, subDays } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
+import { WeatherService } from '../weather/weather.service';
 import { LlmDiagnosisService, type ChatTurn, type PlantContext } from './llm-diagnosis.service';
 import { OpenAiRequestError } from './openai-errors';
 import { readFileSync } from 'fs';
@@ -16,6 +18,7 @@ export class DiagnosisChatService {
     private prisma: PrismaService,
     private llm: LlmDiagnosisService,
     private upload: UploadService,
+    private weather: WeatherService,
   ) {}
 
   private async getPlantForUser(userId: string, plantId: string) {
@@ -27,7 +30,91 @@ export class DiagnosisChatService {
     return plant;
   }
 
-  private plantContext(plant: Awaited<ReturnType<typeof this.getPlantForUser>>): PlantContext {
+  private async buildPlantContext(
+    plant: Awaited<ReturnType<typeof this.getPlantForUser>>,
+    userId: string,
+  ): Promise<PlantContext> {
+    const since = subDays(new Date(), 45);
+
+    const [journalEntries, pendingTasks, recentFeedback, lastDiagnosis, weatherStatus] =
+      await Promise.all([
+        this.prisma.journalEntry.findMany({
+          where: { plantId: plant.id },
+          orderBy: { createdAt: 'desc' },
+          take: 4,
+          select: { notes: true, createdAt: true },
+        }),
+        this.prisma.task.findMany({
+          where: {
+            plantId: plant.id,
+            status: 'PENDING',
+            dueDate: { lte: addDays(new Date(), 30) },
+          },
+          orderBy: { dueDate: 'asc' },
+          take: 6,
+          select: { taskType: true, dueDate: true },
+        }),
+        this.prisma.taskFeedback.findMany({
+          where: { userId, task: { plantId: plant.id }, createdAt: { gte: since } },
+          orderBy: { createdAt: 'desc' },
+          take: 4,
+          select: { action: true, reason: true, note: true },
+        }),
+        this.prisma.diagnosis.findFirst({
+          where: { plantId: plant.id },
+          orderBy: { createdAt: 'desc' },
+          select: {
+            resultLabel: true,
+            resolved: true,
+            symptomsText: true,
+            createdAt: true,
+          },
+        }),
+        this.weather.getAdviceStatus(userId),
+      ]);
+
+    const lines: string[] = [];
+
+    if (journalEntries.length) {
+      lines.push(
+        'Recent journal:',
+        ...journalEntries.map((entry) => {
+          const note = entry.notes?.trim() || '(photo update)';
+          return `- ${format(entry.createdAt, 'MMM d')}: ${note.slice(0, 160)}`;
+        }),
+      );
+    }
+
+    if (pendingTasks.length) {
+      lines.push(
+        'Upcoming care tasks:',
+        ...pendingTasks.map(
+          (task) =>
+            `- ${task.taskType} due ${format(task.dueDate, 'MMM d')}`,
+        ),
+      );
+    }
+
+    const skipNotes = recentFeedback
+      .filter((f) => f.action === 'SKIP' && (f.reason || f.note))
+      .map((f) => f.note || f.reason)
+      .filter(Boolean);
+    if (skipNotes.length) {
+      lines.push('Recent skip reasons:', ...skipNotes.map((note) => `- ${note}`));
+    }
+
+    if (lastDiagnosis && !lastDiagnosis.resolved) {
+      lines.push(
+        `Active diagnosis (${format(lastDiagnosis.createdAt, 'MMM d')}): ${lastDiagnosis.resultLabel}` +
+          (lastDiagnosis.symptomsText ? ` — ${lastDiagnosis.symptomsText.slice(0, 120)}` : ''),
+      );
+    }
+
+    const weatherAlert = weatherStatus.cachedAdvice?.overviewAlerts?.[0]?.title;
+    if (weatherAlert && weatherStatus.locationLabel) {
+      lines.push(`Weather (${weatherStatus.locationLabel}): ${weatherAlert}`);
+    }
+
     return {
       commonName: plant.species.commonName,
       scientificName: plant.species.scientificName,
@@ -36,6 +123,7 @@ export class DiagnosisChatService {
       toxicity: plant.species.toxicity,
       careNotes: plant.species.careNotes,
       location: plant.location,
+      caregiverContext: lines.length ? lines.join('\n') : null,
     };
   }
 
@@ -184,7 +272,7 @@ export class DiagnosisChatService {
         );
       }
       assistantContent = await this.llm.chat(
-        this.plantContext(plant),
+        await this.buildPlantContext(plant, userId),
         history,
         { text, imageBase64, imageMimeType },
       );

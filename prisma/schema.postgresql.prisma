@@ -182,19 +182,22 @@ model Plant {
 }
 
 model Task {
-  id            String     @id @default(cuid())
-  plantId       String
-  plant         Plant      @relation(fields: [plantId], references: [id], onDelete: Cascade)
-  taskType      TaskType
-  dueDate       DateTime
-  completedAt   DateTime?
-  status        TaskStatus @default(PENDING)
-  notifiedAt    DateTime?
-  createdAt     DateTime   @default(now())
-  feedback       TaskFeedback[]
+  id                String     @id @default(cuid())
+  plantId           String
+  plant             Plant      @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  taskType          TaskType
+  dueDate           DateTime
+  completedAt       DateTime?
+  status            TaskStatus @default(PENDING)
+  notifiedAt        DateTime?
+  sourceDiagnosisId String?
+  sourceDiagnosis   Diagnosis? @relation("DiagnosisFollowUpTasks", fields: [sourceDiagnosisId], references: [id], onDelete: SetNull)
+  createdAt         DateTime   @default(now())
+  feedback          TaskFeedback[]
 
   @@index([dueDate, status])
   @@index([plantId])
+  @@index([sourceDiagnosisId])
 }
 
 model TaskFeedback {
@@ -237,8 +240,10 @@ model Diagnosis {
   detailJson    String?
   resolved      Boolean  @default(false)
   createdAt     DateTime @default(now())
+  followUpTasks Task[]   @relation("DiagnosisFollowUpTasks")
 
   @@index([plantId])
+  @@index([plantId, resolved])
 }
 
 model DiagnosisConversation {

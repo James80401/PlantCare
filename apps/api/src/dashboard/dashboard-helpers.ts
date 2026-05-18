@@ -30,6 +30,12 @@ export interface PlantLike {
   species: { commonName: string; wateringFreqDays: number };
 }
 
+export interface UnresolvedDiagnosisLike {
+  plantId: string;
+  resultLabel: string;
+  createdAt: Date | string;
+}
+
 export function sortTasksByDue(a: TaskLike, b: TaskLike) {
   return compareAsc(
     startOfDay(typeof a.dueDate === 'string' ? parseISO(a.dueDate) : a.dueDate),
@@ -159,8 +165,23 @@ export function buildAttention(
   plants: PlantLike[],
   tasks: TaskLike[],
   currentDate = new Date(),
+  unresolvedDiagnoses: UnresolvedDiagnosisLike[] = [],
 ) {
   const today = startOfDay(currentDate);
+  const diagnosisCutoff = addDays(today, -14);
+
+  const diagnosisByPlant = new Map<string, UnresolvedDiagnosisLike>();
+  for (const diagnosis of unresolvedDiagnoses) {
+    const created = startOfDay(
+      typeof diagnosis.createdAt === 'string'
+        ? parseISO(diagnosis.createdAt)
+        : diagnosis.createdAt,
+    );
+    if (created < diagnosisCutoff) continue;
+    if (!diagnosisByPlant.has(diagnosis.plantId)) {
+      diagnosisByPlant.set(diagnosis.plantId, diagnosis);
+    }
+  }
 
   return plants
     .map((plant) => {
@@ -194,6 +215,15 @@ export function buildAttention(
           plantId: plant.id,
           plantName,
           reason: `${dueTodayCount} task${dueTodayCount === 1 ? '' : 's'} due today`,
+          priority: 'warning' as const,
+        };
+      }
+      const openDiagnosis = diagnosisByPlant.get(plant.id);
+      if (openDiagnosis) {
+        return {
+          plantId: plant.id,
+          plantName,
+          reason: `Unresolved diagnosis: ${openDiagnosis.resultLabel}`,
           priority: 'warning' as const,
         };
       }

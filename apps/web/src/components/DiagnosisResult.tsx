@@ -17,6 +17,9 @@ interface DiagnosisResultProps {
     resolved?: boolean;
   };
   onResolvedChange?: (resolved: boolean) => void;
+  onCreateFollowUp?: (dueInDays: number) => Promise<void>;
+  followUpCreating?: boolean;
+  hasFollowUpTask?: boolean;
   updating?: boolean;
 }
 
@@ -43,6 +46,9 @@ function sourceLabel(source?: string): string {
 export default function DiagnosisResult({
   diagnosis,
   onResolvedChange,
+  onCreateFollowUp,
+  followUpCreating = false,
+  hasFollowUpTask = false,
   updating = false,
 }: DiagnosisResultProps) {
   const detail = parseDetail(diagnosis.detailJson);
@@ -147,6 +153,33 @@ export default function DiagnosisResult({
           <p className="text-gray-800 whitespace-pre-line">{diagnosis.adviceText}</p>
         )
       )}
+
+      {onCreateFollowUp && !diagnosis.resolved ? (
+        <div className="border-t border-emerald-100 pt-3 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+            Recovery reminder
+          </p>
+          {hasFollowUpTask ? (
+            <p className="text-sm text-emerald-800">
+              A health check follow-up is already on your task list.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {[3, 7, 14].map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  disabled={followUpCreating}
+                  onClick={() => onCreateFollowUp(days)}
+                  className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
+                >
+                  {followUpCreating ? 'Scheduling…' : `Remind in ${days} days`}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

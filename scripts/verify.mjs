@@ -312,8 +312,25 @@ async function main() {
   const diagData = await diagRes.json().catch(() => ({}));
   if (diagRes.status === 200 || diagRes.status === 201) {
     pass('Diagnosis', `source=${diagData?.source}, label=${diagData?.resultLabel}`);
+
+    const followUp = await api(
+      'POST',
+      `/plants/${plantId}/diagnose/${diagData.id}/follow-up-task`,
+      { dueInDays: 3 },
+      token,
+    );
+    if (followUp.status === 201 || followUp.status === 200) {
+      if (followUp.data?.taskType === 'HEALTH_CHECK' && followUp.data?.sourceDiagnosisId === diagData.id) {
+        pass('Diagnosis follow-up task', 'HEALTH_CHECK linked');
+      } else {
+        fail('Diagnosis follow-up task', JSON.stringify(followUp.data));
+      }
+    } else {
+      fail('Diagnosis follow-up task', `${followUp.status} ${JSON.stringify(followUp.data)}`);
+    }
   } else if (diagRes.status === 503) {
     pass('Diagnosis', `skipped (${diagData?.message || 'OpenAI unavailable'})`);
+    pass('Diagnosis follow-up task', 'skipped (no diagnosis id)');
   } else fail('Diagnosis', JSON.stringify(diagData));
 
   const chatForm = new FormData();

@@ -21,6 +21,7 @@ export interface PlantContext {
   toxicity?: string | null;
   careNotes?: string | null;
   location?: string | null;
+  caregiverContext?: string | null;
 }
 
 export interface LlmDiagnosisInput extends PlantContext {
@@ -76,6 +77,7 @@ export class LlmDiagnosisService {
         : null,
       ctx.toxicity ? `Pet safety: ${ctx.toxicity}` : null,
       ctx.careNotes ? `Care notes: ${ctx.careNotes}` : null,
+      ctx.caregiverContext ? `\nRecent caregiver context:\n${ctx.caregiverContext}` : null,
     ]
       .filter(Boolean)
       .join('\n');

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { addDays, format, startOfDay } from 'date-fns';
+import { addDays, format, startOfDay, subDays } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
 import { WeatherService } from '../weather/weather.service';
@@ -30,7 +30,7 @@ export class DashboardService {
     const fromDate = from ? new Date(from) : addDays(startOfDay(now), -45);
     const toDate = to ? new Date(to) : addDays(startOfDay(now), 14);
 
-    const [user, plants, tasks] = await Promise.all([
+    const [user, plants, tasks, unresolvedDiagnoses] = await Promise.all([
       this.prisma.user.findUnique({
         where: { id: userId },
         select: { name: true },
@@ -56,6 +56,19 @@ export class DashboardService {
           plant: { include: { species: true } },
         },
         orderBy: { dueDate: 'asc' },
+      }),
+      this.prisma.diagnosis.findMany({
+        where: {
+          plant: { userId },
+          resolved: false,
+          createdAt: { gte: subDays(startOfDay(now), 14) },
+        },
+        select: {
+          plantId: true,
+          resultLabel: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
       }),
     ]);
 
@@ -105,7 +118,12 @@ export class DashboardService {
         gardenScore: score,
       },
       todayTasks: pickTodayTasks(taskRows, 5, currentDate),
-      attention: buildAttention(plants, taskRows, currentDate),
+      attention: buildAttention(
+        plants,
+        taskRows,
+        currentDate,
+        unresolvedDiagnoses,
+      ),
       weekPreview: buildWeekPreview(taskRows, currentDate),
       scheduleSuggestions,
       weather: weatherStatus.hasLocation

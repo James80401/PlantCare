@@ -1,13 +1,17 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { TaskType } from '@prisma/client';
 import axios from 'axios';
+import { addDays, startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { formatLabel, getAdvice } from './diagnosis-advice';
+import { FollowUpTaskDto } from './dto/follow-up-task.dto';
 import { UpdateDiagnosisDto } from './dto/update-diagnosis.dto';
 import { LlmDiagnosisService } from './llm-diagnosis.service';
 import { OpenAiRequestError } from './openai-errors';
@@ -112,6 +116,50 @@ export class DiagnosisService {
         adviceText,
         source,
         detailJson,
+      },
+    });
+  }
+
+  async createFollowUpTask(
+    userId: string,
+    plantId: string,
+    diagnosisId: string,
+    dto: FollowUpTaskDto,
+  ) {
+    const diagnosis = await this.prisma.diagnosis.findFirst({
+      where: { id: diagnosisId, plantId, plant: { userId } },
+    });
+    if (!diagnosis) throw new NotFoundException('Diagnosis not found');
+
+    const dueInDays = dto.dueInDays ?? 3;
+    const dueDate = startOfDay(addDays(new Date(), dueInDays));
+
+    const existing = await this.prisma.task.findFirst({
+      where: {
+        plantId,
+        sourceDiagnosisId: diagnosisId,
+        taskType: TaskType.HEALTH_CHECK,
+        status: 'PENDING',
+      },
+    });
+    if (existing) {
+      throw new BadRequestException(
+        'A health check follow-up is already scheduled for this diagnosis.',
+      );
+    }
+
+    return this.prisma.task.create({
+      data: {
+        plantId,
+        taskType: TaskType.HEALTH_CHECK,
+        dueDate,
+        sourceDiagnosisId: diagnosisId,
+      },
+      include: {
+        plant: { include: { species: true } },
+        sourceDiagnosis: {
+          select: { id: true, resultLabel: true, resolved: true },
+        },
       },
     });
   }

@@ -104,6 +104,23 @@ test.describe('UAT checklist — authenticated flows', () => {
     await expectNoHorizontalScroll(page);
   });
 
+  test('plant profile diagnosis can schedule a follow-up task', async ({ page }) => {
+    await openAddPlantSearch(page);
+    await page.getByLabel(/Species name/i).fill('pothos');
+    await page.getByRole('button', { name: /Pothos/i }).first().click();
+    await page.getByRole('button', { name: /Save plant/i }).click();
+    await page.waitForURL(/\/garden\/plants\//);
+
+    await page.getByRole('link', { name: /Diagnosis/i }).click();
+    await page.getByLabel(/What are you seeing/i).fill('Yellow leaves and wet soil');
+    await page.getByRole('button', { name: /Run diagnosis/i }).click();
+    await expect(page.getByText(/Treatment plan/i)).toBeVisible({ timeout: 15_000 });
+    await page.getByRole('button', { name: /Remind in 3 days/i }).click();
+    await page.goto('/garden/tasks');
+    await expect(page.getByText(/Health check/i).first()).toBeVisible({ timeout: 10_000 });
+    await expectNoHorizontalScroll(page);
+  });
+
   test('plant profile has care sections and journal', async ({ page }) => {
     await openAddPlantSearch(page);
     await page.getByLabel(/Species name/i).fill('snake');
