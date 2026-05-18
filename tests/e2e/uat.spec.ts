@@ -39,6 +39,7 @@ test.describe('UAT checklist — authenticated flows', () => {
     await page.goto('/garden');
     await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible();
     await expect(page.getByText('Garden score')).toBeVisible();
+    await expect(page.getByLabel('Your progress')).toBeVisible();
     await expect(page.getByRole('link', { name: /Browse/i }).first()).toBeVisible();
     await expectNoHorizontalScroll(page);
   });

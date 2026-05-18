@@ -1,4 +1,12 @@
-import { FormEvent, useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
+import {
+  FormEvent,
+  useEffect,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from 'react';
+import { SharePlantCard } from '../components/engagement/SharePlantCard';
 import { Link, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import DrPlantChat from '../components/DrPlantChat';
@@ -64,6 +72,7 @@ export default function PlantProfile() {
   const [locationSaving, setLocationSaving] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
   const [updatingDiagnosisId, setUpdatingDiagnosisId] = useState<string | null>(null);
+  const [sharingPlant, setSharingPlant] = useState(false);
 
   const load = () => {
     if (id) plantsApi.get(id).then((r) => setPlant(r.data));
@@ -240,9 +249,33 @@ export default function PlantProfile() {
                 ⚠️ {String(species.toxicity)}
               </p>
             ) : null}
+
+            <button
+              type="button"
+              onClick={() => setSharingPlant(true)}
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100"
+            >
+              Share plant card
+            </button>
           </div>
         </div>
       </section>
+
+      {sharingPlant ? (
+        <SharePlantCard
+          snapshot={{
+            plantName: plantLabel,
+            speciesName: species.commonName as string,
+            scientificName: (species.scientificName as string) || null,
+            location: currentLocation,
+            sunlight: (species.sunlight as string) || null,
+            nextCareLabel: nextTask
+              ? `${taskTypeLabel(nextTask.taskType as string)} · ${format(new Date(nextTask.dueDate as string), 'MMM d')}`
+              : null,
+          }}
+          onClose={() => setSharingPlant(false)}
+        />
+      ) : null}
 
       <nav
         className="sticky top-[4.5rem] z-20 overflow-x-auto rounded-2xl border border-emerald-100 bg-white/95 p-1 shadow-sm shadow-emerald-900/5 backdrop-blur"

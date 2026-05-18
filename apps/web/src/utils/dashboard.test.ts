@@ -35,8 +35,9 @@ describe('dashboard utilities', () => {
   it('keeps garden score encouraging but responsive to overdue and due-today work', () => {
     expect(getGardenScore(0, 0, 0)).toBe(0);
     expect(getGardenScore(4, 0, 0)).toBe(100);
-    expect(getGardenScore(4, 2, 3)).toBe(70);
-    expect(getGardenScore(4, 10, 10)).toBe(45);
+    expect(getGardenScore(4, 2, 3)).toBe(74);
+    expect(getGardenScore(4, 10, 10)).toBe(50);
+    expect(getGardenScore(4, 0, 0, 3)).toBe(100);
   });
 
   it('prioritizes attention cards by urgency before profile completeness nudges', () => {

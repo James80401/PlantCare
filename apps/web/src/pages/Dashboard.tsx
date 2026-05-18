@@ -11,16 +11,21 @@ import {
   findNextTaskForPlant,
   getCompletedTaskCount,
   getFocusDayGroups,
-  getGardenScore,
   getOverdueTasks,
   getPendingTasks,
   getSeasonalTip,
   getSuggestedAction,
   getTodayTasks,
-  scoreLabel,
   type AttentionPlant,
   type DashboardPlant,
 } from '../utils/dashboard';
+import { EngagementProgress } from '../components/engagement/EngagementProgress';
+import {
+  buildEngagementContext,
+  deriveMilestones,
+  getGardenWellness,
+  getMilestoneHighlights,
+} from '../utils/engagement';
 import { TASK_TYPE_ICONS, type TaskItem } from '../utils/taskGroups';
 import { taskTypeLabel } from '../utils/tasks';
 
@@ -61,7 +66,7 @@ export default function Dashboard() {
     handleComplete,
     handleSkip,
     load: reloadTasks,
-  } = useTasksInRange({ pastDays: 7, futureDays: 14 });
+  } = useTasksInRange({ pastDays: 45, futureDays: 14 });
 
   useEffect(() => {
     let cancelled = false;
@@ -144,7 +149,32 @@ export default function Dashboard() {
 
   const recommendedAction = getSuggestedAction(plants, overdueTasks, todayTasks);
   const completedCount = getCompletedTaskCount(tasks);
-  const gardenScore = getGardenScore(plants.length, overdueTasks.length, todayTasks.length);
+  const engagementContext = useMemo(
+    () =>
+      buildEngagementContext(
+        plants.length,
+        plants.map((plant) => plant.createdAt),
+        tasks,
+        currentDate,
+      ),
+    [currentDate, plants, tasks],
+  );
+  const gardenWellness = useMemo(
+    () =>
+      getGardenWellness(
+        plants.length,
+        overdueTasks.length,
+        todayTasks.length,
+        engagementContext.completedInRange,
+        engagementContext.streak,
+      ),
+    [engagementContext, overdueTasks.length, plants.length, todayTasks.length],
+  );
+  const milestoneHighlights = useMemo(
+    () => getMilestoneHighlights(deriveMilestones(engagementContext)),
+    [engagementContext],
+  );
+  const gardenScore = gardenWellness.score;
   const needsAttentionCount = attentionPlants.filter((item) => item.tone !== 'info').length;
   const dashboardLoading = tasksLoading || plantsLoading;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
@@ -187,7 +217,7 @@ export default function Dashboard() {
             <DashboardMetric
               label="Garden score"
               value={plants.length === 0 ? 'New' : gardenScore}
-              helper={plants.length === 0 ? 'Add a plant to begin' : scoreLabel(gardenScore)}
+              helper={plants.length === 0 ? 'Add a plant to begin' : gardenWellness.label}
               accent="emerald"
             />
             <DashboardMetric
@@ -213,7 +243,7 @@ export default function Dashboard() {
           {plants.length > 0 && (
             <div className="relative mt-5">
               <div className="flex items-center justify-between text-xs font-medium text-emerald-50/85">
-                <span>Garden health signal</span>
+                <span>{gardenWellness.headline}</span>
                 <span>{gardenScore}/100</span>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/20">
@@ -226,6 +256,14 @@ export default function Dashboard() {
           )}
         </div>
       </header>
+
+      {plants.length > 0 && (
+        <EngagementProgress
+          wellness={gardenWellness}
+          streak={engagementContext.streak}
+          milestones={milestoneHighlights}
+        />
+      )}
 
       {(weather?.rainSkipApplied || weather?.message) && (
         <section

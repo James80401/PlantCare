@@ -11,6 +11,7 @@ export interface DashboardPlant {
   id: string;
   nickname?: string | null;
   imageUrl?: string | null;
+  createdAt?: string;
   location?: string | null;
   species: {
     commonName: string;
@@ -67,9 +68,16 @@ export function getCompletedTaskCount(tasks: TaskItem[]) {
   return tasks.filter((task) => task.status === 'DONE').length;
 }
 
-export function getGardenScore(plantCount: number, overdueCount: number, todayCount: number) {
+export function getGardenScore(
+  plantCount: number,
+  overdueCount: number,
+  todayCount: number,
+  recentCompletions = 0,
+) {
   if (plantCount === 0) return 0;
-  return Math.max(45, Math.min(100, 100 - overdueCount * 12 - todayCount * 2));
+  const completionBoost = Math.min(8, recentCompletions * 2);
+  const raw = 100 - overdueCount * 10 - todayCount * 2 + completionBoost;
+  return Math.max(50, Math.min(100, raw));
 }
 
 export function getFocusDayGroups(dayGroups: DayGroup[], currentDate = new Date()) {
@@ -233,8 +241,8 @@ export function getSeasonalTip(plantCount: number, currentDate = new Date()) {
 export function scoreLabel(score: number) {
   if (score >= 90) return 'Thriving';
   if (score >= 75) return 'Steady';
-  if (score >= 60) return 'Needs a check';
-  return 'Needs attention';
+  if (score >= 60) return 'Building momentum';
+  return 'Fresh start';
 }
 
 export function sortTasksByDue(a: TaskItem, b: TaskItem) {

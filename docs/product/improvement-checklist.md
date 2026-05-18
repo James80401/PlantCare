@@ -178,21 +178,19 @@ Acceptance check:
 
 Goal: make progress rewarding without making care feel punitive.
 
-- [ ] Add positive milestones.
-- [ ] Refine garden score into an encouraging signal.
-- [ ] Add gentle streaks.
-- [ ] Add shareable plant cards.
+- [x] Add positive milestones.
+- [x] Refine garden score into an encouraging signal.
+- [x] Add gentle streaks.
+- [x] Add shareable plant cards.
 
 Acceptance check:
 
-- [ ] Engagement states are encouraging and optional.
-- [ ] No core care workflow depends on gamification.
+- [x] Engagement states are encouraging and optional.
+- [x] No core care workflow depends on gamification.
 
 ### Current next slice
 
-Continue with **Section 9 - Engagement and shareability**. The next small slice
-is adding positive, optional progress signals without making core care workflows
-depend on gamification.
+Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy/UAT sign-off) or native packaging polish.
 
 ## Phase 1 - Mobile-first shell and dashboard foundation
 
