@@ -39,9 +39,44 @@ async function main() {
     throw new Error(`E2E setup: could not obtain access token (${JSON.stringify(reg)})`);
   }
 
+  const speciesRes = await fetch(`${apiBase}/species/search?q=monstera`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const species = await speciesRes.json();
+  const speciesId = species?.[0]?.id;
+
+  let plantId: string | undefined;
+  if (speciesId) {
+    const plantRes = await fetch(`${apiBase}/plants`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        speciesId,
+        nickname: 'UAT E2E Plant',
+        location: 'Living Room',
+      }),
+    });
+    const plant = await plantRes.json();
+    plantId = plant?.id;
+  }
+
+  const prisma = new PrismaClient();
+  const userRow = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  await prisma.$disconnect();
+
   writeFileSync(
     authFile,
-    JSON.stringify({ email, password, accessToken: token, refreshToken: reg.refreshToken }),
+    JSON.stringify({
+      email,
+      password,
+      accessToken: token,
+      refreshToken: reg.refreshToken,
+      plantId,
+      userId: userRow?.id,
+    }),
   );
 }
 

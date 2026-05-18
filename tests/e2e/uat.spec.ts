@@ -8,6 +8,8 @@ function loadAuth() {
   return JSON.parse(readFileSync(authFile, 'utf8')) as {
     accessToken: string;
     refreshToken?: string;
+    email?: string;
+    plantId?: string;
   };
 }
 
@@ -31,6 +33,8 @@ async function expectNoHorizontalScroll(page: import('@playwright/test').Page) {
 }
 
 test.describe('UAT checklist — authenticated flows', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ page }) => {
     await seedAuth(page);
   });
@@ -91,6 +95,61 @@ test.describe('UAT checklist — authenticated flows', () => {
     await expectNoHorizontalScroll(page);
   });
 
+  test('dashboard highlights overdue tasks', async ({ page }) => {
+    const auth = loadAuth();
+    if (!auth.plantId || !auth.email) {
+      test.skip();
+      return;
+    }
+
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    const user = await prisma.user.findUnique({ where: { email: auth.email } });
+    const overdue = new Date();
+    overdue.setDate(overdue.getDate() - 3);
+    if (user) {
+      await prisma.task.updateMany({
+        where: { plant: { userId: user.id }, status: 'PENDING' },
+        data: { dueDate: overdue },
+      });
+    }
+    await prisma.$disconnect();
+
+    await page.goto('/garden');
+    const overdueCard = page.locator('.text-rose-50, .text-rose-900').filter({ hasText: /overdue/i });
+    await expect(page.getByText('Overdue', { exact: true })).toBeVisible();
+    await expect(overdueCard.first()).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
+  test('dashboard all-caught-up shows useful next action', async ({ page }) => {
+    const auth = loadAuth();
+    if (!auth.email) {
+      test.skip();
+      return;
+    }
+
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    const user = await prisma.user.findUnique({ where: { email: auth.email } });
+    const future = new Date();
+    future.setDate(future.getDate() + 30);
+    if (user) {
+      await prisma.task.updateMany({
+        where: { plant: { userId: user.id }, status: 'PENDING' },
+        data: { dueDate: future },
+      });
+    }
+    await prisma.$disconnect();
+
+    await page.goto('/garden');
+    await expect(page.getByRole('heading', { name: /Log a quick observation/i })).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByText('Nothing due right now')).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
   test('task instructions modal opens from tasks', async ({ page }) => {
     await page.goto('/garden/tasks');
     const howTo = page.getByRole('button', { name: /Care steps/i }).first();
@@ -103,6 +162,56 @@ test.describe('UAT checklist — authenticated flows', () => {
 });
 
 test.describe('UAT checklist — public auth', () => {
+  test('password reset page accepts token from email flow', async ({ page }) => {
+    const email = `uat-reset-${Date.now()}@plantcare.test`;
+    const password = 'password123';
+    const reg = await fetch('http://localhost:3001/api/v1/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name: 'Reset UAT' }),
+    }).then((r) => r.json());
+
+    if (reg.requiresVerification) {
+      const { PrismaClient } = await import('@prisma/client');
+      const prisma = new PrismaClient();
+      await prisma.user.update({ where: { email }, data: { emailVerified: true } });
+      await prisma.$disconnect();
+    }
+
+    const forgot = await fetch('http://localhost:3001/api/v1/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (forgot.status === 503) {
+      test.skip(true, 'SMTP not configured');
+      return;
+    }
+
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    const row = await prisma.user.findUnique({
+      where: { email },
+      select: { passwordResetToken: true },
+    });
+    await prisma.$disconnect();
+    if (!row?.passwordResetToken) {
+      throw new Error('Expected password reset token after forgot-password');
+    }
+
+    await page.goto(`/reset-password/${row.passwordResetToken}`);
+    await page.getByPlaceholder(/New password/i).fill('newpass456');
+    await page.getByPlaceholder(/Confirm password/i).fill('newpass456');
+    await page.getByRole('button', { name: /Update password/i }).click();
+    await page.waitForURL(/\/login/, { timeout: 15_000 });
+
+    await page.goto('/login');
+    await page.getByPlaceholder('Email').fill(email);
+    await page.getByPlaceholder(/^Password$/i).fill('newpass456');
+    await page.getByRole('button', { name: /^Sign in$/i }).click();
+    await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible({ timeout: 15_000 });
+  });
+
   test('landing page links to register and login', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('link', { name: /Sign in|Log in/i }).first()).toBeVisible();

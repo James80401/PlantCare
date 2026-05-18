@@ -95,6 +95,41 @@ async function main() {
     fail('Forgot password', String(forgot.status));
   }
 
+  const forgotSelf = await api('POST', '/auth/forgot-password', { email });
+  if (forgotSelf.status === 503) {
+    pass('Password reset E2E', 'skipped (SMTP off — inbox link manual)');
+  } else if (forgotSelf.status === 200 || forgotSelf.status === 201) {
+    const resetRow = await prisma.user.findUnique({
+      where: { email },
+      select: { passwordResetToken: true },
+    });
+    if (resetRow?.passwordResetToken) {
+      const reset = await api('POST', '/auth/reset-password', {
+        token: resetRow.passwordResetToken,
+        password: 'resetpass789',
+      });
+      if (reset.status === 200 || reset.status === 201) {
+        pass('Reset password (token)', reset.data?.message?.slice(0, 40) || 'ok');
+        const loginAfterReset = await api('POST', '/auth/login', {
+          email,
+          password: 'resetpass789',
+        });
+        if (loginAfterReset.status === 200 || loginAfterReset.status === 201) {
+          token = loginAfterReset.data.accessToken;
+          pass('Login after password reset');
+        } else {
+          fail('Login after password reset', JSON.stringify(loginAfterReset.data));
+        }
+      } else {
+        fail('Reset password', JSON.stringify(reset.data));
+      }
+    } else {
+      fail('Password reset E2E', 'forgot ok but no token in DB');
+    }
+  } else {
+    fail('Forgot password (self)', String(forgotSelf.status));
+  }
+
   const browse = await api('GET', '/species/browse?page=1&pageSize=24', null, token);
   if (
     browse.status === 200 &&
@@ -258,7 +293,10 @@ async function main() {
     const plants = weatherAdvice.data?.plants?.length ?? 0;
     pass('Weather plant advice', `${plants} plant line(s)`);
     const cached = await api('POST', '/users/me/weather/advice', { confirmed: true }, token);
-    if (cached.status === 200 && cached.data?.fromCache === true) {
+    if (
+      (cached.status === 200 || cached.status === 201) &&
+      cached.data?.fromCache === true
+    ) {
       pass('Weather advice cache', 'same-day replay');
     } else {
       fail('Weather advice cache', JSON.stringify(cached.data));
