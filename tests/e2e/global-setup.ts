@@ -1,9 +1,20 @@
+import { execSync } from 'child_process';
 import { PrismaClient } from '@prisma/client';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 
 const apiBase = process.env.API_URL || 'http://localhost:3001/api/v1';
 const authFile = resolve(__dirname, '.uat-auth.json');
+const isStaging = process.env.STAGING_E2E === '1';
+
+function stagingPsql(query: string) {
+  const docker = process.env.DOCKER_BIN || 'docker';
+  const inner = `psql -U plantcare -d plantcare -t -A -c ${JSON.stringify(query)}`;
+  return execSync(`${docker} exec plantcare-postgres-1 sh -c ${JSON.stringify(inner)}`, {
+    encoding: 'utf8',
+    shell: true,
+  }).trim();
+}
 
 async function main() {
   const email = `uat-e2e-${Date.now()}@plantcare.test`;
@@ -19,12 +30,18 @@ async function main() {
   let token = reg.accessToken as string | undefined;
 
   if (reg.requiresVerification) {
-    const prisma = new PrismaClient();
-    await prisma.user.update({
-      where: { email },
-      data: { emailVerified: true },
-    });
-    await prisma.$disconnect();
+    if (isStaging) {
+      stagingPsql(
+        `UPDATE "User" SET "emailVerified" = true WHERE email = '${email.replace(/'/g, "''")}';`,
+      );
+    } else {
+      const prisma = new PrismaClient();
+      await prisma.user.update({
+        where: { email },
+        data: { emailVerified: true },
+      });
+      await prisma.$disconnect();
+    }
 
     const loginRes = await fetch(`${apiBase}/auth/login`, {
       method: 'POST',
@@ -75,9 +92,19 @@ async function main() {
     plantId = plant?.id;
   }
 
-  const prisma = new PrismaClient();
-  const userRow = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-  await prisma.$disconnect();
+  let userId: string | undefined;
+  if (isStaging) {
+    const meRes = await fetch(`${apiBase}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const me = await meRes.json();
+    userId = me?.id;
+  } else {
+    const prisma = new PrismaClient();
+    const userRow = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    userId = userRow?.id;
+    await prisma.$disconnect();
+  }
 
   writeFileSync(
     authFile,
@@ -87,7 +114,7 @@ async function main() {
       accessToken: token,
       refreshToken: reg.refreshToken,
       plantId,
-      userId: userRow?.id,
+      userId,
     }),
   );
 }

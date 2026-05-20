@@ -22,11 +22,12 @@ COPY --from=builder /app/apps/api/package.json ./apps/api/
 COPY --from=builder /app/apps/api/docker-entrypoint.sh ./apps/api/docker-entrypoint.sh
 COPY --from=builder /app/packages/shared ./packages/shared/
 COPY --from=builder /app/prisma ./prisma/
+COPY --from=builder /app/apps/api/src/species ./apps/api/src/species
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/apps/api/src/care-guides/photos ./apps/api/src/care-guides/photos
 COPY --from=builder /app/apps/api/dist/care-guides ./apps/api/dist/care-guides
 
-RUN chmod +x apps/api/docker-entrypoint.sh
+RUN sed -i 's/\r$//' apps/api/docker-entrypoint.sh && chmod +x apps/api/docker-entrypoint.sh
 
 EXPOSE 3001
-ENTRYPOINT ["apps/api/docker-entrypoint.sh"]
+ENTRYPOINT ["sh", "apps/api/docker-entrypoint.sh"]

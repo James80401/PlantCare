@@ -1,7 +1,53 @@
+import { execSync } from 'child_process';
 import { PrismaClient } from '@prisma/client';
 
 const base = process.env.API_URL || 'http://localhost:3001/api/v1';
-const prisma = new PrismaClient();
+const isStaging = process.env.STAGING_E2E === '1';
+const stagingDatabaseUrl =
+  process.env.STAGING_DATABASE_URL ||
+  'postgresql://plantcare:plantcare@localhost:5433/plantcare?schema=public';
+
+function stagingPsql(query) {
+  const docker = process.env.DOCKER_BIN || 'docker';
+  const inner = `psql -U plantcare -d plantcare -t -A -c ${JSON.stringify(query)}`;
+  return execSync(`${docker} exec plantcare-postgres-1 sh -c ${JSON.stringify(inner)}`, {
+    encoding: 'utf8',
+    shell: true,
+  }).trim();
+}
+
+async function speciesCountCheck(prisma) {
+  if (isStaging) {
+    const count = Number.parseInt(stagingPsql('SELECT COUNT(*) FROM "PlantSpecies";'), 10);
+    if (Number.isFinite(count)) return count;
+    throw new Error('species count unavailable from staging Postgres');
+  }
+  return prisma.plantSpecies.count();
+}
+
+async function markEmailVerified(prisma, email) {
+  if (isStaging) {
+    stagingPsql(`UPDATE "User" SET "emailVerified" = true WHERE email = '${email.replace(/'/g, "''")}';`);
+    return;
+  }
+  await prisma.user.update({
+    where: { email },
+    data: { emailVerified: true },
+  });
+}
+
+async function readPasswordResetToken(prisma, email) {
+  if (isStaging) {
+    return stagingPsql(
+      `SELECT "passwordResetToken" FROM "User" WHERE email = '${email.replace(/'/g, "''")}' LIMIT 1;`,
+    );
+  }
+  const resetRow = await prisma.user.findUnique({
+    where: { email },
+    select: { passwordResetToken: true },
+  });
+  return resetRow?.passwordResetToken ?? '';
+}
 
 const results = [];
 
@@ -33,7 +79,9 @@ async function api(method, path, body, token) {
 }
 
 async function main() {
-  const speciesCount = await prisma.plantSpecies.count();
+  const prisma = isStaging ? null : new PrismaClient();
+
+  const speciesCount = await speciesCountCheck(prisma);
   pass('Database', `${speciesCount} species`);
 
   const health = await api('GET', '/health');
@@ -50,10 +98,7 @@ async function main() {
   let authUser = reg.data.user;
   if (reg.status === 201 || reg.status === 200) {
     if (reg.data.requiresVerification) {
-      await prisma.user.update({
-        where: { email },
-        data: { emailVerified: true },
-      });
+      await markEmailVerified(prisma, email);
       const login = await api('POST', '/auth/login', {
         email,
         password: 'password123',
@@ -64,7 +109,7 @@ async function main() {
         pass('Register', `${email} (verified for test)`);
       } else {
         fail('Register login after verify', JSON.stringify(login.data));
-        await prisma.$disconnect();
+        if (prisma) await prisma.$disconnect();
         process.exit(1);
       }
     } else {
@@ -72,13 +117,13 @@ async function main() {
     }
   } else {
     fail('Register', JSON.stringify(reg.data));
-    await prisma.$disconnect();
+    if (prisma) await prisma.$disconnect();
     process.exit(1);
   }
 
   if (!token) {
     fail('Register', 'no access token');
-    await prisma.$disconnect();
+    if (prisma) await prisma.$disconnect();
     process.exit(1);
   }
   const meForTier = await api('GET', '/users/me', null, token);
@@ -99,13 +144,10 @@ async function main() {
   if (forgotSelf.status === 503) {
     pass('Password reset E2E', 'skipped (SMTP off — inbox link manual)');
   } else if (forgotSelf.status === 200 || forgotSelf.status === 201) {
-    const resetRow = await prisma.user.findUnique({
-      where: { email },
-      select: { passwordResetToken: true },
-    });
-    if (resetRow?.passwordResetToken) {
+    const resetToken = await readPasswordResetToken(prisma, email);
+    if (resetToken) {
       const reset = await api('POST', '/auth/reset-password', {
-        token: resetRow.passwordResetToken,
+        token: resetToken,
         password: 'resetpass789',
       });
       if (reset.status === 200 || reset.status === 201) {
@@ -515,7 +557,7 @@ async function main() {
   if (meForTier.status === 200) pass('User profile');
   else fail('User profile');
 
-  await prisma.$disconnect();
+  if (prisma) await prisma.$disconnect();
 
   const failed = results.filter((r) => !r.ok);
   console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
