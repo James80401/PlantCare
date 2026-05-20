@@ -10,8 +10,10 @@ if (-not (Test-Path $envFile)) {
   Write-Host "Created .env.staging from example — review JWT secrets before sharing a link."
 }
 
+$docker = & (Join-Path $PSScriptRoot 'docker-cli.ps1')
+
 Write-Host 'Building and starting staging containers (first run: seed + photos may take several minutes)...'
-docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --build
+& $docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --build
 
 $healthUrl = 'http://localhost:3001/api/v1/health'
 $deadline = (Get-Date).AddMinutes(8)

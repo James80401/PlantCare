@@ -114,6 +114,17 @@ export default function Dashboard() {
 
   const pendingTasks = useMemo(() => getPendingTasks(tasks), [tasks]);
 
+  const sharedPlants = useMemo(
+    () => (user ? plantsSharedWithUser(gardens, user.id) : []),
+    [gardens, user],
+  );
+
+  const visiblePlants = useMemo((): Array<DashboardPlant | SharedPlantView> => {
+    if (plantScope === 'mine') return plants;
+    if (plantScope === 'shared') return sharedPlants;
+    return [...plants, ...sharedPlants];
+  }, [plantScope, plants, sharedPlants]);
+
   const overdueTasks = useMemo(
     () => getOverdueTasks(tasks, currentDate),
     [currentDate, tasks],
@@ -313,7 +324,7 @@ export default function Dashboard() {
               actionLabel="Add your first plant"
               actionTo="/garden/plants/new"
             />
-          ) : focusDayGroups.length === 0 ? (
+          ) : todayTasksPreview.length === 0 ? (
             <EmptyState
               title="Nothing due right now"
               body="Your next care tasks will show up here. You can still add a journal note or check a plant profile."

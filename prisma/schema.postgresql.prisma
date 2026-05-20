@@ -134,6 +134,7 @@ model PlantSpecies {
   updatedAt         DateTime @updatedAt
   plants            Plant[]
   careGuides        CareGuide[]
+  communityPosts    CommunityPost[]
 
   @@index([commonName])
 }
