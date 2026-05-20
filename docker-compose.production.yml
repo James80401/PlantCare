@@ -1,0 +1,86 @@
+# Production-like stack on a VPS. Terminate TLS at reverse proxy (Caddy/nginx), not here.
+#
+#   https://api.yourdomain.com -> api:3001
+#   https://app.yourdomain.com -> web:80
+#
+# Usage:
+#   copy .env.production.example .env.production
+#   npm run production:up
+#
+# For managed Postgres, set DATABASE_URL in .env.production and remove the postgres service
+# (or use profiles — see docs/guides/15-production-deploy-and-android.md).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-plantcare}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-plantcare}
+    volumes:
+      - plantcare_prod_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U plantcare -d plantcare']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Do not publish 5432 to the public internet on a VPS
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:3001:3001'
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: ${DATABASE_URL:-postgresql://plantcare:change-me-postgres@postgres:5432/plantcare?schema=public}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL}
+      CORS_ORIGINS: ${CORS_ORIGINS:-${FRONTEND_URL}}
+      ALL_USERS_PREMIUM: ${ALL_USERS_PREMIUM:-true}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
+    volumes:
+      - plantcare_prod_uploads:/app/apps/api/uploads
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3001/api/v1/health']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 180s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?Set VITE_API_BASE_URL}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:8080:80'
+
+volumes:
+  plantcare_prod_pg:
+  plantcare_prod_uploads:

@@ -28,11 +28,13 @@ import Household from './pages/Household';
 import Community from './pages/Community';
 import Subscription from './pages/Subscription';
 import OnboardingWizard from './pages/OnboardingWizard';
+import Privacy from './pages/Privacy';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/verify-email/:token" element={<VerifyEmail />} />

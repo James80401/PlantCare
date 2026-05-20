@@ -43,6 +43,7 @@ Use this hub when you need **understanding**, not just a single endpoint or scre
 | 12 | [Mobile & clients](12-mobile-and-client-packaging.md) | Capacitor, PWA, device API URLs |
 | 13 | [Operations & deployment](13-operations-deployment-and-quality.md) | Docker staging, CI, verify, Playwright, production |
 | 14 | [Product, QA & roadmap](14-product-qa-and-roadmap.md) | UAT, tiers, roadmap, known limits |
+| 15 | [Production deploy & Android](15-production-deploy-and-android.md) | VPS, HTTPS, Play closed testing, release build |
 
 ---
 

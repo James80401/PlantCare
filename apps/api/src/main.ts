@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { getCorsOrigins } from './cors-origins';
 import { UploadService } from './upload/upload.service';
 
 async function bootstrap() {
@@ -41,7 +42,7 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: getCorsOrigins(),
     credentials: true,
   });
 

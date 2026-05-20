@@ -56,6 +56,16 @@ npm run staging:down
 
 See [docs/guides/13-operations-deployment-and-quality.md](docs/guides/13-operations-deployment-and-quality.md).
 
+## Production + Google Play (private beta)
+
+```bash
+cp .env.production.example .env.production   # edit domain + secrets
+npm run production:check
+npm run production:up   # on VPS behind HTTPS reverse proxy
+```
+
+Android: [docs/guides/15-production-deploy-and-android.md](docs/guides/15-production-deploy-and-android.md)
+
 ---
 
 ## Repository layout
