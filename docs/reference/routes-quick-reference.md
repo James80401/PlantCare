@@ -1,44 +1,138 @@
 # Routes quick reference
 
-> **Navigation:** [Reference INDEX](INDEX.md) · [API INDEX](../api/INDEX.md)
+> **Navigation:** [Reference INDEX](INDEX.md) · [API INDEX](../api/INDEX.md) · [Web routing](../web/routing.md)
 
 **API base:** `/api/v1`
 
 ## Auth
 
-`POST /auth/register` · `login` · `refresh` · `verify-email/:token` · `resend-verification` · `forgot-password` · `reset-password`
+| Method | Path |
+|--------|------|
+| POST | `/auth/register` |
+| POST | `/auth/login` |
+| POST | `/auth/refresh` |
+| GET | `/auth/verify-email/:token` |
+| POST | `/auth/resend-verification` |
+| POST | `/auth/forgot-password` |
+| POST | `/auth/reset-password` |
 
 ## Users
 
-`GET /users/me` · `PUT /users/me/notification-settings` · `DELETE /users/me` · `GET /users/me/weather`
+| Method | Path |
+|--------|------|
+| GET | `/users/me` |
+| PUT | `/users/me/onboarding` |
+| PUT | `/users/me/notification-settings` |
+| DELETE | `/users/me` |
+
+## Weather (under users)
+
+| Method | Path |
+|--------|------|
+| GET | `/users/me/weather` |
+| GET | `/users/me/weather/status` |
+| POST | `/users/me/weather/advice` |
+| GET | `/users/me/weather/plants/:plantId/advice` |
+
+See [api/weather.md](../api/weather.md).
 
 ## Species
 
-`GET /species/search` · `GET /species/:id`
+| Method | Path |
+|--------|------|
+| GET | `/species/search?q=` |
+| GET | `/species/browse` |
+| GET | `/species/recommended` |
+| GET | `/species/:id` |
 
 ## Plants
 
-`GET|POST /plants` · `GET|PATCH|DELETE /plants/:id` · `POST /plants/identify` · `POST /plants/upload`
-
-## Diagnosis
-
-`POST /plants/:id/diagnose`  
-`GET|POST /plants/:plantId/diagnose/conversations`  
-`GET /plants/:plantId/diagnose/conversations/:id`  
-`POST /plants/:plantId/diagnose/conversations/:id/messages`
-
-## Journal
-
-`GET|POST /plants/:plantId/journal`
+| Method | Path |
+|--------|------|
+| GET | `/plants` |
+| POST | `/plants` |
+| GET | `/plants/:id` |
+| PATCH | `/plants/:id` |
+| DELETE | `/plants/:id` |
+| POST | `/plants/identify` |
+| POST | `/plants/upload` |
 
 ## Tasks
 
-`GET /tasks` · `PATCH /tasks/:id/complete` · `PATCH /tasks/:id/skip` · `GET /tasks/:id/instructions`
+| Method | Path |
+|--------|------|
+| GET | `/tasks` |
+| PATCH | `/tasks/:id/complete` |
+| PATCH | `/tasks/:id/skip` |
+| PATCH | `/tasks/:id/snooze` |
+| GET | `/tasks/:id/instructions` |
+| GET | `/tasks/:id/explanation` |
+| GET | `/tasks/schedule-suggestions` |
+| POST | `/tasks/schedule-suggestions/:id/apply` |
 
-## Other
+## Dashboard
 
-`GET /health` · `POST /billing/checkout` · `POST /billing/webhook` · `POST /devices`
+| Method | Path |
+|--------|------|
+| GET | `/dashboard?from=&to=` |
+
+## Gardens
+
+| Method | Path |
+|--------|------|
+| POST | `/gardens` |
+| GET | `/gardens/mine` |
+| POST | `/gardens/invites/accept` |
+| POST | `/gardens/:id/invites` |
+| POST | `/gardens/:id/plants` |
+| GET | `/gardens/:id/activity` |
+
+## Community
+
+| Method | Path |
+|--------|------|
+| GET | `/community/posts` |
+| POST | `/community/posts` |
+| DELETE | `/community/posts/:id` |
+
+## Diagnosis
+
+| Method | Path |
+|--------|------|
+| POST | `/plants/:id/diagnose` |
+| PATCH | `/plants/:id/diagnose/:diagnosisId` |
+| POST | `/plants/:id/diagnose/follow-up-task` |
+| GET | `/plants/:plantId/diagnose/conversations` |
+| POST | `/plants/:plantId/diagnose/conversations` |
+| GET | `/plants/:plantId/diagnose/conversations/:id` |
+| POST | `/plants/:plantId/diagnose/conversations/:id/messages` |
+
+## Journal
+
+| Method | Path |
+|--------|------|
+| GET | `/plants/:plantId/journal` |
+| POST | `/plants/:plantId/journal` |
+| PATCH | `/plants/:plantId/journal/:entryId` |
+| DELETE | `/plants/:plantId/journal/:entryId` |
+
+## Billing & devices
+
+| Method | Path |
+|--------|------|
+| POST | `/billing/checkout` |
+| POST | `/billing/webhook` |
+| POST | `/devices` |
+
+## Health & static
+
+| Method | Path |
+|--------|------|
+| GET | `/health` |
+| GET | `/care-guides/images/*` |
+| GET | `/care-guides/photos/*` |
+| GET | `/uploads/*` |
 
 ## Web routes
 
-See [web/routing.md](../web/routing.md)
+See [web/routing.md](../web/routing.md).

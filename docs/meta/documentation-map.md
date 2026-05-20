@@ -16,6 +16,28 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 
 ---
 
+## guides/ (complete aspect guides)
+
+| File |
+|------|
+| **INDEX.md** |
+| 01-introduction-and-quick-start.md |
+| 02-development-handbook.md |
+| 03-architecture-and-system-design.md |
+| 04-data-model-and-persistence.md |
+| 05-api-complete-reference.md |
+| 06-care-guides-and-content.md |
+| 07-web-application.md |
+| 08-ui-components-and-design.md |
+| 09-integrations-and-external-services.md |
+| 10-end-user-product-guide.md |
+| 11-tutorials-and-walkthroughs.md |
+| 12-mobile-and-client-packaging.md |
+| 13-operations-deployment-and-quality.md |
+| 14-product-qa-and-roadmap.md |
+
+---
+
 ## meta/
 
 | File |
@@ -66,9 +88,13 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 |------|
 | **INDEX.md** |
 | landing-and-auth.md |
+| onboarding.md |
 | garden-dashboard.md |
+| browse-plants.md |
 | plant-profile.md |
 | task-calendar.md |
+| household.md |
+| community.md |
 | settings.md |
 | subscription.md |
 
@@ -100,6 +126,9 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 | species.md |
 | plants.md |
 | tasks.md |
+| dashboard.md |
+| gardens.md |
+| community.md |
 | diagnosis.md |
 | journal.md |
 | billing.md |
@@ -118,10 +147,14 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 | state-and-api-client.md |
 | **pages/INDEX.md** |
 | pages/auth.md |
+| pages/onboarding.md |
 | pages/dashboard.md |
+| pages/browse-plants.md |
 | pages/add-plant.md |
 | pages/plant-profile.md |
 | pages/tasks.md |
+| pages/household.md |
+| pages/community.md |
 | pages/settings.md |
 | pages/subscription.md |
 | pages/landing.md |
@@ -147,6 +180,7 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 | models/species-and-care-guide.md |
 | models/plant-and-task.md |
 | models/diagnosis-and-journal.md |
+| models/collaboration-and-community.md |
 
 ---
 

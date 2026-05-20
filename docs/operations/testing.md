@@ -21,6 +21,31 @@ npm run test -w @plant-care/web
 
 - `AuthContext.test.tsx`
 
-## Manual E2E
+## Verify script
 
-`node scripts/verify.mjs` with dev servers running.
+```bash
+npm run verify
+```
+
+API smoke checks (`scripts/verify.mjs`). For Docker staging, set `STAGING_E2E=1` and `API_URL` — see [guides/13-operations-deployment-and-quality.md](../guides/13-operations-deployment-and-quality.md).
+
+## Playwright E2E
+
+```bash
+npm run uat:e2e
+```
+
+- Config: `playwright.config.ts` (desktop + mobile projects, `workers: 1`)
+- Setup: `tests/e2e/global-setup.ts` (creates UAT user; staging uses Postgres via `docker exec`)
+- Specs: `tests/e2e/uat.spec.ts`, `tests/e2e/onboarding.spec.ts`
+
+**Staging:**
+
+```powershell
+$env:UAT_WEB_URL = 'http://localhost:8080'
+$env:API_URL = 'http://localhost:3001/api/v1'
+$env:STAGING_E2E = '1'
+npm run uat:e2e
+```
+
+Or full flow: `npm run staging:smoke`.

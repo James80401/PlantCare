@@ -8,6 +8,8 @@ This doc set is structured for **top-down navigation**: broad INDEX → layer IN
 
 ## Recommended workflow
 
+0. **Need the full picture on a domain?** → `docs/guides/INDEX.md` (14 end-to-end guides covering product, API, web, DB, ops, integrations).
+
 1. **Classify the question**
    - *Run/build* → `docs/getting-started/`
    - *UI behavior* → `docs/user-guide/` or `docs/web/`

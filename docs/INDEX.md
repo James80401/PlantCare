@@ -4,6 +4,8 @@
 
 This document is the **primary tutorial and instructions hub** for Plant Care. Use the tables below to jump to any layer; each linked folder has its own **INDEX.md** with deeper links.
 
+**For deep, end-to-end coverage of every aspect:** start at **[guides/INDEX.md](guides/INDEX.md)** (14 complete guides).
+
 ---
 
 ## How to use this documentation
@@ -63,6 +65,7 @@ This document is the **primary tutorial and instructions hub** for Plant Care. U
 
 | Layer | INDEX | What you’ll find |
 |-------|-------|------------------|
+| **Complete guides** | [guides/INDEX.md](guides/INDEX.md) | **Every aspect:** product, API, web, DB, ops, integrations |
 | **Getting started** | [getting-started/INDEX.md](getting-started/INDEX.md) | Install, env, DB, email, run, troubleshoot |
 | **Tutorials** | [tutorials/INDEX.md](tutorials/INDEX.md) | Step-by-step procedures |
 | **User guide** | [user-guide/INDEX.md](user-guide/INDEX.md) | Screens, flows, UX |
@@ -95,6 +98,11 @@ This document is the **primary tutorial and instructions hub** for Plant Care. U
 | Journal | — | [tutorials/journal-and-notes.md](tutorials/journal-and-notes.md) | [api/journal.md](api/journal.md) | [web/pages/plant-profile.md](web/pages/plant-profile.md) | — |
 | Settings / weather | [user-guide/settings.md](user-guide/settings.md) | — | [api/users.md](api/users.md) | [web/pages/settings.md](web/pages/settings.md) | [integrations/weather.md](integrations/weather.md) |
 | Premium / billing | [user-guide/subscription.md](user-guide/subscription.md) | — | [api/billing.md](api/billing.md) | [web/pages/subscription.md](web/pages/subscription.md) | [integrations/stripe.md](integrations/stripe.md) |
+| Onboarding | [user-guide/onboarding.md](user-guide/onboarding.md) | — | [api/users.md](api/users.md) | [web/pages/onboarding.md](web/pages/onboarding.md) | [guides/07-web-application.md](guides/07-web-application.md) |
+| Species browse | [user-guide/browse-plants.md](user-guide/browse-plants.md) | — | [api/species.md](api/species.md) | [web/pages/browse-plants.md](web/pages/browse-plants.md) | — |
+| Dashboard API | [user-guide/garden-dashboard.md](user-guide/garden-dashboard.md) | — | [api/dashboard.md](api/dashboard.md) | [web/pages/dashboard.md](web/pages/dashboard.md) | — |
+| Household / share | [user-guide/household.md](user-guide/household.md) | — | [api/gardens.md](api/gardens.md) | [web/pages/household.md](web/pages/household.md) | [database/models/collaboration-and-community.md](database/models/collaboration-and-community.md) |
+| Community | [user-guide/community.md](user-guide/community.md) | — | [api/community.md](api/community.md) | [web/pages/community.md](web/pages/community.md) | — |
 
 ---
 
@@ -102,8 +110,9 @@ This document is the **primary tutorial and instructions hub** for Plant Care. U
 
 ```
 PlantCare/
-├── ReadMe.md                 ← Project entry (links here)
+├── ReadMe.md                 ← Project entry
 ├── docs/INDEX.md             ← You are here
+├── docs/guides/              ← Complete guides (every aspect)
 ├── apps/
 │   ├── api/                  NestJS REST API
 │   └── web/                  React + Vite SPA

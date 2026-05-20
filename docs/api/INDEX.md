@@ -12,6 +12,9 @@
 | Species | [species.md](species.md) | `/species` |
 | Plants | [plants.md](plants.md) | `/plants` |
 | Tasks | [tasks.md](tasks.md) | `/tasks` |
+| Dashboard | [dashboard.md](dashboard.md) | `/dashboard` |
+| Gardens | [gardens.md](gardens.md) | `/gardens` |
+| Community | [community.md](community.md) | `/community` |
 | Diagnosis | [diagnosis.md](diagnosis.md) | `/plants/:id/diagnose*` |
 | Journal | [journal.md](journal.md) | `/plants/:plantId/journal` |
 | Billing | [billing.md](billing.md) | `/billing` |
