@@ -1,6 +1,6 @@
 # Tutorial: Reading care instructions
 
-> **Navigation:** [Tutorials INDEX](INDEX.md) · [Care guides INDEX](../care-guides/INDEX.md)
+> **Navigation:** [Tutorials INDEX](INDEX.md) · [Care guides INDEX](../care-guides/INDEX.md) · [Glossary](../meta/glossary.md)
 
 1. On a task, click **How to do this**
 2. Modal loads `GET /api/v1/tasks/:id/instructions`

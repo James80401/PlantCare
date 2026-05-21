@@ -5,3 +5,5 @@
 Route: `/garden/subscription`
 
 Premium / Stripe checkout UI.
+
+**User guide:** [subscription](../../user-guide/subscription.md)

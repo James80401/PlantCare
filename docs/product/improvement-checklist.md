@@ -235,7 +235,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [x] Make "how to do this" feel like a primary help action.
 - [x] Make skip a button with an obvious affordance.
 - [ ] Add skip reasons in a later API iteration.
-- [x] Add snooze/reschedule in a later API iteration.
+- [ ] Add snooze/reschedule in a later API iteration.
 
 ## Phase 2 - Plant profile and care guide upgrades
 
@@ -288,7 +288,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 ### Species attributes
 
 - [ ] Add or normalize common names and scientific names.
-- [x] Add difficulty level. Derived at runtime in species catalog meta (`Beginner` / `Moderate` / `Advanced`).
+- [ ] Add difficulty level.
 - [ ] Add growth rate.
 - [ ] Add mature size.
 - [ ] Add bloom season.
@@ -304,7 +304,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 ### Search and discovery
 
 - [ ] Search by common name and scientific name.
-- [x] Add filters for pet-safe, low-light, beginner-friendly, edible, drought-tolerant, indoor, outdoor, and succulent plants.
+- [ ] Add filters for pet-safe, low-light, beginner-friendly, edible, drought-tolerant, indoor, and outdoor plants.
 - [ ] Add recommended plants based on user location and experience.
 - [ ] Add "complete your plant profile" suggestions when species data is missing.
 

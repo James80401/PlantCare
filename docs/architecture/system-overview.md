@@ -1,6 +1,6 @@
 # System overview
 
-> **Navigation:** [Architecture INDEX](INDEX.md)
+> **Navigation:** [Architecture INDEX](INDEX.md) · [Application overview](../application-overview.md)
 
 ```
 ┌─────────────┐     HTTPS/proxy      ┌─────────────┐
@@ -22,10 +22,14 @@
 | **Species catalog** | 240+ seeded plants |
 | **Plants & tasks** | User garden + scheduler |
 | **Care guides** | Instruction content |
-| **Diagnosis** | Dr. Plant + chat |
+| **Diagnosis** | Dr. Plant chat (+ one-shot API) |
 | **Notifications** | Cron reminders (email/SMS/push hooks) |
 | **Billing** | Stripe (optional) |
+
+For stack details, data model, API routes, web screens, and MVP caveats, see the **[complete application overview](../application-overview.md)**.
 
 ## External optional services
 
 OpenAI, SMTP, PlantNet, Perenual, OpenWeather, Stripe, S3 — see [integrations INDEX](../integrations/INDEX.md).
+
+Which features have web UI today: [feature availability](../reference/feature-availability.md).

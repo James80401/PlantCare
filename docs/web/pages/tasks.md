@@ -13,5 +13,6 @@ Pending task rows support:
 - Skip with an optional reason/note
 - Open task-specific care instructions
 
-Skip reasons are sent to `tasksApi.skip(id, feedback)` and stored by the API as
-`TaskFeedback`.
+Skip reasons are sent to `tasksApi.skip(id, feedback)` and stored by the API as `TaskFeedback`.
+
+**User guide:** [task calendar](../../user-guide/task-calendar.md) · **Tutorial:** [completing tasks](../../tutorials/completing-tasks.md)

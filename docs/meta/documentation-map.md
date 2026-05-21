@@ -12,7 +12,8 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 |------|------|
 | [ReadMe.md](../../ReadMe.md) | Project entry point |
 | [docs/INDEX.md](../INDEX.md) | **Master tutorial & instructions hub** |
-| docs/DEPLOY.md | Legacy deploy notes (linked from operations) |
+| [docs/application-overview.md](../application-overview.md) | **Complete application overview** (stack, domains, API, UI, MVP) |
+| docs/DEPLOY.md | Deploy quick reference (→ operations/deployment.md) |
 
 ---
 
@@ -45,6 +46,7 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 | **INDEX.md** |
 | documentation-map.md (this file) |
 | for-ai-agents.md |
+| doc-templates.md |
 | glossary.md |
 
 ---
@@ -91,6 +93,7 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 | onboarding.md |
 | garden-dashboard.md |
 | browse-plants.md |
+| add-plant.md |
 | plant-profile.md |
 | task-calendar.md |
 | household.md |
@@ -235,6 +238,7 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 | environment-variables.md |
 | routes-quick-reference.md |
 | file-tree.md |
+| feature-availability.md |
 | shared-package.md |
 
 ---

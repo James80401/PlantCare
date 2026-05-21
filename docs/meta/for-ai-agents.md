@@ -11,13 +11,15 @@ This doc set is structured for **top-down navigation**: broad INDEX → layer IN
 0. **Need the full picture on a domain?** → `docs/guides/INDEX.md` (14 end-to-end guides covering product, API, web, DB, ops, integrations).
 
 1. **Classify the question**
+   - *What is this app / full picture* → `docs/application-overview.md`
    - *Run/build* → `docs/getting-started/`
    - *UI behavior* → `docs/user-guide/` or `docs/web/`
    - *HTTP/API* → `docs/api/`
    - *Schema/data* → `docs/database/`
    - *Care text/tasks* → `docs/care-guides/` + `docs/architecture/scheduling.md`
    - *External service* → `docs/integrations/`
-   - *Deploy/CI* → `docs/operations/`
+   - *Deploy/CI* → `docs/operations/` (Path D on master INDEX)
+   - *Web UI exists?* → `docs/reference/feature-availability.md`
 
 2. **Open the layer INDEX** (e.g. `docs/api/INDEX.md`)
 
@@ -54,4 +56,6 @@ This doc set is structured for **top-down navigation**: broad INDEX → layer IN
 
 ## Updating docs
 
-When changing behavior, update the leaf doc + parent INDEX + [documentation-map.md](documentation-map.md) feature row in [../INDEX.md](../INDEX.md).
+Follow the checklist in [doc-templates.md](doc-templates.md). Minimum: leaf doc + parent INDEX + [documentation-map.md](documentation-map.md) + feature row in [../INDEX.md](../INDEX.md) + [feature-availability.md](../reference/feature-availability.md) when UI/API exposure changes.
+
+Run `npm run verify:docs` to check relative markdown links under `docs/`.

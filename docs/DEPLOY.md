@@ -1,8 +1,8 @@
-# Deployment
+# Deployment (quick reference)
 
-> **See also:** [operations/deployment.md](operations/deployment.md) · [Master INDEX](INDEX.md) · [ReadMe](../ReadMe.md)
+> **Navigation:** [operations/deployment.md](operations/deployment.md) · [operations/ci.md](operations/ci.md) · [Master INDEX](INDEX.md) · [ReadMe](../ReadMe.md)
 
-# Deployment
+This file is a **short checklist**. Full procedures live in [operations/deployment.md](operations/deployment.md).
 
 ## Docker
 
@@ -30,7 +30,7 @@ npm run build -w @plant-care/web
 
 ## CI
 
-GitHub Actions runs on push/PR: install, Prisma generate, API tests, web build.
+GitHub Actions runs on push/PR: install, Prisma generate, API tests, web build. See [operations/ci.md](operations/ci.md).
 
 ## Production checklist
 

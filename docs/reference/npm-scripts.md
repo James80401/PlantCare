@@ -16,6 +16,7 @@
 | `mobile:ios` | Build/sync web and open the iOS project |
 | `test` | API Jest |
 | `test:integrations` | SMTP + OpenAI smoke |
+| `verify:docs` | Check relative links under `docs/` |
 | `db:generate` | Prisma generate |
 | `db:migrate` | prisma migrate dev |
 | `db:push` | prisma db push |

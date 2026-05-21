@@ -17,4 +17,4 @@ Sections:
 - Diagnosis: recovery summary, DrPlantChat with follow-up prompts, diagnosis
   history cards, and resolved/active status controls.
 
-Location edit → `plantsApi.update` — [tutorial](../../tutorials/changing-plant-location.md).
+**User guide:** [plant profile](../../user-guide/plant-profile.md) · **Tutorial:** [changing location](../../tutorials/changing-plant-location.md)

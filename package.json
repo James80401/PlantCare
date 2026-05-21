@@ -11,6 +11,7 @@
     "test:integrations": "node scripts/test-integrations.mjs",
     "dev:auth-help": "node scripts/dev-auth-help.mjs",
     "verify": "node scripts/verify.mjs",
+    "verify:docs": "node scripts/verify-docs-links.mjs",
     "uat:e2e": "playwright test",
     "species:verify": "tsx scripts/verify-species-catalog.mjs",
     "species:photos:fetch": "node apps/api/scripts/fetch-species-photo-sources.mjs",

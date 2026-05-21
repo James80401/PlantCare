@@ -7,6 +7,7 @@
 | Full API smoke | `node scripts/verify.mjs` (API running) |
 | Care guide QA | `npx tsx scripts/verify-care-guides.mjs` |
 | Integrations | `npm run test:integrations` |
+| Docs link check | `npm run verify:docs` |
 | Download photos | `node apps/api/scripts/download-care-guide-photos.mjs` |
 | Copy guide assets | Part of `npm run build` (api) |
 

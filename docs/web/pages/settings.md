@@ -4,4 +4,6 @@
 
 Route: `/garden/settings`
 
-Notification prefs, geo for weather.
+Notification prefs, geo for weather, account delete.
+
+**User guide:** [settings](../../user-guide/settings.md)

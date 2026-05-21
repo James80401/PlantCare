@@ -49,3 +49,11 @@ npm run uat:e2e
 ```
 
 Or full flow: `npm run staging:smoke`.
+
+## Documentation
+
+```bash
+npm run verify:docs
+```
+
+Validates relative links under `docs/`. When changing `apps/web/src/pages/*.tsx`, update the matching [user-guide](../user-guide/INDEX.md) or [tutorial](../tutorials/INDEX.md) in the same change when behavior visible to users changes.

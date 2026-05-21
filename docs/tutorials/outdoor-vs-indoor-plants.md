@@ -2,17 +2,19 @@
 
 > **Navigation:** [Tutorials INDEX](INDEX.md) · [Growing environment](../care-guides/growing-environment.md)
 
-## Location presets
+## Location presets (dropdown)
 
-`Living Room`, `Garden`, `Outdoor garden`, `Balcony`, `Patio`, etc. — see `apps/web/src/constants/plantLocations.ts`.
+`Living Room`, `Bedroom`, `Kitchen`, `Office`, `Balcony`, `Patio`, `Greenhouse`, `Garden`, `Outdoor garden` — see `apps/web/src/constants/plantLocations.ts`.
+
+There is no **Backyard** preset; if you need that label, the API accepts custom location strings and the scheduler infers environment from keywords (e.g. “backyard” in free text).
 
 ## How environment is inferred
 
 | Location keywords | Environment |
 |-------------------|-------------|
-| Garden, Backyard, Outdoor garden, … | `outdoor` |
+| Garden, outdoor garden, backyard, … | `outdoor` |
 | Balcony, Patio, Greenhouse, … | `semi_outdoor` |
-| Default | `indoor` |
+| Default (e.g. Living Room) | `indoor` |
 
 ## Effects
 

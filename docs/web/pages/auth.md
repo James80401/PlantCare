@@ -12,3 +12,5 @@
 | `ResetPassword.tsx` | `/reset-password/:token` |
 
 Uses `authApi` from `services/api.ts`.
+
+**User guide:** [landing and auth](../../user-guide/landing-and-auth.md) · **Tutorial:** [first-time user](../../tutorials/first-time-user.md)

@@ -1,13 +1,13 @@
 # Tutorial: Adding a plant
 
-> **Navigation:** [Tutorials INDEX](INDEX.md) · [Web: add plant](../web/pages/add-plant.md) · [API: plants](../api/plants.md)
+> **Navigation:** [Tutorials INDEX](INDEX.md) · [User guide: add plant](../user-guide/add-plant.md) · [Web: add plant](../web/pages/add-plant.md) · [API: plants](../api/plants.md)
 
 ## UI steps
 
 1. Go to **/garden/plants/new**
 2. **Search species** (type 2+ characters)
 3. Optional: **Identify from photo** (PlantNet if configured)
-4. Set **nickname**, **where it grows**, **pot size**, optional photo
+4. Set **nickname**, **where it grows**, **pot size**, optional **date planted**, optional photo
 5. **Save plant** → profile page
 
 ## What happens in the backend

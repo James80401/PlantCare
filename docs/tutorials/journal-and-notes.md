@@ -1,17 +1,21 @@
 # Tutorial: Journal and notes
 
-> **Navigation:** [Tutorials INDEX](INDEX.md) · [API journal](../api/journal.md)
+> **Navigation:** [Tutorials INDEX](INDEX.md) · [API journal](../api/journal.md) · [Feature availability](../reference/feature-availability.md)
 
-## Journal (profile)
+## Journal on plant profile (web)
 
-1. Plant profile → **Journal** section
-2. Add note → `POST /plants/:plantId/journal`
-3. Entries listed with timestamp
+1. Open **/garden/plants/:id**
+2. Scroll to the **Journal** section
+3. Type a note in the text field and save — text-only in the current web app
+4. Entries appear with a timestamp
 
-Optional photo on create (multipart).
+## API-only (not in web UI yet)
 
-## Plant notes field
+| Capability | API | Web |
+|------------|-----|-----|
+| Journal entry with photo | `POST /plants/:plantId/journal` (multipart) | No file upload on profile |
+| Plant `notes` at create | `POST /plants` body field | Add Plant form has no notes field |
 
-`notes` on plant can be set at create time (`POST /plants`). Displayed in care overview **Your notes** section when present.
+Use Swagger or API clients for photo journal entries and plant notes until the web app adds those fields.
 
-Future: edit notes on profile via PATCH (field supported in API DTO).
+Future: edit notes on profile via PATCH (supported in API DTO).

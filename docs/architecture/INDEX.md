@@ -1,6 +1,6 @@
 # Architecture
 
-> **Navigation:** [Master INDEX](../INDEX.md)
+> **Navigation:** [Master INDEX](../INDEX.md) · [Application overview](../application-overview.md)
 
 | Document | Topics |
 |----------|--------|

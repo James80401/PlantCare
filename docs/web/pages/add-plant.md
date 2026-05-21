@@ -11,4 +11,4 @@ Route: `/garden/plants/new`
 - Locations from `constants/plantLocations.ts`
 - Create → `plantsApi.create`
 
-Tutorial: [adding a plant](../../tutorials/adding-a-plant.md)
+**User guide:** [add plant](../../user-guide/add-plant.md) · **Tutorial:** [adding a plant](../../tutorials/adding-a-plant.md)
