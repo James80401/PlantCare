@@ -59,7 +59,7 @@ Species search on Postgres uses case-insensitive `contains` (`species-name-filte
 | Journal | Shipped | PATCH/DELETE |
 | Weather | Shipped | Location required |
 | Household / share | Shipped | API + UI |
-| Community | Shipped | Posts + comments; likes schema only |
+| Community | Shipped | Posts, comments, and likes |
 | Mobile Capacitor | Partial | Scripts exist; store TBD |
 | Push FCM | Roadmap | Device tokens only |
 
