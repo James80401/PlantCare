@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       logout,
       refreshUser,
-      isPremium: true,
+      isPremium: user?.planTier === 'PREMIUM',
     }),
     [user, loading, refreshUser],
   );

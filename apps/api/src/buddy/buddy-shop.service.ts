@@ -1,9 +1,11 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { PlanTier } from '@prisma/client';
 import { ItemCategory, ItemUnlockType } from '@prisma/client';
 import { createHash } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -32,6 +34,7 @@ export class BuddyShopService {
   async getCatalog(userId: string) {
     const buddy = await this.requireBuddy(userId);
     await this.ensureInventory(buddy.id, buddy.speciesId);
+    const isPremium = await this.userIsPremium(userId);
     const ownedIds = await this.ownedItemIds(buddy.id);
     const items = await this.prisma.shopItem.findMany({
       where: { isActive: true },
@@ -45,13 +48,17 @@ export class BuddyShopService {
       items: items.map((item) => ({
         ...this.formatShopItem(item),
         owned: ownedIds.has(item.id),
-        canPurchase: this.canPurchaseItem(item, buddy, ownedIds),
+        canPurchase: this.canPurchaseItem(item, buddy, ownedIds, isPremium),
+        requiresPremium: item.requiresPremium,
+        lockedReason:
+          item.requiresPremium && !isPremium ? ('premium' as const) : undefined,
       })),
     };
   }
 
   async getDailyRotation(userId: string) {
     const buddy = await this.requireBuddy(userId);
+    const isPremium = await this.userIsPremium(userId);
     const ownedIds = await this.ownedItemIds(buddy.id);
     const purchasable = await this.prisma.shopItem.findMany({
       where: {
@@ -72,7 +79,10 @@ export class BuddyShopService {
       items: items.map((item) => ({
         ...this.formatShopItem(item),
         owned: ownedIds.has(item.id),
-        canPurchase: this.canPurchaseItem(item, buddy, ownedIds),
+        canPurchase: this.canPurchaseItem(item, buddy, ownedIds, isPremium),
+        requiresPremium: item.requiresPremium,
+        lockedReason:
+          item.requiresPremium && !isPremium ? ('premium' as const) : undefined,
       })),
     };
   }
@@ -125,7 +135,10 @@ export class BuddyShopService {
 
     const ownedIds = await this.ownedItemIds(buddy.id);
     if (ownedIds.has(item.id)) throw new ConflictException('You already own this item');
-    if (!this.canPurchaseItem(item, buddy, ownedIds)) {
+    if (item.requiresPremium && !(await this.userIsPremium(userId))) {
+      throw new ForbiddenException('Premium subscription required for this item');
+    }
+    if (!this.canPurchaseItem(item, buddy, ownedIds, await this.userIsPremium(userId))) {
       throw new BadRequestException('This item cannot be purchased right now');
     }
     if (buddy.dewdrops < item.cost) {
@@ -334,6 +347,14 @@ export class BuddyShopService {
     };
   }
 
+  private async userIsPremium(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { planTier: true },
+    });
+    return user?.planTier === PlanTier.PREMIUM;
+  }
+
   private canPurchaseItem(
     item: {
       id: string;
@@ -345,11 +366,12 @@ export class BuddyShopService {
     },
     buddy: { growthStage: string; speciesId: string; dewdrops: number },
     ownedIds: Set<string>,
+    isPremium: boolean,
   ) {
     if (ownedIds.has(item.id)) return false;
     if (item.unlockType !== ItemUnlockType.PURCHASE) return false;
     if (item.cost <= 0) return false;
-    if (item.requiresPremium) return false;
+    if (item.requiresPremium && !isPremium) return false;
     if (item.speciesLocked && item.speciesLocked !== buddy.speciesId) return false;
     if (!stageMeetsTier(buddy.growthStage, item.tier)) return false;
     return buddy.dewdrops >= item.cost;

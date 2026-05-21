@@ -30,6 +30,24 @@ export function parseJsonObject(value: unknown): Record<string, unknown> {
   return {};
 }
 
+export function appendPersonalityChoice(
+  existing: unknown,
+  entry: { journeyId: string; choice: number; recordedAt: string },
+): string {
+  let choices: unknown[] = [];
+  if (typeof existing === 'string') {
+    try {
+      const parsed = JSON.parse(existing) as unknown;
+      if (Array.isArray(parsed)) choices = parsed;
+    } catch {
+      choices = [];
+    }
+  } else if (Array.isArray(existing)) {
+    choices = existing;
+  }
+  return JSON.stringify([...choices, entry]);
+}
+
 export function formatBuddy(buddy: Buddy & { journeys?: BuddyJourney[] }) {
   const activeJourney = buddy.journeys?.find((j) => !j.completed) ?? null;
   return {

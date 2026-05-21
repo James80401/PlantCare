@@ -68,7 +68,9 @@ export default function AccessoryPicker({
             >
               <p className="font-semibold text-emerald-950">{item.name}</p>
               <p className="mt-1 line-clamp-2 text-xs text-gray-500">{item.description}</p>
-              {owned ? (
+              {item.requiresPremium && item.lockedReason === 'premium' ? (
+                <p className="mt-2 text-xs font-medium text-violet-800">Premium item</p>
+              ) : owned ? (
                 <p className="mt-2 text-xs font-medium text-emerald-700">
                   {selected ? 'Equipped' : 'Tap to equip'}
                 </p>

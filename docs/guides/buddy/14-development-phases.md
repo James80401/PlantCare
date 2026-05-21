@@ -149,25 +149,25 @@ Users can connect with friends, visit their terrariums, and send/receive sunshin
 **Goal:** Weather-aware messages, personality system, seasonal events, premium gating.
 
 **Backend:**
-- [ ] `BuddyService.getDailyGreeting()` — weather-flavored message
-- [ ] Personality blend calculation (based on personalityChoices history)
-- [ ] Species-specific dialogue selection based on trait
+- [x] `BuddyService.getDailyGreeting()` — weather-flavored message
+- [x] Personality choices recorded on discovery response + trait-based reaction
+- [x] Trait-based discovery dialogue reactions
 - [ ] Seasonal event system (event start/end dates, exclusive items)
-- [ ] `ShopItem.requiresPremium` gating in purchase endpoint
+- [x] `ShopItem.requiresPremium` gating in purchase endpoint
 - [ ] Bloom Token mechanic for Rose species (perfect day detection)
-- [ ] Journey shortcut minute-reduction logic (tasks during journey)
+- [x] Journey shortcut minute-reduction logic (tasks during journey — already live; UI shows progress)
 - [ ] Advanced push notification scheduling (mood degradation nudges)
 - [ ] Analytics events (journey completion rate, task type distribution)
 
 **Frontend:**
-- [ ] Dynamic buddy greeting using weather data
-- [ ] Personality-influenced dialogue in Discovery modals
-- [ ] Seasonal event banner + event quest UI
-- [ ] Premium badge on locked items in shop
+- [x] Dynamic buddy greeting using weather data
+- [x] Personality-influenced dialogue after discovery choices
+- [x] Seasonal banner (spring stub until full event system)
+- [x] Premium badge on locked items in shop
 - [ ] Bloom Token display for Rose users
-- [ ] Journey shortcut progress indicator ("Tasks completed: saves 30 min")
-- [ ] Mood degradation visual effects (wilting animations)
-- [ ] First Aid shortcut on buddy home (launches Dr. Plant)
+- [x] Journey shortcut progress indicator ("Tasks completed: saves 30 min")
+- [x] Mood degradation visual effects (wilting / dormant styling)
+- [x] First Aid shortcut on buddy home (care tasks entry)
 - [ ] Onboarding improvements (tutorial overlay, tips)
 
 **Definition of Done:**

@@ -10,7 +10,8 @@ import { biomeById, defaultBiomeForBuddy, isBiomeUnlocked } from './constants/bi
 import { pickDiscovery } from './constants/discoveries';
 import { StartJourneyDto } from './dto/start-journey.dto';
 import { BuddyService } from './buddy.service';
-import { formatBuddy, parseStringArray } from './buddy.utils';
+import { appendPersonalityChoice, formatBuddy, parseStringArray } from './buddy.utils';
+import { discoveryReaction } from './constants/buddy-dialogue';
 import { JourneyCompletedEvent } from './events/journey-completed.event';
 
 @Injectable()
@@ -122,12 +123,27 @@ export class BuddyJourneyService {
       throw new BadRequestException('Discovery choice already recorded');
     }
 
-    await this.prisma.buddyJourney.update({
-      where: { id: journeyId },
-      data: { choiceMade: choice },
+    const personalityChoices = appendPersonalityChoice(buddy.personalityChoices, {
+      journeyId,
+      choice,
+      recordedAt: new Date().toISOString(),
     });
 
-    return { saved: true };
+    await this.prisma.$transaction([
+      this.prisma.buddyJourney.update({
+        where: { id: journeyId },
+        data: { choiceMade: choice },
+      }),
+      this.prisma.buddy.update({
+        where: { id: buddy.id },
+        data: { personalityChoices },
+      }),
+    ]);
+
+    return {
+      saved: true,
+      reaction: discoveryReaction(buddy.trait, choice),
+    };
   }
 
   async completeJourney(userId: string, journeyId: string) {
@@ -203,6 +219,8 @@ export class BuddyJourneyService {
       discoveryId: string | null;
       dewdropsEarned: number;
       choiceMade: number | null;
+      tasksCompletedDuring?: number;
+      minutesSaved?: number;
     },
     buddyName: string,
   ) {
@@ -232,6 +250,8 @@ export class BuddyJourneyService {
       discoveryId: journey.discoveryId,
       dewdropsEarned: journey.dewdropsEarned,
       choiceMade: journey.choiceMade,
+      tasksCompletedDuring: journey.tasksCompletedDuring ?? 0,
+      minutesSaved: journey.minutesSaved ?? 0,
       buddyName,
     };
   }

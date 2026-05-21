@@ -61,6 +61,8 @@ export interface JourneyState {
   discoveryId: string | null;
   dewdropsEarned: number;
   choiceMade: number | null;
+  tasksCompletedDuring: number;
+  minutesSaved: number;
   buddyName: string;
   discovery?: JourneyDiscovery;
   needsChoice?: boolean;

@@ -7,6 +7,7 @@ import { GROWTH_STAGE_LABEL } from '../../components/buddy/species';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { PageHeader } from '../../components/ui/PageHeader';
+import SeasonalBanner from '../../components/buddy/SeasonalBanner';
 import { useBuddy } from '../../hooks/buddy/useBuddy';
 import { buddyApi } from '../../services/api';
 
@@ -35,8 +36,15 @@ export default function BuddyHome() {
         description={greeting || `Your ${GROWTH_STAGE_LABEL[buddy.growthStage] ?? 'plant'} companion`}
       />
 
+      <SeasonalBanner />
+
       <Card className="flex flex-col items-center gap-4 py-8">
-        <BuddySprite speciesId={buddy.speciesId} size="lg" traveling={buddy.hasActiveJourney} />
+        <BuddySprite
+          speciesId={buddy.speciesId}
+          size="lg"
+          traveling={buddy.hasActiveJourney}
+          mood={buddy.mood}
+        />
         <div className="flex flex-wrap items-center justify-center gap-2">
           <MoodIndicator mood={buddy.mood} />
           <span className="rounded-full bg-lime-100 px-2.5 py-1 text-xs font-semibold text-lime-900">
@@ -63,6 +71,13 @@ export default function BuddyHome() {
           <p className="text-xs text-gray-500">Journeys</p>
         </div>
       </Card>
+
+      <Link
+        to="/garden/tasks"
+        className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-950 hover:bg-rose-100"
+      >
+        First aid — plant health tasks
+      </Link>
 
       <Link
         to="/garden/buddy/town"

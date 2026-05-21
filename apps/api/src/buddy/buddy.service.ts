@@ -3,6 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { WeatherService } from '../weather/weather.service';
+import { weatherGreetingLine } from './constants/buddy-dialogue';
 import { OnEvent } from '@nestjs/event-emitter';
 import { BuddyMood, GrowthStage } from '@prisma/client';
 import { startOfDay } from 'date-fns';
@@ -32,6 +34,7 @@ export class BuddyService {
   constructor(
     private prisma: PrismaService,
     private shopService: BuddyShopService,
+    private weatherService: WeatherService,
   ) {}
 
   async create(userId: string, dto: CreateBuddyDto) {
@@ -151,11 +154,28 @@ export class BuddyService {
     return formatBuddy(updated);
   }
 
-  async getDailyGreeting(userId: string): Promise<{ message: string }> {
+  async getDailyGreeting(userId: string): Promise<{ message: string; weatherAware: boolean }> {
     const buddy = await this.prisma.buddy.findUnique({ where: { userId } });
     if (!buddy) throw new NotFoundException('Plant buddy not found');
+
+    const status = await this.weatherService.getAdviceStatus(userId);
+    const advice = status.cachedAdvice;
+    if (advice?.summary?.days?.[0]) {
+      const day = advice.summary.days[0];
+      return {
+        weatherAware: true,
+        message: weatherGreetingLine(
+          buddy.name,
+          advice.locationLabel,
+          day.tempMaxC,
+          day.rainProbability,
+        ),
+      };
+    }
+
     return {
-      message: `${buddy.name} is having a great day in the garden 🌿`,
+      weatherAware: false,
+      message: weatherGreetingLine(buddy.name, status.locationLabel),
     };
   }
 

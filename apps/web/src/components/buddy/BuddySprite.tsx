@@ -4,6 +4,7 @@ interface BuddySpriteProps {
   speciesId: string;
   size?: 'sm' | 'md' | 'lg';
   traveling?: boolean;
+  mood?: string;
 }
 
 const sizeClass = {
@@ -12,10 +13,22 @@ const sizeClass = {
   lg: 'text-8xl',
 };
 
-export default function BuddySprite({ speciesId, size = 'md', traveling }: BuddySpriteProps) {
+const moodClass: Record<string, string> = {
+  WILTING: 'opacity-80 saturate-50',
+  THIRSTY: 'opacity-90',
+  DORMANT: 'opacity-60 grayscale',
+};
+
+export default function BuddySprite({
+  speciesId,
+  size = 'md',
+  traveling,
+  mood,
+}: BuddySpriteProps) {
+  const moodEffect = mood ? moodClass[mood] : '';
   return (
     <div
-      className={`flex items-center justify-center ${traveling ? 'animate-pulse' : ''}`}
+      className={`flex items-center justify-center ${traveling ? 'animate-pulse' : ''} ${moodEffect}`}
       style={
         traveling
           ? undefined

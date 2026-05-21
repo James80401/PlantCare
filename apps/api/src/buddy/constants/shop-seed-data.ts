@@ -90,6 +90,17 @@ export const SHOP_ITEMS_SEED: ShopItemSeed[] = [
     sortOrder: 11,
   },
   {
+    id: 'hat_golden_laurel',
+    name: 'Golden laurel',
+    description: 'Premium crown for dedicated gardeners.',
+    category: 'HAT',
+    tier: 3,
+    cost: 200,
+    requiresPremium: true,
+    imageKey: 'hat_laurel',
+    sortOrder: 12,
+  },
+  {
     id: 'hat_mushroom',
     name: 'Mushroom cap',
     description: 'Forest whimsy.',

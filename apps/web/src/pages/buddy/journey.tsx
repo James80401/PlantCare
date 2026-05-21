@@ -27,6 +27,7 @@ export default function BuddyJourneyPage() {
   const { journey, data, loading, error, refresh } = useJourney(Boolean(buddy));
   const [starting, setStarting] = useState(false);
   const [responding, setResponding] = useState(false);
+  const [discoveryReaction, setDiscoveryReaction] = useState('');
   const [pageError, setPageError] = useState('');
 
   const traveling = isJourneyTraveling(journey);
@@ -54,7 +55,10 @@ export default function BuddyJourneyPage() {
     if (!journey?.id) return;
     setResponding(true);
     try {
-      await buddyApi.respondDiscovery(journey.id, choice);
+      const { data } = await buddyApi.respondDiscovery(journey.id, choice);
+      setDiscoveryReaction(
+        (data as { reaction?: string }).reaction ?? 'Your buddy appreciated the moment.',
+      );
       await refresh();
       await refreshBuddy();
     } finally {
@@ -109,13 +113,21 @@ export default function BuddyJourneyPage() {
             <p className="text-center text-xs text-gray-500">
               Tasks you complete now still earn dewdrops and shave ~10 min off the timer.
             </p>
+            {journey.tasksCompletedDuring > 0 ? (
+              <p className="text-center text-sm font-medium text-emerald-800">
+                Care tasks during this trip: {journey.tasksCompletedDuring} · ~
+                {journey.minutesSaved} min saved
+              </p>
+            ) : null}
           </>
         ) : journey?.completed && journey.discovery ? (
           <div className="space-y-2 text-center text-sm text-gray-700">
             <p className="font-semibold text-emerald-900">{buddy.name} is back!</p>
             <p>{journey.discovery.story}</p>
             {journey.choiceMade !== null ? (
-              <p className="text-xs text-gray-500">Thanks for sharing how they responded.</p>
+              <p className="text-xs text-gray-500">
+                {discoveryReaction || 'Thanks for sharing how they responded.'}
+              </p>
             ) : null}
           </div>
         ) : (

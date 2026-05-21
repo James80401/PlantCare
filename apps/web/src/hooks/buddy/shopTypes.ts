@@ -26,6 +26,7 @@ export interface ShopItem {
   sortOrder: number;
   owned?: boolean;
   canPurchase?: boolean;
+  lockedReason?: 'premium';
 }
 
 export interface ShopCatalogResponse {
