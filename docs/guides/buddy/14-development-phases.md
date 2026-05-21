@@ -81,7 +81,7 @@ Users can browse the shop, purchase items, equip them on their buddy, and place 
 **Backend:**
 - [x] `BuddyActivity` Prisma model
 - [x] Activity endpoints for all 10 activity types (`GET /buddy/activities`, `POST /buddy/activities/complete`)
-- [x] Activity-to-task integration (watering, repot, prune, pest inspect complete pending tasks)
+- [x] Activity-to-task integration (water, repot, prune, pest inspect, mist complete pending tasks)
 - [x] Activity-to-journal integration (creates JournalEntry records for journal/photo activities)
 - [ ] Activity-to-diagnosis integration (opens DiagnosisConversation)
 - [x] `Quest` Prisma model + seed daily + achievement definitions
@@ -96,7 +96,7 @@ Users can browse the shop, purchase items, equip them on their buddy, and place 
 **Frontend:**
 - [x] Activity library screen
 - [x] Shared activity completion flow (all 10 types; notes + plant picker)
-- [x] Per-activity multi-step wizards (watering, season check, progress photo, sunlight audit)
+- [x] Per-activity multi-step wizards (all 10 activity types)
 - [x] Pest Inspection — Dr. Plant link from activity flow
 - [x] Plant Journal — notes saved to journal entry
 - [x] Season Check flow (weather integration)

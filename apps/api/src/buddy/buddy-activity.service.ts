@@ -87,6 +87,8 @@ export class BuddyActivityService {
       tasksCompleted = await this.completePendingTasks(userId, [dto.plantId], TaskType.PRUNE);
     } else if (dto.activityType === 'PEST_INSPECTION' && dto.plantId) {
       tasksCompleted = await this.completePendingTasks(userId, [dto.plantId], TaskType.INSPECT_PESTS);
+    } else if (dto.activityType === 'HUMIDITY_CHECK' && dto.plantId) {
+      tasksCompleted = await this.completePendingTasks(userId, [dto.plantId], TaskType.MIST);
     }
 
     const rewards = ACTIVITY_REWARDS[dto.activityType];
@@ -96,12 +98,7 @@ export class BuddyActivityService {
       : Math.min(rewards.sunlight, SUNLIGHT_CAP - buddy.sunlightToday);
 
     let journalEntryId: string | undefined;
-    if (dto.activityType === 'PLANT_JOURNAL' && dto.plantId && dto.notes?.trim()) {
-      const entry = await this.prisma.journalEntry.create({
-        data: { plantId: dto.plantId, notes: dto.notes.trim() },
-      });
-      journalEntryId = entry.id;
-    } else if (dto.activityType === 'PROGRESS_PHOTO' && dto.plantId) {
+    if (dto.activityType === 'PROGRESS_PHOTO' && dto.plantId) {
       const entry = await this.prisma.journalEntry.create({
         data: {
           plantId: dto.plantId,

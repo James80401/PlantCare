@@ -22,6 +22,8 @@ const GUIDED = new Set([
   'PRUNING_GUIDE',
   'PROPAGATION_LOG',
   'PEST_INSPECTION',
+  'HUMIDITY_CHECK',
+  'PLANT_JOURNAL',
 ]);
 
 export default function BuddyActivitiesPage() {
@@ -78,6 +80,8 @@ export default function BuddyActivitiesPage() {
                   {a.activityType === 'REPOTTING_GUIDE' && ' · syncs repot tasks'}
                   {a.activityType === 'PRUNING_GUIDE' && ' · syncs prune tasks'}
                   {a.activityType === 'PEST_INSPECTION' && ' · links to Dr. Plant'}
+                  {a.activityType === 'HUMIDITY_CHECK' && ' · syncs mist tasks'}
+                  {a.activityType === 'PLANT_JOURNAL' && ' · saves to journal'}
                 </p>
               </div>
             </Card>

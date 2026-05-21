@@ -7,6 +7,8 @@ import RepottingWizard from './RepottingWizard';
 import PruningWizard from './PruningWizard';
 import PropagationWizard from './PropagationWizard';
 import PestInspectionWizard from './PestInspectionWizard';
+import HumidityCheckWizard from './HumidityCheckWizard';
+import PlantJournalWizard from './PlantJournalWizard';
 import GenericActivityFlow from './GenericActivityFlow';
 
 const WIZARDS: Record<string, () => JSX.Element> = {
@@ -18,6 +20,8 @@ const WIZARDS: Record<string, () => JSX.Element> = {
   PRUNING_GUIDE: PruningWizard,
   PROPAGATION_LOG: PropagationWizard,
   PEST_INSPECTION: PestInspectionWizard,
+  HUMIDITY_CHECK: HumidityCheckWizard,
+  PLANT_JOURNAL: PlantJournalWizard,
 };
 
 export default function BuddyActivityFlowPage() {
