@@ -5,7 +5,9 @@ import {
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ActivityType } from '@prisma/client';
+import { TaskStatus, TaskType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { TasksService } from '../tasks/tasks.service';
 import { formatBuddy } from './buddy.utils';
 import {
   ACTIVITY_REWARDS,
@@ -29,6 +31,7 @@ export class BuddyActivityService {
   constructor(
     private prisma: PrismaService,
     private events: EventEmitter2,
+    private tasksService: TasksService,
   ) {}
 
   getLibrary() {
@@ -61,6 +64,23 @@ export class BuddyActivityService {
         where: { id: dto.plantId, userId },
       });
       if (!plant) throw new NotFoundException('Plant not found');
+    }
+
+    const plantIds =
+      dto.plantIds?.length ? dto.plantIds : dto.plantId ? [dto.plantId] : [];
+
+    if (plantIds.length > 0) {
+      const owned = await this.prisma.plant.count({
+        where: { id: { in: plantIds }, userId },
+      });
+      if (owned !== plantIds.length) {
+        throw new NotFoundException('One or more plants not found');
+      }
+    }
+
+    let tasksCompleted = 0;
+    if (dto.activityType === 'WATERING_CHECK' && plantIds.length > 0) {
+      tasksCompleted = await this.completeWateringTasks(userId, plantIds);
     }
 
     const rewards = ACTIVITY_REWARDS[dto.activityType];
@@ -127,8 +147,32 @@ export class BuddyActivityService {
         dewdropsEarned: rewards.dewdrops,
         journalEntryId,
         completedAt: activity.completedAt,
+        tasksCompleted,
       },
       buddy: fresh ? formatBuddy(fresh) : null,
     };
+  }
+
+  private async completeWateringTasks(userId: string, plantIds: string[]): Promise<number> {
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        plantId: { in: plantIds },
+        taskType: TaskType.WATER,
+        status: TaskStatus.PENDING,
+        plant: { userId },
+      },
+      select: { id: true },
+    });
+
+    let count = 0;
+    for (const task of tasks) {
+      try {
+        await this.tasksService.complete(userId, task.id);
+        count++;
+      } catch {
+        // User may not have permission on shared plants — skip
+      }
+    }
+    return count;
   }
 }

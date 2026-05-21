@@ -124,7 +124,13 @@ export class AuthService {
       data: { emailVerificationToken: token, emailVerificationExpires: expires },
     });
 
-    await this.email.sendVerificationEmail(user.email, user.name, token);
+    const sent = await this.email.sendVerificationEmail(user.email, user.name, token);
+    if (!sent.success) {
+      throw new ServiceUnavailableException(
+        sent.error ||
+          'Could not send verification email. Check SMTP settings or try again later.',
+      );
+    }
     return { message: 'If that account exists and is unverified, we sent a new link.' };
   }
 
@@ -145,7 +151,13 @@ export class AuthService {
       data: { passwordResetToken: token, passwordResetExpires: expires },
     });
 
-    await this.email.sendPasswordResetEmail(user.email, user.name, token);
+    const sent = await this.email.sendPasswordResetEmail(user.email, user.name, token);
+    if (!sent.success) {
+      throw new ServiceUnavailableException(
+        sent.error ||
+          'Could not send password reset email. Check SMTP_USER and SMTP_PASS (Gmail App Password) in server .env.',
+      );
+    }
     return generic;
   }
 

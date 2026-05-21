@@ -1,5 +1,5 @@
 import { ActivityType } from '@prisma/client';
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class CompleteActivityDto {
   @IsEnum(ActivityType)
@@ -17,4 +17,10 @@ export class CompleteActivityDto {
   @IsInt()
   @Min(0)
   durationSeconds?: number;
+
+  /** Watering check: plants watered (marks pending WATER tasks complete). */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  plantIds?: string[];
 }

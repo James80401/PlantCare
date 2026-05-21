@@ -9,6 +9,7 @@
     "dev:api": "npm run dev -w @plant-care/api",
     "dev:web": "npm run dev -w @plant-care/web --",
     "test:integrations": "node scripts/test-integrations.mjs",
+    "dev:auth-help": "node scripts/dev-auth-help.mjs",
     "verify": "node scripts/verify.mjs",
     "uat:e2e": "playwright test",
     "species:verify": "tsx scripts/verify-species-catalog.mjs",

@@ -17,8 +17,14 @@ export default function ForgotPassword() {
       const { data } = await authApi.forgotPassword(email);
       setMessage(data.message);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Could not send reset email. Check SMTP configuration.');
+      const ax = err as { response?: { data?: { message?: string | string[] }; status?: number }; message?: string };
+      const raw = ax.response?.data?.message;
+      const msg = Array.isArray(raw) ? raw.join(' ') : raw;
+      if (!ax.response) {
+        setError('Cannot reach the API. Start the server (npm run dev) and try again.');
+      } else {
+        setError(msg || 'Could not send reset email.');
+      }
     } finally {
       setLoading(false);
     }

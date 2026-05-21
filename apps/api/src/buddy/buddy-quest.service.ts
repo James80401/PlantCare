@@ -16,6 +16,7 @@ import {
 } from './constants/quest-seed-data';
 import { ActivityCompletedEvent } from './events/activity-completed.event';
 import { JourneyCompletedEvent } from './events/journey-completed.event';
+import { SunshineSentEvent } from './events/sunshine-sent.event';
 import { SUNLIGHT_CAP } from './constants/sunlight-awards';
 
 interface QuestRequirement {
@@ -149,6 +150,13 @@ export class BuddyQuestService {
     const fresh = await this.prisma.buddy.findUnique({ where: { id: buddy.id } });
     if (fresh) await this.syncJourneyAchievements(buddy.id, fresh.journeyCount);
     await this.bumpMonthly(buddy.id);
+  }
+
+  @OnEvent('sunshine.sent')
+  async onSunshineSent(event: SunshineSentEvent) {
+    const buddy = await this.prisma.buddy.findUnique({ where: { userId: event.userId } });
+    if (!buddy) return;
+    await this.setProgressForKind(buddy.id, 'SUNSHINE_SENT', 1);
   }
 
   @OnEvent('journey.started')

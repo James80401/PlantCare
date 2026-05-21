@@ -13,6 +13,8 @@ interface ActivityMeta {
   dewdropReward: number;
 }
 
+const GUIDED = new Set(['WATERING_CHECK', 'SEASON_CHECK', 'PROGRESS_PHOTO']);
+
 export default function BuddyActivitiesPage() {
   const [activities, setActivities] = useState<ActivityMeta[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,9 +55,17 @@ export default function BuddyActivitiesPage() {
                 {a.emoji}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-emerald-950">{a.label}</p>
+                <p className="font-semibold text-emerald-950">
+                  {a.label}
+                  {GUIDED.has(a.activityType) && (
+                    <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                      Guided
+                    </span>
+                  )}
+                </p>
                 <p className="text-sm text-gray-500">
                   ~{a.estimatedMinutes} min · +{a.sunlightReward} ☀️ · +{a.dewdropReward} 💧
+                  {a.activityType === 'WATERING_CHECK' && ' · syncs watering tasks'}
                 </p>
               </div>
             </Card>

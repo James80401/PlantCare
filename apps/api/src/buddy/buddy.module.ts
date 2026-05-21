@@ -10,9 +10,10 @@ import { BuddySocialService } from './buddy-social.service';
 import { BuddySocialController } from './buddy-social.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { WeatherModule } from '../weather/weather.module';
+import { TasksModule } from '../tasks/tasks.module';
 
 @Module({
-  imports: [PrismaModule, WeatherModule],
+  imports: [PrismaModule, WeatherModule, TasksModule],
   controllers: [BuddyController],
   providers: [
     BuddyService,

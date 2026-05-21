@@ -6,6 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { parseJsonObject } from './buddy.utils';
@@ -15,12 +16,16 @@ import {
   levelUpBonus,
 } from './constants/friendship-levels';
 import { AddFriendDto } from './dto/add-friend.dto';
+import { SunshineSentEvent } from './events/sunshine-sent.event';
 
 const SUNSHINE_DEWDROPS = 3;
 
 @Injectable()
 export class BuddySocialService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private events: EventEmitter2,
+  ) {}
 
   async listFriends(userId: string) {
     const buddy = await this.requireBuddy(userId);
@@ -156,6 +161,8 @@ export class BuddySocialService {
         },
       });
     });
+
+    this.events.emit('sunshine.sent', new SunshineSentEvent(userId, friendBuddyId));
 
     return {
       success: true,

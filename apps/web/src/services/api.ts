@@ -99,6 +99,27 @@ export const dashboardApi = {
     api.get('/dashboard', { params: { from, to } }),
 };
 
+export const weatherApi = {
+  adviceStatus: () =>
+    api.get<{
+      hasLocation: boolean;
+      canFetchToday: boolean;
+      fetchedAt: string | null;
+      nextAvailableAt: string | null;
+      locationLabel: string | null;
+      cachedAdvice: {
+        summary?: { days?: { date: string; tempMinC: number; tempMaxC: number; rainProbability: number }[] };
+      } | null;
+    }>('/users/me/weather/advice/status'),
+  fetchAdvice: (confirmed = true) =>
+    api.post('/users/me/weather/advice', { confirmed }),
+  searchLocations: (q: string) =>
+    api.get<{ name: string; latitude: number; longitude: number; country: string }[]>(
+      '/users/me/weather/locations',
+      { params: { q } },
+    ),
+};
+
 export const tasksApi = {
   list: (from?: string, to?: string) => api.get('/tasks', { params: { from, to } }),
   scheduleSuggestions: () => api.get('/tasks/schedule-suggestions'),
@@ -336,9 +357,21 @@ export const buddyApi = {
   completeActivity: (data: {
     activityType: string;
     plantId?: string;
+    plantIds?: string[];
     notes?: string;
     durationSeconds?: number;
-  }) => api.post('/buddy/activities/complete', data),
+  }) =>
+    api.post<{
+      activity: {
+        id: string;
+        activityType: string;
+        sunlightEarned: number;
+        dewdropsEarned: number;
+        tasksCompleted: number;
+        completedAt: string;
+      };
+      buddy: BuddyState | null;
+    }>('/buddy/activities/complete', data),
   getQuests: () => api.get('/buddy/quests'),
   claimQuest: (questId: string) => api.post(`/buddy/quests/${questId}/claim`),
   listFriends: () => api.get('/buddy/social/friends'),

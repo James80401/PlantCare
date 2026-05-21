@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import BuddySubNav from './buddy/BuddySubNav';
 import { useBuddy } from '../hooks/buddy/useBuddy';
 
 /** Routes under /garden/buddy require an adopted buddy (except onboarding). */
@@ -23,5 +24,14 @@ export function BuddyGate() {
     return <Navigate to="/garden/buddy" replace />;
   }
 
-  return <Outlet />;
+  if (onOnboarding) {
+    return <Outlet />;
+  }
+
+  return (
+    <div className="mx-auto max-w-lg space-y-4">
+      <BuddySubNav />
+      <Outlet />
+    </div>
+  );
 }

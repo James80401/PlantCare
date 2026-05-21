@@ -75,6 +75,15 @@ export const DAILY_QUEST_POOL: QuestSeed[] = [
     sortOrder: 7,
   },
   {
+    id: 'daily_sunshine',
+    type: 'DAILY',
+    title: 'Community Gardener',
+    description: 'Send sunshine to a garden friend',
+    requirement: { kind: 'SUNSHINE_SENT', count: 1 },
+    rewardDewdrops: 10,
+    sortOrder: 9,
+  },
+  {
     id: 'daily_tasks3',
     type: 'DAILY',
     title: 'Green Thumb',

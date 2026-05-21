@@ -8,5 +8,6 @@ import { SchedulerModule } from '../scheduler/scheduler.module';
   imports: [SchedulerModule, CareGuidesModule],
   controllers: [TasksController],
   providers: [TasksService],
+  exports: [TasksService],
 })
 export class TasksModule {}
