@@ -83,7 +83,7 @@ Users can browse the shop, purchase items, equip them on their buddy, and place 
 - [x] Activity endpoints for all 10 activity types (`GET /buddy/activities`, `POST /buddy/activities/complete`)
 - [x] Activity-to-task integration (water, repot, prune, pest inspect, mist complete pending tasks)
 - [x] Activity-to-journal integration (creates JournalEntry records for journal/photo activities)
-- [ ] Activity-to-diagnosis integration (opens DiagnosisConversation)
+- [x] Activity-to-diagnosis integration (pest inspection seeds Dr. Plant chat when concerns flagged)
 - [x] `Quest` Prisma model + seed daily + achievement definitions
 - [x] `BuddyQuestProgress` Prisma model
 - [x] `GET /buddy/quests` — active daily + achievement quests

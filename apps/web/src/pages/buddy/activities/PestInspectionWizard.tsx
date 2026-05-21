@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
-import { buddyApi, plantsApi } from '../../../services/api';
+import { buddyApi, diagnosisChatApi, plantsApi } from '../../../services/api';
 
 const SIGNS = [
   'Sticky residue on leaves',
@@ -68,7 +68,17 @@ export default function PestInspectionWizard() {
       setMessage(
         `Done! +${data.activity.sunlightEarned} sunlight, +${data.activity.dewdropsEarned} dewdrops.${extra}`,
       );
-      setTimeout(() => navigate('/garden/buddy/quests'), hasConcern ? 2500 : 1500);
+      if (hasConcern) {
+        const symptomMsg = `Pest inspection: ${[...signs].filter((s) => s !== 'No issues spotted').join(', ')}${notes ? `. ${notes}` : ''}`;
+        try {
+          await diagnosisChatApi.create(plantId, symptomMsg);
+        } catch {
+          // Health tab still available if chat seed fails
+        }
+        setTimeout(() => navigate(`/garden/plants/${plantId}/health`), 1200);
+      } else {
+        setTimeout(() => navigate('/garden/buddy/quests'), 1500);
+      }
     } catch (e: unknown) {
       const raw = (e as { response?: { data?: { message?: string | string[] } } })?.response?.data
         ?.message;
