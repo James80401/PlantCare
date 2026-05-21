@@ -49,6 +49,8 @@
 - [x] Onboarding wizard + gate (`tests/e2e/onboarding.spec.ts` full flow; other E2E users skip in `global-setup`)
 - [x] Household Care Share (`/garden/household` — Playwright)
 - [x] Community feed (`/garden/community` — Playwright)
+- [x] Community post like + comment (Playwright + `verify.mjs` like endpoint)
+- [x] Mobile bottom nav: Community (`Tips` tab — Playwright mobile)
 - [x] Dashboard shared plants filter + badge
 - [x] Plant profile: sections, care guide, journal entry (Playwright + API)
 - [x] Dr. Plant chat (API — OpenAI)

@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext';
 
 const mobileNav = [
   { to: '/garden', label: 'Dashboard', mobileLabel: 'Home', icon: 'home' as const, exact: true },
-  { to: '/garden/calendar', label: 'Calendar', mobileLabel: 'Cal', icon: 'calendar' as const, exact: true },
   { to: '/garden/plants/browse', label: 'Browse', mobileLabel: 'Browse', icon: 'browse' as const, exact: true },
   { to: '/garden/tasks', label: 'Tasks', mobileLabel: 'Tasks', icon: 'tasks' as const },
+  { to: '/garden/community', label: 'Community', mobileLabel: 'Tips', icon: 'community' as const },
   { to: '/garden/plants/new', label: 'Add Plant', mobileLabel: 'Add', icon: 'add' as const, exact: true },
   { to: '/garden/settings', label: 'Settings', mobileLabel: 'Settings', icon: 'settings' as const },
 ];

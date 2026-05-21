@@ -202,7 +202,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [x] Add safe-area padding for top and bottom app chrome.
 - [x] Make bottom navigation the primary mobile navigation pattern.
 - [x] Add clear active states and accessible labels to navigation items.
-- [ ] Keep subscription/upgrade navigation discoverable on mobile.
+- [x] Keep subscription/upgrade navigation discoverable on mobile (beta: upgrade hidden; Community on mobile nav).
 - [ ] Move repeated page bottom padding into shared layout rules where practical.
 - [ ] Review all tap targets for a minimum comfortable mobile hit area.
 
@@ -221,7 +221,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [x] Add plant attention cards for:
   - [x] missed/overdue care
   - [x] plants with no upcoming task
-  - [ ] plants with recent diagnosis issues
+  - [x] plants with recent diagnosis issues
   - [x] plants missing useful profile data
 - [x] Add a seven-day upcoming care preview.
 - [x] Add a suggested next action section.

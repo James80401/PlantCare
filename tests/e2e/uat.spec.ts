@@ -54,6 +54,24 @@ test.describe('UAT checklist — authenticated flows', () => {
     await expectNoHorizontalScroll(page);
   });
 
+  test('community post can be liked and commented', async ({ page }) => {
+    const note = `E2E community tip ${Date.now()}`;
+    await page.goto('/garden/community');
+    await page.getByPlaceholder(/What worked in your care routine/i).fill(note);
+    await page.getByRole('button', { name: /Share with community/i }).click();
+    await expect(page.getByText(note)).toBeVisible({ timeout: 10_000 });
+
+    const card = page.locator('li').filter({ hasText: note });
+    await card.getByRole('button', { name: /Like \(\d+\)/i }).click();
+    await expect(card.getByRole('button', { name: /♥ Liked/i })).toBeVisible();
+
+    await card.getByRole('button', { name: /View comments/i }).click();
+    await card.getByPlaceholder(/Add a comment/i).fill('E2E comment');
+    await card.getByRole('button', { name: /^Reply$/i }).click();
+    await expect(card.getByText('E2E comment')).toBeVisible({ timeout: 10_000 });
+    await expectNoHorizontalScroll(page);
+  });
+
   test('calendar page loads week and month views', async ({ page }) => {
     await page.goto('/garden/calendar');
     await expect(page.getByRole('heading', { name: /Care calendar/i })).toBeVisible();
@@ -379,5 +397,13 @@ test.describe('UAT checklist — mobile layout', () => {
     const browse = page.getByRole('link', { name: 'Browse' });
     const box = await browse.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  });
+
+  test('mobile bottom nav includes community', async ({ page }) => {
+    await seedAuth(page);
+    await page.goto('/garden');
+    await page.getByRole('link', { name: 'Tips' }).click();
+    await expect(page.getByRole('heading', { name: /Plant tips & wins/i })).toBeVisible();
+    await expectNoHorizontalScroll(page);
   });
 });
