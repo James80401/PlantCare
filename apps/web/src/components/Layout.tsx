@@ -1,6 +1,8 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { navIcons } from './icons/NavIcons';
 import { useAuth } from '../context/AuthContext';
+import { BuddyCompanionProvider } from '../context/BuddyCompanionContext';
+import BuddyFloatingCompanion from './buddy/BuddyFloatingCompanion';
 
 const mobileNav = [
   { to: '/garden', label: 'Dashboard', mobileLabel: 'Home', icon: 'home' as const, exact: true },
@@ -22,6 +24,7 @@ export default function Layout() {
   const location = useLocation();
 
   return (
+    <BuddyCompanionProvider>
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-page, #f7f6f2)' }}>
       <header className="sticky top-0 z-30 bg-emerald-900 text-white shadow-md">
         <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>
@@ -112,7 +115,9 @@ export default function Layout() {
           </Link>
         )}
       </nav>
+      <BuddyFloatingCompanion />
     </div>
+    </BuddyCompanionProvider>
   );
 }
 

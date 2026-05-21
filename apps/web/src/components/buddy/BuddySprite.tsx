@@ -5,12 +5,20 @@ interface BuddySpriteProps {
   size?: 'sm' | 'md' | 'lg';
   traveling?: boolean;
   mood?: string;
+  /** Compact floating companion chip */
+  variant?: 'default' | 'companion';
 }
 
 const sizeClass = {
   sm: 'text-5xl',
   md: 'text-7xl',
   lg: 'text-8xl',
+};
+
+const companionSizeClass = {
+  sm: 'text-3xl',
+  md: 'text-5xl',
+  lg: 'text-6xl',
 };
 
 const moodClass: Record<string, string> = {
@@ -24,19 +32,22 @@ export default function BuddySprite({
   size = 'md',
   traveling,
   mood,
+  variant = 'default',
 }: BuddySpriteProps) {
   const moodEffect = mood ? moodClass[mood] : '';
+  const sizes = variant === 'companion' ? companionSizeClass : sizeClass;
+  const motionClass = traveling
+    ? variant === 'companion'
+      ? 'buddy-travel-walk'
+      : 'buddy-travel-walk buddy-travel-walk--slow'
+    : 'buddy-idle-bob';
+
   return (
     <div
-      className={`flex items-center justify-center ${traveling ? 'animate-pulse' : ''} ${moodEffect}`}
-      style={
-        traveling
-          ? undefined
-          : { animation: 'buddy-bob 3s ease-in-out infinite' }
-      }
+      className={`flex items-center justify-center ${motionClass} ${moodEffect}`}
       aria-hidden
     >
-      <span className={sizeClass[size]} role="img">
+      <span className={sizes[size]} role="img">
         {speciesEmoji(speciesId)}
       </span>
     </div>

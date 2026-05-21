@@ -1,0 +1,224 @@
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useBuddyCompanion } from '../../context/BuddyCompanionContext';
+import BuddySprite from './BuddySprite';
+import MoodIndicator from './MoodIndicator';
+import SunlightBar from './SunlightBar';
+import { GROWTH_STAGE_LABEL } from './species';
+
+const ACTIONS = [
+  { to: '/garden/buddy', label: 'Home', emoji: '🏠' },
+  { to: '/garden/buddy/activities', label: 'Activities', emoji: '✨' },
+  { to: '/garden/buddy/quests', label: 'Quests', emoji: '🎯' },
+  { to: '/garden/buddy/journey', label: 'Journey', emoji: '🗺️' },
+  { to: '/garden/buddy/town', label: 'Town', emoji: '🌻' },
+  { to: '/garden/buddy/style', label: 'Style', emoji: '👒' },
+] as const;
+
+function formatCountdown(seconds: number): string {
+  if (seconds <= 0) return 'Back soon';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m >= 60) {
+    const h = Math.floor(m / 60);
+    return `${h}h ${m % 60}m`;
+  }
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+export default function BuddyFloatingCompanion() {
+  const location = useLocation();
+  const { buddy, missing, loading, journey, traveling, greeting, loadGreeting, refresh } =
+    useBuddyCompanion();
+  const [expanded, setExpanded] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const hideOnRoute =
+    location.pathname.includes('/buddy/onboarding') || location.pathname === '/garden/onboarding';
+
+  useEffect(() => {
+    if (expanded) loadGreeting();
+  }, [expanded, loadGreeting, buddy?.id]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (panelRef.current?.contains(e.target as Node)) return;
+      setExpanded(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [expanded]);
+
+  useEffect(() => {
+    setExpanded(false);
+  }, [location.pathname]);
+
+  if (hideOnRoute || loading) return null;
+
+  if (missing) {
+    return (
+      <div className="pointer-events-none fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] z-50 flex flex-col items-end gap-2 md:bottom-6">
+        <Link
+          to="/garden/buddy/onboarding"
+          className="pointer-events-auto flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 shadow-lg shadow-emerald-900/10 hover:bg-emerald-50"
+        >
+          <span className="text-xl" aria-hidden>
+            🌱
+          </span>
+          Get a buddy
+        </Link>
+      </div>
+    );
+  }
+
+  if (!buddy) return null;
+
+  const journeyLabel = journey
+    ? `${journey.biomeEmoji} ${journey.biomeName} · ${formatCountdown(journey.remainingSeconds)}`
+    : 'On a grow journey';
+
+  return (
+    <div
+      ref={panelRef}
+      className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] z-50 flex flex-col items-end gap-2 md:bottom-6"
+    >
+      {expanded && (
+        <div
+          role="dialog"
+          aria-label={`${buddy.name} companion menu`}
+          className="pointer-events-auto buddy-panel-in w-[min(18rem,calc(100vw-1.5rem))] overflow-hidden rounded-3xl border border-emerald-100 bg-white/95 shadow-xl shadow-emerald-950/15 backdrop-blur-md"
+        >
+          <div
+            className={`px-4 pt-4 pb-3 ${traveling ? 'bg-gradient-to-br from-sky-50 to-amber-50' : 'bg-gradient-to-br from-emerald-50 to-lime-50'}`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                  {traveling ? 'Traveling' : 'Plant Buddy'}
+                </p>
+                <p className="font-display text-lg font-bold text-emerald-950">{buddy.name}</p>
+                <p className="text-xs text-gray-600">
+                  {GROWTH_STAGE_LABEL[buddy.growthStage] ?? buddy.growthStage}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpanded(false)}
+                className="rounded-full p-1.5 text-gray-500 hover:bg-white/80 hover:text-emerald-900"
+                aria-label="Minimize buddy"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div
+              className={`mt-3 flex justify-center ${traveling ? 'buddy-travel-stage' : ''}`}
+            >
+              <BuddySprite
+                speciesId={buddy.speciesId}
+                size="md"
+                traveling={traveling}
+                mood={buddy.mood}
+                variant="companion"
+              />
+            </div>
+
+            {traveling ? (
+              <div className="mt-3 space-y-2">
+                <p className="text-center text-sm font-medium text-sky-900">{journeyLabel}</p>
+                {journey && (
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/60">
+                    <div
+                      className="h-full rounded-full bg-sky-500 transition-all duration-500"
+                      style={{ width: `${journey.progressPercent}%` }}
+                    />
+                  </div>
+                )}
+                <p className="text-center text-xs text-sky-800/80">
+                  Complete tasks to help them return sooner
+                </p>
+              </div>
+            ) : (
+              <div className="mt-3 space-y-2">
+                <MoodIndicator mood={buddy.mood} />
+                <SunlightBar value={buddy.sunlightToday} compact />
+              </div>
+            )}
+          </div>
+
+          {greeting && (
+            <p className="border-t border-emerald-50 px-4 py-2.5 text-sm leading-snug text-emerald-900/90">
+              {greeting}
+            </p>
+          )}
+
+          <nav className="grid grid-cols-3 gap-1 border-t border-emerald-50 p-2">
+            {ACTIONS.map(({ to, label, emoji }) => (
+              <Link
+                key={to}
+                to={to}
+                onClick={() => setExpanded(false)}
+                className="flex flex-col items-center rounded-2xl px-1 py-2.5 text-center text-xs font-semibold text-emerald-900 transition hover:bg-emerald-50"
+              >
+                <span className="text-lg" aria-hidden>
+                  {emoji}
+                </span>
+                {label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex gap-2 border-t border-emerald-50 px-3 py-2">
+            <Link
+              to="/garden/tasks"
+              onClick={() => setExpanded(false)}
+              className="flex-1 rounded-xl bg-emerald-800 py-2 text-center text-xs font-semibold text-white hover:bg-emerald-900"
+            >
+              Care tasks
+            </Link>
+            <button
+              type="button"
+              onClick={() => refresh()}
+              className="rounded-xl border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        aria-label={expanded ? `Minimize ${buddy.name}` : `Open ${buddy.name} companion`}
+        className={`pointer-events-auto relative flex h-16 w-16 items-center justify-center rounded-full border-2 shadow-lg transition hover:scale-105 active:scale-95 ${
+          traveling
+            ? 'border-sky-200 bg-gradient-to-br from-sky-100 to-amber-50 shadow-sky-900/20'
+            : 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-lime-50 shadow-emerald-900/15'
+        } ${expanded ? 'ring-2 ring-emerald-400 ring-offset-2' : ''}`}
+      >
+        {traveling && (
+          <>
+            <span className="buddy-trail-dot absolute -left-1 top-1/2" aria-hidden />
+            <span className="buddy-trail-dot absolute -left-3 top-1/3 animation-delay-150" aria-hidden />
+            <span className="buddy-trail-dot absolute -left-2 bottom-1/3 animation-delay-300" aria-hidden />
+          </>
+        )}
+        <BuddySprite
+          speciesId={buddy.speciesId}
+          size="sm"
+          traveling={traveling}
+          mood={buddy.mood}
+          variant="companion"
+        />
+        {traveling && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-[10px] text-white shadow">
+            ✈
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
