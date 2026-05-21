@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FriendCard from '../../../components/buddy/FriendCard';
 import { Button } from '../../../components/ui/Button';
@@ -6,6 +6,7 @@ import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { useBuddy } from '../../../hooks/buddy/useBuddy';
 import { useBuddySocial } from '../../../hooks/buddy/useBuddySocial';
+import { buddyApi } from '../../../services/api';
 
 export default function GardenTownPage() {
   const { buddy } = useBuddy();
@@ -15,6 +16,15 @@ export default function GardenTownPage() {
   const [adding, setAdding] = useState(false);
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState(false);
+  const [sunshineSentIds, setSunshineSentIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    buddyApi.sunshineToday().then(({ data }) => setSunshineSentIds(data.sent)).catch(() => {});
+  }, [friends.length, shining]);
+
+  const pendingSunshine = friends.filter(
+    (f) => !f.sunshineSentToday && !sunshineSentIds.includes(f.friendBuddyId),
+  );
 
   const handleAdd = async () => {
     if (!code.trim()) return;
@@ -89,6 +99,18 @@ export default function GardenTownPage() {
 
       {error && <p className="text-center text-sm text-red-700">{error}</p>}
 
+      {pendingSunshine.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50/80">
+          <p className="text-sm font-medium text-amber-950">
+            Daily quest: send sunshine to a friend ☀️
+          </p>
+          <p className="mt-1 text-xs text-amber-900/80">
+            {pendingSunshine.length} friend{pendingSunshine.length === 1 ? '' : 's'} haven&apos;t
+            received sunshine today — tap Shine on their card.
+          </p>
+        </Card>
+      )}
+
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-emerald-800">Friends</h2>
         {friends.length === 0 ? (
@@ -138,17 +160,9 @@ export default function GardenTownPage() {
         </section>
       )}
 
-      <div className="flex gap-2">
-        <Button type="button" variant="ghost" fullWidth onClick={() => refresh()}>
-          Refresh
-        </Button>
-        <Link
-          to="/garden/buddy"
-          className="inline-flex min-h-11 flex-1 items-center justify-center rounded-2xl text-sm font-medium text-emerald-800 hover:underline"
-        >
-          ← Buddy home
-        </Link>
-      </div>
+      <Button type="button" variant="ghost" fullWidth onClick={() => refresh()}>
+        Refresh
+      </Button>
     </div>
   );
 }

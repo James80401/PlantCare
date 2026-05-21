@@ -13,7 +13,12 @@ interface ActivityMeta {
   dewdropReward: number;
 }
 
-const GUIDED = new Set(['WATERING_CHECK', 'SEASON_CHECK', 'PROGRESS_PHOTO']);
+const GUIDED = new Set([
+  'WATERING_CHECK',
+  'SEASON_CHECK',
+  'PROGRESS_PHOTO',
+  'SUNLIGHT_AUDIT',
+]);
 
 export default function BuddyActivitiesPage() {
   const [activities, setActivities] = useState<ActivityMeta[]>([]);
@@ -73,12 +78,6 @@ export default function BuddyActivitiesPage() {
         ))}
       </div>
 
-      <Link
-        to="/garden/buddy"
-        className="block text-center text-sm font-medium text-emerald-800 hover:underline"
-      >
-        ← Back to buddy
-      </Link>
     </div>
   );
 }

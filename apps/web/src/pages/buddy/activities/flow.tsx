@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import ProgressPhotoWizard from './ProgressPhotoWizard';
 import SeasonCheckWizard from './SeasonCheckWizard';
+import SunlightAuditWizard from './SunlightAuditWizard';
 import WateringWizard from './WateringWizard';
 import GenericActivityFlow from './GenericActivityFlow';
 
@@ -8,6 +9,7 @@ const WIZARDS: Record<string, () => JSX.Element> = {
   WATERING_CHECK: WateringWizard,
   SEASON_CHECK: SeasonCheckWizard,
   PROGRESS_PHOTO: ProgressPhotoWizard,
+  SUNLIGHT_AUDIT: SunlightAuditWizard,
 };
 
 export default function BuddyActivityFlowPage() {
