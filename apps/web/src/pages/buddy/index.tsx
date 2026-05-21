@@ -64,6 +64,27 @@ export default function BuddyHome() {
         </div>
       </Card>
 
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Link
+          to="/garden/buddy/activities"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-100"
+        >
+          Activities
+        </Link>
+        <Link
+          to="/garden/buddy/quests"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-100"
+        >
+          Quests
+        </Link>
+        <Link
+          to="/garden/buddy/style"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-emerald-300 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-50 sm:col-span-2"
+        >
+          Style & shop
+        </Link>
+      </div>
+
       <div className="flex flex-col gap-2 sm:flex-row">
         {buddy.hasActiveJourney ? (
           <Link

@@ -1,6 +1,9 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { BuddyShopService } from './buddy-shop.service';
+import { BuddyActivityService } from './buddy-activity.service';
+import { BuddyQuestService } from './buddy-quest.service';
 import { PurchaseItemDto } from './dto/purchase-item.dto';
+import { CompleteActivityDto } from './dto/complete-activity.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
@@ -20,6 +23,8 @@ export class BuddyController {
     private buddyService: BuddyService,
     private journeyService: BuddyJourneyService,
     private shopService: BuddyShopService,
+    private activityService: BuddyActivityService,
+    private questService: BuddyQuestService,
   ) {}
 
   @Post()
@@ -80,5 +85,25 @@ export class BuddyController {
   @Get('species')
   listSpecies(@CurrentUser() user: JwtPayload) {
     return this.shopService.getSpecies(user.sub);
+  }
+
+  @Get('activities')
+  activityLibrary() {
+    return this.activityService.getLibrary();
+  }
+
+  @Post('activities/complete')
+  completeActivity(@CurrentUser() user: JwtPayload, @Body() dto: CompleteActivityDto) {
+    return this.activityService.complete(user.sub, dto);
+  }
+
+  @Get('quests')
+  getQuests(@CurrentUser() user: JwtPayload) {
+    return this.questService.getQuests(user.sub);
+  }
+
+  @Post('quests/:id/claim')
+  claimQuest(@CurrentUser() user: JwtPayload, @Param('id') questId: string) {
+    return this.questService.claim(user.sub, questId);
   }
 }

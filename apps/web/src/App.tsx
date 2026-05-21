@@ -33,6 +33,15 @@ import { BuddyGate } from './components/BuddyGate';
 import BuddyOnboarding from './pages/buddy/onboarding';
 import BuddyHome from './pages/buddy/index';
 import BuddyJourneyPage from './pages/buddy/journey';
+import BuddyStyleHub from './pages/buddy/style/index';
+import BuddyClothingPage from './pages/buddy/style/clothing';
+import BuddyPotsPage from './pages/buddy/style/pots';
+import BuddyTerrariumPage from './pages/buddy/style/terrarium';
+import BuddySpeciesPage from './pages/buddy/style/species';
+import BuddyShopPage from './pages/buddy/style/shop';
+import BuddyActivitiesPage from './pages/buddy/activities/index';
+import BuddyActivityFlowPage from './pages/buddy/activities/flow';
+import BuddyQuestsPage from './pages/buddy/quests';
 
 export default function App() {
   return (
@@ -72,6 +81,15 @@ export default function App() {
             <Route path="onboarding" element={<BuddyOnboarding />} />
             <Route index element={<BuddyHome />} />
             <Route path="journey" element={<BuddyJourneyPage />} />
+            <Route path="style" element={<BuddyStyleHub />} />
+            <Route path="style/clothing" element={<BuddyClothingPage />} />
+            <Route path="style/pots" element={<BuddyPotsPage />} />
+            <Route path="style/terrarium" element={<BuddyTerrariumPage />} />
+            <Route path="style/species" element={<BuddySpeciesPage />} />
+            <Route path="style/shop" element={<BuddyShopPage />} />
+            <Route path="activities" element={<BuddyActivitiesPage />} />
+            <Route path="activities/:activityType" element={<BuddyActivityFlowPage />} />
+            <Route path="quests" element={<BuddyQuestsPage />} />
           </Route>
           <Route path="settings" element={<Settings />} />
           <Route path="subscription" element={<Subscription />} />

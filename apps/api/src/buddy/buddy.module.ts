@@ -4,12 +4,21 @@ import { BuddyService } from './buddy.service';
 import { BuddyJourneyService } from './buddy-journey.service';
 import { BuddySchedulerService } from './buddy-scheduler.service';
 import { BuddyShopService } from './buddy-shop.service';
+import { BuddyActivityService } from './buddy-activity.service';
+import { BuddyQuestService } from './buddy-quest.service';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
   controllers: [BuddyController],
-  providers: [BuddyService, BuddyJourneyService, BuddySchedulerService, BuddyShopService],
+  providers: [
+    BuddyService,
+    BuddyJourneyService,
+    BuddySchedulerService,
+    BuddyShopService,
+    BuddyActivityService,
+    BuddyQuestService,
+  ],
   exports: [BuddyService],
 })
 export class BuddyModule {}

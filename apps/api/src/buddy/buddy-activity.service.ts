@@ -1,0 +1,134 @@
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ActivityType } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { formatBuddy } from './buddy.utils';
+import {
+  ACTIVITY_REWARDS,
+  ACTIVITY_TYPES,
+} from './constants/activity-rewards';
+import { SUNLIGHT_CAP } from './constants/sunlight-awards';
+import { CompleteActivityDto } from './dto/complete-activity.dto';
+import { ActivityCompletedEvent } from './events/activity-completed.event';
+
+const PLANT_REQUIRED: ActivityType[] = [
+  'PLANT_JOURNAL',
+  'PROGRESS_PHOTO',
+  'PEST_INSPECTION',
+  'REPOTTING_GUIDE',
+  'PRUNING_GUIDE',
+  'PROPAGATION_LOG',
+];
+
+@Injectable()
+export class BuddyActivityService {
+  constructor(
+    private prisma: PrismaService,
+    private events: EventEmitter2,
+  ) {}
+
+  getLibrary() {
+    return ACTIVITY_TYPES.map((type) => {
+      const meta = ACTIVITY_REWARDS[type];
+      return {
+        activityType: type,
+        label: meta.label,
+        emoji: meta.emoji,
+        estimatedMinutes: meta.minutes,
+        sunlightReward: meta.sunlight,
+        dewdropReward: meta.dewdrops,
+      };
+    });
+  }
+
+  async complete(userId: string, dto: CompleteActivityDto) {
+    const buddy = await this.prisma.buddy.findUnique({
+      where: { userId },
+      include: { journeys: { where: { completed: false }, take: 1 } },
+    });
+    if (!buddy) throw new NotFoundException('Plant buddy not found');
+
+    if (PLANT_REQUIRED.includes(dto.activityType) && !dto.plantId) {
+      throw new BadRequestException('plantId is required for this activity');
+    }
+
+    if (dto.plantId) {
+      const plant = await this.prisma.plant.findFirst({
+        where: { id: dto.plantId, userId },
+      });
+      if (!plant) throw new NotFoundException('Plant not found');
+    }
+
+    const rewards = ACTIVITY_REWARDS[dto.activityType];
+    const onJourney = Boolean(buddy.journeys[0]);
+    const sunlightEarned = onJourney
+      ? 0
+      : Math.min(rewards.sunlight, SUNLIGHT_CAP - buddy.sunlightToday);
+
+    let journalEntryId: string | undefined;
+    if (dto.activityType === 'PLANT_JOURNAL' && dto.plantId && dto.notes?.trim()) {
+      const entry = await this.prisma.journalEntry.create({
+        data: { plantId: dto.plantId, notes: dto.notes.trim() },
+      });
+      journalEntryId = entry.id;
+    } else if (dto.activityType === 'PROGRESS_PHOTO' && dto.plantId) {
+      const entry = await this.prisma.journalEntry.create({
+        data: {
+          plantId: dto.plantId,
+          notes: dto.notes?.trim() || 'Progress photo (buddy activity)',
+        },
+      });
+      journalEntryId = entry.id;
+    }
+
+    const activity = await this.prisma.buddyActivity.create({
+      data: {
+        buddyId: buddy.id,
+        userId,
+        activityType: dto.activityType,
+        durationSeconds: dto.durationSeconds,
+        sunlightEarned,
+        dewdropsEarned: rewards.dewdrops,
+        plantId: dto.plantId,
+        notes: dto.notes,
+        journalEntryId,
+      },
+    });
+
+    await this.prisma.buddy.update({
+      where: { id: buddy.id },
+      data: {
+        ...(sunlightEarned > 0 ? { sunlightToday: { increment: sunlightEarned } } : {}),
+        dewdrops: { increment: rewards.dewdrops },
+        lastActiveDate: new Date(),
+        lastTaskDate: new Date(),
+      },
+    });
+
+    this.events.emit(
+      'activity.completed',
+      new ActivityCompletedEvent(userId, dto.activityType, dto.plantId ?? null),
+    );
+
+    const fresh = await this.prisma.buddy.findUnique({
+      where: { userId },
+      include: { journeys: { where: { completed: false }, take: 1 } },
+    });
+
+    return {
+      activity: {
+        id: activity.id,
+        activityType: activity.activityType,
+        sunlightEarned,
+        dewdropsEarned: rewards.dewdrops,
+        journalEntryId,
+        completedAt: activity.completedAt,
+      },
+      buddy: fresh ? formatBuddy(fresh) : null,
+    };
+  }
+}

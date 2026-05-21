@@ -7,6 +7,8 @@ import {
 import { speciesCatalog, speciesSeedId } from './data/species-catalog';
 import { legacySpeciesSeedId, resolveSpeciesPhotoFileKey, speciesPhotoUrl } from './data/species-photo-utils';
 import { seedCareGuides } from './seed-care-guides';
+import { seedBuddyShop } from './seed-buddy-shop';
+import { seedBuddyQuests } from './seed-buddy-quests';
 
 const prisma = new PrismaClient();
 
@@ -64,6 +66,8 @@ async function main() {
   );
 
   await seedCareGuides();
+  await seedBuddyShop(prisma);
+  await seedBuddyQuests(prisma);
 }
 
 main()

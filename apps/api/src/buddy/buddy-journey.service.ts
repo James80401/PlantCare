@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { biomeById, defaultBiomeForBuddy, isBiomeUnlocked } from './constants/biomes';
@@ -10,6 +11,7 @@ import { pickDiscovery } from './constants/discoveries';
 import { StartJourneyDto } from './dto/start-journey.dto';
 import { BuddyService } from './buddy.service';
 import { formatBuddy, parseStringArray } from './buddy.utils';
+import { JourneyCompletedEvent } from './events/journey-completed.event';
 
 @Injectable()
 export class BuddyJourneyService {
@@ -17,6 +19,7 @@ export class BuddyJourneyService {
     private prisma: PrismaService,
     private buddyService: BuddyService,
     private config: ConfigService,
+    private events: EventEmitter2,
   ) {}
 
   private journeyDurationMs(growthStage: string, biomeHours: number): number {
@@ -96,6 +99,11 @@ export class BuddyJourneyService {
       return created;
     });
 
+    this.events.emit(
+      'journey.started',
+      new JourneyCompletedEvent(userId, journey.id),
+    );
+
     return {
       journey: this.formatJourney(journey, buddy.name),
       estimatedMinutes: Math.round((endsAt.getTime() - Date.now()) / 60000),
@@ -151,6 +159,11 @@ export class BuddyJourneyService {
     });
 
     const stageResult = await this.buddyService.applyJourneyCompletion(buddy.id, dewdropsEarned);
+
+    this.events.emit(
+      'journey.completed',
+      new JourneyCompletedEvent(userId, journey.id),
+    );
 
     const freshBuddy = await this.prisma.buddy.findUnique({
       where: { userId },

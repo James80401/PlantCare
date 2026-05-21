@@ -475,9 +475,13 @@ model Buddy {
   terrariumBackground String     @default("sunny_windowsill")
   gardenCode         String      @unique
   showLastActive     Boolean     @default(true)
-  journeys           BuddyJourney[]
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  journeys            BuddyJourney[]
+  inventory           BuddyInventory[]
+  activities          BuddyActivity[]
+  questProgress       BuddyQuestProgress[]
+  challengeProgress   BuddyChallengeProgress[]
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 }
 
 model BuddyJourney {
@@ -498,4 +502,179 @@ model BuddyJourney {
   minutesSaved         Int       @default(0)
 
   @@index([buddyId, completed])
+}
+
+enum ItemCategory {
+  HAT
+  TOP
+  SHOES
+  GLASSES
+  HELD_ITEM
+  POT_SKIN
+  BODY_COLOR
+  BODY_PATTERN
+  COMPANION
+  WINGS
+  BACKGROUND
+  FURNITURE
+}
+
+enum ItemUnlockType {
+  PURCHASE
+  QUEST_REWARD
+  JOURNEY_DROP
+  ACHIEVEMENT
+  SEASONAL_EVENT
+  SPECIES_UNLOCK
+  DEFAULT_ITEM
+}
+
+enum BuddySpeciesUnlockType {
+  DEFAULT
+  DEWDROPS
+  STREAK
+  QUEST
+  JOURNEY_COUNT
+  SEASONAL
+}
+
+model ShopItem {
+  id              String         @id
+  name            String
+  description     String
+  category        ItemCategory
+  tier            Int
+  cost            Int
+  requiresPremium Boolean        @default(false)
+  speciesLocked   String?
+  unlockType      ItemUnlockType @default(PURCHASE)
+  imageKey        String
+  isActive        Boolean        @default(true)
+  sortOrder       Int            @default(0)
+  createdAt       DateTime       @default(now())
+  inventory       BuddyInventory[]
+}
+
+model BuddyInventory {
+  id            String   @id @default(cuid())
+  buddyId       String
+  buddy         Buddy    @relation(fields: [buddyId], references: [id], onDelete: Cascade)
+  itemId        String
+  item          ShopItem @relation(fields: [itemId], references: [id])
+  acquiredAt    DateTime @default(now())
+  acquireMethod String
+
+  @@unique([buddyId, itemId])
+}
+
+model BuddySpecies {
+  id          String                 @id
+  displayName String
+  description String
+  emoji       String
+  unlockType  BuddySpeciesUnlockType @default(DEFAULT)
+  unlockValue Int?
+  isDefault   Boolean                @default(false)
+  sortOrder   Int                    @default(0)
+}
+
+enum ActivityType {
+  WATERING_CHECK
+  SUNLIGHT_AUDIT
+  PEST_INSPECTION
+  PLANT_JOURNAL
+  REPOTTING_GUIDE
+  SEASON_CHECK
+  PROGRESS_PHOTO
+  HUMIDITY_CHECK
+  PRUNING_GUIDE
+  PROPAGATION_LOG
+}
+
+enum QuestType {
+  DAILY
+  MONTHLY_CHALLENGE
+  ACHIEVEMENT
+  SEASONAL_EVENT
+  FRIENDSHIP
+}
+
+model BuddyActivity {
+  id              String       @id @default(cuid())
+  buddyId         String
+  buddy           Buddy        @relation(fields: [buddyId], references: [id], onDelete: Cascade)
+  userId          String
+  activityType    ActivityType
+  completedAt     DateTime     @default(now())
+  durationSeconds Int?
+  sunlightEarned  Int
+  dewdropsEarned  Int
+  taskId          String?
+  journalEntryId  String?
+  diagnosisId     String?
+  plantId         String?
+  notes           String?
+
+  @@index([buddyId, completedAt])
+}
+
+model Quest {
+  id             String     @id
+  type           QuestType
+  title          String
+  description    String
+  requirement    String
+  rewardDewdrops Int
+  rewardItemId   String?
+  rewardBadgeId  String?
+  expiresAt      DateTime?
+  isActive       Boolean    @default(true)
+  sortOrder      Int        @default(0)
+  createdAt      DateTime   @default(now())
+  progress       BuddyQuestProgress[]
+}
+
+model BuddyQuestProgress {
+  id            String    @id @default(cuid())
+  buddyId       String
+  buddy         Buddy     @relation(fields: [buddyId], references: [id], onDelete: Cascade)
+  questId       String
+  quest         Quest     @relation(fields: [questId], references: [id])
+  progress      Int       @default(0)
+  completed     Boolean   @default(false)
+  completedAt   DateTime?
+  rewardClaimed Boolean   @default(false)
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([buddyId, questId])
+}
+
+model MonthlyChallenge {
+  id             String   @id @default(cuid())
+  month          Int
+  year           Int
+  title          String
+  description    String
+  steps          String
+  rewardDewdrops Int
+  rewardItemId   String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  progress       BuddyChallengeProgress[]
+
+  @@unique([month, year])
+}
+
+model BuddyChallengeProgress {
+  id               String           @id @default(cuid())
+  buddyId          String
+  buddy            Buddy            @relation(fields: [buddyId], references: [id], onDelete: Cascade)
+  challengeId      String
+  challenge        MonthlyChallenge @relation(fields: [challengeId], references: [id])
+  stepsCompleted   Int              @default(0)
+  completedStepIds String           @default("[]")
+  completedAt      DateTime?
+  startedAt        DateTime         @default(now())
+
+  @@unique([buddyId, challengeId])
 }

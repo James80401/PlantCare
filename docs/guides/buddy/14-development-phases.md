@@ -79,35 +79,32 @@ Users can browse the shop, purchase items, equip them on their buddy, and place 
 **Goal:** Structured in-app care experiences and goal tracking.
 
 **Backend:**
-- [ ] `BuddyActivity` Prisma model
-- [ ] Activity endpoints for all 10 activity types
+- [x] `BuddyActivity` Prisma model
+- [x] Activity endpoints for all 10 activity types (`GET /buddy/activities`, `POST /buddy/activities/complete`)
 - [ ] Activity-to-task integration (creates Task records)
-- [ ] Activity-to-journal integration (creates JournalEntry records)
+- [x] Activity-to-journal integration (creates JournalEntry records for journal/photo activities)
 - [ ] Activity-to-diagnosis integration (opens DiagnosisConversation)
-- [ ] `Quest` Prisma model + seed all achievement and daily quest definitions
-- [ ] `BuddyQuestProgress` Prisma model
-- [ ] `GET /buddy/quests` — active daily + achievement quests
-- [ ] Quest progress tracking (listen to task/activity/journey events)
-- [ ] `POST /buddy/quests/:id/claim` — claim reward
-- [ ] Daily quest rotation logic (seeded by date)
-- [ ] `MonthlyChallenge` Prisma model + seed Jan–Dec challenges
-- [ ] Monthly challenge step tracking
+- [x] `Quest` Prisma model + seed daily + achievement definitions
+- [x] `BuddyQuestProgress` Prisma model
+- [x] `GET /buddy/quests` — active daily + achievement quests
+- [x] Quest progress tracking (listen to task/activity/journey events)
+- [x] `POST /buddy/quests/:id/claim` — claim reward
+- [x] Daily quest rotation logic (seeded by date)
+- [x] `MonthlyChallenge` Prisma model + seed (May 2026 starter challenge)
+- [x] Monthly challenge step tracking (increments on care actions)
 
 **Frontend:**
-- [ ] Activity library screen
-- [ ] Watering Check flow (multi-step form)
-- [ ] Sunlight Audit flow
-- [ ] Pest Inspection flow (with Dr. Plant integration button)
-- [ ] Plant Journal flow (buddy prompt + entry)
-- [ ] Repotting Guide flow (step-by-step)
+- [x] Activity library screen
+- [x] Shared activity completion flow (all 10 types; notes + plant picker)
+- [ ] Per-activity multi-step wizards (watering, sunlight audit, etc.)
+- [x] Pest Inspection — Dr. Plant link from activity flow
+- [x] Plant Journal — notes saved to journal entry
 - [ ] Season Check flow (weather integration)
 - [ ] Progress Photo flow (camera + upload)
-- [ ] Humidity Check flow
-- [ ] Pruning Guide flow
-- [ ] Propagation Log flow
-- [ ] Quests screen (daily + achievements + monthly challenge)
-- [ ] `QuestCard` component
-- [ ] Monthly challenge path display
+- [ ] Dedicated multi-step guides (repotting, pruning, propagation)
+- [x] Quests screen (daily + achievements + monthly challenge)
+- [x] `QuestCard` component
+- [x] Monthly challenge path display
 
 **Definition of Done:**
 Users can complete guided activities, track quest progress, and work through the monthly challenge.

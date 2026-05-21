@@ -300,7 +300,19 @@ export const buddyApi = {
   create: (data: { name: string; speciesId: string; trait: BuddyTrait }) =>
     api.post<BuddyState>('/buddy', data),
   get: () => api.get<BuddyState>('/buddy'),
-  update: (data: { name?: string; trait?: BuddyTrait }) => api.patch<BuddyState>('/buddy', data),
+  update: (data: {
+    name?: string;
+    trait?: BuddyTrait;
+    speciesId?: string;
+    equippedItems?: Record<string, unknown>;
+    terrariumLayout?: Record<string, unknown>;
+    terrariumBackground?: string;
+  }) => api.patch<BuddyState>('/buddy', data),
+  shopCatalog: () => api.get('/buddy/shop/catalog'),
+  shopDaily: () => api.get('/buddy/shop/daily'),
+  shopInventory: () => api.get('/buddy/shop/inventory'),
+  shopPurchase: (itemId: string) => api.post('/buddy/shop/purchase', { itemId }),
+  listSpecies: () => api.get('/buddy/species'),
   greeting: () => api.get<{ message: string }>('/buddy/greeting'),
   getJourney: () => api.get<JourneyResponse>('/buddy/journey'),
   startJourney: (biomeId?: string) =>
@@ -310,6 +322,25 @@ export const buddyApi = {
     ),
   respondDiscovery: (journeyId: string, choice: number) =>
     api.post('/buddy/journey/respond', { journeyId, choice }),
+  activityLibrary: () =>
+    api.get<
+      {
+        activityType: string;
+        label: string;
+        emoji: string;
+        estimatedMinutes: number;
+        sunlightReward: number;
+        dewdropReward: number;
+      }[]
+    >('/buddy/activities'),
+  completeActivity: (data: {
+    activityType: string;
+    plantId?: string;
+    notes?: string;
+    durationSeconds?: number;
+  }) => api.post('/buddy/activities/complete', data),
+  getQuests: () => api.get('/buddy/quests'),
+  claimQuest: (questId: string) => api.post(`/buddy/quests/${questId}/claim`),
 };
 
 export const communityApi = {
