@@ -5,14 +5,7 @@ import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { buddyApi, plantsApi } from '../../../services/api';
 
-const NEEDS_PLANT = new Set([
-  'PLANT_JOURNAL',
-  'PEST_INSPECTION',
-  'REPOTTING_GUIDE',
-  'PRUNING_GUIDE',
-  'PROPAGATION_LOG',
-  'SUNLIGHT_AUDIT',
-]);
+const NEEDS_PLANT = new Set(['PLANT_JOURNAL']);
 
 interface Props {
   activityType: string;

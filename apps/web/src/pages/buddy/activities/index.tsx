@@ -18,6 +18,10 @@ const GUIDED = new Set([
   'SEASON_CHECK',
   'PROGRESS_PHOTO',
   'SUNLIGHT_AUDIT',
+  'REPOTTING_GUIDE',
+  'PRUNING_GUIDE',
+  'PROPAGATION_LOG',
+  'PEST_INSPECTION',
 ]);
 
 export default function BuddyActivitiesPage() {
@@ -71,6 +75,9 @@ export default function BuddyActivitiesPage() {
                 <p className="text-sm text-gray-500">
                   ~{a.estimatedMinutes} min · +{a.sunlightReward} ☀️ · +{a.dewdropReward} 💧
                   {a.activityType === 'WATERING_CHECK' && ' · syncs watering tasks'}
+                  {a.activityType === 'REPOTTING_GUIDE' && ' · syncs repot tasks'}
+                  {a.activityType === 'PRUNING_GUIDE' && ' · syncs prune tasks'}
+                  {a.activityType === 'PEST_INSPECTION' && ' · links to Dr. Plant'}
                 </p>
               </div>
             </Card>

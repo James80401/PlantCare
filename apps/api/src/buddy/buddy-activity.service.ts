@@ -80,7 +80,13 @@ export class BuddyActivityService {
 
     let tasksCompleted = 0;
     if (dto.activityType === 'WATERING_CHECK' && plantIds.length > 0) {
-      tasksCompleted = await this.completeWateringTasks(userId, plantIds);
+      tasksCompleted = await this.completePendingTasks(userId, plantIds, TaskType.WATER);
+    } else if (dto.activityType === 'REPOTTING_GUIDE' && dto.plantId) {
+      tasksCompleted = await this.completePendingTasks(userId, [dto.plantId], TaskType.REPOT);
+    } else if (dto.activityType === 'PRUNING_GUIDE' && dto.plantId) {
+      tasksCompleted = await this.completePendingTasks(userId, [dto.plantId], TaskType.PRUNE);
+    } else if (dto.activityType === 'PEST_INSPECTION' && dto.plantId) {
+      tasksCompleted = await this.completePendingTasks(userId, [dto.plantId], TaskType.INSPECT_PESTS);
     }
 
     const rewards = ACTIVITY_REWARDS[dto.activityType];
@@ -153,11 +159,15 @@ export class BuddyActivityService {
     };
   }
 
-  private async completeWateringTasks(userId: string, plantIds: string[]): Promise<number> {
+  private async completePendingTasks(
+    userId: string,
+    plantIds: string[],
+    taskType: TaskType,
+  ): Promise<number> {
     const tasks = await this.prisma.task.findMany({
       where: {
         plantId: { in: plantIds },
-        taskType: TaskType.WATER,
+        taskType,
         status: TaskStatus.PENDING,
         plant: { userId },
       },

@@ -3,6 +3,10 @@ import ProgressPhotoWizard from './ProgressPhotoWizard';
 import SeasonCheckWizard from './SeasonCheckWizard';
 import SunlightAuditWizard from './SunlightAuditWizard';
 import WateringWizard from './WateringWizard';
+import RepottingWizard from './RepottingWizard';
+import PruningWizard from './PruningWizard';
+import PropagationWizard from './PropagationWizard';
+import PestInspectionWizard from './PestInspectionWizard';
 import GenericActivityFlow from './GenericActivityFlow';
 
 const WIZARDS: Record<string, () => JSX.Element> = {
@@ -10,6 +14,10 @@ const WIZARDS: Record<string, () => JSX.Element> = {
   SEASON_CHECK: SeasonCheckWizard,
   PROGRESS_PHOTO: ProgressPhotoWizard,
   SUNLIGHT_AUDIT: SunlightAuditWizard,
+  REPOTTING_GUIDE: RepottingWizard,
+  PRUNING_GUIDE: PruningWizard,
+  PROPAGATION_LOG: PropagationWizard,
+  PEST_INSPECTION: PestInspectionWizard,
 };
 
 export default function BuddyActivityFlowPage() {
