@@ -175,17 +175,6 @@ export default function Dashboard() {
   const plantCount = metrics?.totalPlants ?? plants.length;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
 
-  const sharedPlants = useMemo(
-    () => (user ? plantsSharedWithUser(gardens, user.id) : []),
-    [gardens, user],
-  );
-
-  const visiblePlants = useMemo((): Array<DashboardPlant | SharedPlantView> => {
-    if (plantScope === 'mine') return plants;
-    if (plantScope === 'shared') return sharedPlants;
-    return [...plants, ...sharedPlants];
-  }, [plants, sharedPlants, plantScope]);
-
   return (
     <div className="space-y-6 pb-24 md:pb-8">
       <header className="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-emerald-800 to-lime-700 text-white shadow-xl shadow-emerald-900/15">
