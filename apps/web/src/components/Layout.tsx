@@ -6,16 +6,13 @@ const mobileNav = [
   { to: '/garden', label: 'Dashboard', mobileLabel: 'Home', icon: 'home' as const, exact: true },
   { to: '/garden/plants/browse', label: 'Browse', mobileLabel: 'Browse', icon: 'browse' as const, exact: true },
   { to: '/garden/tasks', label: 'Tasks', mobileLabel: 'Tasks', icon: 'tasks' as const },
+  { to: '/garden/buddy', label: 'Buddy', mobileLabel: 'Buddy', icon: 'add' as const },
   { to: '/garden/community', label: 'Community', mobileLabel: 'Tips', icon: 'community' as const },
   { to: '/garden/plants/new', label: 'Add Plant', mobileLabel: 'Add', icon: 'add' as const, exact: true },
   { to: '/garden/settings', label: 'Settings', mobileLabel: 'Settings', icon: 'settings' as const },
 ];
 
-const desktopNav = [
-  ...mobileNav.slice(0, 4),
-  { to: '/garden/community', label: 'Community', mobileLabel: 'Tips', icon: 'community' as const },
-  ...mobileNav.slice(4),
-];
+const desktopNav = mobileNav;
 
 /** Hide upgrade CTAs during beta — all features enabled */
 const SHOW_UPGRADE = false;
@@ -85,7 +82,7 @@ export default function Layout() {
         style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
         aria-label="Primary"
       >
-        <div className="mx-auto grid max-w-lg grid-cols-6 gap-px">
+        <div className="mx-auto grid max-w-lg grid-cols-7 gap-px">
           {mobileNav.map(({ to, mobileLabel, icon, exact }) => {
             const active = isActivePath(location.pathname, to, exact);
             const Icon = navIcons[icon];

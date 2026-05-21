@@ -29,6 +29,10 @@ import Community from './pages/Community';
 import Subscription from './pages/Subscription';
 import OnboardingWizard from './pages/OnboardingWizard';
 import Privacy from './pages/Privacy';
+import { BuddyGate } from './components/BuddyGate';
+import BuddyOnboarding from './pages/buddy/onboarding';
+import BuddyHome from './pages/buddy/index';
+import BuddyJourneyPage from './pages/buddy/journey';
 
 export default function App() {
   return (
@@ -64,6 +68,11 @@ export default function App() {
           <Route path="insights/score" element={<GardenScoreInsights />} />
           <Route path="household" element={<Household />} />
           <Route path="community" element={<Community />} />
+          <Route path="buddy" element={<BuddyGate />}>
+            <Route path="onboarding" element={<BuddyOnboarding />} />
+            <Route index element={<BuddyHome />} />
+            <Route path="journey" element={<BuddyJourneyPage />} />
+          </Route>
           <Route path="settings" element={<Settings />} />
           <Route path="subscription" element={<Subscription />} />
           </Route>

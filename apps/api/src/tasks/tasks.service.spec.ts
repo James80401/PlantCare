@@ -48,7 +48,9 @@ describe('TasksService', () => {
       onTaskCompleted: jest.fn().mockResolvedValue(undefined),
     };
 
-    const service = new TasksService(prisma as never, scheduler as never, {} as never);
+    const service = new TasksService(prisma as never, scheduler as never, {} as never, {
+      emit: jest.fn(),
+    } as never);
 
     return { service, prisma, scheduler, tx };
   }
@@ -106,7 +108,9 @@ describe('TasksService', () => {
       $transaction: jest.fn((callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
     };
     const scheduler = { onTaskCompleted: jest.fn() };
-    const service = new TasksService(prisma as never, scheduler as never, {} as never);
+    const service = new TasksService(prisma as never, scheduler as never, {} as never, {
+      emit: jest.fn(),
+    } as never);
 
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-05-17T15:00:00.000Z'));

@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TaskStatus } from '@prisma/client';
 import { addDays, startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
@@ -7,6 +8,7 @@ import { SchedulerService } from '../scheduler/scheduler.service';
 import { sharedPlantInclude, userCanCompletePlantTask, userCanViewPlantTasks } from '../gardens/task-access';
 import { SkipTaskDto } from './dto/skip-task.dto';
 import { SnoozeTaskDto } from './dto/snooze-task.dto';
+import { TaskCompletedEvent } from './events/task-completed.event';
 
 @Injectable()
 export class TasksService {
@@ -14,6 +16,7 @@ export class TasksService {
     private prisma: PrismaService,
     private scheduler: SchedulerService,
     private careGuides: CareGuidesService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async findForUser(userId: string, from?: string, to?: string) {
@@ -52,6 +55,10 @@ export class TasksService {
     });
 
     await this.scheduler.onTaskCompleted(taskId);
+    this.eventEmitter.emit(
+      'task.completed',
+      new TaskCompletedEvent(userId, taskId, updated.taskType, updated.plantId),
+    );
     return updated;
   }
 

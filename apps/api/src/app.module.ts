@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { join } from 'path';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
@@ -19,6 +20,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { UploadModule } from './upload/upload.module';
 import { GardensModule } from './gardens/gardens.module';
 import { CommunityModule } from './community/community.module';
+import { BuddyModule } from './buddy/buddy.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -31,6 +33,7 @@ import { HealthController } from './health.controller';
       ],
     }),
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
     PrismaModule,
     EmailModule,
     AuthModule,
@@ -48,6 +51,7 @@ import { HealthController } from './health.controller';
     UploadModule,
     GardensModule,
     CommunityModule,
+    BuddyModule,
   ],
   controllers: [HealthController],
 })

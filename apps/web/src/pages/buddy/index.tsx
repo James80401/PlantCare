@@ -1,0 +1,101 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import BuddySprite from '../../components/buddy/BuddySprite';
+import MoodIndicator from '../../components/buddy/MoodIndicator';
+import SunlightBar from '../../components/buddy/SunlightBar';
+import { GROWTH_STAGE_LABEL } from '../../components/buddy/species';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { useBuddy } from '../../hooks/buddy/useBuddy';
+import { buddyApi } from '../../services/api';
+
+export default function BuddyHome() {
+  const { buddy, loading, error, refresh } = useBuddy();
+  const [greeting, setGreeting] = useState('');
+
+  useEffect(() => {
+    if (!buddy) return;
+    buddyApi.greeting().then(({ data }) => setGreeting(data.message)).catch(() => {});
+  }, [buddy?.id]);
+
+  if (loading || !buddy) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center text-emerald-700">
+        {loading ? 'Loading…' : error || 'Buddy not found'}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-lg space-y-5">
+      <PageHeader
+        eyebrow="Plant Buddy"
+        title={buddy.name}
+        description={greeting || `Your ${GROWTH_STAGE_LABEL[buddy.growthStage] ?? 'plant'} companion`}
+      />
+
+      <Card className="flex flex-col items-center gap-4 py-8">
+        <BuddySprite speciesId={buddy.speciesId} size="lg" traveling={buddy.hasActiveJourney} />
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <MoodIndicator mood={buddy.mood} />
+          <span className="rounded-full bg-lime-100 px-2.5 py-1 text-xs font-semibold text-lime-900">
+            {GROWTH_STAGE_LABEL[buddy.growthStage] ?? buddy.growthStage}
+          </span>
+          <span className="text-xs text-gray-500">{buddy.dewdrops} dewdrops 💧</span>
+        </div>
+        {buddy.hasActiveJourney ? (
+          <p className="text-center text-sm text-emerald-800">
+            {buddy.name} is on a grow journey!
+          </p>
+        ) : (
+          <SunlightBar value={buddy.sunlightToday} />
+        )}
+      </Card>
+
+      <Card className="grid grid-cols-2 gap-3 text-center text-sm">
+        <div>
+          <p className="text-2xl font-bold text-emerald-900">{buddy.streakDays}</p>
+          <p className="text-xs text-gray-500">Day streak</p>
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-emerald-900">{buddy.journeyCount}</p>
+          <p className="text-xs text-gray-500">Journeys</p>
+        </div>
+      </Card>
+
+      <div className="flex flex-col gap-2 sm:flex-row">
+        {buddy.hasActiveJourney ? (
+          <Link
+            to="/garden/buddy/journey"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-900"
+          >
+            View journey
+          </Link>
+        ) : buddy.journeyReady ? (
+          <Link
+            to="/garden/buddy/journey"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-900"
+          >
+            Send on a journey
+          </Link>
+        ) : (
+          <Link
+            to="/garden/tasks"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-50"
+          >
+            Complete care tasks
+          </Link>
+        )}
+        <Button type="button" variant="ghost" fullWidth onClick={() => refresh()}>
+          Refresh
+        </Button>
+      </div>
+
+      <p className="text-center text-xs text-gray-500">
+        Garden code: <span className="font-mono font-semibold">{buddy.gardenCode}</span> (friends —
+        coming soon)
+      </p>
+    </div>
+  );
+}

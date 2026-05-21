@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { BuddyState, BuddyTrait, JourneyResponse } from '../hooks/buddy/types';
 import type { TaskSkipFeedback } from '../utils/taskFeedback';
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api/v1';
@@ -293,6 +294,22 @@ export const gardensApi = {
     data: { plantId: string; canComplete?: boolean; canJournal?: boolean },
   ) => api.post(`/gardens/${gardenId}/plants`, data),
   activity: (gardenId: string) => api.get<ActivityEventSummary[]>(`/gardens/${gardenId}/activity`),
+};
+
+export const buddyApi = {
+  create: (data: { name: string; speciesId: string; trait: BuddyTrait }) =>
+    api.post<BuddyState>('/buddy', data),
+  get: () => api.get<BuddyState>('/buddy'),
+  update: (data: { name?: string; trait?: BuddyTrait }) => api.patch<BuddyState>('/buddy', data),
+  greeting: () => api.get<{ message: string }>('/buddy/greeting'),
+  getJourney: () => api.get<JourneyResponse>('/buddy/journey'),
+  startJourney: (biomeId?: string) =>
+    api.post<{ journey: JourneyResponse['journey']; estimatedMinutes: number }>(
+      '/buddy/journey/start',
+      biomeId ? { biomeId } : {},
+    ),
+  respondDiscovery: (journeyId: string, choice: number) =>
+    api.post('/buddy/journey/respond', { journeyId, choice }),
 };
 
 export const communityApi = {

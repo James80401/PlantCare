@@ -45,6 +45,13 @@ Use this hub when you need **understanding**, not just a single endpoint or scre
 | 14 | [Product, QA & roadmap](14-product-qa-and-roadmap.md) | UAT, tiers, roadmap, known limits |
 | 15 | [Production deploy & Android](15-production-deploy-and-android.md) | VPS, HTTPS, Play closed testing, release build |
 
+### Plant Buddy (companion layer)
+
+| Doc | Topic |
+|-----|--------|
+| [buddy/00 — Overview](buddy/00-overview.md) | Finch-style companion loop, phases, principles |
+| [buddy/14 — Development phases](buddy/14-development-phases.md) | Phase 1–5 checklist (Phase 1 implemented on `feature/plant-buddy`) |
+
 ---
 
 ## Feature → guide map

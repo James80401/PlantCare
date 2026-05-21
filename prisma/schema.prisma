@@ -94,6 +94,7 @@ model User {
   comments              Comment[]
   postLikes             PostLike[]
   activityEvents        ActivityEvent[]
+  buddy                 Buddy?
 }
 
 model WeatherAdviceCache {
@@ -417,4 +418,84 @@ model ActivityEvent {
 
   @@index([gardenId, createdAt])
   @@index([actorId])
+}
+
+// ─── Plant Buddy (feature/plant-buddy) ───────────────────────────────────────
+
+enum GrowthStage {
+  SEED
+  SPROUT
+  SEEDLING
+  YOUNG_PLANT
+  ESTABLISHED
+  ANCIENT
+}
+
+enum BuddyTrait {
+  RESILIENT
+  SUN_SEEKER
+  NIGHT_BLOOMER
+  WILD
+  TENDER
+}
+
+enum BuddyMood {
+  THRIVING
+  HAPPY
+  CONTENT
+  WILTING
+  THIRSTY
+  DORMANT
+}
+
+model Buddy {
+  id                 String      @id @default(cuid())
+  userId             String      @unique
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name               String
+  speciesId          String      @default("monstera")
+  trait              BuddyTrait  @default(RESILIENT)
+  growthStage        GrowthStage @default(SEED)
+  journeyCount       Int         @default(0)
+  dewdrops           Int         @default(0)
+  sunlightToday      Int         @default(0)
+  tasksToday         Int         @default(0)
+  lastResetDate      DateTime?
+  mood               BuddyMood   @default(HAPPY)
+  lastTaskDate       DateTime?
+  streakDays         Int         @default(0)
+  longestStreak      Int         @default(0)
+  lastActiveDate     DateTime?
+  equippedItems      String      @default("{}")
+  unlockedSpecies    String      @default("[\"monstera\"]")
+  currentBiome       String      @default("seed_garden")
+  unlockedBiomes     String      @default("[\"seed_garden\"]")
+  personalityChoices String      @default("[]")
+  terrariumLayout    String      @default("{}")
+  terrariumBackground String     @default("sunny_windowsill")
+  gardenCode         String      @unique
+  showLastActive     Boolean     @default(true)
+  journeys           BuddyJourney[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+}
+
+model BuddyJourney {
+  id                   String    @id @default(cuid())
+  buddyId              String
+  buddy                Buddy     @relation(fields: [buddyId], references: [id], onDelete: Cascade)
+  biomeId              String
+  startedAt            DateTime  @default(now())
+  endsAt               DateTime
+  completedAt          DateTime?
+  completed            Boolean   @default(false)
+  discoveryId          String?
+  choiceMade           Int?
+  dewdropsEarned       Int       @default(0)
+  itemDropped          String?
+  companionDropped     String?
+  tasksCompletedDuring Int       @default(0)
+  minutesSaved         Int       @default(0)
+
+  @@index([buddyId, completed])
 }
