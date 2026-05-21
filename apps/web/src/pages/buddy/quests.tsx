@@ -95,12 +95,6 @@ export default function BuddyQuestsPage() {
         ))}
       </section>
 
-      <Link
-        to="/garden/buddy"
-        className="block text-center text-sm font-medium text-emerald-800 hover:underline"
-      >
-        ← Back to buddy
-      </Link>
     </div>
   );
 }

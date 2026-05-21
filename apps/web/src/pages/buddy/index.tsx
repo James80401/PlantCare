@@ -108,9 +108,14 @@ export default function BuddyHome() {
         </Link>
         <Link
           to="/garden/buddy/quests"
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-100"
+          className="relative inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-100"
         >
           Quests
+          {claimableQuests > 0 && (
+            <span className="absolute -right-1 -top-1 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
+              {claimableQuests}
+            </span>
+          )}
         </Link>
         <Link
           to="/garden/buddy/style"
