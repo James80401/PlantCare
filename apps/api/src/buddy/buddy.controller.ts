@@ -47,6 +47,11 @@ export class BuddyController {
     return this.buddyService.getDailyGreeting(user.sub);
   }
 
+  @Get('companion-line')
+  companionLine(@CurrentUser() user: JwtPayload) {
+    return this.buddyService.getCompanionLine(user.sub);
+  }
+
   @Get('journey')
   getJourney(@CurrentUser() user: JwtPayload) {
     return this.journeyService.getActiveJourney(user.sub);

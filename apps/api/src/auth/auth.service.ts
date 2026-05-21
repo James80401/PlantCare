@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -17,6 +18,8 @@ import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
@@ -153,6 +156,11 @@ export class AuthService {
 
     const sent = await this.email.sendPasswordResetEmail(user.email, user.name, token);
     if (!sent.success) {
+      const base = this.config.get<string>('FRONTEND_URL', 'http://localhost:5173').replace(/\/$/, '');
+      const devUrl = `${base}/reset-password/${token}`;
+      if (process.env.NODE_ENV !== 'production') {
+        this.logger.warn(`Password reset email failed; local reset link: ${devUrl}`);
+      }
       throw new ServiceUnavailableException(
         sent.error ||
           'Could not send password reset email. Check SMTP_USER and SMTP_PASS (Gmail App Password) in server .env.',

@@ -4,7 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { WeatherService } from '../weather/weather.service';
-import { weatherGreetingLine } from './constants/buddy-dialogue';
+import {
+  companionLineFromGarden,
+  weatherGreetingLine,
+} from './constants/buddy-dialogue';
+import {
+  getOverdueTasks,
+  getTasksCompletedToday,
+  getTodayTasks,
+  type TaskLike,
+} from '../dashboard/dashboard-helpers';
+import { addDays } from 'date-fns';
 import { OnEvent } from '@nestjs/event-emitter';
 import { BuddyMood, GrowthStage } from '@prisma/client';
 import { startOfDay } from 'date-fns';
@@ -154,10 +164,40 @@ export class BuddyService {
     return formatBuddy(updated);
   }
 
+  private greetingSeed(): number {
+    return startOfDay(new Date()).getDate() + new Date().getMonth() * 31;
+  }
+
+  private async gardenMetricsForUser(userId: string) {
+    const now = new Date();
+    const fromDate = addDays(startOfDay(now), -45);
+    const toDate = addDays(startOfDay(now), 14);
+    const [plantCount, tasks] = await Promise.all([
+      this.prisma.plant.count({ where: { userId } }),
+      this.prisma.task.findMany({
+        where: {
+          plant: { userId },
+          dueDate: { gte: fromDate, lte: toDate },
+        },
+        select: {
+          status: true,
+          dueDate: true,
+          completedAt: true,
+        },
+      }),
+    ]);
+    const taskRows = tasks as TaskLike[];
+    const overdue = getOverdueTasks(taskRows, now).length;
+    const dueToday = getTodayTasks(taskRows, now).length;
+    const completedToday = getTasksCompletedToday(taskRows, now).length;
+    return { totalPlants: plantCount, overdue, dueToday, completedToday };
+  }
+
   async getDailyGreeting(userId: string): Promise<{ message: string; weatherAware: boolean }> {
     const buddy = await this.prisma.buddy.findUnique({ where: { userId } });
     if (!buddy) throw new NotFoundException('Plant buddy not found');
 
+    const seed = this.greetingSeed();
     const status = await this.weatherService.getAdviceStatus(userId);
     const advice = status.cachedAdvice;
     if (advice?.summary?.days?.[0]) {
@@ -169,13 +209,25 @@ export class BuddyService {
           advice.locationLabel,
           day.tempMaxC,
           day.rainProbability,
+          seed,
         ),
       };
     }
 
     return {
       weatherAware: false,
-      message: weatherGreetingLine(buddy.name, status.locationLabel),
+      message: weatherGreetingLine(buddy.name, status.locationLabel, undefined, undefined, seed),
+    };
+  }
+
+  async getCompanionLine(userId: string): Promise<{ message: string; source: 'garden' }> {
+    const buddy = await this.prisma.buddy.findUnique({ where: { userId } });
+    if (!buddy) throw new NotFoundException('Plant buddy not found');
+    const metrics = await this.gardenMetricsForUser(userId);
+    const seed = this.greetingSeed() + 7;
+    return {
+      source: 'garden',
+      message: companionLineFromGarden(buddy.name, metrics, seed),
     };
   }
 

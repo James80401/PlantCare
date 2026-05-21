@@ -1,0 +1,183 @@
+/* Extended buddy animations — reuse families where noted */
+
+.buddy-act-gasp,
+.buddy-act-pop-up {
+  animation: buddy-act-surprised-kf 2.2s ease-in-out infinite;
+}
+
+.buddy-act-sigh-happy,
+.buddy-act-content-sigh,
+.buddy-act-sway-slow {
+  animation: buddy-act-float-kf 4s ease-in-out infinite;
+}
+
+.buddy-act-determined,
+.buddy-act-salute,
+.buddy-act-stretch-tall {
+  animation: buddy-act-proud-stand-kf 3s ease-in-out infinite;
+}
+
+.buddy-act-mist-leaves,
+.buddy-act-leaf-wave,
+.buddy-act-water-drop {
+  animation: buddy-act-flutter-kf 2s ease-in-out infinite;
+}
+
+.buddy-act-fertilize,
+.buddy-act-fertilizer-shake,
+.buddy-act-seed-plant {
+  animation: buddy-act-nod-kf 2.4s ease-in-out infinite;
+}
+
+.buddy-act-repot-lift,
+.buddy-act-jump-joy,
+.buddy-act-stretch-tall {
+  animation: buddy-act-celebrate-kf 2.4s ease-in-out infinite;
+}
+
+.buddy-act-check-soil,
+.buddy-act-crouch-low,
+.buddy-act-pest-watch,
+.buddy-act-root-check {
+  animation: buddy-act-lean-kf 3s ease-in-out infinite;
+}
+
+.buddy-act-rotate-pot,
+.buddy-act-cartwheel {
+  animation: buddy-act-twirl-kf 4s linear infinite;
+}
+
+.buddy-act-hug {
+  animation: buddy-act-love-kf 2.6s ease-in-out infinite;
+}
+
+.buddy-act-thumbs-up,
+.buddy-act-double-wave,
+.buddy-act-town-wave {
+  animation: buddy-act-wave-both-kf 2.2s ease-in-out infinite;
+}
+
+.buddy-act-peace-sign,
+.buddy-act-blow-kiss {
+  animation: buddy-act-wave-kf 2.4s ease-in-out infinite;
+}
+
+.buddy-act-umbrella,
+.buddy-act-rain-happy {
+  animation: buddy-act-rain-happy-kf 2.8s ease-in-out infinite;
+}
+
+.buddy-act-fan-cool,
+.buddy-act-wind-sway {
+  animation: buddy-act-wind-sway-kf 2.6s ease-in-out infinite;
+}
+
+.buddy-act-cozy-blanket,
+.buddy-act-sleepy-droop,
+.buddy-act-night-yawn {
+  animation: buddy-act-sleep-kf 4s ease-in-out infinite;
+}
+
+.buddy-act-moonwalk,
+.buddy-act-slide-in,
+.buddy-act-slide-out {
+  animation: buddy-act-side-step-kf 2s ease-in-out infinite;
+}
+
+.buddy-act-hide-seek,
+.buddy-act-peek {
+  animation: buddy-act-peek-kf 3s ease-in-out infinite;
+}
+
+.buddy-act-shiver {
+  animation: buddy-act-giggle-kf 1.2s ease-in-out infinite;
+}
+
+.buddy-act-shrug,
+.buddy-act-wobble {
+  animation: buddy-act-shake-kf 1.4s ease-in-out infinite;
+}
+
+.buddy-act-bow-deep,
+.buddy-act-greet-bow {
+  animation: buddy-act-greet-bow-kf 3.2s ease-in-out infinite;
+}
+
+.buddy-act-zoom-pulse {
+  animation: buddy-act-pulse-kf 2.4s ease-in-out infinite;
+}
+
+.buddy-act-pulse-soft,
+.buddy-act-dew-collect {
+  animation: buddy-act-heartbeat-kf 2s ease-in-out infinite;
+}
+
+.buddy-act-sunbeam,
+.buddy-act-sun-bask,
+.buddy-act-sunshine-send {
+  animation: buddy-act-sun-bask-kf 4s ease-in-out infinite;
+}
+
+.buddy-act-cloud-pass,
+.buddy-act-star-gaze,
+.buddy-act-biome-dream {
+  animation: buddy-act-float-kf 5s ease-in-out infinite;
+}
+
+.buddy-act-prune-snip,
+.buddy-act-measure-grow,
+.buddy-act-journal-scribble {
+  animation: buddy-act-think-kf 3.8s ease-in-out infinite;
+}
+
+.buddy-act-photo-pose,
+.buddy-act-outfit-show {
+  animation: buddy-act-mirror-kf 3.8s ease-in-out infinite;
+}
+
+.buddy-act-humidity-happy,
+.buddy-act-water-splash {
+  animation: buddy-act-water-splash-kf 2.2s ease-in-out infinite;
+}
+
+.buddy-act-repot-dust,
+.buddy-act-propagation {
+  animation: buddy-act-bloom-kf 3s ease-in-out infinite;
+}
+
+.buddy-act-drink-water,
+.buddy-act-cheer-jump {
+  animation: buddy-act-cheer-jump-kf 2s cubic-bezier(0.34, 1.2, 0.64, 1) infinite;
+}
+
+.buddy-act-spin-fast {
+  animation: buddy-act-spin-kf 3s linear infinite;
+}
+
+.buddy-act-tip-toe {
+  animation: buddy-act-shy-kf 3.2s ease-in-out infinite;
+}
+
+.buddy-act-clap {
+  animation: buddy-act-tap-dance-kf 1.4s ease-in-out infinite;
+}
+
+.buddy-act-thinking-hard,
+.buddy-act-shop-browse {
+  animation: buddy-act-think-kf 3.8s ease-in-out infinite;
+}
+
+.buddy-act-lightbulb,
+.buddy-act-quest-point {
+  animation: buddy-act-surprised-kf 2.5s ease-in-out infinite;
+}
+
+.buddy-act-wake-stretch,
+.buddy-act-stretch {
+  animation: buddy-act-stretch-kf 3.2s ease-in-out infinite;
+}
+
+.buddy-act-terrarium-tend {
+  animation: buddy-act-sway-kf 3.2s ease-in-out infinite;
+}
+

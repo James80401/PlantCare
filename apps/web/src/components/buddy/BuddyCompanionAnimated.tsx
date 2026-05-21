@@ -1,0 +1,127 @@
+import { useEffect, useMemo, useState } from 'react';
+import { speciesEmoji } from './species';
+import { cssClassForAnimation, durationForAnimation } from './buddyCompanionAnimations';
+import type { BuddyAnimationDef } from './buddyAnimationCatalog';
+import { buildCompanionAnimationRotation } from './buddyCompanionRotation';
+import BuddyCuteFace from './BuddyCuteFace';
+import { faceExpressionForMood, type BuddyFaceExpression } from './buddyFaces';
+import type { BuddyPhraseContext } from './buddyPhraseContext';
+
+interface BuddyCompanionAnimatedProps {
+  speciesId: string;
+  size?: 'sm' | 'md';
+  traveling?: boolean;
+  mood?: string;
+  phraseContext?: BuddyPhraseContext | null;
+}
+
+/** Floating companion chip — ~2.5× previous emoji scale. */
+const sizeClass = {
+  sm: 'text-7xl',
+  md: 'text-8xl',
+};
+
+const faceSize = { sm: 'md' as const, md: 'lg' as const };
+
+const moodClass: Record<string, string> = {
+  WILTING: 'opacity-80 saturate-50',
+  THIRSTY: 'opacity-90',
+  DORMANT: 'opacity-60 grayscale',
+};
+
+const PROP_POSITION_CLASS: Record<NonNullable<BuddyAnimationDef['propPosition']>, string> = {
+  'top-left': 'absolute -left-2 -top-2 text-3xl',
+  'top-right': 'absolute -right-2 -top-2 text-3xl',
+  'bottom-left': 'absolute -left-2 -bottom-2 text-2xl',
+  'bottom-right': 'absolute -right-2 -bottom-2 text-2xl',
+  top: 'absolute -top-4 left-1/2 -translate-x-1/2 text-2xl',
+  left: 'absolute -left-4 top-1/2 -translate-y-1/2 text-3xl',
+};
+
+export default function BuddyCompanionAnimated({
+  speciesId,
+  size = 'sm',
+  traveling,
+  mood,
+  phraseContext,
+}: BuddyCompanionAnimatedProps) {
+  const rotationKey = `${speciesId}-${phraseContext?.name ?? 'none'}`;
+  const actRotation = useMemo(
+    () => buildCompanionAnimationRotation(phraseContext ?? null, rotationKey),
+    [phraseContext, rotationKey],
+  );
+
+  const [actIndex, setActIndex] = useState(0);
+
+  const currentDef = actRotation[actIndex % actRotation.length];
+
+  useEffect(() => {
+    setActIndex(0);
+  }, [rotationKey]);
+
+  useEffect(() => {
+    if (traveling || !currentDef) return;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) return;
+
+    const id = window.setTimeout(() => {
+      setActIndex((i) => (i + 1) % actRotation.length);
+    }, durationForAnimation(currentDef));
+    return () => window.clearTimeout(id);
+  }, [traveling, actIndex, currentDef, actRotation.length]);
+
+  const motionClass = traveling ? 'buddy-travel-walk' : cssClassForAnimation(currentDef);
+  const moodEffect = mood ? moodClass[mood] : '';
+
+  const faceExpression: BuddyFaceExpression = useMemo(() => {
+    if (traveling) return 'cozy';
+    return faceExpressionForMood(mood) ?? currentDef?.face ?? 'happy';
+  }, [traveling, mood, currentDef?.face]);
+
+  const propClass = currentDef?.propPosition
+    ? PROP_POSITION_CLASS[currentDef.propPosition]
+    : PROP_POSITION_CLASS['top-left'];
+
+  const propSecondaryClass = currentDef?.propSecondaryPosition
+    ? PROP_POSITION_CLASS[currentDef.propSecondaryPosition]
+    : PROP_POSITION_CLASS['top-right'];
+
+  const interactionProps = currentDef?.interaction || Boolean(currentDef?.propSecondary);
+  const propAnimClass = interactionProps ? '' : 'buddy-act-prop';
+
+  return (
+    <div className="relative flex h-full w-full items-center justify-center" aria-hidden>
+      <div className={`${motionClass} ${moodEffect} relative flex items-center justify-center`}>
+        <span className={`${sizeClass[size]} relative select-none`} role="img">
+          {speciesEmoji(speciesId)}
+          <span className="absolute bottom-[8%] left-1/2 -translate-x-1/2">
+            <BuddyCuteFace
+              expression={faceExpression}
+              speciesId={speciesId}
+              size={faceSize[size]}
+            />
+          </span>
+        </span>
+      </div>
+
+      {!traveling && currentDef?.prop && (
+        <span
+          className={`${propAnimClass} pointer-events-none ${propClass}`}
+          role="img"
+          aria-hidden
+        >
+          {currentDef.prop}
+        </span>
+      )}
+      {!traveling && currentDef?.propSecondary && (
+        <span
+          className={`buddy-act-prop-secondary pointer-events-none ${propSecondaryClass}`}
+          role="img"
+          aria-hidden
+        >
+          {currentDef.propSecondary}
+        </span>
+      )}
+    </div>
+  );
+}

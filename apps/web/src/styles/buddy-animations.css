@@ -1,0 +1,1032 @@
+/* Plant Buddy — companion motion + cute face SVG styling */
+@import './buddy-animations-extended.css';
+@import './buddy-animations-interactions.css';
+
+.buddy-cute-face .buddy-face-eye {
+  fill: var(--buddy-face-tint, #14532d);
+}
+
+.buddy-cute-face .buddy-face-eye-closed {
+  fill: none;
+  stroke: var(--buddy-face-tint, #14532d);
+  stroke-linecap: round;
+}
+
+.buddy-cute-face .buddy-face-mouth-smile {
+  fill: none;
+  stroke: var(--buddy-face-tint, #14532d);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.buddy-cute-face .buddy-face-mouth-small {
+  fill: none;
+  stroke: var(--buddy-face-tint, #14532d);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+
+.buddy-cute-face .buddy-face-mouth-open {
+  fill: none;
+  stroke: var(--buddy-face-tint, #14532d);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.buddy-cute-face .buddy-face-mouth-o {
+  fill: none;
+  stroke: var(--buddy-face-tint, #14532d);
+  stroke-width: 1.3;
+}
+
+.buddy-cute-face .buddy-face-blush {
+  fill: #fda4af;
+}
+
+.buddy-cute-face .buddy-face-heart-eye {
+  fill: #f472b6;
+  stroke: none;
+}
+
+.buddy-act-prop {
+  animation: buddy-prop-pop 3.8s ease-in-out infinite;
+}
+
+@keyframes buddy-prop-pop {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(0.9);
+  }
+  40%,
+  60% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* ── Live animation set ─────────────────────────────────────────────────── */
+
+.buddy-act-bob {
+  animation: buddy-bob 2.8s ease-in-out infinite;
+}
+
+@keyframes buddy-act-wave-kf {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(14deg) scale(1.02);
+  }
+  50% {
+    transform: rotate(-10deg) scale(1.02);
+  }
+  75% {
+    transform: rotate(12deg) scale(1.01);
+  }
+}
+
+.buddy-act-wave {
+  animation: buddy-act-wave-kf 2.4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-wink-kf {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(1.04, 0.88);
+  }
+  22% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.03, 0.9);
+  }
+  52% {
+    transform: scale(1);
+  }
+}
+
+.buddy-act-wink {
+  animation: buddy-act-wink-kf 2.6s ease-in-out infinite;
+}
+
+@keyframes buddy-act-hop-kf {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-28px) scale(1.06);
+  }
+  55% {
+    transform: translateY(-10px) scale(1.03);
+  }
+  72% {
+    transform: translateY(-20px) scale(1.05);
+  }
+}
+
+.buddy-act-hop {
+  animation: buddy-act-hop-kf 2.2s cubic-bezier(0.34, 1.2, 0.64, 1) infinite;
+}
+
+@keyframes buddy-act-smile-kf {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+.buddy-act-smile {
+  animation: buddy-act-smile-kf 2.8s ease-in-out infinite;
+}
+
+@keyframes buddy-act-sway-kf {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.buddy-act-sway {
+  animation: buddy-act-sway-kf 3.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-nod-kf {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  30% {
+    transform: translateY(4px) rotate(2deg);
+  }
+  45% {
+    transform: translateY(-2px) rotate(-1deg);
+  }
+  60% {
+    transform: translateY(3px) rotate(1deg);
+  }
+}
+
+.buddy-act-nod {
+  animation: buddy-act-nod-kf 2.4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-giggle-kf {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+  20% {
+    transform: translateX(-3px) rotate(-2deg);
+  }
+  40% {
+    transform: translateX(3px) rotate(2deg);
+  }
+  60% {
+    transform: translateX(-2px) rotate(-1deg);
+  }
+  80% {
+    transform: translateX(2px) rotate(1deg);
+  }
+}
+
+.buddy-act-giggle {
+  animation: buddy-act-giggle-kf 1.8s ease-in-out infinite;
+}
+
+@keyframes buddy-act-bounce-kf {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.08, 0.94);
+  }
+  50% {
+    transform: scale(0.96, 1.06);
+  }
+  75% {
+    transform: scale(1.06, 0.97);
+  }
+}
+
+.buddy-act-bounce {
+  animation: buddy-act-bounce-kf 2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-twirl-kf {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.buddy-act-twirl {
+  animation: buddy-act-twirl-kf 4s linear infinite;
+}
+
+@keyframes buddy-act-lean-kf {
+  0%,
+  100% {
+    transform: rotate(0deg) translateX(0);
+  }
+  50% {
+    transform: rotate(12deg) translateX(4px);
+  }
+}
+
+.buddy-act-lean {
+  animation: buddy-act-lean-kf 3s ease-in-out infinite;
+}
+
+@keyframes buddy-act-blink-kf {
+  0%,
+  88%,
+  100% {
+    transform: scaleY(1);
+  }
+  92% {
+    transform: scaleY(0.85);
+  }
+  96% {
+    transform: scaleY(1.02);
+  }
+}
+
+.buddy-act-blink {
+  animation: buddy-act-blink-kf 3.5s ease-in-out infinite;
+}
+
+@keyframes buddy-act-love-kf {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08) rotate(-3deg);
+  }
+}
+
+.buddy-act-love {
+  animation: buddy-act-love-kf 2.6s ease-in-out infinite;
+}
+
+@keyframes buddy-act-shy-kf {
+  0%,
+  100% {
+    transform: scale(1) translateX(0);
+  }
+  50% {
+    transform: scale(0.92) translateX(3px);
+  }
+}
+
+.buddy-act-shy {
+  animation: buddy-act-shy-kf 3.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-dance-kf {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+  25% {
+    transform: translateX(-6px) rotate(-6deg);
+  }
+  75% {
+    transform: translateX(6px) rotate(6deg);
+  }
+}
+
+.buddy-act-dance {
+  animation: buddy-act-dance-kf 1.6s ease-in-out infinite;
+}
+
+@keyframes buddy-act-celebrate-kf {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  20% {
+    transform: translateY(-12px) scale(1.1);
+  }
+  40% {
+    transform: translateY(-4px) scale(1.05);
+  }
+  60% {
+    transform: translateY(-10px) scale(1.08);
+  }
+}
+
+.buddy-act-celebrate {
+  animation: buddy-act-celebrate-kf 2.4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-float-kf {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.buddy-act-float {
+  animation: buddy-act-float-kf 4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-wiggle-kf {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  15% {
+    transform: rotate(-8deg);
+  }
+  30% {
+    transform: rotate(8deg);
+  }
+  45% {
+    transform: rotate(-6deg);
+  }
+  60% {
+    transform: rotate(6deg);
+  }
+}
+
+.buddy-act-wiggle {
+  animation: buddy-act-wiggle-kf 1.2s ease-in-out infinite;
+}
+
+/* ── Extended animation set ───────────────────────────────────────────────── */
+
+@keyframes buddy-act-spin-kf {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.buddy-act-spin {
+  animation: buddy-act-spin-kf 5s linear infinite;
+}
+
+@keyframes buddy-act-peek-kf {
+  0%,
+  100% {
+    transform: translateX(8px) scale(0.88);
+    opacity: 0.85;
+  }
+  40%,
+  60% {
+    transform: translateX(-2px) scale(1);
+    opacity: 1;
+  }
+}
+
+.buddy-act-peek {
+  animation: buddy-act-peek-kf 3s ease-in-out infinite;
+}
+
+@keyframes buddy-act-shake-kf {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  15% {
+    transform: rotate(-12deg);
+  }
+  30% {
+    transform: rotate(10deg);
+  }
+  45% {
+    transform: rotate(-8deg);
+  }
+  60% {
+    transform: rotate(8deg);
+  }
+}
+
+.buddy-act-shake {
+  animation: buddy-act-shake-kf 1.4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-stretch-kf {
+  0%,
+  100% {
+    transform: scaleY(1) scaleX(1);
+  }
+  40% {
+    transform: scaleY(1.18) scaleX(0.94);
+  }
+  55% {
+    transform: scaleY(1.12) scaleX(0.96);
+  }
+}
+
+.buddy-act-stretch {
+  animation: buddy-act-stretch-kf 3.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-sleep-kf {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(6px) rotate(8deg);
+  }
+}
+
+.buddy-act-sleep {
+  animation: buddy-act-sleep-kf 4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-yawn-kf {
+  0%,
+  100% {
+    transform: scale(1) rotate(0);
+  }
+  35% {
+    transform: scale(1.05, 1.12) rotate(-4deg);
+  }
+  50% {
+    transform: scale(1.02, 1.08) rotate(-2deg);
+  }
+}
+
+.buddy-act-yawn {
+  animation: buddy-act-yawn-kf 3.5s ease-in-out infinite;
+}
+
+@keyframes buddy-act-think-kf {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-10deg) translateY(2px);
+  }
+}
+
+.buddy-act-think {
+  animation: buddy-act-think-kf 3.8s ease-in-out infinite;
+}
+
+@keyframes buddy-act-surprised-kf {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(1.2) translateY(-8px);
+  }
+  35% {
+    transform: scale(1.1) translateY(-4px);
+  }
+}
+
+.buddy-act-surprised {
+  animation: buddy-act-surprised-kf 2.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-march-kf {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  25% {
+    transform: translateY(-4px) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0);
+  }
+  75% {
+    transform: translateY(-4px) rotate(2deg);
+  }
+}
+
+.buddy-act-march {
+  animation: buddy-act-march-kf 1.8s ease-in-out infinite;
+}
+
+@keyframes buddy-act-flutter-kf {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  25% {
+    transform: rotate(-6deg) translateY(-3px);
+  }
+  50% {
+    transform: rotate(4deg) translateY(-5px);
+  }
+  75% {
+    transform: rotate(-4deg) translateY(-2px);
+  }
+}
+
+.buddy-act-flutter {
+  animation: buddy-act-flutter-kf 2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-pulse-kf {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.1);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.08);
+  }
+}
+
+.buddy-act-pulse {
+  animation: buddy-act-pulse-kf 2.4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-rain-happy-kf {
+  0%,
+  100% {
+    transform: rotate(-4deg) translateY(0);
+  }
+  50% {
+    transform: rotate(4deg) translateY(-4px);
+  }
+}
+
+.buddy-act-rain-happy {
+  animation: buddy-act-rain-happy-kf 2.8s ease-in-out infinite;
+}
+
+@keyframes buddy-act-sun-bask-kf {
+  0%,
+  100% {
+    transform: rotate(-6deg) scale(1);
+  }
+  50% {
+    transform: rotate(4deg) scale(1.04);
+  }
+}
+
+.buddy-act-sun-bask {
+  animation: buddy-act-sun-bask-kf 4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-water-splash-kf {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  20% {
+    transform: translateY(-6px) rotate(-8deg);
+  }
+  40% {
+    transform: translateY(2px) rotate(6deg);
+  }
+  60% {
+    transform: translateY(-4px) rotate(-4deg);
+  }
+}
+
+.buddy-act-water-splash {
+  animation: buddy-act-water-splash-kf 2.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-photosynthesis-kf {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: brightness(1.15);
+  }
+}
+
+.buddy-act-photosynthesis {
+  animation: buddy-act-photosynthesis-kf 3s ease-in-out infinite;
+}
+
+@keyframes buddy-act-curious-tilt-kf {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30%,
+  70% {
+    transform: rotate(14deg);
+  }
+}
+
+.buddy-act-curious-tilt {
+  animation: buddy-act-curious-tilt-kf 3.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-proud-stand-kf {
+  0%,
+  100% {
+    transform: scaleY(1) translateY(0);
+  }
+  50% {
+    transform: scaleY(1.14) translateY(-4px);
+  }
+}
+
+.buddy-act-proud-stand {
+  animation: buddy-act-proud-stand-kf 3s ease-in-out infinite;
+}
+
+@keyframes buddy-act-side-step-kf {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
+  }
+}
+
+.buddy-act-side-step {
+  animation: buddy-act-side-step-kf 2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-jelly-kf {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  25% {
+    transform: scale(1.12, 0.88);
+  }
+  50% {
+    transform: scale(0.9, 1.1);
+  }
+  75% {
+    transform: scale(1.08, 0.92);
+  }
+}
+
+.buddy-act-jelly {
+  animation: buddy-act-jelly-kf 2.4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-heartbeat-kf {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  10% {
+    transform: scale(1.14);
+  }
+  20% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.1);
+  }
+}
+
+.buddy-act-heartbeat {
+  animation: buddy-act-heartbeat-kf 2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-wave-both-kf {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  20% {
+    transform: rotate(18deg) scale(1.05);
+  }
+  40% {
+    transform: rotate(-14deg) scale(1.05);
+  }
+  60% {
+    transform: rotate(16deg) scale(1.04);
+  }
+  80% {
+    transform: rotate(-10deg) scale(1.02);
+  }
+}
+
+.buddy-act-wave-both {
+  animation: buddy-act-wave-both-kf 2.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-high-five-kf {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-14px) scale(1.08);
+  }
+  55% {
+    transform: translateY(-10px) scale(1.05);
+  }
+}
+
+.buddy-act-high-five {
+  animation: buddy-act-high-five-kf 2.6s ease-in-out infinite;
+}
+
+@keyframes buddy-act-cheer-jump-kf {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-18px) scale(1.12);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.05);
+  }
+  75% {
+    transform: translateY(-14px) scale(1.1);
+  }
+}
+
+.buddy-act-cheer-jump {
+  animation: buddy-act-cheer-jump-kf 2s cubic-bezier(0.34, 1.2, 0.64, 1) infinite;
+}
+
+@keyframes buddy-act-snooze-kf {
+  0%,
+  100% {
+    transform: translateY(0) rotate(2deg);
+  }
+  50% {
+    transform: translateY(5px) rotate(6deg);
+  }
+}
+
+.buddy-act-snooze {
+  animation: buddy-act-snooze-kf 5s ease-in-out infinite;
+}
+
+@keyframes buddy-act-greet-bow-kf {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  45% {
+    transform: rotate(18deg) translateY(6px);
+  }
+}
+
+.buddy-act-greet-bow {
+  animation: buddy-act-greet-bow-kf 3.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-tickle-kf {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+  12% {
+    transform: translate(-4px, 2px) rotate(-5deg);
+  }
+  24% {
+    transform: translate(4px, -2px) rotate(5deg);
+  }
+  36% {
+    transform: translate(-3px, 1px) rotate(-4deg);
+  }
+  48% {
+    transform: translate(3px, -1px) rotate(4deg);
+  }
+}
+
+.buddy-act-tickle {
+  animation: buddy-act-tickle-kf 1.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-listen-kf {
+  0%,
+  100% {
+    transform: rotate(0deg) translateX(0);
+  }
+  50% {
+    transform: rotate(-12deg) translateX(-3px);
+  }
+}
+
+.buddy-act-listen {
+  animation: buddy-act-listen-kf 3.4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-bloom-kf {
+  0%,
+  100% {
+    transform: scale(0.92) rotate(0);
+  }
+  50% {
+    transform: scale(1.15) rotate(5deg);
+  }
+}
+
+.buddy-act-bloom {
+  animation: buddy-act-bloom-kf 3s ease-in-out infinite;
+}
+
+@keyframes buddy-act-water-can-kf {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-18deg) translateY(2px);
+  }
+  60% {
+    transform: rotate(-14deg) translateY(0);
+  }
+}
+
+.buddy-act-water-can {
+  animation: buddy-act-water-can-kf 3.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-wind-sway-kf {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
+}
+
+.buddy-act-wind-sway {
+  animation: buddy-act-wind-sway-kf 2.6s ease-in-out infinite;
+}
+
+@keyframes buddy-act-seed-friend-kf {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06) rotate(-4deg);
+  }
+}
+
+.buddy-act-seed-friend {
+  animation: buddy-act-seed-friend-kf 3.2s ease-in-out infinite;
+}
+
+@keyframes buddy-act-look-around-kf {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-14deg);
+  }
+  75% {
+    transform: rotate(14deg);
+  }
+}
+
+.buddy-act-look-around {
+  animation: buddy-act-look-around-kf 3.6s ease-in-out infinite;
+}
+
+@keyframes buddy-act-tap-dance-kf {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  20% {
+    transform: translateY(-5px);
+  }
+  40% {
+    transform: translateY(0);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+  80% {
+    transform: translateY(0);
+  }
+}
+
+.buddy-act-tap-dance {
+  animation: buddy-act-tap-dance-kf 1.4s ease-in-out infinite;
+}
+
+@keyframes buddy-act-mirror-kf {
+  0%,
+  100% {
+    transform: scale(1) rotate(0);
+  }
+  50% {
+    transform: scale(1.08) rotate(3deg);
+  }
+}
+
+.buddy-act-mirror {
+  animation: buddy-act-mirror-kf 3.8s ease-in-out infinite;
+}
+
+@keyframes buddy-act-sneeze-kf {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  15% {
+    transform: translate(4px, -6px) scale(1.05);
+  }
+  30% {
+    transform: translate(-2px, 2px) scale(0.98);
+  }
+}
+
+.buddy-act-sneeze {
+  animation: buddy-act-sneeze-kf 2.8s ease-in-out infinite;
+}
+
+@keyframes buddy-act-cool-shades-kf {
+  0%,
+  100% {
+    transform: rotate(-4deg) translateY(0);
+  }
+  50% {
+    transform: rotate(4deg) translateY(-2px);
+  }
+}
+
+.buddy-act-cool-shades {
+  animation: buddy-act-cool-shades-kf 3.5s ease-in-out infinite;
+}
+
+@keyframes buddy-act-rainbow-kf {
+  0%,
+  100% {
+    transform: rotate(-6deg) scale(1);
+  }
+  33% {
+    transform: rotate(0deg) scale(1.06);
+  }
+  66% {
+    transform: rotate(6deg) scale(1.04);
+  }
+}
+
+.buddy-act-rainbow {
+  animation: buddy-act-rainbow-kf 3s ease-in-out infinite;
+}
+
+@keyframes buddy-act-team-cheer-kf {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  25% {
+    transform: translateY(-8px) rotate(-8deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(0);
+  }
+  75% {
+    transform: translateY(-8px) rotate(8deg);
+  }
+}
+
+.buddy-act-team-cheer {
+  animation: buddy-act-team-cheer-kf 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy-hang-peek,
+  .buddy-act-prop,
+  .buddy-travel-walk,
+  [class*='buddy-act-'] {
+    animation: none !important;
+  }
+}

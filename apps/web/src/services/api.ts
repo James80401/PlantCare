@@ -334,7 +334,8 @@ export const buddyApi = {
   shopInventory: () => api.get('/buddy/shop/inventory'),
   shopPurchase: (itemId: string) => api.post('/buddy/shop/purchase', { itemId }),
   listSpecies: () => api.get('/buddy/species'),
-  greeting: () => api.get<{ message: string }>('/buddy/greeting'),
+  greeting: () => api.get<{ message: string; weatherAware?: boolean }>('/buddy/greeting'),
+  companionLine: () => api.get<{ message: string; source: string }>('/buddy/companion-line'),
   getJourney: () => api.get<JourneyResponse>('/buddy/journey'),
   startJourney: (biomeId?: string) =>
     api.post<{ journey: JourneyResponse['journey']; estimatedMinutes: number }>(

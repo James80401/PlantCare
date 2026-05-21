@@ -7,9 +7,15 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { buddyApi } from '../services/api';
+import { buddyApi, dashboardApi } from '../services/api';
 import type { BuddyState, JourneyState } from '../hooks/buddy/types';
 import { isJourneyTraveling } from '../hooks/buddy/useJourney';
+import {
+  buildBuddyPhraseContext,
+  EMPTY_GARDEN_METRICS,
+  type BuddyPhraseContext,
+  type GardenMetrics,
+} from '../components/buddy/buddyPhraseContext';
 
 interface BuddyCompanionContextValue {
   buddy: BuddyState | null;
@@ -18,8 +24,11 @@ interface BuddyCompanionContextValue {
   journey: JourneyState | null;
   traveling: boolean;
   greeting: string;
+  gardenMetrics: GardenMetrics;
+  phraseContext: BuddyPhraseContext | null;
   refresh: () => Promise<void>;
   refreshJourney: () => Promise<void>;
+  refreshGardenMetrics: () => Promise<void>;
   loadGreeting: () => Promise<void>;
 }
 
@@ -31,6 +40,22 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [journey, setJourney] = useState<JourneyState | null>(null);
   const [greeting, setGreeting] = useState('');
+  const [gardenMetrics, setGardenMetrics] = useState<GardenMetrics>(EMPTY_GARDEN_METRICS);
+
+  const refreshGardenMetrics = useCallback(async () => {
+    try {
+      const { data } = await dashboardApi.get();
+      const m = data.metrics;
+      setGardenMetrics({
+        totalPlants: m?.totalPlants ?? 0,
+        dueToday: m?.dueToday ?? 0,
+        overdue: m?.overdue ?? 0,
+        completedToday: m?.completedToday ?? 0,
+      });
+    } catch {
+      /* keep last snapshot */
+    }
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -48,7 +73,8 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+    await refreshGardenMetrics();
+  }, [refreshGardenMetrics]);
 
   const refreshJourney = useCallback(async () => {
     if (!buddy?.hasActiveJourney) return;
@@ -79,6 +105,15 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
     if (buddy?.hasActiveJourney) refreshJourney();
   }, [buddy?.hasActiveJourney, buddy?.id, refreshJourney]);
 
+  useEffect(() => {
+    if (buddy) loadGreeting();
+  }, [buddy?.id, loadGreeting]);
+
+  useEffect(() => {
+    const id = window.setInterval(refreshGardenMetrics, 60_000);
+    return () => window.clearInterval(id);
+  }, [refreshGardenMetrics]);
+
   const traveling = isJourneyTraveling(journey) || Boolean(buddy?.hasActiveJourney);
 
   useEffect(() => {
@@ -86,6 +121,11 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
     const id = window.setInterval(refreshJourney, 30_000);
     return () => window.clearInterval(id);
   }, [traveling, refreshJourney]);
+
+  const phraseContext = useMemo(() => {
+    if (!buddy) return null;
+    return buildBuddyPhraseContext(buddy, journey, traveling, gardenMetrics, greeting || undefined);
+  }, [buddy, journey, traveling, gardenMetrics, greeting]);
 
   const value = useMemo(
     () => ({
@@ -95,11 +135,27 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
       journey,
       traveling,
       greeting,
+      gardenMetrics,
+      phraseContext,
       refresh,
       refreshJourney,
+      refreshGardenMetrics,
       loadGreeting,
     }),
-    [buddy, missing, loading, journey, traveling, greeting, refresh, refreshJourney, loadGreeting],
+    [
+      buddy,
+      missing,
+      loading,
+      journey,
+      traveling,
+      greeting,
+      gardenMetrics,
+      phraseContext,
+      refresh,
+      refreshJourney,
+      refreshGardenMetrics,
+      loadGreeting,
+    ],
   );
 
   return (

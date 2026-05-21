@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './styles/tokens.css';
+@import './styles/buddy-animations.css';
 
 body {
   font-family: var(--font-sans);
@@ -22,7 +23,7 @@ body {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-10px);
   }
 }
 
@@ -101,6 +102,50 @@ body {
 
 .buddy-panel-in {
   animation: buddy-panel-in 0.2s ease-out;
+}
+
+/** Side-docked companion leans in from the screen edge. */
+@keyframes buddy-hang-sway {
+  0%,
+  100% {
+    transform: translateX(6px) rotate(3deg);
+  }
+  50% {
+    transform: translateX(-2px) rotate(-2deg);
+  }
+}
+
+.buddy-hang-peek {
+  animation: buddy-hang-sway 4.5s ease-in-out infinite;
+}
+
+@keyframes buddy-speech-in {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.buddy-speech-in {
+  animation: buddy-speech-in 0.35s ease-out;
+}
+
+@keyframes buddy-enlarge {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.15);
+  }
+}
+
+.buddy-chip-expanded {
+  transform: scale(1.08);
+  transition: transform 0.2s ease-out;
 }
 
 .font-display {
