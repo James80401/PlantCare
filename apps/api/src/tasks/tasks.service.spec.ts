@@ -11,7 +11,18 @@ describe('TasksService', () => {
     status: TaskStatus.PENDING,
   };
 
-  function createService(taskResult: unknown = task) {
+  const taskWithPlant = {
+    ...task,
+    plant: {
+      userId: 'user-1',
+      shares: [] as Array<{
+        canComplete: boolean;
+        garden: { members: Array<{ userId: string; role: string }> };
+      }>,
+    },
+  };
+
+  function createService(taskResult: unknown = taskWithPlant) {
     const tx = {
       task: {
         update: jest.fn().mockResolvedValue({
