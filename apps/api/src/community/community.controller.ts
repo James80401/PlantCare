@@ -14,9 +14,9 @@ export class CommunityController {
   constructor(private community: CommunityService) {}
 
   @Get('posts')
-  listPosts(@Query('limit') limit?: string) {
+  listPosts(@CurrentUser() user: JwtPayload, @Query('limit') limit?: string) {
     const parsed = parseInt(limit || '30', 10);
-    return this.community.listPosts(Number.isFinite(parsed) ? parsed : 30);
+    return this.community.listPosts(Number.isFinite(parsed) ? parsed : 30, user.sub);
   }
 
   @Post('posts')
@@ -46,5 +46,10 @@ export class CommunityController {
   @Delete('comments/:id')
   deleteComment(@CurrentUser() user: JwtPayload, @Param('id') commentId: string) {
     return this.community.deleteComment(user.sub, commentId);
+  }
+
+  @Post('posts/:id/like')
+  toggleLike(@CurrentUser() user: JwtPayload, @Param('id') postId: string) {
+    return this.community.toggleLike(user.sub, postId);
   }
 }

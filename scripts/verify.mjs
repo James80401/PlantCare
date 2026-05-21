@@ -541,10 +541,32 @@ async function main() {
     { body: 'Verify community post — happy growing!' },
     token,
   );
+  const postId = communityPost.data?.id;
   if (communityPost.status === 201 || communityPost.status === 200) {
-    pass('Community post create', communityPost.data?.id || 'ok');
+    pass('Community post create', postId || 'ok');
   } else {
     fail('Community post create', JSON.stringify(communityPost.data)?.slice(0, 120));
+  }
+
+  if (postId) {
+    const comment = await api(
+      'POST',
+      `/community/posts/${postId}/comments`,
+      { body: 'Verify comment — great tip!' },
+      token,
+    );
+    if (comment.status === 201 || comment.status === 200) {
+      pass('Community comment create', comment.data?.id || 'ok');
+    } else {
+      fail('Community comment create', JSON.stringify(comment.data)?.slice(0, 120));
+    }
+
+    const like = await api('POST', `/community/posts/${postId}/like`, null, token);
+    if (like.status === 201 || like.status === 200) {
+      pass('Community post like', `liked=${like.data?.liked}, count=${like.data?.likeCount}`);
+    } else {
+      fail('Community post like', JSON.stringify(like.data)?.slice(0, 120));
+    }
   }
 
   const communityList = await api('GET', '/community/posts?limit=5', null, token);

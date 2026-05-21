@@ -195,6 +195,15 @@ export default function Community() {
     }
   };
 
+  const handleLike = async (postId: string) => {
+    try {
+      await communityApi.toggleLike(postId);
+      await load();
+    } catch {
+      setError('Could not update like.');
+    }
+  };
+
   return (
     <div>
       <PageHeader
@@ -277,9 +286,20 @@ export default function Community() {
                   </span>
                 ) : null}
                 <p className="text-sm leading-6 text-gray-700 whitespace-pre-wrap">{post.body}</p>
-                <p className="text-xs text-gray-500">
-                  {post._count?.likes ?? 0} likes · {post._count?.comments ?? 0} comments
-                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleLike(post.id)}
+                    className={`text-xs font-semibold ${
+                      post.likedByMe ? 'text-rose-700' : 'text-emerald-800 hover:underline'
+                    }`}
+                  >
+                    {post.likedByMe ? '♥ Liked' : '♡ Like'} ({post._count?.likes ?? 0})
+                  </button>
+                  <span className="text-xs text-gray-500">
+                    {post._count?.comments ?? 0} comments
+                  </span>
+                </div>
                 <PostComments
                   postId={post.id}
                   commentCount={post._count?.comments ?? 0}

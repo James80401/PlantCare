@@ -8,17 +8,31 @@ import { CreatePostDto } from './dto/create-post.dto';
 export class CommunityService {
   constructor(private prisma: PrismaService) {}
 
-  listPosts(limit = 30) {
+  async listPosts(limit = 30, viewerId?: string) {
     const take = Math.min(50, Math.max(1, limit));
-    return this.prisma.communityPost.findMany({
+    const posts = await this.prisma.communityPost.findMany({
       take,
       orderBy: { createdAt: 'desc' },
       include: {
         author: { select: { id: true, name: true, email: true } },
         species: { select: { id: true, commonName: true } },
         _count: { select: { comments: true, likes: true } },
+        ...(viewerId
+          ? {
+              likes: {
+                where: { userId: viewerId },
+                select: { id: true },
+                take: 1,
+              },
+            }
+          : {}),
       },
     });
+    if (!viewerId) return posts;
+    return posts.map(({ likes, ...post }) => ({
+      ...post,
+      likedByMe: likes.length > 0,
+    }));
   }
 
   createPost(userId: string, dto: CreatePostDto) {
@@ -71,6 +85,24 @@ export class CommunityService {
         author: { select: { id: true, name: true, email: true } },
       },
     });
+  }
+
+  async toggleLike(userId: string, postId: string) {
+    const post = await this.prisma.communityPost.findUnique({ where: { id: postId } });
+    if (!post) throw new NotFoundException('Post not found');
+
+    const existing = await this.prisma.postLike.findUnique({
+      where: { postId_userId: { postId, userId } },
+    });
+
+    if (existing) {
+      await this.prisma.postLike.delete({ where: { id: existing.id } });
+    } else {
+      await this.prisma.postLike.create({ data: { postId, userId } });
+    }
+
+    const count = await this.prisma.postLike.count({ where: { postId } });
+    return { liked: !existing, likeCount: count };
   }
 
   async deleteComment(userId: string, commentId: string) {

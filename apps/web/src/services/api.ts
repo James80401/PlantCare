@@ -271,6 +271,7 @@ export interface CommunityPostSummary {
   author?: { id: string; name?: string | null; email?: string };
   species?: { id: string; commonName: string } | null;
   _count?: { comments: number; likes: number };
+  likedByMe?: boolean;
 }
 
 export interface CommunityCommentSummary {
@@ -304,6 +305,8 @@ export const communityApi = {
   createComment: (postId: string, body: string) =>
     api.post<CommunityCommentSummary>(`/community/posts/${postId}/comments`, { body }),
   deleteComment: (commentId: string) => api.delete(`/community/comments/${commentId}`),
+  toggleLike: (postId: string) =>
+    api.post<{ liked: boolean; likeCount: number }>(`/community/posts/${postId}/like`),
 };
 
 export default api;
