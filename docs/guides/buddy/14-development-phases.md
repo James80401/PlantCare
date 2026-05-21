@@ -168,7 +168,7 @@ Users can connect with friends, visit their terrariums, and send/receive sunshin
 - [x] Journey shortcut progress indicator ("Tasks completed: saves 30 min")
 - [x] Mood degradation visual effects (wilting / dormant styling)
 - [x] First Aid shortcut on buddy home (care tasks entry)
-- [ ] Onboarding improvements (tutorial overlay, tips)
+- [x] Onboarding improvements (dismissible home tips carousel, dashboard buddy panel + adopt CTA)
 
 **Definition of Done:**
 The full feature set is live. Seasonal events run on schedule. Premium items are correctly gated. Personality system influences all dialogue.

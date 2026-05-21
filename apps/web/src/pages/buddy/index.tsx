@@ -8,12 +8,23 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { PageHeader } from '../../components/ui/PageHeader';
 import SeasonalBanner from '../../components/buddy/SeasonalBanner';
+import BuddyTipsCard from '../../components/buddy/BuddyTipsCard';
+import { useMemo } from 'react';
 import { useBuddy } from '../../hooks/buddy/useBuddy';
+import { useBuddyQuests } from '../../hooks/buddy/useBuddyQuests';
 import { buddyApi } from '../../services/api';
 
 export default function BuddyHome() {
   const { buddy, loading, error, refresh } = useBuddy();
+  const { data: quests } = useBuddyQuests();
   const [greeting, setGreeting] = useState('');
+
+  const claimableQuests = useMemo(() => {
+    if (!quests) return 0;
+    return [...quests.daily, ...quests.achievements].filter(
+      (q) => q.completed && !q.rewardClaimed,
+    ).length;
+  }, [quests]);
 
   useEffect(() => {
     if (!buddy) return;
@@ -37,6 +48,8 @@ export default function BuddyHome() {
       />
 
       <SeasonalBanner />
+
+      <BuddyTipsCard />
 
       <Card className="flex flex-col items-center gap-4 py-8">
         <BuddySprite

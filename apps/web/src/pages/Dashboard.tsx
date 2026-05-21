@@ -8,6 +8,7 @@ import { gardensApi, plantsApi, tasksApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { plantsSharedWithUser, type SharedPlantView } from '../utils/household';
 import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
+import BuddyDashboardPanel from '../components/buddy/BuddyDashboardPanel';
 import {
   findNextTaskForPlant,
   getTasksCompletedToday,
@@ -263,6 +264,8 @@ export default function Dashboard() {
       ) : null}
 
       <WeatherAdvicePanel />
+
+      <BuddyDashboardPanel />
 
       {dashError ? (
         <p className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
