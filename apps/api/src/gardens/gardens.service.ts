@@ -18,10 +18,14 @@ import { AcceptInviteDto } from './dto/accept-invite.dto';
 import { CreateGardenDto } from './dto/create-garden.dto';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { SharePlantDto } from './dto/share-plant.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class GardensService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private email: EmailService,
+  ) {}
 
   async create(userId: string, dto: CreateGardenDto) {
     return this.prisma.$transaction(async (tx) => {
@@ -69,11 +73,23 @@ export class GardensService {
     }
     await this.requireRole(userId, gardenId, canManageGarden);
 
+    const garden = await this.prisma.garden.findUnique({
+      where: { id: gardenId },
+      select: { name: true },
+    });
+    if (!garden) throw new NotFoundException('Garden not found');
+
+    const inviter = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+
     const token = randomBytes(24).toString('hex');
+    const email = dto.email?.trim().toLowerCase() || null;
     const invite = await this.prisma.careInvite.create({
       data: {
         gardenId,
-        email: dto.email?.trim().toLowerCase() || null,
+        email,
         token,
         role,
         expiresAt: addDays(new Date(), 7),
@@ -87,7 +103,19 @@ export class GardensService {
       payload: { role, email: invite.email },
     });
 
-    return invite;
+    let emailSent = false;
+    if (email) {
+      const sent = await this.email.sendHouseholdInviteEmail(
+        email,
+        inviter?.name ?? null,
+        garden.name,
+        role,
+        token,
+      );
+      emailSent = sent.success;
+    }
+
+    return { ...invite, emailSent };
   }
 
   async acceptInvite(userId: string, dto: AcceptInviteDto) {

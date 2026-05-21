@@ -273,11 +273,19 @@ export interface CommunityPostSummary {
   _count?: { comments: number; likes: number };
 }
 
+export interface CommunityCommentSummary {
+  id: string;
+  body: string;
+  createdAt: string;
+  postId: string;
+  author?: { id: string; name?: string | null; email?: string };
+}
+
 export const gardensApi = {
   create: (name: string) => api.post<GardenSummary>('/gardens', { name }),
   mine: () => api.get<GardenSummary[]>('/gardens/mine'),
   createInvite: (gardenId: string, data: { email?: string; role: 'CAREGIVER' | 'VIEWER' }) =>
-    api.post(`/gardens/${gardenId}/invites`, data),
+    api.post<{ token: string; emailSent?: boolean }>(`/gardens/${gardenId}/invites`, data),
   acceptInvite: (token: string) => api.post('/gardens/invites/accept', { token }),
   sharePlant: (
     gardenId: string,
@@ -291,6 +299,11 @@ export const communityApi = {
   createPost: (data: { body: string; speciesId?: string; imageUrl?: string }) =>
     api.post<CommunityPostSummary>('/community/posts', data),
   deletePost: (postId: string) => api.delete(`/community/posts/${postId}`),
+  listComments: (postId: string) =>
+    api.get<CommunityCommentSummary[]>(`/community/posts/${postId}/comments`),
+  createComment: (postId: string, body: string) =>
+    api.post<CommunityCommentSummary>(`/community/posts/${postId}/comments`, { body }),
+  deleteComment: (commentId: string) => api.delete(`/community/comments/${commentId}`),
 };
 
 export default api;

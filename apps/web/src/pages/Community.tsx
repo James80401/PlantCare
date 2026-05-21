@@ -2,8 +2,125 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { communityApi, speciesApi, type CommunityPostSummary } from '../services/api';
+import {
+  communityApi,
+  speciesApi,
+  type CommunityCommentSummary,
+  type CommunityPostSummary,
+} from '../services/api';
 import { useAuth } from '../context/AuthContext';
+
+function PostComments({
+  postId,
+  commentCount,
+  currentUserId,
+}: {
+  postId: string;
+  commentCount: number;
+  currentUserId?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [comments, setComments] = useState<CommunityCommentSummary[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [body, setBody] = useState('');
+  const [posting, setPosting] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { data } = await communityApi.listComments(postId);
+      setComments(data);
+    } catch {
+      setError('Could not load comments.');
+    } finally {
+      setLoading(false);
+    }
+  }, [postId]);
+
+  useEffect(() => {
+    if (open) load();
+  }, [open, load]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!body.trim()) return;
+    setPosting(true);
+    try {
+      await communityApi.createComment(postId, body.trim());
+      setBody('');
+      await load();
+    } catch {
+      setError('Could not post comment.');
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!confirm('Delete this comment?')) return;
+    try {
+      await communityApi.deleteComment(commentId);
+      await load();
+    } catch {
+      setError('Could not delete comment.');
+    }
+  };
+
+  return (
+    <div className="border-t border-emerald-50 pt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="text-xs font-semibold text-emerald-800 hover:underline"
+      >
+        {open ? 'Hide' : 'View'} comments ({commentCount})
+      </button>
+      {open ? (
+        <div className="mt-2 space-y-2">
+          {loading ? (
+            <p className="text-xs text-gray-500">Loading comments…</p>
+          ) : comments.length === 0 ? (
+            <p className="text-xs text-gray-500">No comments yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {comments.map((c) => (
+                <li key={c.id} className="rounded-xl bg-emerald-50/60 px-3 py-2">
+                  <p className="text-xs font-semibold text-emerald-900">
+                    {c.author?.name || 'Gardener'}
+                  </p>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{c.body}</p>
+                  {c.author?.id === currentUserId ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(c.id)}
+                      className="mt-1 text-xs font-semibold text-red-700 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
+            <input
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Add a comment…"
+              className="min-w-0 flex-1 rounded-xl border border-emerald-100 px-3 py-2 text-sm"
+            />
+            <Button type="submit" size="sm" disabled={posting || !body.trim()}>
+              {posting ? '…' : 'Reply'}
+            </Button>
+          </form>
+          {error ? <p className="text-xs text-red-600">{error}</p> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export default function Community() {
   const { user } = useAuth();
@@ -163,6 +280,11 @@ export default function Community() {
                 <p className="text-xs text-gray-500">
                   {post._count?.likes ?? 0} likes · {post._count?.comments ?? 0} comments
                 </p>
+                <PostComments
+                  postId={post.id}
+                  commentCount={post._count?.comments ?? 0}
+                  currentUserId={user?.id}
+                />
                 {post.author?.id === user?.id ? (
                   <button
                     type="button"

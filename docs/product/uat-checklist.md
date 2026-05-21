@@ -1,7 +1,7 @@
 # User acceptance testing (UAT) checklist
 
 > **Owner:** James80401 · **Branch:** `main` (default)  
-> Last run: **2026-05-16** — run `npm run verify` and `npm run uat:e2e` after `db:push` on target DB.
+> Last run: **2026-05-21** — run `npm run verify` and `npm run uat:e2e` after `db:push` on target DB; `npm run staging:smoke` for Docker Postgres.
 
 ## A. Environment and database
 

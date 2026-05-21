@@ -9,6 +9,7 @@ import {
   type SpeciesSearchFilters,
 } from './species-filters';
 import { enrichSpeciesRecord } from './species-enrich';
+import { speciesNameContains } from './species-name-filter';
 
 @Injectable()
 export class PerenualService {
@@ -21,6 +22,10 @@ export class PerenualService {
     private prisma: PrismaService,
   ) {
     this.apiKey = this.config.get<string>('PERENUAL_API_KEY');
+  }
+
+  private nameContains(text: string) {
+    return speciesNameContains(this.config.get<string>('DATABASE_URL') ?? '', text);
   }
 
   async browse(
@@ -38,8 +43,8 @@ export class PerenualService {
     const where = q
       ? {
           OR: [
-            { commonName: { contains: q } },
-            { scientificName: { contains: q } },
+            { commonName: this.nameContains(q) },
+            { scientificName: this.nameContains(q) },
           ],
         }
       : {};
@@ -95,8 +100,8 @@ export class PerenualService {
     const local = await this.prisma.plantSpecies.findMany({
       where: {
         OR: [
-          { commonName: { contains: query } },
-          { scientificName: { contains: query } },
+          { commonName: this.nameContains(query) },
+          { scientificName: this.nameContains(query) },
         ],
       },
       take: hasFilters ? 500 : 30,

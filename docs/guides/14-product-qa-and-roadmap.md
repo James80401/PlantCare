@@ -42,7 +42,7 @@ npm run uat:e2e
 npm run staging:smoke   # when Docker available
 ```
 
-Known staging gaps (as of last run): some species search E2E (e.g. Magic Carpet Thyme) may fail if catalog search differs on Postgres seed — fix seed or test data.
+Species search on Postgres uses case-insensitive `contains` (`species-name-filter.ts`). Rebuild staging API after changes, then run `staging:smoke`.
 
 ---
 
@@ -59,7 +59,7 @@ Known staging gaps (as of last run): some species search E2E (e.g. Magic Carpet 
 | Journal | Shipped | PATCH/DELETE |
 | Weather | Shipped | Location required |
 | Household / share | Shipped | API + UI |
-| Community | Shipped | Posts; comments/likes schema only |
+| Community | Shipped | Posts + comments; likes schema only |
 | Mobile Capacitor | Partial | Scripts exist; store TBD |
 | Push FCM | Roadmap | Device tokens only |
 

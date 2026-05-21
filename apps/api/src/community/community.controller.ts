@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { CommunityService } from './community.service';
+import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 
 @ApiTags('community')
@@ -26,5 +27,24 @@ export class CommunityController {
   @Delete('posts/:id')
   deletePost(@CurrentUser() user: JwtPayload, @Param('id') postId: string) {
     return this.community.deletePost(user.sub, postId);
+  }
+
+  @Get('posts/:id/comments')
+  listComments(@Param('id') postId: string) {
+    return this.community.listComments(postId);
+  }
+
+  @Post('posts/:id/comments')
+  createComment(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') postId: string,
+    @Body() dto: CreateCommentDto,
+  ) {
+    return this.community.createComment(user.sub, postId, dto);
+  }
+
+  @Delete('comments/:id')
+  deleteComment(@CurrentUser() user: JwtPayload, @Param('id') commentId: string) {
+    return this.community.deleteComment(user.sub, commentId);
   }
 }

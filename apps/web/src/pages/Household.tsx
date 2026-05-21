@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -9,6 +9,7 @@ import { formatActivityLabel } from '../utils/household';
 
 export default function Household() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [gardens, setGardens] = useState<GardenSummary[]>([]);
   const [myPlants, setMyPlants] = useState<Array<{ id: string; nickname?: string | null; species: { commonName: string } }>>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +74,13 @@ export default function Household() {
       setLastInviteToken(data.token);
       setInviteGardenId(gardenId);
       setInviteEmail('');
-      setMessage('Invite created — share the token below.');
+      setMessage(
+        data.emailSent
+          ? 'Invite email sent. They can also use the link or token below.'
+          : inviteEmail.trim()
+            ? 'Invite created — email was not sent (SMTP may be off). Share the link or token below.'
+            : 'Invite created — share the link or token below.',
+      );
       await load();
     } catch {
       setMessage('Could not create invite.');
@@ -277,9 +284,20 @@ export default function Household() {
                 </form>
 
                 {inviteGardenId === garden.id && lastInviteToken ? (
-                  <p className="break-all rounded-xl bg-gray-50 p-3 text-xs text-gray-700">
-                    Invite token (share securely): <strong>{lastInviteToken}</strong>
-                  </p>
+                  <div className="space-y-2 rounded-xl bg-gray-50 p-3 text-xs text-gray-700">
+                    <p>
+                      Invite link:{' '}
+                      <a
+                        href={`${window.location.origin}/garden/household?invite=${encodeURIComponent(lastInviteToken)}`}
+                        className="font-medium text-emerald-800 break-all hover:underline"
+                      >
+                        Open invite
+                      </a>
+                    </p>
+                    <p className="break-all">
+                      Or paste token: <strong>{lastInviteToken}</strong>
+                    </p>
+                  </div>
                 ) : null}
               </Card>
             </li>

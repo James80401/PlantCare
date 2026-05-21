@@ -117,6 +117,35 @@ export class EmailService implements OnModuleInit {
     });
   }
 
+  async sendHouseholdInviteEmail(
+    to: string,
+    inviterName: string | null,
+    gardenName: string,
+    role: string,
+    token: string,
+  ): Promise<SendResult> {
+    const url = this.frontendUrl(`/garden/household?invite=${encodeURIComponent(token)}`);
+    const greeting = inviterName ? `${inviterName} invited you` : 'You have been invited';
+    const roleLabel = role === 'VIEWER' ? 'viewer' : 'caregiver';
+    return this.deliver({
+      to,
+      subject: `Join ${gardenName} on Plant Care`,
+      text: `${greeting} to help with plants in "${gardenName}" as a ${roleLabel}.\n\nAccept invite: ${url}\n\nExpires in 7 days.`,
+      html: this.wrapHtml(
+        'Household invite',
+        `
+        <p>${greeting} to join <strong>${gardenName}</strong> as a <strong>${roleLabel}</strong>.</p>
+        <p>Accept the invite to see shared plants and help with care tasks.</p>
+        <p style="text-align:center;margin:24px 0">
+          <a href="${url}" style="${EmailService.buttonStyle}">Accept invite</a>
+        </p>
+        <p style="font-size:13px;color:#666">Or copy this link:<br><a href="${url}">${url}</a></p>
+        <p style="font-size:13px;color:#666">Expires in 7 days.</p>
+      `,
+      ),
+    });
+  }
+
   async sendPasswordResetEmail(to: string, name: string | null, token: string): Promise<SendResult> {
     const url = this.frontendUrl(`/reset-password/${token}`);
     const greeting = name ? `Hi ${name},` : 'Hi,';
