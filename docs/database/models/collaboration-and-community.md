@@ -1,6 +1,6 @@
 # Collaboration & community models
 
-> **Navigation:** [Database models INDEX](INDEX.md) · [Guide 04](../guides/04-data-model-and-persistence.md)
+> **Navigation:** [Database models INDEX](INDEX.md) · [Guide 04](../../guides/04-data-model-and-persistence.md)
 
 ## Collaboration (Care Share)
 
