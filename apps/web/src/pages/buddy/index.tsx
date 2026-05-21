@@ -64,6 +64,13 @@ export default function BuddyHome() {
         </div>
       </Card>
 
+      <Link
+        to="/garden/buddy/town"
+        className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-amber-100 px-4 py-2.5 text-sm font-semibold text-amber-950 hover:bg-amber-200"
+      >
+        Garden Town
+      </Link>
+
       <div className="grid gap-2 sm:grid-cols-2">
         <Link
           to="/garden/buddy/activities"
@@ -114,8 +121,11 @@ export default function BuddyHome() {
       </div>
 
       <p className="text-center text-xs text-gray-500">
-        Garden code: <span className="font-mono font-semibold">{buddy.gardenCode}</span> (friends —
-        coming soon)
+        Garden code:{' '}
+        <span className="font-mono font-semibold">{buddy.gardenCode}</span> — share in{' '}
+        <Link to="/garden/buddy/town" className="font-medium text-emerald-800 hover:underline">
+          Garden Town
+        </Link>
       </p>
     </div>
   );

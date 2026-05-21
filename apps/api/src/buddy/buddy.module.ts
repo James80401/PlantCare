@@ -6,6 +6,8 @@ import { BuddySchedulerService } from './buddy-scheduler.service';
 import { BuddyShopService } from './buddy-shop.service';
 import { BuddyActivityService } from './buddy-activity.service';
 import { BuddyQuestService } from './buddy-quest.service';
+import { BuddySocialService } from './buddy-social.service';
+import { BuddySocialController } from './buddy-social.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
@@ -18,6 +20,7 @@ import { PrismaModule } from '../prisma/prisma.module';
     BuddyShopService,
     BuddyActivityService,
     BuddyQuestService,
+    BuddySocialService,
   ],
   exports: [BuddyService],
 })

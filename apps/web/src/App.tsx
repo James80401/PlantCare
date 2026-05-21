@@ -42,6 +42,8 @@ import BuddyShopPage from './pages/buddy/style/shop';
 import BuddyActivitiesPage from './pages/buddy/activities/index';
 import BuddyActivityFlowPage from './pages/buddy/activities/flow';
 import BuddyQuestsPage from './pages/buddy/quests';
+import GardenTownPage from './pages/buddy/town/index';
+import FriendTerrariumPage from './pages/buddy/town/terrarium';
 
 export default function App() {
   return (
@@ -90,6 +92,8 @@ export default function App() {
             <Route path="activities" element={<BuddyActivitiesPage />} />
             <Route path="activities/:activityType" element={<BuddyActivityFlowPage />} />
             <Route path="quests" element={<BuddyQuestsPage />} />
+            <Route path="town" element={<GardenTownPage />} />
+            <Route path="town/:friendBuddyId" element={<FriendTerrariumPage />} />
           </Route>
           <Route path="settings" element={<Settings />} />
           <Route path="subscription" element={<Subscription />} />

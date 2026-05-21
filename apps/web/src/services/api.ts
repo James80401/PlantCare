@@ -341,6 +341,17 @@ export const buddyApi = {
   }) => api.post('/buddy/activities/complete', data),
   getQuests: () => api.get('/buddy/quests'),
   claimQuest: (questId: string) => api.post(`/buddy/quests/${questId}/claim`),
+  listFriends: () => api.get('/buddy/social/friends'),
+  addFriend: (gardenCode: string) =>
+    api.post('/buddy/social/friends/add', { gardenCode }),
+  removeFriend: (friendBuddyId: string) =>
+    api.delete(`/buddy/social/friends/${friendBuddyId}`),
+  sendSunshine: (friendBuddyId: string) =>
+    api.post(`/buddy/social/sunshine/${friendBuddyId}`),
+  sunshineToday: () => api.get<{ sent: string[]; received: number }>('/buddy/social/sunshine/today'),
+  viewFriendTerrarium: (friendBuddyId: string) =>
+    api.get(`/buddy/social/friends/${friendBuddyId}/terrarium`),
+  socialFeed: () => api.get('/buddy/social/feed'),
 };
 
 export const communityApi = {

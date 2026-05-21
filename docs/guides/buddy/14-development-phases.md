@@ -116,28 +116,28 @@ Users can complete guided activities, track quest progress, and work through the
 **Goal:** Friends can connect, visit each other's terrariums, and send sunshine.
 
 **Backend:**
-- [ ] `BuddyFriendship` Prisma model
-- [ ] `SunshineEvent` Prisma model
-- [ ] Garden code generation on buddy creation
-- [ ] `POST /buddy/social/friends/add` — add by garden code
-- [ ] `DELETE /buddy/social/friends/:id` — remove friend
-- [ ] `GET /buddy/social/friends` — list with buddy info
-- [ ] `POST /buddy/social/sunshine/:id` — send sunshine (once per friend per day)
-- [ ] Sunshine daily reset cron job
-- [ ] Friendship level calculation
-- [ ] `GET /buddy/social/friends/:id/terrarium` — read-only terrarium view
-- [ ] `GET /buddy/social/feed` — activity feed events
+- [x] `BuddyFriendship` Prisma model
+- [x] `SunshineEvent` Prisma model
+- [x] Garden code generation on buddy creation
+- [x] `POST /buddy/social/friends/add` — add by garden code
+- [x] `DELETE /buddy/social/friends/:id` — remove friend
+- [x] `GET /buddy/social/friends` — list with buddy info
+- [x] `POST /buddy/social/sunshine/:id` — send sunshine (once per friend per day)
+- [x] Sunshine daily reset (date check on `lastSunshineSentAt`)
+- [x] Friendship level calculation
+- [x] `GET /buddy/social/friends/:id/terrarium` — read-only terrarium view
+- [x] `GET /buddy/social/feed` — activity feed events
 - [ ] Push notifications for received sunshine and friend milestones
 
 **Frontend:**
-- [ ] Garden Town screen
-- [ ] `FriendCard` component (buddy display + shine button)
-- [ ] Friend terrarium view (read-only)
-- [ ] Add friend modal (garden code input)
-- [ ] Remove friend confirmation
-- [ ] Activity feed section
-- [ ] Garden code display + copy + share
-- [ ] Friendship level progress indicator
+- [x] Garden Town screen
+- [x] `FriendCard` component (buddy display + shine button)
+- [x] Friend terrarium view (read-only)
+- [x] Add friend (garden code input)
+- [ ] Remove friend confirmation UI
+- [x] Activity feed section
+- [x] Garden code display + copy
+- [x] Friendship level progress indicator (level name + points on card)
 
 **Definition of Done:**
 Users can connect with friends, visit their terrariums, and send/receive sunshine with Dewdrop rewards.

@@ -478,6 +478,8 @@ model Buddy {
   activities          BuddyActivity[]
   questProgress       BuddyQuestProgress[]
   challengeProgress   BuddyChallengeProgress[]
+  friendshipsFrom     BuddyFriendship[] @relation("FriendshipFrom")
+  friendshipsTo       BuddyFriendship[] @relation("FriendshipTo")
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
 }
@@ -675,4 +677,34 @@ model BuddyChallengeProgress {
   startedAt        DateTime         @default(now())
 
   @@unique([buddyId, challengeId])
+}
+
+model BuddyFriendship {
+  id                 String    @id @default(cuid())
+  fromBuddyId        String
+  toBuddyId          String
+  fromBuddy          Buddy     @relation("FriendshipFrom", fields: [fromBuddyId], references: [id], onDelete: Cascade)
+  toBuddy            Buddy     @relation("FriendshipTo", fields: [toBuddyId], references: [id], onDelete: Cascade)
+  level              Int       @default(1)
+  points             Int       @default(0)
+  lastSunshineSentAt DateTime?
+  totalSunshineSent  Int       @default(0)
+  connectedAt        DateTime  @default(now())
+  isActive           Boolean   @default(true)
+
+  @@unique([fromBuddyId, toBuddyId])
+  @@index([toBuddyId])
+}
+
+model SunshineEvent {
+  id              String   @id @default(cuid())
+  fromUserId      String
+  toUserId        String
+  fromBuddyId     String
+  toBuddyId       String
+  sentAt          DateTime @default(now())
+  dewdropsAwarded Int      @default(3)
+
+  @@index([toUserId, sentAt])
+  @@index([fromUserId, sentAt])
 }
