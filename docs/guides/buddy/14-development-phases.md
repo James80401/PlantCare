@@ -134,7 +134,7 @@ Users can complete guided activities, track quest progress, and work through the
 - [x] `FriendCard` component (buddy display + shine button)
 - [x] Friend terrarium view (read-only)
 - [x] Add friend (garden code input)
-- [ ] Remove friend confirmation UI
+- [x] Remove friend confirmation UI
 - [x] Activity feed section
 - [x] Garden code display + copy
 - [x] Friendship level progress indicator (level name + points on card)
