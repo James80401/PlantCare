@@ -1,0 +1,64 @@
+import { Link } from 'react-router-dom';
+import BuddySprite from '../../../components/buddy/BuddySprite';
+import { Card } from '../../../components/ui/Card';
+import { PageHeader } from '../../../components/ui/PageHeader';
+import { useBuddy } from '../../../hooks/buddy/useBuddy';
+
+const STYLE_LINKS = [
+  { to: 'clothing', label: 'Clothing & accessories', desc: 'Hats, tops, glasses, and more' },
+  { to: 'pots', label: 'Pots', desc: 'Pot skins for your buddy' },
+  { to: 'terrarium', label: 'Terrarium', desc: 'Backgrounds and furniture' },
+  { to: 'species', label: 'Species', desc: 'Switch plant personality' },
+  { to: 'shop', label: 'Shop', desc: 'Spend dewdrops on new items' },
+] as const;
+
+export default function BuddyStyleHub() {
+  const { buddy, loading } = useBuddy();
+
+  if (loading || !buddy) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center text-emerald-700">
+        Loading…
+      </div>
+    );
+  }
+
+  const equipped = buddy.equippedItems as Record<string, string>;
+
+  return (
+    <div className="mx-auto max-w-lg space-y-5">
+      <PageHeader
+        eyebrow="Style"
+        title="Dress up"
+        description={`${buddy.dewdrops} dewdrops available`}
+      />
+
+      <Card className="flex flex-col items-center gap-2 py-6">
+        <BuddySprite speciesId={buddy.speciesId} size="lg" />
+        <p className="text-xs text-gray-500">
+          {equipped.potSkin ? `Pot: ${equipped.potSkin}` : 'Default look'}
+        </p>
+      </Card>
+
+      <div className="grid gap-2">
+        {STYLE_LINKS.map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className="block rounded-2xl border border-emerald-100 bg-white px-4 py-3 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/50"
+          >
+            <p className="font-semibold text-emerald-950">{link.label}</p>
+            <p className="text-sm text-gray-500">{link.desc}</p>
+          </Link>
+        ))}
+      </div>
+
+      <Link
+        to="/garden/buddy"
+        className="block text-center text-sm font-medium text-emerald-800 hover:underline"
+      >
+        ← Back to buddy home
+      </Link>
+    </div>
+  );
+}

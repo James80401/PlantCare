@@ -47,27 +47,27 @@ A user can create a buddy, complete tasks, fill the sunlight bar, send their bud
 **Goal:** Users can spend Dewdrops to customize their buddy.
 
 **Backend:**
-- [ ] `ShopItem` Prisma model + seed data (all 30+ items)
-- [ ] `BuddyInventory` Prisma model
-- [ ] `BuddySpecies` Prisma model + seed data (all 12 species)
-- [ ] `GET /buddy/shop/catalog` — full shop with ownership status
-- [ ] `GET /buddy/shop/daily` — daily rotation (4 items)
-- [ ] `POST /buddy/shop/purchase` — spend dewdrops
-- [ ] `PATCH /buddy` — update `equippedItems` JSON
-- [ ] `PATCH /buddy` — update `terrariumLayout` JSON
-- [ ] Species unlock logic (check unlock conditions)
-- [ ] Item ownership validation on equip
+- [x] `ShopItem` Prisma model + seed data (all 30+ items)
+- [x] `BuddyInventory` Prisma model
+- [x] `BuddySpecies` Prisma model + seed data (7 species in Phase 2 catalog)
+- [x] `GET /buddy/shop/catalog` — full shop with ownership status
+- [x] `GET /buddy/shop/daily` — daily rotation (4 items)
+- [x] `POST /buddy/shop/purchase` — spend dewdrops
+- [x] `PATCH /buddy` — update `equippedItems` JSON
+- [x] `PATCH /buddy` — update `terrariumLayout` JSON
+- [x] Species unlock logic (check unlock conditions)
+- [x] Item ownership validation on equip
 
 **Frontend:**
-- [ ] Shop hub screen
-- [ ] Clothing shop by category (hats, tops, accessories)
-- [ ] Pot shop
-- [ ] Terrarium shop (backgrounds + furniture)
-- [ ] `AccessoryPicker` component — grid of owned items
-- [ ] `TerrariumView` component — interactive terrarium
-- [ ] Species selector in style tab
-- [ ] Dewdrops balance display + spending confirmation
-- [ ] Daily rotation banner in shop
+- [x] Shop hub screen
+- [x] Clothing shop by category (hats, tops, accessories)
+- [x] Pot shop
+- [x] Terrarium shop (backgrounds + furniture)
+- [x] `AccessoryPicker` component — grid of owned items
+- [x] `TerrariumView` component — interactive terrarium
+- [x] Species selector in style tab
+- [x] Dewdrops balance display + spending confirmation
+- [x] Daily rotation banner in shop
 
 **Definition of Done:**
 Users can browse the shop, purchase items, equip them on their buddy, and place furniture in their terrarium.

@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { BuddyShopService } from './buddy-shop.service';
+import { PurchaseItemDto } from './dto/purchase-item.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
@@ -17,6 +19,7 @@ export class BuddyController {
   constructor(
     private buddyService: BuddyService,
     private journeyService: BuddyJourneyService,
+    private shopService: BuddyShopService,
   ) {}
 
   @Post()
@@ -52,5 +55,30 @@ export class BuddyController {
   @Post('journey/respond')
   respondToDiscovery(@CurrentUser() user: JwtPayload, @Body() body: JourneyRespondDto) {
     return this.journeyService.recordDiscoveryChoice(user.sub, body.journeyId, body.choice);
+  }
+
+  @Get('shop/catalog')
+  shopCatalog(@CurrentUser() user: JwtPayload) {
+    return this.shopService.getCatalog(user.sub);
+  }
+
+  @Get('shop/daily')
+  shopDaily(@CurrentUser() user: JwtPayload) {
+    return this.shopService.getDailyRotation(user.sub);
+  }
+
+  @Get('shop/inventory')
+  shopInventory(@CurrentUser() user: JwtPayload) {
+    return this.shopService.getInventory(user.sub);
+  }
+
+  @Post('shop/purchase')
+  shopPurchase(@CurrentUser() user: JwtPayload, @Body() dto: PurchaseItemDto) {
+    return this.shopService.purchase(user.sub, dto);
+  }
+
+  @Get('species')
+  listSpecies(@CurrentUser() user: JwtPayload) {
+    return this.shopService.getSpecies(user.sub);
   }
 }

@@ -1,5 +1,12 @@
 import { BuddyTrait } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateBuddyDto {
   @IsOptional()
@@ -11,4 +18,20 @@ export class UpdateBuddyDto {
   @IsOptional()
   @IsEnum(BuddyTrait)
   trait?: BuddyTrait;
+
+  @IsOptional()
+  @IsString()
+  speciesId?: string;
+
+  @IsOptional()
+  @IsObject()
+  equippedItems?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  terrariumLayout?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsString()
+  terrariumBackground?: string;
 }

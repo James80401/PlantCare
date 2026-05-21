@@ -19,15 +19,20 @@ import {
 } from './constants/stage-thresholds';
 import { CreateBuddyDto } from './dto/create-buddy.dto';
 import { UpdateBuddyDto } from './dto/update-buddy.dto';
+import { BuddyShopService } from './buddy-shop.service';
 import {
   formatBuddy,
   generateGardenCode,
+  parseJsonObject,
   parseStringArray,
 } from './buddy.utils';
 
 @Injectable()
 export class BuddyService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private shopService: BuddyShopService,
+  ) {}
 
   async create(userId: string, dto: CreateBuddyDto) {
     const existing = await this.prisma.buddy.findUnique({ where: { userId } });
@@ -43,6 +48,8 @@ export class BuddyService {
       gardenCode = generateGardenCode();
     }
 
+    const equippedItems = this.shopService.defaultEquippedForSpecies(dto.speciesId);
+
     const buddy = await this.prisma.buddy.create({
       data: {
         userId,
@@ -51,9 +58,12 @@ export class BuddyService {
         trait: dto.trait,
         unlockedSpecies: JSON.stringify(unlockedSpecies),
         unlockedBiomes: JSON.stringify(['seed_garden']),
+        equippedItems: JSON.stringify(equippedItems),
         gardenCode,
       },
     });
+
+    await this.shopService.grantDefaultInventory(buddy.id, dto.speciesId);
 
     return formatBuddy(buddy);
   }
@@ -77,11 +87,58 @@ export class BuddyService {
     const buddy = await this.prisma.buddy.findUnique({ where: { userId } });
     if (!buddy) throw new NotFoundException('Plant buddy not found');
 
+    let speciesId = buddy.speciesId;
+    let unlockedSpecies = parseStringArray(buddy.unlockedSpecies);
+
+    if (dto.speciesId !== undefined) {
+      await this.shopService.validateSpeciesChange(buddy, dto.speciesId, buddy.unlockedSpecies);
+      speciesId = dto.speciesId;
+      if (!unlockedSpecies.includes(speciesId)) {
+        unlockedSpecies = [...unlockedSpecies, speciesId];
+      }
+    }
+
+    if (dto.equippedItems !== undefined) {
+      await this.shopService.validateEquipped(
+        buddy.id,
+        speciesId,
+        buddy.growthStage,
+        dto.equippedItems,
+      );
+    }
+
+    if (dto.terrariumBackground !== undefined) {
+      await this.shopService.validateTerrariumBackground(buddy.id, dto.terrariumBackground);
+    }
+
+    if (dto.terrariumLayout !== undefined) {
+      await this.shopService.validateTerrariumLayout(buddy.id, dto.terrariumLayout);
+    }
+
+    const currentEquipped = parseJsonObject(buddy.equippedItems);
+    const nextEquipped =
+      dto.equippedItems !== undefined
+        ? { ...currentEquipped, ...dto.equippedItems }
+        : undefined;
+
     const updated = await this.prisma.buddy.update({
       where: { id: buddy.id },
       data: {
         ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
         ...(dto.trait !== undefined ? { trait: dto.trait } : {}),
+        ...(dto.speciesId !== undefined
+          ? {
+              speciesId,
+              unlockedSpecies: JSON.stringify(unlockedSpecies),
+            }
+          : {}),
+        ...(nextEquipped !== undefined ? { equippedItems: JSON.stringify(nextEquipped) } : {}),
+        ...(dto.terrariumLayout !== undefined
+          ? { terrariumLayout: JSON.stringify(dto.terrariumLayout) }
+          : {}),
+        ...(dto.terrariumBackground !== undefined
+          ? { terrariumBackground: dto.terrariumBackground }
+          : {}),
       },
       include: {
         journeys: {
