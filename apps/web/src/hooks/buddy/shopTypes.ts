@@ -19,6 +19,8 @@ export interface ShopItem {
   category: ShopItemCategory;
   tier: number;
   cost: number;
+  bloomTokenCost?: number;
+  seasonalEventId?: string | null;
   requiresPremium: boolean;
   speciesLocked: string | null;
   unlockType: string;
@@ -26,11 +28,13 @@ export interface ShopItem {
   sortOrder: number;
   owned?: boolean;
   canPurchase?: boolean;
-  lockedReason?: 'premium';
+  lockedReason?: 'premium' | 'seasonal' | 'species' | 'stage' | 'funds';
 }
 
 export interface ShopCatalogResponse {
   dewdrops: number;
+  bloomTokens: number;
+  bloomTokensEnabled: boolean;
   growthStage: string;
   speciesId: string;
   items: ShopItem[];

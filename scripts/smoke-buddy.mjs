@@ -35,12 +35,14 @@ const get = await api('GET', '/buddy', null, token);
 const acts = await api('GET', '/buddy/activities', null, token);
 const greet = await api('GET', '/buddy/greeting', null, token);
 const quests = await api('GET', '/buddy/quests', null, token);
+const seasonal = await api('GET', '/buddy/seasonal', null, token);
 
 const checks = [
   ['GET /buddy', get.status === 200 && get.data.name === 'Sprout'],
   ['GET /buddy/activities', acts.status === 200 && Array.isArray(acts.data) && acts.data.length === 10],
   ['GET /buddy/greeting', greet.status === 200 && greet.data.message],
   ['GET /buddy/quests', quests.status === 200 && quests.data.daily],
+  ['GET /buddy/seasonal', seasonal.status === 200 && typeof seasonal.data.active === 'boolean'],
 ];
 
 for (const [name, ok] of checks) {

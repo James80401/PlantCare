@@ -58,6 +58,8 @@ export function formatBuddy(buddy: Buddy & { journeys?: BuddyJourney[] }) {
     growthStage: buddy.growthStage,
     journeyCount: buddy.journeyCount,
     dewdrops: buddy.dewdrops,
+    bloomTokens: buddy.bloomTokens ?? 0,
+    bloomTokensEnabled: buddy.speciesId === 'rose',
     sunlightToday: buddy.sunlightToday,
     tasksToday: buddy.tasksToday,
     mood: buddy.mood,

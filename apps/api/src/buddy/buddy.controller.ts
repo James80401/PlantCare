@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/co
 import { BuddyShopService } from './buddy-shop.service';
 import { BuddyActivityService } from './buddy-activity.service';
 import { BuddyQuestService } from './buddy-quest.service';
+import { BuddySeasonalService } from './buddy-seasonal.service';
 import { PurchaseItemDto } from './dto/purchase-item.dto';
 import { CompleteActivityDto } from './dto/complete-activity.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -25,7 +26,13 @@ export class BuddyController {
     private shopService: BuddyShopService,
     private activityService: BuddyActivityService,
     private questService: BuddyQuestService,
+    private seasonalService: BuddySeasonalService,
   ) {}
+
+  @Get('seasonal')
+  seasonalStatus(@CurrentUser() user: JwtPayload) {
+    return this.seasonalService.getStatus(user.sub);
+  }
 
   @Post()
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateBuddyDto) {

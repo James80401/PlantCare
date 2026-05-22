@@ -64,6 +64,11 @@ export default function BuddyHome() {
             {GROWTH_STAGE_LABEL[buddy.growthStage] ?? buddy.growthStage}
           </span>
           <span className="text-xs text-gray-500">{buddy.dewdrops} dewdrops 💧</span>
+          {buddy.bloomTokensEnabled && (
+            <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-900">
+              {buddy.bloomTokens ?? 0} bloom 🌸
+            </span>
+          )}
         </div>
         {buddy.hasActiveJourney ? (
           <p className="text-center text-sm text-emerald-800">

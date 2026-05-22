@@ -36,6 +36,13 @@ export const BUDDY_SPECIES = [
     emoji: '🌱',
     blurb: 'Gentle and curious — loves humidity checks.',
   },
+  {
+    id: 'rose',
+    name: 'Rosalind',
+    label: 'Rose',
+    emoji: '🌹',
+    blurb: 'Earn Bloom Tokens when every due task is done.',
+  },
 ] as const;
 
 export const BUDDY_TRAITS: { value: BuddyTrait; label: string; hint: string }[] = [

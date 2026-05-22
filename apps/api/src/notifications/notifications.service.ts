@@ -105,14 +105,44 @@ export class NotificationsService {
     }
   }
 
+  async notifyBuddy(userId: string, title: string, body: string, tag = 'buddy') {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return;
+    if (this.isQuietHours(user)) return;
+
+    if (user.notifyPush) {
+      await this.sendPush(userId, title, body);
+    }
+    if (user.notifyEmail) {
+      await this.sendEmail(user.email, title, body);
+      await this.log(userId, NotificationChannel.EMAIL, `[${tag}] ${title}: ${body}`);
+    }
+  }
+
+  async hasBuddyNudgeToday(userId: string, tag: string): Promise<boolean> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const row = await this.prisma.notificationLog.findFirst({
+      where: {
+        userId,
+        channel: NotificationChannel.PUSH,
+        message: { contains: `[${tag}]` },
+        createdAt: { gte: today },
+      },
+    });
+    return Boolean(row);
+  }
+
   private async sendPush(userId: string, title: string, body: string) {
     const tokens = await this.prisma.deviceToken.findMany({ where: { userId } });
+    const message = `${title}: ${body}`;
     if (!tokens.length) {
-      this.logger.log(`[push mock] ${userId}: ${title} - ${body}`);
+      this.logger.log(`[push mock] ${userId}: ${message}`);
+      await this.log(userId, NotificationChannel.PUSH, `[buddy] ${message}`);
       return;
     }
-    this.logger.log(`[push] Would send to ${tokens.length} devices: ${title}`);
-    await this.log(userId, NotificationChannel.PUSH, `${title}: ${body}`);
+    this.logger.log(`[push] Would send to ${tokens.length} devices: ${message}`);
+    await this.log(userId, NotificationChannel.PUSH, `[buddy] ${message}`);
   }
 
   private async log(userId: string, channel: NotificationChannel, message: string) {

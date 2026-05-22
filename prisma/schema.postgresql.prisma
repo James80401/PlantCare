@@ -456,6 +456,8 @@ model Buddy {
   growthStage         GrowthStage @default(SEED)
   journeyCount        Int         @default(0)
   dewdrops            Int         @default(0)
+  bloomTokens         Int         @default(0)
+  lastPerfectDayKey   String?
   sunlightToday       Int         @default(0)
   tasksToday          Int         @default(0)
   lastResetDate       DateTime?
@@ -545,6 +547,8 @@ model ShopItem {
   category        ItemCategory
   tier            Int
   cost            Int
+  bloomTokenCost  Int            @default(0)
+  seasonalEventId String?
   requiresPremium Boolean        @default(false)
   speciesLocked   String?
   unlockType      ItemUnlockType @default(PURCHASE)

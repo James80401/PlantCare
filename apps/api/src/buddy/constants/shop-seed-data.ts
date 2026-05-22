@@ -7,6 +7,8 @@ export interface ShopItemSeed {
   category: ItemCategory;
   tier: number;
   cost: number;
+  bloomTokenCost?: number;
+  seasonalEventId?: string | null;
   requiresPremium?: boolean;
   speciesLocked?: string | null;
   unlockType?: ItemUnlockType;
@@ -385,6 +387,107 @@ export const SHOP_ITEMS_SEED: ShopItemSeed[] = [
     imageKey: 'furn_fountain',
     sortOrder: 84,
   },
+  // Seasonal — Spring Garden 2026
+  {
+    id: 'hat_spring_wreath',
+    name: 'Spring wreath',
+    description: 'Limited spring crown.',
+    category: 'HAT',
+    tier: 2,
+    cost: 55,
+    seasonalEventId: 'spring_garden_2026',
+    unlockType: 'SEASONAL_EVENT',
+    imageKey: 'hat_spring',
+    sortOrder: 90,
+  },
+  {
+    id: 'furn_spring_planter',
+    name: 'Spring planter',
+    description: 'Pastel terrarium accent.',
+    category: 'FURNITURE',
+    tier: 2,
+    cost: 70,
+    seasonalEventId: 'spring_garden_2026',
+    unlockType: 'SEASONAL_EVENT',
+    imageKey: 'furn_spring',
+    sortOrder: 91,
+  },
+  {
+    id: 'top_spring_cardigan',
+    name: 'Garden cardigan',
+    description: 'Cozy spring layer.',
+    category: 'TOP',
+    tier: 2,
+    cost: 60,
+    seasonalEventId: 'spring_garden_2026',
+    unlockType: 'SEASONAL_EVENT',
+    imageKey: 'top_spring',
+    sortOrder: 92,
+  },
+  // Seasonal — Summer Sun 2026
+  {
+    id: 'hat_sun_visor',
+    name: 'Sun visor',
+    description: 'Summer event exclusive.',
+    category: 'HAT',
+    tier: 2,
+    cost: 50,
+    seasonalEventId: 'summer_sun_2026',
+    unlockType: 'SEASONAL_EVENT',
+    imageKey: 'hat_summer',
+    sortOrder: 93,
+  },
+  {
+    id: 'glasses_summer_shades',
+    name: 'Summer shades',
+    description: 'Cool patio vibes.',
+    category: 'GLASSES',
+    tier: 2,
+    cost: 45,
+    seasonalEventId: 'summer_sun_2026',
+    unlockType: 'SEASONAL_EVENT',
+    imageKey: 'glasses_summer',
+    sortOrder: 94,
+  },
+  {
+    id: 'held_watering_can_gold',
+    name: 'Golden watering can',
+    description: 'Summer shine accessory.',
+    category: 'HELD_ITEM',
+    tier: 3,
+    cost: 85,
+    seasonalEventId: 'summer_sun_2026',
+    unlockType: 'SEASONAL_EVENT',
+    imageKey: 'held_gold_can',
+    sortOrder: 95,
+  },
+  // Rose bloom token exclusives
+  {
+    id: 'hat_rose_crown',
+    name: 'Rose crown',
+    description: 'Exclusive — costs Bloom Tokens (Rose buddies).',
+    category: 'HAT',
+    tier: 3,
+    cost: 0,
+    bloomTokenCost: 3,
+    speciesLocked: 'rose',
+    unlockType: 'PURCHASE',
+    imageKey: 'hat_rose',
+    sortOrder: 96,
+  },
+  {
+    id: 'top_rose_petals',
+    name: 'Petal shawl',
+    description: 'Rose-themed wrap from Bloom Tokens.',
+    category: 'TOP',
+    tier: 3,
+    cost: 0,
+    bloomTokenCost: 5,
+    speciesLocked: 'rose',
+    unlockType: 'PURCHASE',
+    imageKey: 'top_rose',
+    sortOrder: 97,
+  },
 ];
 
 export const BUDDY_SPECIES_SEED = [
@@ -450,6 +553,15 @@ export const BUDDY_SPECIES_SEED = [
     unlockType: 'STREAK' as const,
     unlockValue: 30,
     sortOrder: 7,
+  },
+  {
+    id: 'rose',
+    displayName: 'Rosalind',
+    description: 'Earn Bloom Tokens on perfect care days.',
+    emoji: '🌹',
+    unlockType: 'DEWDROPS' as const,
+    unlockValue: 500,
+    sortOrder: 8,
   },
 ];
 

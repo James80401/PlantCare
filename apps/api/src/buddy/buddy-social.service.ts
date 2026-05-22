@@ -162,7 +162,10 @@ export class BuddySocialService {
       });
     });
 
-    this.events.emit('sunshine.sent', new SunshineSentEvent(userId, friendBuddyId));
+    this.events.emit(
+      'sunshine.sent',
+      new SunshineSentEvent(userId, friendBuddyId, friendship.toBuddy.userId, buddy.id),
+    );
 
     return {
       success: true,

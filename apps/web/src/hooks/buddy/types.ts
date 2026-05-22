@@ -21,6 +21,8 @@ export interface BuddyState {
   growthStage: string;
   journeyCount: number;
   dewdrops: number;
+  bloomTokens: number;
+  bloomTokensEnabled: boolean;
   sunlightToday: number;
   tasksToday: number;
   mood: BuddyMood;

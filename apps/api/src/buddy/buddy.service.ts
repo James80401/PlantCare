@@ -14,10 +14,9 @@ import {
   getTodayTasks,
   type TaskLike,
 } from '../dashboard/dashboard-helpers';
-import { addDays } from 'date-fns';
+import { addDays, startOfDay } from 'date-fns';
 import { OnEvent } from '@nestjs/event-emitter';
-import { BuddyMood, GrowthStage } from '@prisma/client';
-import { startOfDay } from 'date-fns';
+import { BuddyMood, GrowthStage, TaskStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { TaskCompletedEvent } from '../tasks/events/task-completed.event';
 import {
@@ -279,6 +278,43 @@ export class BuddyService {
     });
 
     await this.updateStreak(buddy.id, buddy.lastActiveDate);
+    await this.tryAwardPerfectCareDay(event.userId, buddy.id);
+  }
+
+  /** Rose buddies earn a Bloom Token when all of today's due tasks are complete. */
+  private async tryAwardPerfectCareDay(userId: string, buddyId: string) {
+    const buddy = await this.prisma.buddy.findUnique({ where: { id: buddyId } });
+    if (!buddy || buddy.speciesId !== 'rose') return;
+
+    const dayKey = new Date().toISOString().slice(0, 10);
+    if (buddy.lastPerfectDayKey === dayKey) return;
+
+    const today = startOfDay(new Date());
+    const tomorrow = addDays(today, 1);
+    const pending = await this.prisma.task.count({
+      where: {
+        status: TaskStatus.PENDING,
+        dueDate: { gte: today, lt: tomorrow },
+        plant: { userId },
+      },
+    });
+    if (pending > 0) return;
+
+    const dueToday = await this.prisma.task.count({
+      where: {
+        dueDate: { gte: today, lt: tomorrow },
+        plant: { userId },
+      },
+    });
+    if (dueToday === 0) return;
+
+    await this.prisma.buddy.update({
+      where: { id: buddyId },
+      data: {
+        bloomTokens: { increment: 1 },
+        lastPerfectDayKey: dayKey,
+      },
+    });
   }
 
   async resetDailyIfNeeded(buddyId: string) {

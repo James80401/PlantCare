@@ -11,9 +11,12 @@ import { BuddySocialController } from './buddy-social.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { WeatherModule } from '../weather/weather.module';
 import { TasksModule } from '../tasks/tasks.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { BuddySeasonalService } from './buddy-seasonal.service';
+import { BuddyNotificationsListener } from './buddy-notifications.listener';
 
 @Module({
-  imports: [PrismaModule, WeatherModule, TasksModule],
+  imports: [PrismaModule, WeatherModule, TasksModule, NotificationsModule],
   controllers: [BuddyController],
   providers: [
     BuddyService,
@@ -23,6 +26,8 @@ import { TasksModule } from '../tasks/tasks.module';
     BuddyActivityService,
     BuddyQuestService,
     BuddySocialService,
+    BuddySeasonalService,
+    BuddyNotificationsListener,
   ],
   exports: [BuddyService],
 })

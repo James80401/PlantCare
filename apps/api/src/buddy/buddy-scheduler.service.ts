@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { BuddyService } from './buddy.service';
 import { BuddyJourneyService } from './buddy-journey.service';
+import { BuddyNotificationsListener } from './buddy-notifications.listener';
 
 @Injectable()
 export class BuddySchedulerService {
@@ -12,6 +13,7 @@ export class BuddySchedulerService {
     private prisma: PrismaService,
     private buddyService: BuddyService,
     private journeyService: BuddyJourneyService,
+    private buddyNotifications: BuddyNotificationsListener,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
@@ -38,5 +40,10 @@ export class BuddySchedulerService {
         this.logger.warn(`Journey auto-complete failed ${row.id}: ${err}`);
       }
     }
+  }
+
+  @Cron('0 10 * * *')
+  async sendBuddyMoodNudges() {
+    await this.buddyNotifications.sendMoodNudges();
   }
 }

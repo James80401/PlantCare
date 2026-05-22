@@ -12,8 +12,15 @@ export default function BuddyShopPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
 
+  const priceLabel = (item: ShopItem) => {
+    if (item.bloomTokenCost && item.bloomTokenCost > 0) {
+      return `${item.bloomTokenCost} Bloom Token${item.bloomTokenCost === 1 ? '' : 's'}`;
+    }
+    return `${item.cost} dewdrops`;
+  };
+
   const handlePurchase = async (item: ShopItem) => {
-    if (!window.confirm(`Buy "${item.name}" for ${item.cost} dewdrops?`)) return;
+    if (!window.confirm(`Buy "${item.name}" for ${priceLabel(item)}?`)) return;
     setBusyId(item.id);
     setMessage('');
     try {
@@ -58,7 +65,11 @@ export default function BuddyShopPage() {
       <PageHeader
         eyebrow="Shop"
         title="Dewdrop market"
-        description={`Balance: ${catalog.dewdrops} 💧`}
+        description={
+          catalog.bloomTokensEnabled
+            ? `Balance: ${catalog.dewdrops} 💧 · ${catalog.bloomTokens} 🌸 Bloom Tokens`
+            : `Balance: ${catalog.dewdrops} 💧`
+        }
       />
 
       {daily && daily.items.length > 0 && (

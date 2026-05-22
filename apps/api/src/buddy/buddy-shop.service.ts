@@ -13,6 +13,7 @@ import {
   EQUIP_SLOT_CATEGORY,
   stageMeetsTier,
 } from './constants/shop-seed-data';
+import { isSeasonalItemAvailable } from './constants/seasonal-events';
 import { PurchaseItemDto } from './dto/purchase-item.dto';
 
 const DEFAULT_SPECIES_COLOR: Record<string, string> = {
@@ -43,6 +44,8 @@ export class BuddyShopService {
 
     return {
       dewdrops: buddy.dewdrops,
+      bloomTokens: buddy.bloomTokens,
+      bloomTokensEnabled: buddy.speciesId === 'rose',
       growthStage: buddy.growthStage,
       speciesId: buddy.speciesId,
       items: items.map((item) => ({
@@ -50,8 +53,7 @@ export class BuddyShopService {
         owned: ownedIds.has(item.id),
         canPurchase: this.canPurchaseItem(item, buddy, ownedIds, isPremium),
         requiresPremium: item.requiresPremium,
-        lockedReason:
-          item.requiresPremium && !isPremium ? ('premium' as const) : undefined,
+        lockedReason: this.purchaseLockReason(item, buddy, ownedIds, isPremium),
       })),
     };
   }
@@ -81,8 +83,7 @@ export class BuddyShopService {
         owned: ownedIds.has(item.id),
         canPurchase: this.canPurchaseItem(item, buddy, ownedIds, isPremium),
         requiresPremium: item.requiresPremium,
-        lockedReason:
-          item.requiresPremium && !isPremium ? ('premium' as const) : undefined,
+        lockedReason: this.purchaseLockReason(item, buddy, ownedIds, isPremium),
       })),
     };
   }
@@ -141,7 +142,15 @@ export class BuddyShopService {
     if (!this.canPurchaseItem(item, buddy, ownedIds, await this.userIsPremium(userId))) {
       throw new BadRequestException('This item cannot be purchased right now');
     }
-    if (buddy.dewdrops < item.cost) {
+    const usesBloom = item.bloomTokenCost > 0;
+    if (usesBloom) {
+      if (buddy.speciesId !== 'rose') {
+        throw new BadRequestException('Bloom Token items are for Rose buddies only');
+      }
+      if (buddy.bloomTokens < item.bloomTokenCost) {
+        throw new BadRequestException('Not enough Bloom Tokens');
+      }
+    } else if (buddy.dewdrops < item.cost) {
       throw new BadRequestException('Not enough dewdrops');
     }
 
@@ -150,18 +159,21 @@ export class BuddyShopService {
         data: {
           buddyId: buddy.id,
           itemId: item.id,
-          acquireMethod: 'purchase',
+          acquireMethod: usesBloom ? 'bloom_token' : 'purchase',
         },
       });
       return tx.buddy.update({
         where: { id: buddy.id },
-        data: { dewdrops: { decrement: item.cost } },
+        data: usesBloom
+          ? { bloomTokens: { decrement: item.bloomTokenCost } }
+          : { dewdrops: { decrement: item.cost } },
       });
     });
 
     return {
       item: this.formatShopItem(item),
       dewdrops: updated.dewdrops,
+      bloomTokens: updated.bloomTokens,
     };
   }
 
@@ -326,6 +338,8 @@ export class BuddyShopService {
     category: ItemCategory;
     tier: number;
     cost: number;
+    bloomTokenCost: number;
+    seasonalEventId: string | null;
     requiresPremium: boolean;
     speciesLocked: string | null;
     unlockType: ItemUnlockType;
@@ -339,6 +353,8 @@ export class BuddyShopService {
       category: item.category,
       tier: item.tier,
       cost: item.cost,
+      bloomTokenCost: item.bloomTokenCost,
+      seasonalEventId: item.seasonalEventId,
       requiresPremium: item.requiresPremium,
       speciesLocked: item.speciesLocked,
       unlockType: item.unlockType,
@@ -355,26 +371,57 @@ export class BuddyShopService {
     return user?.planTier === PlanTier.PREMIUM;
   }
 
-  private canPurchaseItem(
+  private purchaseLockReason(
     item: {
       id: string;
       cost: number;
+      bloomTokenCost: number;
       tier: number;
       speciesLocked: string | null;
       unlockType: ItemUnlockType;
       requiresPremium: boolean;
+      seasonalEventId: string | null;
     },
-    buddy: { growthStage: string; speciesId: string; dewdrops: number },
+    buddy: { growthStage: string; speciesId: string; dewdrops: number; bloomTokens: number },
+    ownedIds: Set<string>,
+    isPremium: boolean,
+  ): 'premium' | 'seasonal' | 'species' | 'stage' | 'funds' | undefined {
+    if (ownedIds.has(item.id)) return undefined;
+    if (item.requiresPremium && !isPremium) return 'premium';
+    if (item.seasonalEventId && !isSeasonalItemAvailable(item.seasonalEventId)) return 'seasonal';
+    if (item.speciesLocked && item.speciesLocked !== buddy.speciesId) return 'species';
+    if (!stageMeetsTier(buddy.growthStage, item.tier)) return 'stage';
+    if (item.bloomTokenCost > 0) {
+      if (buddy.speciesId !== 'rose') return 'species';
+      if (buddy.bloomTokens < item.bloomTokenCost) return 'funds';
+      return undefined;
+    }
+    if (
+      item.unlockType !== ItemUnlockType.PURCHASE &&
+      item.unlockType !== ItemUnlockType.SEASONAL_EVENT
+    ) {
+      return 'stage';
+    }
+    if (item.cost > 0 && buddy.dewdrops < item.cost) return 'funds';
+    return undefined;
+  }
+
+  private canPurchaseItem(
+    item: {
+      id: string;
+      cost: number;
+      bloomTokenCost: number;
+      tier: number;
+      speciesLocked: string | null;
+      unlockType: ItemUnlockType;
+      requiresPremium: boolean;
+      seasonalEventId: string | null;
+    },
+    buddy: { growthStage: string; speciesId: string; dewdrops: number; bloomTokens: number },
     ownedIds: Set<string>,
     isPremium: boolean,
   ) {
-    if (ownedIds.has(item.id)) return false;
-    if (item.unlockType !== ItemUnlockType.PURCHASE) return false;
-    if (item.cost <= 0) return false;
-    if (item.requiresPremium && !isPremium) return false;
-    if (item.speciesLocked && item.speciesLocked !== buddy.speciesId) return false;
-    if (!stageMeetsTier(buddy.growthStage, item.tier)) return false;
-    return buddy.dewdrops >= item.cost;
+    return this.purchaseLockReason(item, buddy, ownedIds, isPremium) === undefined;
   }
 
   private pickDailyItems(ids: string[], dayKey: string, count: number): string[] {

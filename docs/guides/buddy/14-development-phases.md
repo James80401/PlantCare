@@ -127,7 +127,7 @@ Users can complete guided activities, track quest progress, and work through the
 - [x] Friendship level calculation
 - [x] `GET /buddy/social/friends/:id/terrarium` — read-only terrarium view
 - [x] `GET /buddy/social/feed` — activity feed events
-- [ ] Push notifications for received sunshine and friend milestones
+- [x] Push notifications for journey return, received sunshine, and mood nudges
 
 **Frontend:**
 - [x] Garden Town screen
@@ -152,11 +152,11 @@ Users can connect with friends, visit their terrariums, and send/receive sunshin
 - [x] `BuddyService.getDailyGreeting()` — weather-flavored message
 - [x] Personality choices recorded on discovery response + trait-based reaction
 - [x] Trait-based discovery dialogue reactions
-- [ ] Seasonal event system (event start/end dates, exclusive items)
+- [x] Seasonal event system (calendar windows, exclusive shop items, API + banner)
 - [x] `ShopItem.requiresPremium` gating in purchase endpoint
 - [ ] Bloom Token mechanic for Rose species (perfect day detection)
 - [x] Journey shortcut minute-reduction logic (tasks during journey — already live; UI shows progress)
-- [ ] Advanced push notification scheduling (mood degradation nudges)
+- [x] Advanced push notification scheduling (daily mood nudges via cron)
 - [ ] Analytics events (journey completion rate, task type distribution)
 
 **Frontend:**
@@ -164,7 +164,7 @@ Users can connect with friends, visit their terrariums, and send/receive sunshin
 - [x] Personality-influenced dialogue after discovery choices
 - [x] Seasonal banner (spring stub until full event system)
 - [x] Premium badge on locked items in shop
-- [ ] Bloom Token display for Rose users
+- [x] Bloom Token display for Rose users (home, shop, API fields)
 - [x] Journey shortcut progress indicator ("Tasks completed: saves 30 min")
 - [x] Mood degradation visual effects (wilting / dormant styling)
 - [x] First Aid shortcut on buddy home (care tasks entry)
