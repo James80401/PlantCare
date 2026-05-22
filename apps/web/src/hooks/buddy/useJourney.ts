@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { buddyApi } from '../../services/api';
+import { trackEvent } from '../../utils/analytics';
 import type { JourneyResponse, JourneyState } from './types';
 
 export function useJourney(enabled: boolean) {
@@ -31,6 +32,14 @@ export function useJourney(enabled: boolean) {
     const id = window.setInterval(refresh, 30_000);
     return () => window.clearInterval(id);
   }, [enabled, data?.journey, refresh]);
+
+  useEffect(() => {
+    const journey = data?.journey;
+    if (!journey?.completed || !journey.id) return;
+    if (trackedCompleteId.current === journey.id) return;
+    trackedCompleteId.current = journey.id;
+    trackEvent('BuddyJourneyCompleted', { biomeId: journey.biomeId });
+  }, [data?.journey]);
 
   return { data, journey: data?.journey ?? null, loading, error, refresh, setData };
 }

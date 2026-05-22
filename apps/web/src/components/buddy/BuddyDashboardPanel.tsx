@@ -80,8 +80,11 @@ export default function BuddyDashboardPanel() {
           </div>
         </div>
       )}
-      <div className="mt-2 flex gap-3 text-xs text-gray-500">
+      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
         <span>{buddy.dewdrops} dewdrops</span>
+        {buddy.speciesId === 'rose' && (
+          <span>{buddy.bloomTokens ?? 0} bloom tokens</span>
+        )}
         <span>{buddy.streakDays} day streak</span>
       </div>
     </section>

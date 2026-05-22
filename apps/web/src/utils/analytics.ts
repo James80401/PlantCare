@@ -8,6 +8,7 @@ type EventName =
   | 'BuddyActivityCompleted'
   | 'BuddyShopPurchase'
   | 'BuddyJourneyStarted'
+  | 'BuddyJourneyCompleted'
   | 'BuddyQuestClaimed';
 
 export function trackEvent(name: EventName, props?: Record<string, unknown>) {

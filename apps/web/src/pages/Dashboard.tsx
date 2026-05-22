@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { plantsSharedWithUser, type SharedPlantView } from '../utils/household';
 import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
 import BuddyDashboardPanel from '../components/buddy/BuddyDashboardPanel';
+import SeasonalBanner from '../components/buddy/SeasonalBanner';
 import {
   findNextTaskForPlant,
   getTasksCompletedToday,
@@ -266,6 +267,7 @@ export default function Dashboard() {
       <WeatherAdvicePanel />
 
       <BuddyDashboardPanel />
+      <SeasonalBanner />
 
       {dashError ? (
         <p className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
