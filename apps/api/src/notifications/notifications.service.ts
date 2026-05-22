@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NotificationChannel, TaskStatus } from '@prisma/client';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
+import { sendFcmNotification } from './fcm.client';
 
 @Injectable()
 export class NotificationsService {
@@ -111,7 +112,7 @@ export class NotificationsService {
     if (this.isQuietHours(user)) return;
 
     if (user.notifyPush) {
-      await this.sendPush(userId, title, body);
+      await this.sendPush(userId, title, body, tag);
     }
     if (user.notifyEmail) {
       await this.sendEmail(user.email, title, body);
@@ -133,16 +134,47 @@ export class NotificationsService {
     return Boolean(row);
   }
 
-  private async sendPush(userId: string, title: string, body: string) {
-    const tokens = await this.prisma.deviceToken.findMany({ where: { userId } });
+  private async sendPush(userId: string, title: string, body: string, tag = 'push') {
+    const rows = await this.prisma.deviceToken.findMany({ where: { userId } });
     const message = `${title}: ${body}`;
-    if (!tokens.length) {
+    const logTag = `[${tag}] ${message}`;
+
+    if (!rows.length) {
       this.logger.log(`[push mock] ${userId}: ${message}`);
-      await this.log(userId, NotificationChannel.PUSH, `[buddy] ${message}`);
+      await this.log(userId, NotificationChannel.PUSH, logTag);
       return;
     }
-    this.logger.log(`[push] Would send to ${tokens.length} devices: ${message}`);
-    await this.log(userId, NotificationChannel.PUSH, `[buddy] ${message}`);
+
+    const fcmKey = this.config.get<string>('FCM_SERVER_KEY');
+    if (!fcmKey) {
+      this.logger.log(`[push mock] ${userId} (${rows.length} devices): ${message}`);
+      await this.log(userId, NotificationChannel.PUSH, logTag);
+      return;
+    }
+
+    try {
+      const result = await sendFcmNotification(
+        fcmKey,
+        rows.map((r) => r.token),
+        title,
+        body,
+      );
+      if (result.invalidTokens.length) {
+        await this.prisma.deviceToken.deleteMany({
+          where: { userId, token: { in: result.invalidTokens } },
+        });
+        this.logger.warn(
+          `Removed ${result.invalidTokens.length} invalid FCM token(s) for user ${userId}`,
+        );
+      }
+      this.logger.log(
+        `FCM sent ${result.sent}/${rows.length} to user ${userId} (${result.failed} failed)`,
+      );
+      await this.log(userId, NotificationChannel.PUSH, logTag);
+    } catch (err) {
+      this.logger.warn(`FCM failed for ${userId}: ${err}`);
+      await this.log(userId, NotificationChannel.PUSH, `${logTag} (FCM error)`);
+    }
   }
 
   private async log(userId: string, channel: NotificationChannel, message: string) {

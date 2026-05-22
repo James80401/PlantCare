@@ -157,6 +157,7 @@ Users can connect with friends, visit their terrariums, and send/receive sunshin
 - [ ] Bloom Token mechanic for Rose species (perfect day detection)
 - [x] Journey shortcut minute-reduction logic (tasks during journey — already live; UI shows progress)
 - [x] Advanced push notification scheduling (daily mood nudges via cron)
+- [x] FCM delivery when `FCM_SERVER_KEY` is set (`fcm.client.ts` + device token registration API)
 - [ ] Analytics events (journey completion rate, task type distribution)
 
 **Frontend:**

@@ -3,6 +3,8 @@ import { navIcons } from './icons/NavIcons';
 import { useAuth } from '../context/AuthContext';
 import { BuddyCompanionProvider } from '../context/BuddyCompanionContext';
 import BuddyFloatingCompanion from './buddy/BuddyFloatingCompanion';
+import { useBuddyQuestBadge } from '../hooks/buddy/useBuddyQuestBadge';
+import { useRegisterPushDevice } from '../hooks/useRegisterPushDevice';
 
 const mobileNav = [
   { to: '/garden', label: 'Dashboard', mobileLabel: 'Home', icon: 'home' as const, exact: true },
@@ -22,6 +24,8 @@ const SHOW_UPGRADE = false;
 export default function Layout() {
   const { user, logout, isPremium } = useAuth();
   const location = useLocation();
+  const buddyQuestClaims = useBuddyQuestBadge(Boolean(user));
+  useRegisterPushDevice(Boolean(user));
 
   return (
     <BuddyCompanionProvider>
@@ -89,18 +93,27 @@ export default function Layout() {
           {mobileNav.map(({ to, mobileLabel, icon, exact }) => {
             const active = isActivePath(location.pathname, to, exact);
             const Icon = navIcons[icon];
+            const showQuestBadge = to === '/garden/buddy' && buddyQuestClaims > 0;
             return (
               <Link
                 key={to}
                 to={to}
                 aria-current={active ? 'page' : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center rounded-2xl px-2 py-1.5 transition ${
+                className={`relative flex min-h-14 flex-col items-center justify-center rounded-2xl px-2 py-1.5 transition ${
                   active
                     ? 'bg-emerald-800 text-white shadow-sm'
                     : 'text-gray-500 hover:bg-emerald-50 hover:text-emerald-800'
                 }`}
               >
                 <Icon className="h-6 w-6" aria-hidden />
+                {showQuestBadge && (
+                  <span
+                    className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-emerald-950"
+                    aria-hidden
+                  >
+                    {buddyQuestClaims > 9 ? '9+' : buddyQuestClaims}
+                  </span>
+                )}
                 <span className="mt-1 font-medium">{mobileLabel}</span>
               </Link>
             );
