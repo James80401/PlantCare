@@ -28,7 +28,14 @@ Authorization: Bearer <accessToken>
 
 ### Capacitor (recommended for mobile)
 
-In the native shell, install `@capacitor/push-notifications`, request permission, listen for `registration`, then call `devicesApi.register(token, Capacitor.getPlatform())` from the web bundle.
+The web app depends on `@capacitor/push-notifications`. After `npm run mobile:sync`, the layout hook `useRegisterPushDevice` requests permission and registers the token when the user has **Push notifications** enabled in Settings.
+
+```bash
+npm install @capacitor/push-notifications -w @plant-care/web
+npm run mobile:sync -w @plant-care/web
+```
+
+Configure Firebase in the Android/iOS native projects per Capacitor docs, then set `FCM_SERVER_KEY` on the API.
 
 Users must enable **Push notifications** in Settings (`notifyPush`).
 

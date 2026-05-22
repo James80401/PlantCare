@@ -1,7 +1,9 @@
+import { Capacitor } from '@capacitor/core';
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { registerPushNative } from '../lib/registerPushNative';
 import type { TemperatureUnit } from '../utils/temperature';
 
 interface LocationOption {
@@ -89,6 +91,9 @@ export default function Settings() {
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      if (notifyPush && Capacitor.isNativePlatform()) {
+        void registerPushNative();
+      }
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
@@ -146,6 +151,12 @@ export default function Settings() {
           <input type="checkbox" checked={notifyPush} onChange={(e) => setNotifyPush(e.target.checked)} />
           Push notifications
         </label>
+        {notifyPush && (
+          <p className="text-xs leading-relaxed text-gray-600">
+            Includes care reminders and Plant Buddy alerts (journey return, sunshine, mood nudges).
+            On mobile, allow notifications when prompted after saving.
+          </p>
+        )}
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={notifyEmail} onChange={(e) => setNotifyEmail(e.target.checked)} />
           Email reminders

@@ -579,6 +579,18 @@ async function main() {
   if (meForTier.status === 200) pass('User profile');
   else fail('User profile');
 
+  const deviceReg = await api(
+    'POST',
+    '/devices',
+    { token: `verify-device-${Date.now()}`, platform: 'web' },
+    token,
+  );
+  if (deviceReg.status === 201 || deviceReg.status === 200) {
+    pass('Device token register', 'ok');
+  } else {
+    fail('Device token register', String(deviceReg.status));
+  }
+
   let buddyGet = await api('GET', '/buddy', null, token);
   if (buddyGet.status === 404) {
     const buddyCreate = await api(

@@ -57,6 +57,7 @@
 - [x] Plant Buddy: create + home, activities, quests, seasonal, shop (`verify.mjs` + `smoke:buddy`)
 - [x] Plant Buddy: shop rejects insufficient dewdrops (`verify.mjs`)
 - [x] Plant Buddy: home + activities pages (Playwright `uat.spec.ts`)
+- [x] Device push token registration API (`verify.mjs` POST `/devices`)
 
 ## E. Mobile QA (browser / device)
 
