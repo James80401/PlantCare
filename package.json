@@ -39,8 +39,10 @@
     "docker:postgres": "docker compose up -d",
     "staging:up": "docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --build",
     "staging:down": "docker compose -f docker-compose.staging.yml down",
+    "staging:check": "node scripts/check-staging-env.mjs",
     "staging:smoke": "powershell -ExecutionPolicy Bypass -File scripts/deploy-staging.ps1",
     "production:check": "powershell -ExecutionPolicy Bypass -File scripts/deploy-production-check.ps1",
+    "production:check:env": "node scripts/check-production-env.mjs",
     "production:up": "docker compose -f docker-compose.production.yml --env-file .env.production up -d --build",
     "production:down": "docker compose -f docker-compose.production.yml down",
     "mobile:release:android": "npm run build -w @plant-care/web && npm run mobile:sync -w @plant-care/web && npm run mobile:android"

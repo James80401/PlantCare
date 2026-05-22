@@ -34,8 +34,18 @@ GitHub Actions runs on push/PR: install, Prisma generate, API tests, web build. 
 
 ## Production checklist
 
+```powershell
+copy .env.production.example .env.production
+# Edit URLs and secrets, then:
+npm run production:check
+npm run production:up
+```
+
 - Set strong `JWT_SECRET` and `JWT_REFRESH_SECRET`
-- Use managed PostgreSQL (RDS, Cloud SQL)
-- Configure S3 for image uploads (`AWS_*`, `S3_BUCKET`)
-- Set Stripe keys and webhook endpoint
-- Configure SendGrid, Firebase, optional Perenual/PlantNet/HF keys
+- `FRONTEND_URL`, `CORS_ORIGINS`, and `VITE_API_BASE_URL` must match your public HTTPS URLs
+- Use managed PostgreSQL (RDS, Cloud SQL) or compose `postgres`
+- `FCM_SERVER_KEY` for real push (see [operations/push-notifications.md](operations/push-notifications.md))
+- Configure OpenAI, SMTP, S3, Stripe as needed
+- Post-deploy: `API_URL=... npm run verify` and `npm run smoke:buddy`
+
+Full runbook: [guides/15-production-deploy-and-android.md](guides/15-production-deploy-and-android.md)

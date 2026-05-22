@@ -30,8 +30,11 @@ Runs Postgres + API + nginx web on **localhost** with production-like env vars:
 ```powershell
 # From repo root (Windows)
 copy .env.staging.example .env.staging
+npm run staging:check
 npm run staging:smoke
 ```
+
+`staging:smoke` runs `verify`, `smoke:buddy`, and Playwright against the Docker stack.
 
 `staging:smoke` builds containers, waits for health, seeds 320 species, then runs `verify` + Playwright with `STAGING_E2E=1`.
 

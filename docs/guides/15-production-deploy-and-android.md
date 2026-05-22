@@ -68,6 +68,18 @@ VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
 
 Copy `OPENAI_API_KEY`, `SMTP_*` from your working local `.env`.
 
+Optional for Plant Buddy / task push on devices:
+
+```env
+FCM_SERVER_KEY=<Firebase Cloud Messaging server key>
+```
+
+Validate before starting containers:
+
+```bash
+npm run production:check
+```
+
 ### Start stack
 
 ```bash
@@ -93,6 +105,7 @@ If using Neon/Supabase/RDS instead of the compose `postgres` service:
 
 ```bash
 API_URL=https://api.yourdomain.com/api/v1 npm run verify
+API_URL=https://api.yourdomain.com/api/v1 npm run smoke:buddy
 ```
 
 Optional web UAT:

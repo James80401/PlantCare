@@ -10,6 +10,9 @@ if (-not (Test-Path $envFile)) {
   Write-Host 'Created .env.staging from example - review JWT secrets before sharing a link.'
 }
 
+node (Join-Path $Root 'scripts/check-staging-env.mjs') $envFile
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 $docker = & (Join-Path $PSScriptRoot 'docker-cli.ps1')
 
 Write-Host 'Building and starting staging containers (first run: seed + photos may take several minutes)...'
@@ -37,6 +40,10 @@ $env:STAGING_E2E = '1'
 
 Write-Host 'Running verify against staging API...'
 npm run verify
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+Write-Host 'Running Plant Buddy API smoke...'
+npm run smoke:buddy
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host 'Running Playwright UAT against staging web...'
