@@ -140,11 +140,18 @@ export class BuddyShopService {
 
     const ownedIds = await this.ownedItemIds(buddy.id);
     if (ownedIds.has(item.id)) throw new ConflictException('You already own this item');
-    if (item.requiresPremium && !(await this.userIsPremium(userId))) {
-      throw new ForbiddenException('Premium subscription required for this item');
-    }
-    if (!this.canPurchaseItem(item, buddy, ownedIds, await this.userIsPremium(userId))) {
-      throw new BadRequestException('This item cannot be purchased right now');
+    const purchaseLockReason = getPurchaseLockReason(
+      item,
+      buddy,
+      ownedIds,
+      await this.userIsPremium(userId),
+    );
+    if (purchaseLockReason) {
+      const message = purchaseDenialMessage(purchaseLockReason, item);
+      if (purchaseLockReason === 'premium') {
+        throw new ForbiddenException(message);
+      }
+      throw new BadRequestException(message);
     }
     const usesBloom = item.bloomTokenCost > 0;
     if (usesBloom) {
