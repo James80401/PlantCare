@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BuddyController } from './buddy.controller';
+import { BuddyDevController } from './buddy-dev.controller';
 import { BuddyService } from './buddy.service';
 import { BuddyJourneyService } from './buddy-journey.service';
 import { BuddySchedulerService } from './buddy-scheduler.service';
@@ -17,7 +18,7 @@ import { BuddyNotificationsListener } from './buddy-notifications.listener';
 
 @Module({
   imports: [PrismaModule, WeatherModule, TasksModule, NotificationsModule],
-  controllers: [BuddyController],
+  controllers: [BuddyController, BuddyDevController],
   providers: [
     BuddyService,
     BuddyJourneyService,

@@ -132,6 +132,19 @@ export default function Settings() {
       <h1 className="text-2xl font-bold text-emerald-900">Settings</h1>
 
       <section className="rounded-xl border border-emerald-100 bg-white p-6 space-y-3">
+        <h2 className="font-semibold text-emerald-950">Plant Buddy</h2>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          Your Finch-style companion — journeys, quests, shop, and Garden Town sunshine.
+        </p>
+        <Link
+          to="/garden/buddy"
+          className="inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+        >
+          Open Plant Buddy
+        </Link>
+      </section>
+
+      <section className="rounded-xl border border-emerald-100 bg-white p-6 space-y-3">
         <h2 className="font-semibold text-emerald-950">Household (Care Share)</h2>
         <p className="text-sm text-gray-600 leading-relaxed">
           Create a household, invite caregivers, and share plants so others can help with watering and

@@ -27,4 +27,21 @@ jobs:
       - run: npm run db:seed
       - run: npm run build -w @plant-care/shared
       - run: npm run test -w @plant-care/api
+      - run: npm run build -w @plant-care/api
       - run: npm run build -w @plant-care/web
+
+      - name: Buddy API smoke (live server)
+        env:
+          PORT: 3001
+          FRONTEND_URL: http://localhost:5173
+          CORS_ORIGIN: http://localhost:5173
+        run: |
+          node apps/api/dist/main.js &
+          echo $! > api.pid
+          for i in $(seq 1 45); do
+            if curl -sf http://localhost:3001/api/v1/health; then break; fi
+            sleep 2
+          done
+          curl -sf http://localhost:3001/api/v1/health || (echo "API failed to start" && exit 1)
+          API_URL=http://localhost:3001/api/v1 npm run smoke:buddy
+          kill $(cat api.pid) 2>/dev/null || true

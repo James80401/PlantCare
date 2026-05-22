@@ -154,11 +154,11 @@ Users can connect with friends, visit their terrariums, and send/receive sunshin
 - [x] Trait-based discovery dialogue reactions
 - [x] Seasonal event system (calendar windows, exclusive shop items, API + banner)
 - [x] `ShopItem.requiresPremium` gating in purchase endpoint
-- [ ] Bloom Token mechanic for Rose species (perfect day detection)
+- [x] Bloom Token mechanic for Rose species (perfect day detection)
 - [x] Journey shortcut minute-reduction logic (tasks during journey — already live; UI shows progress)
 - [x] Advanced push notification scheduling (daily mood nudges via cron)
 - [x] FCM delivery when `FCM_SERVER_KEY` is set (`fcm.client.ts` + device token registration API)
-- [ ] Analytics events (journey completion rate, task type distribution)
+- [x] Analytics events (client `trackEvent`; server aggregates TBD)
 
 **Frontend:**
 - [x] Dynamic buddy greeting using weather data
@@ -183,10 +183,10 @@ Before merging any phase to main:
 - [ ] All new API endpoints have unit tests
 - [ ] Prisma models have integration tests
 - [ ] Event listeners (task.completed) tested in isolation
-- [ ] Cron jobs have manual trigger endpoints (dev-only) for testing
+- [x] Cron jobs have manual trigger endpoints (dev-only) for testing
 - [ ] Frontend components have Storybook stories
 - [ ] Journey timer tested with accelerated time (config flag)
-- [ ] Shop purchase tested for insufficient funds edge case
+- [x] Shop purchase tested for insufficient funds edge case (`buddy-shop-purchase.util.spec.ts` + `verify.mjs`)
 - [ ] Streak break logic tested across midnight boundary
 - [ ] Mobile layout tested on iOS and Android
 - [ ] All text reviewed for tone consistency (warm, plant-focused, non-pressuring)
