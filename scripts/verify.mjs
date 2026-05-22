@@ -622,7 +622,7 @@ async function main() {
       fail('Buddy seasonal', String(buddySeasonal.status));
     }
 
-    const buddyShop = await api('GET', '/buddy/shop/catalog', null, token);
+    let buddyShop = await api('GET', '/buddy/shop/catalog', null, token);
     if (
       buddyShop.status === 200 &&
       Array.isArray(buddyShop.data?.items) &&
@@ -630,6 +630,33 @@ async function main() {
       typeof buddyShop.data.dewdrops === 'number'
     ) {
       pass('Buddy shop catalog', `${buddyShop.data.items.length} items`);
+
+      if (prisma && buddyGet.data?.id) {
+        await prisma.buddy.update({
+          where: { id: buddyGet.data.id },
+          data: { dewdrops: 0 },
+        });
+        buddyShop = await api('GET', '/buddy/shop/catalog', null, token);
+      }
+      const costly = buddyShop.data?.items?.find(
+        (i) => !i.owned && (i.cost ?? 0) > 0 && !i.bloomTokenCost,
+      );
+      if (costly) {
+        const buyFail = await api(
+          'POST',
+          '/buddy/shop/purchase',
+          { itemId: costly.id },
+          token,
+        );
+        const msg = buyFail.data?.message ?? '';
+        if (buyFail.status === 400 && /dewdrop/i.test(String(msg))) {
+          pass('Buddy shop insufficient funds', costly.id);
+        } else {
+          fail('Buddy shop insufficient funds', JSON.stringify(buyFail.data)?.slice(0, 80));
+        }
+      } else {
+        pass('Buddy shop insufficient funds', 'skipped (no priced item)');
+      }
     } else {
       fail('Buddy shop catalog', String(buddyShop.status));
     }

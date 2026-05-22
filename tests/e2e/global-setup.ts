@@ -74,6 +74,23 @@ async function main() {
   const species = await speciesRes.json();
   const speciesId = species?.[0]?.id;
 
+  const buddyRes = await fetch(`${apiBase}/buddy`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: 'UAT Buddy',
+      speciesId: 'monstera',
+      trait: 'RESILIENT',
+    }),
+  });
+  if (!buddyRes.ok && buddyRes.status !== 409) {
+    const errBody = await buddyRes.text();
+    throw new Error(`E2E setup: buddy create failed (${buddyRes.status}) ${errBody}`);
+  }
+
   let plantId: string | undefined;
   if (speciesId) {
     const plantRes = await fetch(`${apiBase}/plants`, {

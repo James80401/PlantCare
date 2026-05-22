@@ -89,6 +89,16 @@ test.describe('UAT checklist — authenticated flows', () => {
     await expectNoHorizontalScroll(page);
   });
 
+  test('plant buddy home and activities load', async ({ page }) => {
+    await page.goto('/garden/buddy');
+    await expect(page.getByRole('heading', { name: 'UAT Buddy' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Plant Buddy/i).first()).toBeVisible();
+    await page.goto('/garden/buddy/activities');
+    await expect(page.getByRole('heading', { name: 'Activities' })).toBeVisible();
+    await expect(page.getByText(/Watering check/i)).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+
   test('browse plants catalog is paged', async ({ page }) => {
     await page.goto('/garden/plants/browse');
     await expect(page.getByRole('heading', { name: /Browse plants/i })).toBeVisible();
@@ -384,7 +394,7 @@ test.describe('UAT checklist — mobile layout', () => {
     ).toBeVisible();
     await expectNoHorizontalScroll(page);
 
-    const contentPad = await page.locator('.pb-24').first().evaluate((el) => {
+    const contentPad = await page.locator('.page-garden').first().evaluate((el) => {
       const style = getComputedStyle(el);
       return parseFloat(style.paddingBottom || '0');
     });

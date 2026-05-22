@@ -4,10 +4,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { buddyApi, dashboardApi } from '../services/api';
+import { trackEvent } from '../utils/analytics';
 import type { BuddyState, JourneyState } from '../hooks/buddy/types';
 import { isJourneyTraveling } from '../hooks/buddy/useJourney';
 import {
@@ -41,6 +43,7 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
   const [journey, setJourney] = useState<JourneyState | null>(null);
   const [greeting, setGreeting] = useState('');
   const [gardenMetrics, setGardenMetrics] = useState<GardenMetrics>(EMPTY_GARDEN_METRICS);
+  const trackedJourneyCompleteId = useRef<string | null>(null);
 
   const refreshGardenMetrics = useCallback(async () => {
     try {
@@ -77,15 +80,24 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
   }, [refreshGardenMetrics]);
 
   const refreshJourney = useCallback(async () => {
-    if (!buddy?.hasActiveJourney) return;
+    if (!buddy) return;
     try {
       const { data } = await buddyApi.getJourney();
-      setJourney(data.journey ?? null);
+      const next = data.journey ?? null;
+      setJourney(next);
       if (data.buddy) setBuddy(data.buddy);
+      if (
+        next?.completed &&
+        next.id &&
+        trackedJourneyCompleteId.current !== next.id
+      ) {
+        trackedJourneyCompleteId.current = next.id;
+        trackEvent('BuddyJourneyCompleted', { biomeId: next.biomeId });
+      }
     } catch {
       /* keep last journey snapshot */
     }
-  }, [buddy?.hasActiveJourney]);
+  }, [buddy]);
 
   const loadGreeting = useCallback(async () => {
     if (!buddy) return;
@@ -104,6 +116,15 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (buddy?.hasActiveJourney) refreshJourney();
   }, [buddy?.hasActiveJourney, buddy?.id, refreshJourney]);
+
+  const wasOnJourney = useRef(false);
+  useEffect(() => {
+    const active = Boolean(buddy?.hasActiveJourney);
+    if (wasOnJourney.current && !active) {
+      void refreshJourney();
+    }
+    wasOnJourney.current = active;
+  }, [buddy?.hasActiveJourney, refreshJourney]);
 
   useEffect(() => {
     if (buddy) loadGreeting();

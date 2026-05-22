@@ -54,11 +54,14 @@
 - [x] One-shot diagnosis (API — OpenAI)
 - [x] Schedule suggestions endpoint (API)
 - [x] Weather advice: on-demand button + daily cache (`verify.mjs` + dashboard panel)
+- [x] Plant Buddy: create + home, activities, quests, seasonal, shop (`verify.mjs` + `smoke:buddy`)
+- [x] Plant Buddy: shop rejects insufficient dewdrops (`verify.mjs`)
+- [x] Plant Buddy: home + activities pages (Playwright `uat.spec.ts`)
 
 ## E. Mobile QA (browser / device)
 
 - [x] Empty garden state readable, no horizontal scroll (Playwright mobile)
-- [x] Active garden: bottom nav does not cover content (`pb-24` + Playwright)
+- [x] Active garden: bottom nav does not cover content (`page-garden` safe-area padding + Playwright)
 - [x] Overdue tasks visually distinct (Playwright: overdue metric + attention card)
 - [x] All-caught-up state shows useful next action (Playwright: “Nothing due” + observation CTA)
 - [x] Tap targets comfortable on phone width (Playwright: nav ≥44px)
