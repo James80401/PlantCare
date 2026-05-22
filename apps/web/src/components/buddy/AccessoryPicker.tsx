@@ -1,4 +1,5 @@
 import type { ShopItem, ShopItemCategory } from '../../hooks/buddy/shopTypes';
+import { shopLockLabel } from '../../utils/shopLockLabel';
 
 interface AccessoryPickerProps {
   title: string;
@@ -68,16 +69,19 @@ export default function AccessoryPicker({
             >
               <p className="font-semibold text-emerald-950">{item.name}</p>
               <p className="mt-1 line-clamp-2 text-xs text-gray-500">{item.description}</p>
-              {item.requiresPremium && item.lockedReason === 'premium' ? (
-                <p className="mt-2 text-xs font-medium text-violet-800">Premium item</p>
-              ) : owned ? (
+              {owned ? (
                 <p className="mt-2 text-xs font-medium text-emerald-700">
                   {selected ? 'Equipped' : 'Tap to equip'}
                 </p>
+              ) : canBuy ? (
+                <p className="mt-2 text-xs font-medium text-amber-800">{shopLockLabel(item, dewdrops)}</p>
               ) : (
-                <p className="mt-2 text-xs font-medium text-amber-800">
-                  {item.cost} 💧
-                  {dewdrops < item.cost ? ' · need more' : ''}
+                <p
+                  className={`mt-2 text-xs font-medium ${
+                    item.lockedReason === 'premium' ? 'text-violet-800' : 'text-gray-600'
+                  }`}
+                >
+                  {shopLockLabel(item, dewdrops)}
                 </p>
               )}
             </button>

@@ -3,7 +3,12 @@ type EventName =
   | 'PlantAdded'
   | 'TaskCompleted'
   | 'DiagnoseSubmitted'
-  | 'UpgradeToPremium';
+  | 'UpgradeToPremium'
+  | 'BuddyCreated'
+  | 'BuddyActivityCompleted'
+  | 'BuddyShopPurchase'
+  | 'BuddyJourneyStarted'
+  | 'BuddyQuestClaimed';
 
 export function trackEvent(name: EventName, props?: Record<string, unknown>) {
   if (typeof window !== 'undefined') {

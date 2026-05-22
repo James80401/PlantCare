@@ -579,6 +579,62 @@ async function main() {
   if (meForTier.status === 200) pass('User profile');
   else fail('User profile');
 
+  let buddyGet = await api('GET', '/buddy', null, token);
+  if (buddyGet.status === 404) {
+    const buddyCreate = await api(
+      'POST',
+      '/buddy',
+      { name: 'Verify Sprout', speciesId: 'monstera', trait: 'RESILIENT' },
+      token,
+    );
+    if (buddyCreate.status === 201 || buddyCreate.status === 200) {
+      pass('Buddy create', buddyCreate.data?.name || 'ok');
+      buddyGet = await api('GET', '/buddy', null, token);
+    } else {
+      fail('Buddy create', JSON.stringify(buddyCreate.data)?.slice(0, 120));
+    }
+  } else if (buddyGet.status === 200) {
+    pass('Buddy exists', buddyGet.data?.name || 'ok');
+  } else {
+    fail('Buddy get', String(buddyGet.status));
+  }
+
+  if (buddyGet.status === 200) {
+    const buddyActs = await api('GET', '/buddy/activities', null, token);
+    if (buddyActs.status === 200 && Array.isArray(buddyActs.data) && buddyActs.data.length >= 10) {
+      pass('Buddy activities', `${buddyActs.data.length} types`);
+    } else {
+      fail('Buddy activities', JSON.stringify(buddyActs.data)?.slice(0, 80));
+    }
+
+    const buddyGreet = await api('GET', '/buddy/greeting', null, token);
+    if (buddyGreet.status === 200 && buddyGreet.data?.message) pass('Buddy greeting');
+    else fail('Buddy greeting', String(buddyGreet.status));
+
+    const buddyQuests = await api('GET', '/buddy/quests', null, token);
+    if (buddyQuests.status === 200 && buddyQuests.data?.daily) pass('Buddy quests');
+    else fail('Buddy quests', String(buddyQuests.status));
+
+    const buddySeasonal = await api('GET', '/buddy/seasonal', null, token);
+    if (buddySeasonal.status === 200 && typeof buddySeasonal.data?.active === 'boolean') {
+      pass('Buddy seasonal', buddySeasonal.data.active ? 'event active' : 'no event');
+    } else {
+      fail('Buddy seasonal', String(buddySeasonal.status));
+    }
+
+    const buddyShop = await api('GET', '/buddy/shop/catalog', null, token);
+    if (
+      buddyShop.status === 200 &&
+      Array.isArray(buddyShop.data?.items) &&
+      buddyShop.data.items.length > 0 &&
+      typeof buddyShop.data.dewdrops === 'number'
+    ) {
+      pass('Buddy shop catalog', `${buddyShop.data.items.length} items`);
+    } else {
+      fail('Buddy shop catalog', String(buddyShop.status));
+    }
+  }
+
   if (prisma) await prisma.$disconnect();
 
   const failed = results.filter((r) => !r.ok);

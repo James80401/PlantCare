@@ -6,6 +6,7 @@ import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import type { ShopItem } from '../../../hooks/buddy/shopTypes';
 import { useBuddyShop } from '../../../hooks/buddy/useBuddyShop';
+import { shopLockLabel } from '../../../utils/shopLockLabel';
 
 export default function BuddyShopPage() {
   const { catalog, daily, loading, error, purchase, refresh } = useBuddyShop();
@@ -79,8 +80,12 @@ export default function BuddyShopPage() {
             {daily.items.map((item) => (
               <li key={item.id} className="flex items-center justify-between gap-2">
                 <span>
-                  {item.name} — {item.cost} 💧
-                  {item.owned ? ' (owned)' : ''}
+                  {item.name}
+                  {item.owned
+                    ? ' (owned)'
+                    : item.canPurchase
+                      ? ` — ${priceLabel(item)}`
+                      : ` — ${shopLockLabel(item, catalog.dewdrops)}`}
                 </span>
                 {!item.owned && item.canPurchase && (
                   <Button

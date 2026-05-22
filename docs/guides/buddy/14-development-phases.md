@@ -11,31 +11,31 @@ Development is split into 5 phases. Each phase is a self-contained, shippable in
 **Goal:** A working buddy that grows when you complete tasks.
 
 **Backend:**
-- [ ] Create `buddy.module.ts` and register in `app.module.ts`
-- [ ] Create `Buddy` Prisma model and run migration
-- [ ] Create `BuddyJourney` Prisma model
-- [ ] `POST /buddy` — create a buddy (onboarding)
-- [ ] `GET /buddy` — fetch buddy state
-- [ ] `PATCH /buddy` — update name, trait
-- [ ] Add `EventEmitter2` to `TasksService.completeTask()`
-- [ ] `BuddyService.handleTaskCompleted()` — award sunlight + dewdrops
-- [ ] Daily sunlight reset cron job
-- [ ] Streak tracking cron job
-- [ ] `POST /buddy/journey/start` — start a journey
-- [ ] `GET /buddy/journey` — get active journey status
-- [ ] Journey completion logic + dewdrop award
-- [ ] Stage advancement logic (journeyCount thresholds)
-- [ ] Push notification on journey complete
+- [x] Create `buddy.module.ts` and register in `app.module.ts`
+- [x] Create `Buddy` Prisma model and run migration
+- [x] Create `BuddyJourney` Prisma model
+- [x] `POST /buddy` — create a buddy (onboarding)
+- [x] `GET /buddy` — fetch buddy state
+- [x] `PATCH /buddy` — update name, trait
+- [x] Add `EventEmitter2` to `TasksService.completeTask()`
+- [x] `BuddyService.handleTaskCompleted()` — award sunlight + dewdrops
+- [x] Daily sunlight reset cron job
+- [x] Streak tracking cron job
+- [x] `POST /buddy/journey/start` — start a journey
+- [x] `GET /buddy/journey` — get active journey status
+- [x] Journey completion logic + dewdrop award
+- [x] Stage advancement logic (journeyCount thresholds)
+- [x] Push notification on journey complete
 
 **Frontend:**
-- [ ] Buddy onboarding screen (name + species + trait selection)
-- [ ] `BuddyHome` page — buddy display + sunlight bar + mood
-- [ ] `SunlightBar` component
-- [ ] Journey screen — progress bar + return timer
-- [ ] Stage advancement modal
-- [ ] Nav bar with 5 tabs (Home, Tasks, Style, Journey, Town)
-- [ ] `useBuddy` hook — fetches and caches buddy state
-- [ ] `useJourney` hook — polls journey status every 30s
+- [x] Buddy onboarding screen (name + species + trait selection)
+- [x] `BuddyHome` page — buddy display + sunlight bar + mood
+- [x] `SunlightBar` component
+- [x] Journey screen — progress bar + return timer
+- [x] Stage advancement modal
+- [x] Nav bar with 5 tabs (Home, Tasks, Style, Journey, Town)
+- [x] `useBuddy` hook — fetches and caches buddy state
+- [x] `useJourney` hook — polls journey status every 30s
 
 **Definition of Done:**
 A user can create a buddy, complete tasks, fill the sunlight bar, send their buddy on a journey, and watch it grow through the first two stages.
@@ -162,7 +162,7 @@ Users can connect with friends, visit their terrariums, and send/receive sunshin
 **Frontend:**
 - [x] Dynamic buddy greeting using weather data
 - [x] Personality-influenced dialogue after discovery choices
-- [x] Seasonal banner (spring stub until full event system)
+- [x] Seasonal banner (live API-driven event windows)
 - [x] Premium badge on locked items in shop
 - [x] Bloom Token display for Rose users (home, shop, API fields)
 - [x] Journey shortcut progress indicator ("Tasks completed: saves 30 min")

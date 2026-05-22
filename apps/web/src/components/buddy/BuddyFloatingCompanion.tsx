@@ -86,7 +86,9 @@ export default function BuddyFloatingCompanion() {
   if (hideOnRoute) return null;
 
   const dockClass =
-    'pointer-events-none fixed right-0 top-1/2 z-50 flex -translate-y-1/2 flex-col items-end pr-[max(0px,env(safe-area-inset-right))]';
+    'pointer-events-none fixed right-0 z-50 flex flex-col items-end pr-[max(0px,env(safe-area-inset-right))] ' +
+    'max-sm:bottom-[calc(5.25rem+env(safe-area-inset-bottom))] max-sm:top-auto max-sm:translate-y-0 ' +
+    'sm:top-1/2 sm:-translate-y-1/2';
 
   if (loading) {
     return (
