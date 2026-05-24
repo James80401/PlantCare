@@ -13,6 +13,7 @@
     "mobile:add:android": "npm run build && cap add android",
     "mobile:add:ios": "npm run build && cap add ios",
     "mobile:android": "npm run mobile:sync && cap open android",
+    "mobile:firebase-setup": "node ../../scripts/setup-android-firebase.mjs",
     "mobile:ios": "npm run mobile:sync && cap open ios"
   },
   "dependencies": {

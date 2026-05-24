@@ -42,10 +42,13 @@ if (capConfig.includes('PushNotifications')) {
 }
 
 const gServices = resolve(web, 'android/app/google-services.json');
+const gExample = resolve(web, 'android/app/google-services.json.example');
 if (existsSync(gServices)) {
   pass('Android', 'google-services.json found');
+} else if (existsSync(gExample)) {
+  fail('Android', 'Copy Firebase google-services.json to android/app/ (see google-services.json.example)');
 } else if (existsSync(resolve(web, 'android'))) {
-  fail('Android', 'Missing android/app/google-services.json — download from Firebase');
+  fail('Android', 'Missing google-services.json — run npm run mobile:firebase-setup');
 } else {
   pass('Android', 'Native project not added yet (npm run mobile:add:android)');
 }

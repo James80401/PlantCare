@@ -33,18 +33,32 @@ npm run mobile:add:android -w @plant-care/web
 3. Download **`google-services.json`**
 4. Place at: `apps/web/android/app/google-services.json`
 
-### Gradle (Capacitor 8 + recent Firebase)
+### Gradle (already scaffolded in repo)
 
-In `apps/web/android/build.gradle`, ensure Google services classpath:
+Capacitor adds Firebase Gradle wiring automatically:
 
 ```gradle
-classpath 'com.google.gms:google-services:4.4.2'
+// android/build.gradle
+classpath 'com.google.gms:google-services:4.4.4'
+
+// android/app/build.gradle — applied when google-services.json exists
+apply plugin: 'com.google.gms.google-services'
 ```
 
-In `apps/web/android/app/build.gradle`:
+`POST_NOTIFICATIONS` is in `AndroidManifest.xml` for Android 13+.
 
-```gradle
-apply plugin: 'com.google.gms.google-services'
+### Firebase Android app
+
+1. Firebase → **Add app → Android**
+2. Package name: `com.plantcare.app` (must match `capacitor.config.ts` `appId`)
+3. Download **`google-services.json`**
+4. Place at: `apps/web/android/app/google-services.json`
+
+Or scaffold from template:
+
+```bash
+npm run mobile:firebase-setup
+# Edit google-services.json with Firebase download, then sync
 ```
 
 Run:

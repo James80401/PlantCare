@@ -13,6 +13,7 @@
     "verify": "node scripts/verify.mjs",
     "smoke:buddy": "node scripts/smoke-buddy.mjs",
     "mobile:push-check": "node scripts/mobile-push-check.mjs",
+    "mobile:firebase-setup": "node scripts/setup-android-firebase.mjs",
     "verify:docs": "node scripts/verify-docs-links.mjs",
     "uat:e2e": "playwright test",
     "species:verify": "tsx scripts/verify-species-catalog.mjs",
