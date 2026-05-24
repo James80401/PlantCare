@@ -143,20 +143,12 @@ export class BuddyShopService {
     if (item.requiresPremium && !(await this.userIsPremium(userId))) {
       throw new ForbiddenException('Premium subscription required for this item');
     }
-    if (!this.canPurchaseItem(item, buddy, ownedIds, await this.userIsPremium(userId))) {
-      throw new BadRequestException('This item cannot be purchased right now');
+    const isPremium = await this.userIsPremium(userId);
+    const lock = getPurchaseLockReason(item, buddy, ownedIds, isPremium);
+    if (lock) {
+      throw new BadRequestException(purchaseDenialMessage(lock, item));
     }
     const usesBloom = item.bloomTokenCost > 0;
-    if (usesBloom) {
-      if (buddy.speciesId !== 'rose') {
-        throw new BadRequestException('Bloom Token items are for Rose buddies only');
-      }
-      if (buddy.bloomTokens < item.bloomTokenCost) {
-        throw new BadRequestException('Not enough Bloom Tokens');
-      }
-    } else if (buddy.dewdrops < item.cost) {
-      throw new BadRequestException('Not enough dewdrops');
-    }
 
     const updated = await this.prisma.$transaction(async (tx) => {
       await tx.buddyInventory.create({
