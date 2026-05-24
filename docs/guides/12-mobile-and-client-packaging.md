@@ -41,11 +41,11 @@ Staging/production: use public HTTPS API URL baked at build time.
 
 ---
 
-## Push notifications (readiness)
+## Push notifications
 
-- API: `POST /devices` registers `DeviceToken`.
-- Cron sends daily reminders (`NotificationsModule`).
-- Full FCM/APNs wiring is roadmap (P3).
+- API: `POST /devices` / `DELETE /devices` register FCM tokens; `FCM_SERVER_KEY` sends real push.
+- Mobile: `@capacitor/push-notifications` + Firebase (`google-services.json` / APNs).
+- Full setup: [17 — Mobile push setup](17-mobile-push-setup.md) · [push-notifications.md](../operations/push-notifications.md)
 
 ---
 

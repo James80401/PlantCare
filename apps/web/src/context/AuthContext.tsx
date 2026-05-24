@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { authApi, usersApi } from '../services/api';
+import { unregisterPushNative } from '../lib/unregisterPushNative';
 
 interface User {
   id: string;
@@ -85,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    void unregisterPushNative();
     localStorage.clear();
     setUser(null);
   };

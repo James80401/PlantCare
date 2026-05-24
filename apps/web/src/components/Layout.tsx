@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { BuddyCompanionProvider } from '../context/BuddyCompanionContext';
 import BuddyFloatingCompanion from './buddy/BuddyFloatingCompanion';
 import { useBuddyQuestBadge } from '../hooks/buddy/useBuddyQuestBadge';
-import { useRegisterPushDevice } from '../hooks/useRegisterPushDevice';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 const mobileNav = [
   { to: '/garden', label: 'Dashboard', mobileLabel: 'Home', icon: 'home' as const, exact: true },
@@ -25,7 +25,7 @@ export default function Layout() {
   const { user, logout, isPremium } = useAuth();
   const location = useLocation();
   const buddyQuestClaims = useBuddyQuestBadge(Boolean(user));
-  useRegisterPushDevice(Boolean(user));
+  usePushNotifications(Boolean(user));
 
   return (
     <BuddyCompanionProvider>

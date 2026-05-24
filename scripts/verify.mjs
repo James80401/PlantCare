@@ -579,14 +579,21 @@ async function main() {
   if (meForTier.status === 200) pass('User profile');
   else fail('User profile');
 
+  const deviceToken = `verify-device-${Date.now()}`;
   const deviceReg = await api(
     'POST',
     '/devices',
-    { token: `verify-device-${Date.now()}`, platform: 'web' },
+    { token: deviceToken, platform: 'web' },
     token,
   );
   if (deviceReg.status === 201 || deviceReg.status === 200) {
     pass('Device token register', 'ok');
+    const deviceUnreg = await api('DELETE', '/devices', { token: deviceToken }, token);
+    if (deviceUnreg.status === 200 && typeof deviceUnreg.data?.removed === 'number') {
+      pass('Device token unregister', `removed=${deviceUnreg.data.removed}`);
+    } else {
+      fail('Device token unregister', JSON.stringify(deviceUnreg.data)?.slice(0, 80));
+    }
   } else {
     fail('Device token register', String(deviceReg.status));
   }

@@ -16,6 +16,7 @@
     "mobile:ios": "npm run mobile:sync && cap open ios"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.0",
     "@capacitor/core": "^8.3.4",
     "@capacitor/push-notifications": "^8.1.1",
     "@plant-care/shared": "*",

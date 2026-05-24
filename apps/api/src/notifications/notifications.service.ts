@@ -83,6 +83,13 @@ export class NotificationsService {
     });
   }
 
+  async unregisterDevice(userId: string, token: string) {
+    const result = await this.prisma.deviceToken.deleteMany({
+      where: { userId, token },
+    });
+    return { removed: result.count };
+  }
+
   private async sendEmail(to: string, subject: string, text: string) {
     const apiKey = this.config.get<string>('SENDGRID_API_KEY');
     const from = this.config.get<string>('SENDGRID_FROM_EMAIL', 'noreply@plantcare.app');
@@ -158,6 +165,7 @@ export class NotificationsService {
         rows.map((r) => r.token),
         title,
         body,
+        { route: this.pushRouteForTag(tag) },
       );
       if (result.invalidTokens.length) {
         await this.prisma.deviceToken.deleteMany({
@@ -174,6 +182,17 @@ export class NotificationsService {
     } catch (err) {
       this.logger.warn(`FCM failed for ${userId}: ${err}`);
       await this.log(userId, NotificationChannel.PUSH, `${logTag} (FCM error)`);
+    }
+  }
+
+  private pushRouteForTag(tag: string): string {
+    switch (tag) {
+      case 'buddy':
+        return '/garden/buddy/journey';
+      case 'mood':
+        return '/garden/buddy';
+      default:
+        return '/garden/tasks';
     }
   }
 

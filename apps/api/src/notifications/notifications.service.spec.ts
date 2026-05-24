@@ -59,13 +59,20 @@ describe('NotificationsService', () => {
     });
 
     const service = createService();
-    await (service as unknown as { sendPush: (u: string, t: string, b: string) => Promise<void> }).sendPush(
+    await (service as unknown as { sendPush: (u: string, t: string, b: string, tag?: string) => Promise<void> }).sendPush(
       'user-1',
       'Buddy',
       'Back from journey',
+      'buddy',
     );
 
-    expect(sendSpy).toHaveBeenCalledWith('fcm-secret', ['device-1'], 'Buddy', 'Back from journey');
+    expect(sendSpy).toHaveBeenCalledWith(
+      'fcm-secret',
+      ['device-1'],
+      'Buddy',
+      'Back from journey',
+      { route: '/garden/buddy/journey' },
+    );
     sendSpy.mockRestore();
   });
 });

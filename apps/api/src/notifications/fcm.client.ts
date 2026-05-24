@@ -12,6 +12,7 @@ export async function sendFcmNotification(
   tokens: string[],
   title: string,
   body: string,
+  extraData: Record<string, string> = {},
 ): Promise<FcmSendResult> {
   if (!tokens.length) {
     return { sent: 0, failed: 0, invalidTokens: [] };
@@ -20,7 +21,7 @@ export async function sendFcmNotification(
   const payload = {
     registration_ids: tokens,
     notification: { title, body },
-    data: { title, body },
+    data: { title, body, ...extraData },
     priority: 'high',
   };
 
@@ -37,14 +38,14 @@ export async function sendFcmNotification(
     throw new Error(`FCM HTTP ${res.status}: ${JSON.stringify(res.data)?.slice(0, 200)}`);
   }
 
-  const data = res.data as {
+  const responseBody = res.data as {
     success?: number;
     failure?: number;
     results?: Array<{ error?: string }>;
   };
 
   const invalidTokens: string[] = [];
-  const results = data.results ?? [];
+  const results = responseBody.results ?? [];
   for (let i = 0; i < results.length; i++) {
     const err = results[i]?.error;
     if (
@@ -57,8 +58,8 @@ export async function sendFcmNotification(
   }
 
   return {
-    sent: data.success ?? 0,
-    failed: data.failure ?? 0,
+    sent: Number(responseBody.success) || 0,
+    failed: Number(responseBody.failure) || 0,
     invalidTokens,
   };
 }

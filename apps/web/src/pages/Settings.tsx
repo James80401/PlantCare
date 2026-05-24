@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { registerPushNative } from '../lib/registerPushNative';
+import { unregisterPushNative } from '../lib/unregisterPushNative';
 import type { TemperatureUnit } from '../utils/temperature';
 
 interface LocationOption {
@@ -93,6 +94,8 @@ export default function Settings() {
       setTimeout(() => setSaved(false), 2000);
       if (notifyPush && Capacitor.isNativePlatform()) {
         void registerPushNative();
+      } else if (!notifyPush) {
+        void unregisterPushNative();
       }
     } catch (err: unknown) {
       const message =

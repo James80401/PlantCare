@@ -239,6 +239,7 @@ export const billingApi = {
 export const devicesApi = {
   register: (token: string, platform: string) =>
     api.post('/devices', { token, platform }),
+  unregister: (token: string) => api.delete('/devices', { data: { token } }),
 };
 
 export interface GardenMemberSummary {
