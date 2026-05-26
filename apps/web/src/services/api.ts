@@ -57,8 +57,16 @@ export const authApi = {
 export const plantsApi = {
   list: () => api.get('/plants'),
   get: (id: string) => api.get(`/plants/${id}`),
-  update: (id: string, data: { location?: string; notes?: string }) =>
-    api.patch(`/plants/${id}`, data),
+  update: (
+    id: string,
+    data: {
+      nickname?: string;
+      location?: string;
+      potSize?: string;
+      notes?: string;
+      imageUrl?: string | null;
+    },
+  ) => api.patch(`/plants/${id}`, data),
   create: (data: Record<string, unknown>) => api.post('/plants', data),
   delete: (id: string) => api.delete(`/plants/${id}`),
   identify: (file: File) => {

@@ -249,7 +249,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
   - [x] Health (Diagnosis)
 - [x] Keep the top summary compact on mobile.
 - [x] Add next task, last care action, and health state near the hero.
-- [ ] Add clear edit affordances for location, pot size, notes, and image.
+- [x] Add clear edit affordances for location, pot size, notes, and image.
 - [x] Add a sticky or compact section index if the profile remains long.
 
 ### Granular care guide structure

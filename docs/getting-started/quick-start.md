@@ -27,6 +27,8 @@ npm run dev:web   # port 5173
 
 Open **http://localhost:5173** — register or log in, then **/garden**.
 
+**Demo account** (after `npm run db:seed`): `demo@plantcare.local` / `DemoPlant1!` — includes two plants, an open diagnosis, and a sample Dr. Plant chat.
+
 ## Verify (optional)
 
 With API running:

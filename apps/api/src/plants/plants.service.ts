@@ -97,21 +97,33 @@ export class PlantsService {
 
     const locationChanged =
       dto.location !== undefined && dto.location.trim() !== (plant.location ?? '').trim();
+    const potSizeChanged =
+      dto.potSize !== undefined && dto.potSize !== plant.potSize;
+    const imageChanged =
+      dto.imageUrl !== undefined && dto.imageUrl !== (plant.imageUrl ?? null);
+
+    if (imageChanged && plant.imageUrl && dto.imageUrl !== plant.imageUrl) {
+      await this.upload.deleteByUrl(plant.imageUrl).catch(() => {});
+    }
 
     await this.prisma.plant.update({
       where: { id },
       data: {
+        ...(dto.nickname !== undefined ? { nickname: dto.nickname.trim() || null } : {}),
         ...(dto.location !== undefined ? { location: dto.location } : {}),
+        ...(dto.potSize !== undefined ? { potSize: dto.potSize } : {}),
         ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
+        ...(dto.imageUrl !== undefined ? { imageUrl: dto.imageUrl || null } : {}),
       },
     });
 
-    if (locationChanged) {
+    const shouldReschedule = locationChanged || potSizeChanged;
+    if (shouldReschedule) {
       await this.scheduler.generateTasksForPlant(id, planTier);
     }
 
     const updated = await this.findOne(userId, id);
-    return { ...updated, tasksRescheduled: locationChanged };
+    return { ...updated, tasksRescheduled: shouldReschedule };
   }
 
   async remove(userId: string, id: string) {

@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { usePlantProfile } from './PlantProfileContext';
+import { PlantDetailsEditor } from './PlantDetailsEditor';
 import { InfoRow, LocationEditor, ProfileSection } from './shared';
 import { taskTypeLabel } from '../../utils/tasks';
 
@@ -35,6 +36,8 @@ export default function PlantOverviewTab() {
             <InfoRow label="Last completed care" value="No completed care logged yet" />
           )}
         </div>
+
+        <PlantDetailsEditor />
 
         <LocationEditor
           editingLocation={ctx.editingLocation}
