@@ -77,6 +77,9 @@ describe('SchedulerService', () => {
           feedback('feedback-2', 'SOIL_STILL_WET'),
         ]),
       },
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
       task: {
         findMany: jest
           .fn()
@@ -102,6 +105,9 @@ describe('SchedulerService', () => {
     const prisma = {
       taskFeedback: {
         findMany: jest.fn().mockResolvedValue([]),
+      },
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue(null),
       },
       task: {
         findMany: jest.fn().mockResolvedValue([]),
@@ -138,6 +144,116 @@ describe('SchedulerService', () => {
       data: { dueDate: new Date('2026-05-19T00:00:00.000Z') },
     });
   });
+
+  it('suggests watering more often after repeated dry-soil completions', async () => {
+    const prisma = {
+      taskFeedback: {
+        findMany: jest.fn().mockResolvedValue([
+          feedbackComplete('complete-1', 'SOIL_VERY_DRY'),
+          feedbackComplete('complete-2', 'SOIL_VERY_DRY'),
+        ]),
+      },
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
+      task: {
+        findMany: jest
+          .fn()
+          .mockResolvedValueOnce([{ id: 'task-next-1' }, { id: 'task-next-2' }])
+          .mockResolvedValue([]),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    const suggestions = await service.getScheduleSuggestionsForUser('user-1');
+
+    expect(suggestions).toEqual([
+      expect.objectContaining({
+        id: 'plant-1:water-accelerate',
+        title: 'Water more often',
+        affectedTaskCount: 2,
+        adjustmentDays: -2,
+      }),
+    ]);
+  });
+
+  it('suggests delaying outdoor watering when rain is forecast', async () => {
+    const payload = {
+      summary: {
+        days: [
+          { date: '2026-05-26', tempMinC: 10, tempMaxC: 20, rainProbability: 0.2 },
+          { date: '2026-05-27', tempMinC: 11, tempMaxC: 21, rainProbability: 0.75 },
+          { date: '2026-05-28', tempMinC: 12, tempMaxC: 22, rainProbability: 0.3 },
+        ],
+      },
+    };
+
+    const prisma = {
+      taskFeedback: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue({ payload: JSON.stringify(payload) }),
+      },
+      plant: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'plant-1',
+            nickname: 'Outdoor Basil',
+            location: 'Garden shed',
+            species: { commonName: 'Basil' },
+          },
+        ]),
+      },
+      task: {
+        findMany: jest
+          .fn()
+          .mockResolvedValueOnce([{ id: 'task-rain-delay-1' }])
+          .mockResolvedValue([]),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    const suggestions = await service.getScheduleSuggestionsForUser('user-1');
+
+    expect(suggestions).toEqual([
+      expect.objectContaining({
+        id: 'plant-1:water-rain-delay',
+        title: 'Delay outdoor watering (forecast)',
+        adjustmentDays: 2,
+        affectedTaskCount: 1,
+      }),
+    ]);
+  });
+
+  it('applies a water-acceleration suggestion by shifting pending tasks earlier', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-05-15T12:00:00.000Z'));
+
+    const firstDue = new Date('2026-05-17T00:00:00.000Z');
+    const prisma = {
+      plant: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'plant-1' }),
+      },
+      task: {
+        findMany: jest.fn().mockResolvedValue([{ id: 'task-1', dueDate: firstDue }]),
+        update: jest.fn((args) => Promise.resolve({ id: args.where.id, dueDate: args.data.dueDate })),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    const result = await service.applyScheduleSuggestion('user-1', 'plant-1:water-accelerate');
+
+    expect(result.applied).toBe(true);
+    const updateArg = prisma.task.update.mock.calls[0][0];
+    expect(updateArg).toEqual({
+      where: { id: 'task-1' },
+      data: { dueDate: updateArg.data.dueDate },
+    });
+    expect(updateArg.data.dueDate.toISOString().slice(0, 10)).toBe('2026-05-15');
+
+    jest.useRealTimers();
+  });
 });
 
 function feedback(id: string, reason: string) {
@@ -150,6 +266,29 @@ function feedback(id: string, reason: string) {
       plantId: 'plant-1',
       taskType: TaskType.WATER,
       status: TaskStatus.SKIPPED,
+      plant: {
+        id: 'plant-1',
+        nickname: 'Kitchen Basil',
+        location: 'Kitchen window',
+        species: {
+          commonName: 'Basil',
+          wateringFreqDays: 3,
+        },
+      },
+    },
+  };
+}
+
+function feedbackComplete(id: string, reason: string) {
+  return {
+    id,
+    reason,
+    action: 'COMPLETE',
+    task: {
+      id: `${id}-task`,
+      plantId: 'plant-1',
+      taskType: TaskType.WATER,
+      status: TaskStatus.DONE,
       plant: {
         id: 'plant-1',
         nickname: 'Kitchen Basil',

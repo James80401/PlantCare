@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { BuddyState, BuddyTrait, JourneyResponse } from '../hooks/buddy/types';
 import { trackEvent } from '../utils/analytics';
-import type { TaskSkipFeedback } from '../utils/taskFeedback';
+import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api/v1';
 
@@ -138,7 +138,8 @@ export const tasksApi = {
   scheduleSuggestions: () => api.get('/tasks/schedule-suggestions'),
   applyScheduleSuggestion: (suggestionId: string) =>
     api.post(`/tasks/schedule-suggestions/${encodeURIComponent(suggestionId)}/apply`),
-  complete: (id: string) => api.patch(`/tasks/${id}/complete`),
+  complete: (id: string, feedback?: TaskCompleteFeedback) =>
+    api.patch(`/tasks/${id}/complete`, feedback ?? {}),
   skip: (id: string, feedback?: TaskSkipFeedback) => api.patch(`/tasks/${id}/skip`, feedback ?? {}),
   snooze: (id: string, days: 1 | 3 | 7) => api.patch(`/tasks/${id}/snooze`, { days }),
   instructions: (id: string) => api.get(`/tasks/${id}/instructions`),

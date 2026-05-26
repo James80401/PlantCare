@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import { PLANT_LOCATIONS } from '../../constants/plantLocations';
 import { useTasksInRange } from '../../hooks/useTasksInRange';
 import { plantsApi, journalApi, diagnosisApi } from '../../services/api';
-import type { TaskSkipFeedback } from '../../utils/taskFeedback';
+import type { TaskCompleteFeedback, TaskSkipFeedback } from '../../utils/taskFeedback';
 import { taskTypeLabel } from '../../utils/tasks';
 import { appendJournalPrompt, buildTimelineEvents } from './shared';
 import type { CareOverview, PlantRecord } from './types';
@@ -41,7 +41,7 @@ interface PlantProfileContextValue {
   latestCompleted?: PlantRecord;
   plantPendingFromHook: ReturnType<typeof useTasksInRange>['tasks'];
   animating: ReturnType<typeof useTasksInRange>['animating'];
-  handleCompleteTask: (taskId: string) => void;
+  handleCompleteTask: (taskId: string, feedback?: TaskCompleteFeedback) => void;
   handleSkipTask: (taskId: string, feedback?: TaskSkipFeedback) => void;
   handleSnooze: ReturnType<typeof useTasksInRange>['handleSnooze'];
   journalNotes: string;
@@ -294,8 +294,8 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleCompleteTask = (taskId: string) => {
-    completeFromHook(taskId);
+  const handleCompleteTask = (taskId: string, feedback?: TaskCompleteFeedback) => {
+    completeFromHook(taskId, feedback);
     window.setTimeout(() => load(), 700);
   };
 

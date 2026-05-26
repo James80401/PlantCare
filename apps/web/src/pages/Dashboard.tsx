@@ -401,8 +401,8 @@ export default function Dashboard() {
                   key={task.id}
                   task={task}
                   animating={animating[task.id] ?? null}
-                  onComplete={(id) => {
-                    handleComplete(id);
+                  onComplete={(id, feedback) => {
+                    handleComplete(id, feedback);
                     window.setTimeout(() => void refreshAfterTask(), 700);
                   }}
                   onSkip={(id, feedback) => {

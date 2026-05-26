@@ -5,6 +5,7 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { SkeletonTaskRows } from '../components/ui/Skeleton';
 import { useTasksInRange } from '../hooks/useTasksInRange';
 import { trackEvent } from '../utils/analytics';
+import type { TaskCompleteFeedback } from '../utils/taskFeedback';
 
 export default function Tasks() {
   const [filter, setFilter] = useState<'all' | 'upcoming'>('all');
@@ -26,9 +27,9 @@ export default function Tasks() {
     return dayGroups;
   }, [dayGroups, filter]);
 
-  const onComplete = (id: string) => {
+  const onComplete = (id: string, _feedback?: TaskCompleteFeedback) => {
     trackEvent('TaskCompleted');
-    handleComplete(id);
+    handleComplete(id, _feedback);
   };
 
   return (

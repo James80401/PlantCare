@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import TaskRow from '../components/tasks/TaskRow';
 import { useTasksInRange } from '../hooks/useTasksInRange';
 import { trackEvent } from '../utils/analytics';
+import type { TaskCompleteFeedback } from '../utils/taskFeedback';
 import {
   getOverdueTasks,
   getTasksCompletedToday,
@@ -52,9 +53,9 @@ export default function FilteredTasks() {
     }
   }, [filter, tasks]);
 
-  const onComplete = (id: string) => {
+  const onComplete = (id: string, _feedback?: TaskCompleteFeedback) => {
     trackEvent('TaskCompleted');
-    handleComplete(id);
+    handleComplete(id, _feedback);
   };
 
   if (!meta) {
