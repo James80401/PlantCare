@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, type To } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import TaskRow from '../components/tasks/TaskRow';
 import { useDashboard, type DashboardAttention } from '../hooks/useDashboard';
@@ -29,6 +29,7 @@ import {
 } from '../utils/engagement';
 import { TASK_TYPE_ICONS, type TaskItem } from '../utils/taskGroups';
 import { taskTypeLabel } from '../utils/tasks';
+import { plantDrPlantPath } from './plant-profile/constants';
 
 interface ScheduleSuggestion {
   id: string;
@@ -46,6 +47,7 @@ interface ScheduleSuggestion {
 type PlantScope = 'all' | 'mine' | 'shared';
 
 export default function Dashboard() {
+  const location = useLocation();
   const { user } = useAuth();
   const [plants, setPlants] = useState<DashboardPlant[]>([]);
   const [gardens, setGardens] = useState<Awaited<ReturnType<typeof gardensApi.mine>>['data']>([]);
@@ -126,6 +128,23 @@ export default function Dashboard() {
     if (plantScope === 'shared') return sharedPlants;
     return [...plants, ...sharedPlants];
   }, [plantScope, plants, sharedPlants]);
+
+  const allGardenPlants = useMemo(
+    () => [...plants, ...sharedPlants],
+    [plants, sharedPlants],
+  );
+
+  const drPlantAction = useMemo((): To => {
+    if (allGardenPlants.length === 1) {
+      return plantDrPlantPath(allGardenPlants[0].id);
+    }
+    return { pathname: '/garden', hash: '#plants' };
+  }, [allGardenPlants]);
+
+  useEffect(() => {
+    if (location.hash.replace('#', '') !== 'plants') return;
+    document.getElementById('plants')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [location.hash, location.pathname]);
 
   const overdueTasks = useMemo(
     () => getOverdueTasks(tasks, currentDate),
@@ -431,9 +450,9 @@ export default function Dashboard() {
         />
         <SuggestionCard
           title="Dr. Plant is ready"
-          body="If a plant looks off, open its profile and ask Dr. Plant with a photo and recent symptoms."
-          actionLabel="Choose a plant"
-          actionTo="#plants"
+          body="Each plant has its own Dr. Plant chat — describe symptoms or add a photo for tailored advice."
+          actionLabel={allGardenPlants.length === 1 ? 'Ask Dr. Plant' : 'Pick a plant'}
+          actionTo={drPlantAction}
         />
       </section>
 
@@ -742,7 +761,7 @@ function SuggestionCard({
   title: string;
   body: string;
   actionLabel: string;
-  actionTo: string;
+  actionTo: To;
 }) {
   return (
     <article className="rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm shadow-emerald-900/5">
@@ -773,44 +792,52 @@ function PlantCard({
   const overdueCount = getOverdueTasks(plantTasks).length;
 
   return (
-    <Link
-      to={`/garden/plants/${plant.id}`}
-      className="group overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
-    >
-      <div className="flex gap-4 p-4">
-        <PlantThumb plant={plant} size="lg" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="truncate font-semibold text-emerald-950">{name}</h3>
-              <p className="truncate text-sm text-gray-500">{plant.species.commonName}</p>
-              {sharedMeta ? (
-                <span className="mt-1 inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-900">
-                  Shared · {sharedMeta.gardenName}
+    <article className="group overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
+      <Link to={`/garden/plants/${plant.id}`} className="block">
+        <div className="flex gap-4 p-4">
+          <PlantThumb plant={plant} size="lg" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="truncate font-semibold text-emerald-950">{name}</h3>
+                <p className="truncate text-sm text-gray-500">{plant.species.commonName}</p>
+                {sharedMeta ? (
+                  <span className="mt-1 inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-900">
+                    Shared · {sharedMeta.gardenName}
+                  </span>
+                ) : null}
+              </div>
+              {overdueCount > 0 && (
+                <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
+                  {overdueCount} late
                 </span>
-              ) : null}
+              )}
             </div>
-            {overdueCount > 0 && (
-              <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
-                {overdueCount} late
-              </span>
-            )}
-          </div>
-          <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-            {next ? (
-              <p className="font-medium text-emerald-800">
-                <span aria-hidden>{TASK_TYPE_ICONS[next.taskType] ?? '🌿'} </span>
-                Next: {taskTypeLabel(next.taskType)} on {format(parseISO(next.dueDate), 'MMM d')}
-              </p>
-            ) : (
-              <p className="font-medium text-amber-700">No upcoming task found</p>
-            )}
-            {plant.location && <p>Location: {plant.location}</p>}
-            {plant.species.sunlight && <p>Light: {plant.species.sunlight}</p>}
+            <div className="mt-3 space-y-1.5 text-xs text-gray-600">
+              {next ? (
+                <p className="font-medium text-emerald-800">
+                  <span aria-hidden>{TASK_TYPE_ICONS[next.taskType] ?? '🌿'} </span>
+                  Next: {taskTypeLabel(next.taskType)} on {format(parseISO(next.dueDate), 'MMM d')}
+                </p>
+              ) : (
+                <p className="font-medium text-amber-700">No upcoming task found</p>
+              )}
+              {plant.location && <p>Location: {plant.location}</p>}
+              {plant.species.sunlight && <p>Light: {plant.species.sunlight}</p>}
+            </div>
           </div>
         </div>
+      </Link>
+      <div className="border-t border-emerald-50 px-4 pb-3 pt-2">
+        <Link
+          to={plantDrPlantPath(plant.id)}
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-emerald-800 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900"
+        >
+          <span aria-hidden>🩺</span>
+          Ask Dr. Plant
+        </Link>
       </div>
-    </Link>
+    </article>
   );
 }
 

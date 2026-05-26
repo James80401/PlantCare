@@ -13,6 +13,10 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // FormData needs a multipart boundary; a preset Content-Type breaks uploads and fields.
+  if (config.data instanceof FormData) {
+    config.headers.delete('Content-Type');
+  }
   return config;
 });
 

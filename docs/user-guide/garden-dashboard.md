@@ -26,6 +26,11 @@ You can complete or skip tasks from the dashboard without opening the task calen
 
 - Grid of plant cards with image, name, species, and next pending task
 - Tap a card → plant profile (`/garden/plants/:id`)
+- **Ask Dr. Plant** on each card → that plant’s Health chat (`/garden/plants/:id/health#dr-plant`). See [Using Dr. Plant chat](../tutorials/using-dr-plant-chat.md).
+
+## Dr. Plant tip card
+
+When you have plants, the **Dr. Plant is ready** suggestion opens chat for a single plant or scrolls to **Your plants** so you can pick one.
 
 ## Navigation (layout)
 

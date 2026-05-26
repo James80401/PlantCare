@@ -90,7 +90,7 @@ docs/               All documentation (guides, API, architecture, …)
 - **Plants** — add from catalog or identify (PlantNet), profile tabs (overview, care, tasks, journal, health)
 - **Tasks & calendar** — complete, skip (with feedback), snooze, instructions, “why this date”
 - **Species browse** — filters, recommendations, growing metadata
-- **Health** — one-shot diagnosis, Dr. Plant chat, follow-up tasks
+- **Health** — one-shot diagnosis, per-plant Dr. Plant chat (garden cards + profile Health tab), follow-up tasks
 - **Journal** — notes and photos per plant
 - **Household** — shared gardens, invites, plant sharing, activity feed
 - **Community** — posts with optional species/plant context
@@ -109,6 +109,12 @@ docs/               All documentation (guides, API, architecture, …)
 | API modules | [docs/api/INDEX.md](docs/api/INDEX.md) |
 | Deploy | [docs/operations/deployment.md](docs/operations/deployment.md) |
 | UAT / testers | [docs/product/tester-5-minute.md](docs/product/tester-5-minute.md) |
+
+---
+
+## Agent / contributor workflow
+
+After finishing work: **commit**, **push**, and **sync to `main`**. See [AGENTS.md](AGENTS.md) and `.cursor/rules/workflow.mdc`.
 
 ---
 

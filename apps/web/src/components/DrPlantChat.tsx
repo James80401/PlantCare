@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { diagnosisChatApi } from '../services/api';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 export interface ChatMessage {
   id: string;
@@ -99,17 +100,22 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
       setPhoto(null);
       loadConversations();
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Could not reach Dr. Plant. Check your OpenAI API key and billing.';
-      setError(msg);
+      setError(
+        formatApiErrorMessage(
+          err,
+          'Could not reach Dr. Plant. Check your OpenAI API key and billing.',
+        ),
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="rounded-2xl border border-emerald-200 bg-white overflow-hidden shadow-sm">
+    <div
+      id="dr-plant"
+      className="scroll-mt-28 rounded-2xl border border-emerald-200 bg-white overflow-hidden shadow-sm"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-100 bg-emerald-50/80 px-4 py-3">
         <div>
           <h2 className="font-semibold text-emerald-900">Dr. Plant</h2>

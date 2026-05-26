@@ -1,12 +1,22 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import DiagnosisForm from '../../components/DiagnosisForm';
 import DiagnosisResult from '../../components/DiagnosisResult';
 import DrPlantChat from '../../components/DrPlantChat';
 import TreatmentPlanCard from '../../components/TreatmentPlanCard';
 import { usePlantProfile } from './PlantProfileContext';
+import { DR_PLANT_SECTION_ID } from './constants';
 import { ProfileSection, RecoveryPanel, SectionEmptyState } from './shared';
 
 export default function PlantHealthTab() {
   const ctx = usePlantProfile();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash.replace('#', '') !== DR_PLANT_SECTION_ID) return;
+    const el = document.getElementById(DR_PLANT_SECTION_ID);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [location.hash, location.pathname]);
 
   return (
     <ProfileSection

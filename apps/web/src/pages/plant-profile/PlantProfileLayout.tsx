@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { SharePlantCard } from '../../components/engagement/SharePlantCard';
-import { PROFILE_TABS } from './constants';
+import { DR_PLANT_SECTION_ID, plantDrPlantPath, PROFILE_TABS } from './constants';
 import { PlantProfileProvider, usePlantProfile } from './PlantProfileContext';
 import { SummaryTile } from './shared';
 import { taskTypeLabel } from '../../utils/tasks';
@@ -14,9 +14,18 @@ function PlantProfileShell() {
   useEffect(() => {
     const hash = location.hash.replace('#', '');
     if (!hash) return;
-    const mapped = hash === 'diagnosis' ? 'health' : hash;
+    const mapped =
+      hash === 'diagnosis' || hash === DR_PLANT_SECTION_ID
+        ? 'health'
+        : hash;
     if (PROFILE_TABS.some((t) => t.id === mapped)) {
-      navigate(`/garden/plants/${ctx.id}/${mapped}`, { replace: true });
+      navigate(
+        {
+          pathname: `/garden/plants/${ctx.id}/${mapped}`,
+          hash: hash === DR_PLANT_SECTION_ID ? `#${DR_PLANT_SECTION_ID}` : '',
+        },
+        { replace: true },
+      );
     }
   }, [location.hash, ctx.id, navigate]);
 
@@ -93,13 +102,21 @@ function PlantProfileShell() {
               </p>
             ) : null}
 
-            <button
-              type="button"
-              onClick={() => ctx.setSharingPlant(true)}
-              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100"
-            >
-              Share plant card
-            </button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                to={plantDrPlantPath(ctx.id)}
+                className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-900"
+              >
+                Ask Dr. Plant
+              </Link>
+              <button
+                type="button"
+                onClick={() => ctx.setSharingPlant(true)}
+                className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100"
+              >
+                Share plant card
+              </button>
+            </div>
           </div>
         </div>
       </section>
