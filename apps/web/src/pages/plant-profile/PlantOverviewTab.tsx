@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { format } from 'date-fns';
+import { PLANT_DETAILS_SECTION_ID } from '../../utils/gardenPaths';
 import { usePlantProfile } from './PlantProfileContext';
 import { PlantDetailsEditor } from './PlantDetailsEditor';
 import { InfoRow, LocationEditor, ProfileSection } from './shared';
@@ -6,6 +9,15 @@ import { taskTypeLabel } from '../../utils/tasks';
 
 export default function PlantOverviewTab() {
   const ctx = usePlantProfile();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash.replace('#', '') !== PLANT_DETAILS_SECTION_ID) return;
+    document.getElementById(PLANT_DETAILS_SECTION_ID)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, [location.hash, location.pathname]);
 
   return (
     <ProfileSection

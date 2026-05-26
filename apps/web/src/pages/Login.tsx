@@ -58,6 +58,12 @@ export default function Login() {
       <Link to="/" className="text-sm font-medium text-emerald-700 hover:underline">
         ← Back to home
       </Link>
+      {import.meta.env.DEV ? (
+        <p className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-900">
+          Local demo after <code className="rounded bg-white px-1">npm run db:seed</code>:{' '}
+          <strong>demo@plantcare.local</strong> / <strong>DemoPlant1!</strong>
+        </p>
+      ) : null}
       {notice ? <p className="text-sm text-emerald-700">{notice}</p> : null}
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
       {needsVerification ? (

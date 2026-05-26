@@ -6,6 +6,7 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "node scripts/dev.mjs",
     "dev:api": "npm run dev -w @plant-care/api",
     "dev:web": "npm run dev -w @plant-care/web --",
     "test:integrations": "node scripts/test-integrations.mjs",

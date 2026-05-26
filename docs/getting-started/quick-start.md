@@ -21,6 +21,8 @@ npm run db:seed
 ## Run
 
 ```bash
+npm run dev       # API + web together
+# or separately:
 npm run dev:api   # port 3001
 npm run dev:web   # port 5173
 ```

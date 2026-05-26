@@ -234,8 +234,8 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [x] Use stronger visual hierarchy for plant, task type, due date, and status.
 - [x] Make "how to do this" feel like a primary help action.
 - [x] Make skip a button with an obvious affordance.
-- [ ] Add skip reasons in a later API iteration.
-- [ ] Add snooze/reschedule in a later API iteration.
+- [x] Add skip reasons in a later API iteration.
+- [x] Add snooze/reschedule in a later API iteration.
 
 ## Phase 2 - Plant profile and care guide upgrades
 
@@ -306,7 +306,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [ ] Search by common name and scientific name.
 - [ ] Add filters for pet-safe, low-light, beginner-friendly, edible, drought-tolerant, indoor, and outdoor plants.
 - [ ] Add recommended plants based on user location and experience.
-- [ ] Add "complete your plant profile" suggestions when species data is missing.
+- [x] Add "complete your plant profile" suggestions when species data is missing.
 
 ## Phase 4 - Adaptive care intelligence
 
@@ -380,7 +380,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 
 ### Dashboard aggregation
 
-- [ ] Add `GET /api/v1/dashboard` when the frontend dashboard outgrows client-side aggregation.
+- [x] Add `GET /api/v1/dashboard` when the frontend dashboard outgrows client-side aggregation.
 - [ ] Include targeted aggregates rather than duplicating large plant/task payloads.
 - [ ] Add recent journal and diagnosis summaries across all user plants.
 - [ ] Add care streak and garden score calculations server-side.

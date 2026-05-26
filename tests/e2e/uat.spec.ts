@@ -439,3 +439,18 @@ test.describe('UAT checklist — mobile layout', () => {
     await expectNoHorizontalScroll(page);
   });
 });
+
+test.describe('Demo seed account', () => {
+  test('demo login opens garden with sample plants', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel(/^Email$/i).fill('demo@plantcare.local');
+    await page.getByLabel(/^Password$/i).fill('DemoPlant1!');
+    await page.getByRole('button', { name: /Sign in/i }).click();
+    await page.waitForURL(/\/garden/, { timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible();
+    await expect(page.getByText(/Window Snake|Shelf Pothos/i).first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await expectNoHorizontalScroll(page);
+  });
+});

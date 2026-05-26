@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PhotoCaptureZone } from '../../components/plants/PhotoCaptureZone';
 import { plantsApi } from '../../services/api';
+import { PLANT_DETAILS_SECTION_ID } from '../../utils/gardenPaths';
 import { usePlantProfile } from './PlantProfileContext';
 
 const POT_OPTIONS = [
@@ -76,7 +77,10 @@ export function PlantDetailsEditor() {
   const busy = saving || uploadingPhoto;
 
   return (
-    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
+    <div
+      id={PLANT_DETAILS_SECTION_ID}
+      className="scroll-anchor rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5"
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">

@@ -26,8 +26,9 @@ A full-stack plant care companion: personalized watering and care schedules, spe
 cp .env.example .env    # fill secrets as needed
 npm install
 npm run db:generate && npm run db:push && npm run db:seed
-npm run dev:api         # http://localhost:3001
-npm run dev:web         # http://localhost:5173
+npm run dev             # API :3001 + web :5173 together
+npm run dev:api         # http://localhost:3001 only
+npm run dev:web         # http://localhost:5173 only
 ```
 
 | URL | Purpose |

@@ -30,7 +30,11 @@ import {
 import { TASK_TYPE_ICONS, type TaskItem } from '../utils/taskGroups';
 import { taskTypeLabel } from '../utils/tasks';
 import { plantDrPlantPath } from './plant-profile/constants';
-import { isDiagnosisAttentionReason } from '../utils/gardenPaths';
+import {
+  isDiagnosisAttentionReason,
+  isProfilePhotoAttentionReason,
+  plantProfileDetailsPath,
+} from '../utils/gardenPaths';
 
 interface ScheduleSuggestion {
   id: string;
@@ -798,9 +802,17 @@ function AttentionItemCard({
     info: 'border-emerald-100 bg-emerald-50 text-emerald-950',
   };
   const isDiagnosis = isDiagnosisAttentionReason(item.reason);
+  const needsPhoto = isProfilePhotoAttentionReason(item.reason);
   const primaryTo = isDiagnosis
     ? plantDrPlantPath(item.plantId)
-    : `/garden/plants/${item.plantId}`;
+    : needsPhoto
+      ? plantProfileDetailsPath(item.plantId)
+      : `/garden/plants/${item.plantId}`;
+  const primaryLabel = isDiagnosis
+    ? 'Ask Dr. Plant'
+    : needsPhoto
+      ? 'Add photo'
+      : 'Open plant';
 
   return (
     <article
@@ -816,7 +828,7 @@ function AttentionItemCard({
               to={primaryTo}
               className="inline-flex min-h-9 items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-emerald-900 hover:bg-white"
             >
-              {isDiagnosis ? 'Ask Dr. Plant' : 'Open plant'}
+              {primaryLabel}
             </Link>
             {isDiagnosis ? (
               <Link
