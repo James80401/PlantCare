@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { StructuredCareSectionCard } from './care/StructuredCareSectionCard';
 import { tasksApi } from '../services/api';
-import {
-  careSectionToneClasses,
-  getCareSectionMeta,
-  sectionLead,
-} from '../utils/careGuideSections';
-import { formatGuideBody, taskTypeLabel } from '../utils/tasks';
+import { taskTypeLabel } from '../utils/tasks';
+import type { CareDetailLevel } from '../pages/plant-profile/types';
 
 export interface TaskInstructionsModalProps {
   taskId: string;
@@ -24,6 +22,10 @@ interface GuideImage {
 interface GuideSection {
   heading: string;
   body: string;
+  whyItMatters?: string;
+  beginnerBody?: string;
+  advancedBody?: string;
+  warnings?: string[];
   images: GuideImage[];
 }
 
@@ -40,12 +42,21 @@ function sectionAnchor(heading: string, index: number): string {
   return `guide-sec-${index}-${heading.slice(0, 20).replace(/\W+/g, '-').toLowerCase()}`;
 }
 
+function defaultCareDetailLevel(experienceLevel?: string | null): CareDetailLevel {
+  if (experienceLevel === 'advanced' || experienceLevel === 'expert') {
+    return 'advanced';
+  }
+  return 'beginner';
+}
+
 export default function TaskInstructionsModal({
   taskId,
   taskType,
   plantLabel,
   onClose,
 }: TaskInstructionsModalProps) {
+  const { user } = useAuth();
+  const defaultDetailLevel = defaultCareDetailLevel(user?.experienceLevel);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [guide, setGuide] = useState<Instructions | null>(null);
@@ -149,78 +160,53 @@ export default function TaskInstructionsModal({
                 </nav>
               )}
               {guide.sections.map((section, index) => (
-                <InstructionSection
-                  key={`${section.heading}-${index}`}
-                  section={section}
-                  anchor={sectionAnchor(section.heading, index)}
-                />
+                <div key={`${section.heading}-${index}`} id={sectionAnchor(section.heading, index)} className="scroll-mt-24">
+                  <StructuredCareSectionCard
+                    heading={section.heading}
+                    body={section.body}
+                    whyItMatters={section.whyItMatters}
+                    beginnerBody={section.beginnerBody}
+                    advancedBody={section.advancedBody}
+                    warnings={section.warnings}
+                    defaultDetailLevel={defaultDetailLevel}
+                    footer={
+                      section.images.length > 0 ? (
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          {section.images.map((img) => (
+                            <figure
+                              key={img.url}
+                              className={`overflow-hidden rounded-2xl border ${
+                                img.mediaType === 'photo'
+                                  ? 'border-gray-200 bg-gray-50'
+                                  : 'border-emerald-100 bg-emerald-50/50'
+                              }`}
+                            >
+                              <img
+                                src={img.url}
+                                alt={img.altText}
+                                className="w-full h-auto max-h-64 object-cover object-center"
+                                loading="lazy"
+                              />
+                              <figcaption className="flex gap-2 px-3 py-2 text-xs text-gray-600">
+                                <span className="min-w-0 flex-1">{img.caption}</span>
+                                {img.mediaType === 'photo' && (
+                                  <span className="flex-shrink-0 text-gray-400">
+                                    Reference photo
+                                  </span>
+                                )}
+                              </figcaption>
+                            </figure>
+                          ))}
+                        </div>
+                      ) : undefined
+                    }
+                  />
+                </div>
               ))}
             </>
           )}
         </div>
       </div>
     </div>
-  );
-}
-
-function InstructionSection({ section, anchor }: { section: GuideSection; anchor: string }) {
-  const meta = getCareSectionMeta(section.heading);
-  const toneClasses = careSectionToneClasses(meta.tone);
-  const lead = sectionLead(section);
-
-  return (
-    <section
-      id={anchor}
-      className={`space-y-3 scroll-mt-24 rounded-2xl border p-4 ${toneClasses.card}`}
-    >
-      <div>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${toneClasses.badge}`}>
-          {meta.label}
-        </span>
-        <h3 className="mt-3 text-lg font-semibold text-emerald-950">{section.heading}</h3>
-        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-gray-500">
-          {meta.intent}
-        </p>
-      </div>
-
-      {lead ? (
-        <p className="rounded-xl bg-white/75 px-3 py-2 text-sm font-medium leading-6 text-gray-700">
-          {lead}
-        </p>
-      ) : null}
-
-      <div
-        className="text-sm text-gray-700 leading-6 prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2"
-        dangerouslySetInnerHTML={{ __html: formatGuideBody(section.body) }}
-      />
-
-      {section.images.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {section.images.map((img) => (
-            <figure
-              key={img.url}
-              className={`overflow-hidden rounded-2xl border ${
-                img.mediaType === 'photo'
-                  ? 'border-gray-200 bg-gray-50'
-                  : 'border-emerald-100 bg-emerald-50/50'
-              }`}
-            >
-              <img
-                src={img.url}
-                alt={img.altText}
-                className="w-full h-auto max-h-64 object-cover object-center"
-                loading="lazy"
-              />
-              <figcaption className="flex gap-2 px-3 py-2 text-xs text-gray-600">
-                <span className="min-w-0 flex-1">{img.caption}</span>
-                {img.mediaType === 'photo' && (
-                  <span className="flex-shrink-0 text-gray-400">Reference photo</span>
-                )}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      )}
-    </section>
   );
 }

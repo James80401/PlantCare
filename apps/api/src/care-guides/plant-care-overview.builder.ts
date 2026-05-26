@@ -1,4 +1,5 @@
 import { PotSize } from '@prisma/client';
+import type { WeatherAdvicePayload } from '../weather/weather-advice.types';
 import {
   buildLocationCareParagraph,
   buildMistCareParagraph,
@@ -8,9 +9,19 @@ import {
   type GrowingEnvironment,
   type PlantCategory,
 } from './growing-environment';
+import {
+  buildGrowthStageNote,
+  buildSeasonCareNote,
+  buildWeatherCareHint,
+  getSeason,
+  inferPlantGrowthStage,
+  type PlantGrowthStage,
+  type Season,
+} from './plant-care-season.util';
 
 export type PlantCareTopicId =
   | 'water'
+  | 'season'
   | 'light'
   | 'soil'
   | 'humidity'
@@ -44,6 +55,11 @@ export interface PlantCareOverviewContext {
   mistNote: string;
   plantNotes?: string;
   category: PlantCategory;
+  season: Season;
+  growthStage: PlantGrowthStage;
+  seasonNote: string;
+  growthNote: string;
+  weatherHint?: string;
 }
 
 export interface StructuredCareSection {
@@ -60,6 +76,7 @@ export function buildStructuredPlantCareSections(
 ): StructuredCareSection[] {
   const sections: StructuredCareSection[] = [
     buildWaterSection(ctx),
+    buildSeasonSection(ctx),
     buildLightSection(ctx),
     buildSoilSection(ctx),
     buildHumiditySection(ctx),
@@ -100,6 +117,8 @@ function buildWaterSection(ctx: PlantCareOverviewContext): StructuredCareSection
       ctx.wateringStyle,
       '',
       ctx.drainageNote,
+      '',
+      ctx.growthNote,
     ].join('\n\n'),
     advancedBody: [
       `Target interval: **${ctx.waterIntervalDays} days** (catalog base ${ctx.wateringFreqDays} days, adjusted for **${ctx.potSize}** pot).`,
@@ -111,11 +130,42 @@ function buildWaterSection(ctx: PlantCareOverviewContext): StructuredCareSection
       ctx.drainageNote,
       '',
       'Weigh the pot after watering once to learn the “just watered” vs “needs water” feel.',
+      '',
+      ctx.seasonNote,
     ].join('\n\n'),
     warnings: [
       'Never leave the pot sitting in a full saucer for more than 30 minutes.',
       'Yellow leaves + wet soil often mean overwatering, not thirst.',
     ],
+  };
+}
+
+function buildSeasonSection(ctx: PlantCareOverviewContext): StructuredCareSection {
+  const lines = [ctx.seasonNote, ctx.growthNote];
+  if (ctx.weatherHint) lines.push(`**This week:** ${ctx.weatherHint}`);
+  const body = lines.join('\n\n');
+  const warnings: string[] = [];
+  if (ctx.growingEnvironment === 'outdoor' && ctx.season === 'winter') {
+    warnings.push('Bring frost-sensitive pots indoors before overnight lows drop below freezing.');
+  }
+  if (ctx.weatherHint && /frost|freeze|cold tonight/i.test(ctx.weatherHint)) {
+    warnings.push('Act on frost warnings the same day — damage can happen overnight.');
+  }
+
+  return {
+    id: 'season',
+    heading: 'Season & weather',
+    whyItMatters:
+      'Care needs shift with daylight, temperature, and forecast — not just the calendar on the watering app.',
+    beginnerBody: body,
+    advancedBody: [
+      body,
+      '',
+      ctx.weatherHint
+        ? 'Weather hints refresh from your dashboard when you fetch daily advice.'
+        : 'Turn on **Weather advice** on the garden home screen for a 7-day forecast tied to your plants.',
+    ].join('\n\n'),
+    warnings,
   };
 }
 
@@ -252,6 +302,8 @@ function buildFertilizerSection(ctx: PlantCareOverviewContext): StructuredCareSe
       dormant
         ? 'Pause or reduce feed in winter when growth slows.'
         : 'Skip feeding for two weeks after repotting.',
+      '',
+      ctx.growthStage === 'new' ? ctx.growthNote : '',
     ].join('\n\n'),
     advancedBody: [
       `Use a balanced liquid fertilizer (e.g. 10-10-10 or 20-20-20) at **½ label strength** every 4–6 weeks in active growth.`,
@@ -261,6 +313,9 @@ function buildFertilizerSection(ctx: PlantCareOverviewContext): StructuredCareSe
       ctx.category === 'orchid'
         ? 'Use orchid-specific fertilizer during active growth; many orchids rest after blooming.'
         : 'Organic slow-release top dressings work for outdoor containers; indoors prefer liquid for control.',
+      '',
+      ctx.seasonNote,
+      ctx.growthNote,
     ].join('\n\n'),
     warnings: [
       'Over-fertilizing burns roots and shows as brown leaf tips.',
@@ -310,6 +365,10 @@ function buildRepottingSection(ctx: PlantCareOverviewContext): StructuredCareSec
       `After repotting a **${ctx.potSize}** plant, expect watering rhythm to shift — monitor soil moisture closely for 2 weeks.`,
       '',
       'Bottom watering once after repotting helps settle mix without compacting the surface.',
+      '',
+      ctx.growthStage === 'new'
+        ? '**New plant:** wait unless roots are clearly root-bound — settling in matters more than fresh soil.'
+        : ctx.growthNote,
     ].join('\n\n'),
     warnings: [
       'Repotting during peak stress (mid-winter low light) can stall growth.',
@@ -416,7 +475,15 @@ export function buildOverviewContext(
   location?: string | null,
   plantNotes?: string | null,
   waterIntervalDaysFn?: (freq: number, pot: PotSize) => number,
+  timing?: {
+    datePlanted?: Date | null;
+    createdAt?: Date;
+    plantId?: string;
+    weatherAdvice?: WeatherAdvicePayload | null;
+    now?: Date;
+  },
 ): PlantCareOverviewContext {
+  const now = timing?.now ?? new Date();
   const waterIntervalDays = waterIntervalDaysFn
     ? waterIntervalDaysFn(species.wateringFreqDays, potSize)
     : Math.max(
@@ -455,6 +522,18 @@ export function buildOverviewContext(
   const loc = location?.trim() || 'Not set';
   const growingEnvironment = inferGrowingEnvironment(location);
   const category = classifySpeciesForCare(species);
+  const season = getSeason(now);
+  const growthStage = inferPlantGrowthStage(
+    timing?.datePlanted,
+    timing?.createdAt ?? now,
+    now,
+  );
+  const seasonNote = buildSeasonCareNote(season, category, growingEnvironment, plantName);
+  const growthNote = buildGrowthStageNote(growthStage, plantName, category);
+  const weatherHint =
+    timing?.plantId && timing.weatherAdvice
+      ? buildWeatherCareHint(timing.weatherAdvice, timing.plantId) ?? undefined
+      : undefined;
 
   const ctx: PlantCareOverviewContext = {
     speciesName: species.commonName,
@@ -477,6 +556,11 @@ export function buildOverviewContext(
     mistNote: buildMistCareParagraph(growingEnvironment, category, plantName),
     plantNotes: plantNotes?.trim() || undefined,
     category,
+    season,
+    growthStage,
+    seasonNote,
+    growthNote,
+    weatherHint,
   };
 
   return ctx;

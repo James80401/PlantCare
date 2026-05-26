@@ -1,18 +1,9 @@
 import { format } from 'date-fns';
-import { useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
-import {
-  careSectionToneClasses,
-  getCareSectionMeta,
-  getStructuredCareSectionMeta,
-  sectionLead,
-} from '../../utils/careGuideSections';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import { StructuredCareSectionCard } from '../../components/care/StructuredCareSectionCard';
+import { careSectionToneClasses, getCareSectionMeta } from '../../utils/careGuideSections';
 import { formatGuideBody, taskTypeLabel } from '../../utils/tasks';
-import type {
-  CareDetailLevel,
-  CareOverviewSection,
-  PlantRecord,
-  TimelineEvent,
-} from './types';
+import type { CareDetailLevel, CareOverviewSection, PlantRecord, TimelineEvent } from './types';
 
 export function ProfileSection({
   eyebrow,
@@ -100,73 +91,16 @@ export function CareGuideCard({
   section: CareOverviewSection;
   defaultDetailLevel?: CareDetailLevel;
 }) {
-  const [detailLevel, setDetailLevel] = useState<CareDetailLevel>(defaultDetailLevel);
-  const meta = getStructuredCareSectionMeta(section.id, section.heading);
-  const toneClasses = careSectionToneClasses(meta.tone);
-  const body =
-    detailLevel === 'advanced' ? section.advancedBody : section.beginnerBody;
-  const lead = sectionLead({ heading: section.heading, body });
-
   return (
-    <article className={`rounded-2xl border p-4 ${toneClasses.card}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${toneClasses.badge}`}>
-            {meta.label}
-          </span>
-          <h3 className="mt-3 font-semibold text-emerald-950">{section.heading}</h3>
-        </div>
-        <div
-          className="flex rounded-full border border-emerald-200 bg-white p-0.5 text-xs font-semibold"
-          role="group"
-          aria-label="Detail level"
-        >
-          {(['beginner', 'advanced'] as const).map((level) => (
-            <button
-              key={level}
-              type="button"
-              onClick={() => setDetailLevel(level)}
-              className={`rounded-full px-3 py-1.5 capitalize transition ${
-                detailLevel === level
-                  ? 'bg-emerald-700 text-white'
-                  : 'text-emerald-800 hover:bg-emerald-50'
-              }`}
-              aria-pressed={detailLevel === level}
-            >
-              {level}
-            </button>
-          ))}
-        </div>
-      </div>
-      {section.whyItMatters ? (
-        <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-sm font-medium leading-6 text-gray-700">
-          {section.whyItMatters}
-        </p>
-      ) : lead ? (
-        <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-sm font-medium leading-6 text-gray-700">
-          {lead}
-        </p>
-      ) : null}
-      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-gray-500">
-        {meta.intent}
-      </p>
-      <div
-        className="mt-3 text-sm leading-6 text-gray-700 prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2"
-        dangerouslySetInnerHTML={{ __html: formatGuideBody(body) }}
-      />
-      {section.warnings.length > 0 ? (
-        <ul className="mt-3 space-y-2 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-sm text-amber-950">
-          {section.warnings.map((warning) => (
-            <li key={warning} className="flex gap-2 leading-5">
-              <span className="font-semibold" aria-hidden>
-                !
-              </span>
-              <span>{warning}</span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </article>
+    <StructuredCareSectionCard
+      id={section.id}
+      heading={section.heading}
+      whyItMatters={section.whyItMatters}
+      beginnerBody={section.beginnerBody}
+      advancedBody={section.advancedBody}
+      warnings={section.warnings}
+      defaultDetailLevel={defaultDetailLevel}
+    />
   );
 }
 

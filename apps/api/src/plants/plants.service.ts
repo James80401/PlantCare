@@ -7,6 +7,7 @@ import { UploadService } from '../upload/upload.service';
 import { sharedPlantInclude, userCanViewPlantTasks } from '../gardens/task-access';
 import { PlantNetService } from './plantnet.service';
 import { PerenualService } from '../species/perenual.service';
+import { WeatherService } from '../weather/weather.service';
 import { CreatePlantDto } from './dto/create-plant.dto';
 import { UpdatePlantDto } from './dto/update-plant.dto';
 
@@ -19,6 +20,7 @@ export class PlantsService {
     private upload: UploadService,
     private plantNet: PlantNetService,
     private perenual: PerenualService,
+    private weather: WeatherService,
   ) {}
 
   async findAll(userId: string) {
@@ -66,7 +68,11 @@ export class PlantsService {
     if (!plant || !userCanViewPlantTasks(userId, plant)) {
       throw new NotFoundException('Plant not found');
     }
-    const careOverview = this.careGuides.buildPlantCareOverview(plant);
+    const weatherStatus = await this.weather.getAdviceStatus(userId);
+    const careOverview = this.careGuides.buildPlantCareOverview(
+      plant,
+      weatherStatus.cachedAdvice,
+    );
     return { ...plant, careOverview };
   }
 

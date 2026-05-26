@@ -271,8 +271,8 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [x] Add warning blocks for common mistakes.
 - [x] Tailor guidance by indoor/outdoor location.
 - [x] Tailor guidance by pot size and drainage.
-- [ ] Tailor guidance by season and weather.
-- [ ] Tailor guidance by growth stage.
+- [x] Tailor guidance by season and weather.
+- [x] Tailor guidance by growth stage.
 
 ## Phase 3 - More detailed plant data
 

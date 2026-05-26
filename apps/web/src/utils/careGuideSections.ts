@@ -5,6 +5,7 @@ export interface CareGuideSectionLike {
 
 export type PlantCareTopicId =
   | 'water'
+  | 'season'
   | 'light'
   | 'soil'
   | 'humidity'
@@ -22,6 +23,11 @@ const TOPIC_META: Record<PlantCareTopicId, CareSectionMeta> = {
     label: 'Water',
     intent: 'How often and how much to water this plant.',
     tone: 'action',
+  },
+  season: {
+    label: 'Season',
+    intent: 'How daylight, weather, and plant age change care right now.',
+    tone: 'seasonal',
   },
   light: {
     label: 'Light',

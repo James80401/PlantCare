@@ -17,6 +17,15 @@ import {
   buildStructuredPlantCareSections,
   type StructuredCareSection,
 } from './plant-care-overview.builder';
+import {
+  buildGrowthStageNote,
+  buildSeasonCareNote,
+  buildWeatherCareHint,
+  getSeason,
+  inferPlantGrowthStage,
+} from './plant-care-season.util';
+import { WeatherService } from '../weather/weather.service';
+import type { WeatherAdvicePayload } from '../weather/weather-advice.types';
 
 
 
@@ -39,6 +48,14 @@ export interface GuideSectionDto {
   heading: string;
 
   body: string;
+
+  whyItMatters?: string;
+
+  beginnerBody?: string;
+
+  advancedBody?: string;
+
+  warnings?: string[];
 
   images: GuideImageDto[];
 
@@ -88,6 +105,14 @@ interface GuideSection {
 
   body: string;
 
+  whyItMatters?: string;
+
+  beginnerBody?: string;
+
+  advancedBody?: string;
+
+  warnings?: string[];
+
   imageKeys?: string[];
 
 }
@@ -132,6 +157,12 @@ interface PersonalizationContext {
 
   mistNote: string;
 
+  seasonNote: string;
+
+  growthNote: string;
+
+  weatherHint?: string;
+
 }
 
 
@@ -140,7 +171,10 @@ interface PersonalizationContext {
 
 export class CareGuidesService {
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private weather: WeatherService,
+  ) {}
 
 
 
@@ -158,7 +192,11 @@ export class CareGuidesService {
 
 
 
-  buildPlantCareOverview(plant: {
+  buildPlantCareOverview(
+    plant: {
+    id: string;
+    createdAt: Date;
+    datePlanted: Date | null;
     nickname: string | null;
     location: string | null;
     notes: string | null;
@@ -173,7 +211,9 @@ export class CareGuidesService {
       wateringFreqDays: number;
       toxicity: string | null;
     };
-  }): PlantCareOverviewDto {
+  },
+    weatherAdvice?: WeatherAdvicePayload | null,
+  ): PlantCareOverviewDto {
     const species = plant.species;
     const plantName = plant.nickname || species.commonName;
     const overviewCtx = buildOverviewContext(
@@ -183,6 +223,12 @@ export class CareGuidesService {
       plant.location,
       plant.notes,
       (freq, pot) => this.waterIntervalDays(freq, pot),
+      {
+        datePlanted: plant.datePlanted,
+        createdAt: plant.createdAt,
+        plantId: plant.id,
+        weatherAdvice: weatherAdvice ?? null,
+      },
     );
 
     return {
@@ -214,9 +260,13 @@ export class CareGuidesService {
 
     const plantName = plant.nickname || species.commonName;
 
-    const ctx = this.buildContext(plantName, species, plant.potSize, plant.location);
-
-
+    const weatherStatus = await this.weather.getAdviceStatus(userId);
+    const ctx = this.buildContext(plantName, species, plant.potSize, plant.location, {
+      datePlanted: plant.datePlanted,
+      createdAt: plant.createdAt,
+      plantId: plant.id,
+      weatherAdvice: weatherStatus.cachedAdvice,
+    });
 
     let guide = await this.prisma.careGuide.findFirst({
 
@@ -324,11 +374,7 @@ export class CareGuidesService {
 
 
 
-    return {
-
-      heading: 'Your plant right now',
-
-      body: [
+    const beginnerBody = [
 
         taskHints[taskType],
 
@@ -350,6 +396,10 @@ export class CareGuidesService {
 
         '',
 
+        ctx.seasonNote,
+
+        ctx.growthNote,
+
         `**Catalog note:** ${ctx.careNotes}`,
 
         ctx.toxicityWarning,
@@ -358,7 +408,34 @@ export class CareGuidesService {
 
         .filter(Boolean)
 
-        .join('\n\n'),
+        .join('\n\n');
+
+    const advancedBody = [
+      beginnerBody,
+      ctx.weatherHint ? `**Forecast:** ${ctx.weatherHint}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+
+    const warnings: string[] = [];
+    if (ctx.weatherHint && /frost|freeze/i.test(ctx.weatherHint)) {
+      warnings.push('Act on frost or freeze warnings the same day.');
+    }
+
+    return {
+
+      heading: 'Your plant right now',
+
+      body: beginnerBody,
+
+      whyItMatters:
+        'This task fits your plant’s pot, light, season, and location — adjust if the soil or forecast says otherwise.',
+
+      beginnerBody,
+
+      advancedBody,
+
+      warnings,
 
       images: [],
 
@@ -412,6 +489,20 @@ export class CareGuidesService {
 
       body: this.personalize(section.body, ctx),
 
+      whyItMatters: section.whyItMatters
+        ? this.personalize(section.whyItMatters, ctx)
+        : undefined,
+
+      beginnerBody: section.beginnerBody
+        ? this.personalize(section.beginnerBody, ctx)
+        : undefined,
+
+      advancedBody: section.advancedBody
+        ? this.personalize(section.advancedBody, ctx)
+        : undefined,
+
+      warnings: section.warnings?.map((w) => this.personalize(w, ctx)),
+
       images,
 
     };
@@ -447,6 +538,14 @@ export class CareGuidesService {
     potSize: PotSize,
 
     location?: string | null,
+
+    timing?: {
+      datePlanted?: Date | null;
+      createdAt?: Date;
+      plantId?: string;
+      weatherAdvice?: WeatherAdvicePayload | null;
+      now?: Date;
+    },
 
   ): PersonalizationContext {
 
@@ -519,8 +618,19 @@ export class CareGuidesService {
     const growingEnvironment = inferGrowingEnvironment(location);
 
     const category = classifySpeciesForCare(species);
-
-
+    const now = timing?.now ?? new Date();
+    const season = getSeason(now);
+    const growthStage = inferPlantGrowthStage(
+      timing?.datePlanted,
+      timing?.createdAt ?? now,
+      now,
+    );
+    const seasonNote = buildSeasonCareNote(season, category, growingEnvironment, plantName);
+    const growthNote = buildGrowthStageNote(growthStage, plantName, category);
+    const weatherHint =
+      timing?.plantId && timing.weatherAdvice
+        ? buildWeatherCareHint(timing.weatherAdvice, timing.plantId) ?? undefined
+        : undefined;
 
     return {
 
@@ -559,6 +669,12 @@ export class CareGuidesService {
       locationNote: buildLocationCareParagraph(growingEnvironment, loc, plantName),
 
       mistNote: buildMistCareParagraph(growingEnvironment, category, plantName),
+
+      seasonNote,
+
+      growthNote,
+
+      weatherHint,
 
     };
 

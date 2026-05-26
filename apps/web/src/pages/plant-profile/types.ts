@@ -4,6 +4,7 @@ export type PlantRecord = Record<string, unknown>;
 
 export type PlantCareTopicId =
   | 'water'
+  | 'season'
   | 'light'
   | 'soil'
   | 'humidity'

@@ -29,6 +29,7 @@ describe('plant-care-overview.builder', () => {
 
     expect(sections.map((s) => s.id)).toEqual([
       'water',
+      'season',
       'light',
       'soil',
       'humidity',
@@ -69,6 +70,48 @@ describe('plant-care-overview.builder', () => {
 
     expect(humidity?.beginnerBody).toContain('Kitchen Pothos');
     expect(humidity?.beginnerBody.length).toBeGreaterThan(50);
+  });
+
+  it('includes season section with growth context', () => {
+    const ctx = buildOverviewContext('Kitchen Pothos', species, PotSize.MEDIUM);
+    const season = buildStructuredPlantCareSections(ctx).find((s) => s.id === 'season');
+    expect(season?.heading).toBe('Season & weather');
+    expect(season?.beginnerBody).toContain('Kitchen Pothos');
+  });
+
+  it('includes weather hint when advice is provided', () => {
+    const ctx = buildOverviewContext(
+      'Kitchen Pothos',
+      species,
+      PotSize.MEDIUM,
+      'Living room',
+      undefined,
+      undefined,
+      {
+        plantId: 'plant-1',
+        createdAt: new Date('2024-01-01'),
+        weatherAdvice: {
+          fromCache: true,
+          fetchedAt: '2026-05-19',
+          locationLabel: 'Home',
+          timezone: 'UTC',
+          overviewAlerts: [],
+          summary: { days: [] },
+          plants: [
+            {
+              plantId: 'plant-1',
+              plantName: 'Kitchen Pothos',
+              environment: 'indoor',
+              advice: 'Extra dry air this week — mist lightly.',
+              severity: 'info',
+            },
+          ],
+        },
+        now: new Date('2026-05-19'),
+      },
+    );
+    const season = buildStructuredPlantCareSections(ctx).find((s) => s.id === 'season');
+    expect(season?.beginnerBody).toContain('Extra dry air');
   });
 
   it('omits notes section when plant has no notes', () => {
