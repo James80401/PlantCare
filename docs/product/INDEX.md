@@ -4,6 +4,7 @@
 
 | Document | Audience | Purpose |
 |----------|----------|---------|
+| [improvement-recommendations.md](improvement-recommendations.md) | PM / dev | Researched, prioritized improvement backlog |
 | [improvement-checklist.md](improvement-checklist.md) | PM / dev | Roadmap and UX acceptance ideas |
 | [uat-checklist.md](uat-checklist.md) | QA | Full UAT matrix |
 | [tester-5-minute.md](tester-5-minute.md) | Testers | Quick smoke script |

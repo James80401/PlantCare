@@ -14,6 +14,9 @@ plants and environment, and make progress visible over time.
 Use these sections as the implementation queue. Each section should be small
 enough to finish, verify, and review independently before starting the next one.
 
+For a **research-backed prioritized backlog** (impact, effort, code paths, and
+shipped-vs-gap reconciliation), see [improvement-recommendations.md](improvement-recommendations.md).
+
 ### Section 0 - Completed foundation
 
 Status: completed in the current branch.
@@ -190,7 +193,7 @@ Acceptance check:
 
 ### Current next slice
 
-Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy/UAT sign-off) or native packaging polish.
+Continue with **Section 10+ backlog** (structured task care guides, adaptive completion feedback, deploy/UAT sign-off) or native packaging polish. See [improvement-recommendations.md](improvement-recommendations.md) for the suggested **Now** horizon.
 
 ## Phase 1 - Mobile-first shell and dashboard foundation
 

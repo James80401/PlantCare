@@ -98,7 +98,7 @@ npm run uat:e2e
 
 ### Known limitations (not blocking UAT)
 
-- Task snooze not implemented
+- Task snooze: available on dashboard/calendar task rows (`PATCH /tasks/:id/snooze`, 1/3/7 days); profile Tasks tab may not expose snooze yet
 - Capacitor native build needs `VITE_API_BASE_URL` pointing at a reachable API
 - Password reset requires SMTP (token flow is tested in CI when SMTP is configured)
 
