@@ -19,6 +19,23 @@ Status update body:
 
 Use this to mark a diagnosis as active/recovered from the plant profile.
 
+## Follow-up task (shipped)
+
+| Method | Path |
+|--------|------|
+| POST | `/plants/:plantId/diagnose/:diagnosisId/follow-up-task` |
+
+Body:
+
+```json
+{
+  "dueInDays": 3,
+  "note": "Recheck yellow leaves and soil moisture"
+}
+```
+
+Creates a **`HEALTH_CHECK`** task linked via `sourceDiagnosisId`. The optional `note` is accepted by the API; persisting it on the task or journal is a follow-up improvement (see [improvement-recommendations.md](../product/improvement-recommendations.md) C3).
+
 ## Conversations
 
 | Method | Path |
@@ -32,31 +49,12 @@ Use this to mark a diagnosis as active/recovered from the plant profile.
 
 See [diagnosis pipeline](../architecture/diagnosis-pipeline.md).
 
-## Recovery follow-up task design
+## Web UI
 
-Section 6 implements recovery status and journal follow-up notes first. A
-dedicated follow-up task API should come next when the task model can represent
-health-check work explicitly.
+| Surface | Status |
+|---------|--------|
+| Dr. Plant chat | Shipped on plant Health tab |
+| One-shot diagnosis | Shipped in Health tab (symptom check form); also callable via API |
+| Past diagnoses | Shipped; recovery status and manual follow-up tasks |
 
-Proposed API:
-
-```http
-POST /plants/:plantId/diagnose/:diagnosisId/follow-up-task
-```
-
-Proposed body:
-
-```json
-{
-  "dueInDays": 3,
-  "note": "Recheck yellow leaves and soil moisture"
-}
-```
-
-Recommended data-model addition before implementation:
-
-- Add a `HEALTH_CHECK` task type, or add a task `source`/`sourceDiagnosisId`
-  field so recovery follow-ups do not masquerade as pest-control or watering
-  tasks.
-- Return the created task with plant/species included so the existing task UI can
-  render it immediately.
+See [feature availability](../reference/feature-availability.md).

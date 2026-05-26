@@ -32,3 +32,8 @@ export interface TaskSkipFeedback {
   reason?: TaskSkipReason;
   note?: string;
 }
+
+export function skipReasonLabel(reason: string | undefined): string | null {
+  if (!reason) return null;
+  return TASK_SKIP_REASONS.find((r) => r.value === reason)?.label ?? reason;
+}

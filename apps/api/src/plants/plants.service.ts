@@ -59,7 +59,13 @@ export class PlantsService {
       where: { id },
       include: {
         species: true,
-        tasks: { orderBy: { dueDate: 'asc' }, take: 20 },
+        tasks: {
+          orderBy: { dueDate: 'desc' },
+          take: 40,
+          include: {
+            feedback: { orderBy: { createdAt: 'desc' }, take: 1 },
+          },
+        },
         journalEntries: { orderBy: { createdAt: 'desc' }, take: 10 },
         diagnoses: { orderBy: { createdAt: 'desc' }, take: 5 },
         ...sharedPlantInclude,

@@ -60,7 +60,7 @@ Recommendations below are **additive** — they assume the foundation already sh
 | **E1** | Notes + toxicity preview in Add Plant wizard | Safer, complete plant setup at create time | S | P2 | Onboarding |
 | **A2** | Auto-postpone watering from cached weather | Outdoor care adapts to rain without manual skip | M | P2 | Scheduler / weather |
 | **H1** | Slim dashboard API aggregates | Faster dashboard; less client fanout | M | P2 | API |
-| **H4** | Fix stale docs (snooze, diagnosis API, Phase 4 drift) | Team and testers trust documentation | S | P2 | Docs |
+| **H4** | Fix stale docs (snooze, diagnosis API, Phase 4 drift) | Team and testers trust documentation | S | P2 | Docs (shipped 2026-05) |
 
 ---
 
@@ -296,23 +296,23 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 |----|--------|---------|
 | A1 | Not started | Complete-time feedback + dry-soil scheduler rules |
 | A2 | Partial | `postponeWateringForRain` exists, not wired to weather cache |
-| A3 | Not started | Show skip reason on profile timeline |
-| A4 | Not started | Unified skip UX |
+| A3 | Done | Skip reason on profile timeline |
+| A4 | Done | Unified skip opens feedback panel |
 | A5 | Not started | Task completion notes |
 | B1 | Partial | Profile overview structured; DB task guides flat |
 | B2 | Not started | Verify structured guide coverage in CI |
 | B3 | Partial | Browse/filters exist; Phase 3 attributes open |
-| C1 | Not started | One-shot diagnosis create in web UI |
+| C1 | Done | One-shot diagnosis on Health tab |
 | C2 | Partial | Manual follow-up only |
 | C3 | Partial | Follow-up note not persisted; images hidden in list |
 | C4 | Partial | Chat has context; not full care/skip/weather |
 | C5 | Not started | Structured pre-diagnosis intake |
-| D1 | Not started | Journal photo UX on profile |
+| D1 | Partial | Photo preview, photo-only create, edit preview |
 | D2 | Partial | API measurements; limited UI |
 | D3 | Partial | Client-side timeline merge |
 | D4 | Partial | Ephemeral dashboard milestones only |
-| E1 | Not started | Notes/toxicity on add plant |
-| E2 | Not started | Settings for onboarding prefs |
+| E1 | Done | Notes + toxicity preview on Add Plant |
+| E2 | Done | Settings care preferences |
 | E3 | Not started | defaultLightLevel surfaced in UX |
 | E4 | Not started | Delete plant UI |
 | F1 | Not started | Community post images |
@@ -325,7 +325,7 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | H1 | Partial | Dashboard endpoint exists; still heavy payload |
 | H2 | Not started | Systematic a11y pass |
 | H3 | Not started | E2E for new care UI + snooze |
-| H4 | Not started | Doc drift cleanup |
+| H4 | Done | UAT snooze note, diagnosis API doc, Phase 4 reconciliation |
 
 ### Already shipped (related work — do not re-implement blindly)
 

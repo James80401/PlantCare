@@ -14,7 +14,7 @@ Use this matrix when writing tutorials or testing — avoids documenting UI that
 | Task instructions | Yes | Yes | Modal from dashboard, calendar, profile |
 | Change plant location | Yes | Yes | Profile dropdown; reschedules pending tasks |
 | Dr. Plant chat | Yes | Yes | Profile section; requires OpenAI for best results |
-| One-shot diagnosis | No (create) | Yes | Create via Swagger/API; profile shows past rows only |
+| One-shot diagnosis | Yes | Yes | Health tab symptom check form; API also available |
 | Journal (text) | Yes | Yes | Profile text field |
 | Journal photo | No | Yes | Multipart on API |
 | Plant identify (photo) | Yes | Yes | Add plant flow; monthly quota on free tier |

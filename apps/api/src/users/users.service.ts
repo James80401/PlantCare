@@ -67,6 +67,27 @@ export class UsersService {
     });
   }
 
+  async updateCarePreferences(
+    userId: string,
+    data: { experienceLevel?: string; defaultLightLevel?: string },
+  ) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.experienceLevel !== undefined
+          ? { experienceLevel: data.experienceLevel }
+          : {}),
+        ...(data.defaultLightLevel !== undefined
+          ? { defaultLightLevel: data.defaultLightLevel }
+          : {}),
+      },
+      select: {
+        experienceLevel: true,
+        defaultLightLevel: true,
+      },
+    });
+  }
+
   async updateNotificationSettings(
     userId: string,
     data: {

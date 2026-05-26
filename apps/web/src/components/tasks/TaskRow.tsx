@@ -167,18 +167,11 @@ export default function TaskRow({
               />
               <button
                 type="button"
-                onClick={() => onSkip(task.id)}
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-200 hover:text-gray-800"
-              >
-                Skip
-              </button>
-              <button
-                type="button"
                 onClick={() => setFeedbackOpen((open) => !open)}
                 className="inline-flex min-h-11 items-center justify-center rounded-full bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
                 aria-expanded={feedbackOpen}
               >
-                Skip reason
+                Skip
               </button>
               {onSnooze ? (
                 <button
@@ -272,6 +265,13 @@ export default function TaskRow({
                     className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
                   >
                     Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSkip(task.id)}
+                    className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
+                  >
+                    Skip without reason
                   </button>
                 </div>
               </div>

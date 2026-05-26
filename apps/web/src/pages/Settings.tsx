@@ -14,8 +14,21 @@ interface LocationOption {
   timezone: string;
 }
 
+const EXPERIENCE_LEVELS = [
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', label: 'Advanced' },
+  { value: 'expert', label: 'Expert' },
+] as const;
+
+const LIGHT_LEVELS = [
+  { value: 'low', label: 'Low light' },
+  { value: 'medium', label: 'Medium light' },
+  { value: 'high', label: 'Bright light' },
+] as const;
+
 export default function Settings() {
-  const { logout } = useAuth();
+  const { logout, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [notifyPush, setNotifyPush] = useState(true);
   const [notifyEmail, setNotifyEmail] = useState(true);
@@ -30,7 +43,10 @@ export default function Settings() {
   const [quietStart, setQuietStart] = useState('');
   const [quietEnd, setQuietEnd] = useState('');
   const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('C');
+  const [experienceLevel, setExperienceLevel] = useState('beginner');
+  const [defaultLightLevel, setDefaultLightLevel] = useState('medium');
   const [saved, setSaved] = useState(false);
+  const [carePrefsSaved, setCarePrefsSaved] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -47,8 +63,26 @@ export default function Settings() {
       if (data.temperatureUnit === 'F' || data.temperatureUnit === 'C') {
         setTemperatureUnit(data.temperatureUnit);
       }
+      if (data.experienceLevel) setExperienceLevel(data.experienceLevel);
+      if (data.defaultLightLevel) setDefaultLightLevel(data.defaultLightLevel);
     });
   }, []);
+
+  const handleCarePrefsSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+    try {
+      await usersApi.updateCarePreferences({
+        experienceLevel,
+        defaultLightLevel,
+      });
+      await refreshUser();
+      setCarePrefsSaved(true);
+      setTimeout(() => setCarePrefsSaved(false), 2000);
+    } catch {
+      setError('Could not save care preferences.');
+    }
+  };
 
   useEffect(() => {
     if (locationQuery.trim().length < 2) {
@@ -160,6 +194,51 @@ export default function Settings() {
           Manage household
         </Link>
       </section>
+
+      <form
+        onSubmit={handleCarePrefsSubmit}
+        className="bg-white rounded-xl border border-emerald-100 p-6 space-y-4"
+      >
+        <h2 className="font-semibold text-emerald-950">Care preferences</h2>
+        <p className="text-sm text-gray-600">
+          Used for species recommendations and default detail level on plant care guides.
+        </p>
+        <label className="block text-sm">
+          <span className="font-medium text-gray-700">Experience level</span>
+          <select
+            value={experienceLevel}
+            onChange={(e) => setExperienceLevel(e.target.value)}
+            className="mt-1 w-full rounded-lg border px-3 py-2"
+          >
+            {EXPERIENCE_LEVELS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-gray-700">Typical light at home</span>
+          <select
+            value={defaultLightLevel}
+            onChange={(e) => setDefaultLightLevel(e.target.value)}
+            className="mt-1 w-full rounded-lg border px-3 py-2"
+          >
+            {LIGHT_LEVELS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="submit"
+          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+        >
+          Save care preferences
+        </button>
+        {carePrefsSaved ? <p className="text-sm text-emerald-700">Care preferences saved.</p> : null}
+      </form>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-emerald-100 p-6 space-y-4">
         <h2 className="font-semibold">Notifications</h2>

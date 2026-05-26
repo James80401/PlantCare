@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { StructuredCareSectionCard } from '../../components/care/StructuredCareSectionCard';
 import { careSectionToneClasses, getCareSectionMeta } from '../../utils/careGuideSections';
+import { skipReasonLabel } from '../../utils/taskFeedback';
 import { formatGuideBody, taskTypeLabel } from '../../utils/tasks';
 import type { CareDetailLevel, CareOverviewSection, PlantRecord, TimelineEvent } from './types';
 
@@ -254,19 +255,35 @@ export function buildTimelineEvents({
 
   const taskEvents: TimelineEvent[] = tasks
     .filter((task) => task.status !== 'PENDING' && task.completedAt)
-    .map((task) => ({
-      id: `task-${task.id as string}`,
-      date: new Date(task.completedAt as string),
-      type: 'care' as const,
-      title: `${taskTypeLabel(task.taskType as string)} ${
-        task.status === 'DONE' ? 'completed' : 'skipped'
-      }`,
-      description:
+    .map((task) => {
+      const feedbackList = task.feedback as
+        | Array<{ reason?: string; note?: string | null }>
+        | undefined;
+      const latestFeedback = feedbackList?.[0];
+      const reasonLabel = skipReasonLabel(latestFeedback?.reason);
+      let description =
         task.status === 'SKIPPED'
-          ? 'This care task was skipped. Feedback can help future scheduling improve.'
-          : 'This care task was marked complete.',
-      meta: `Originally due ${format(new Date(task.dueDate as string), 'MMM d')}`,
-    }));
+          ? 'This care task was skipped.'
+          : 'This care task was marked complete.';
+      if (task.status === 'SKIPPED' && reasonLabel) {
+        description = `Skipped: ${reasonLabel}.`;
+        if (latestFeedback?.note?.trim()) {
+          description += ` ${latestFeedback.note.trim()}`;
+        }
+      } else if (task.status === 'SKIPPED') {
+        description += ' Add a skip reason next time to improve scheduling.';
+      }
+      return {
+        id: `task-${task.id as string}`,
+        date: new Date(task.completedAt as string),
+        type: 'care' as const,
+        title: `${taskTypeLabel(task.taskType as string)} ${
+          task.status === 'DONE' ? 'completed' : 'skipped'
+        }`,
+        description,
+        meta: `Originally due ${format(new Date(task.dueDate as string), 'MMM d')}`,
+      };
+    });
 
   const diagnosisEvents: TimelineEvent[] = diagnoses.map((diagnosis) => ({
     id: `diagnosis-${diagnosis.id as string}`,

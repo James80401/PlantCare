@@ -42,6 +42,7 @@ export default function AddPlantWizard() {
   const [location, setLocation] = useState(PLANT_LOCATIONS[0]);
   const [potSize, setPotSize] = useState('MEDIUM');
   const [datePlanted, setDatePlanted] = useState('');
+  const [notes, setNotes] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [identifyPreview, setIdentifyPreview] = useState<string | null>(null);
 
@@ -142,6 +143,7 @@ export default function AddPlantWizard() {
         location,
         potSize,
         datePlanted: datePlanted || undefined,
+        notes: notes.trim() || undefined,
         imageUrl: imageUrl || undefined,
       });
       trackEvent('PlantAdded', { speciesId });
@@ -318,16 +320,28 @@ export default function AddPlantWizard() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Card className="space-y-3">
             {selectedSpecies ? (
-              <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm">
-                <span className="text-gray-600">Species: </span>
-                <span className="font-semibold text-emerald-950">{selectedSpecies.commonName}</span>
-                <button
-                  type="button"
-                  className="ml-2 text-xs font-semibold text-emerald-800 underline"
-                  onClick={() => setStep('search')}
-                >
-                  Change
-                </button>
+              <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm space-y-2">
+                <p>
+                  <span className="text-gray-600">Species: </span>
+                  <span className="font-semibold text-emerald-950">{selectedSpecies.commonName}</span>
+                  <button
+                    type="button"
+                    className="ml-2 text-xs font-semibold text-emerald-800 underline"
+                    onClick={() => setStep('search')}
+                  >
+                    Change
+                  </button>
+                </p>
+                {selectedSpecies.sunlight ? (
+                  <p className="text-gray-700">
+                    <span className="font-medium text-emerald-900">Light:</span> {selectedSpecies.sunlight}
+                  </p>
+                ) : null}
+                {selectedSpecies.toxicity ? (
+                  <p className="text-gray-700">
+                    <span className="font-medium text-emerald-900">Safety:</span> {selectedSpecies.toxicity}
+                  </p>
+                ) : null}
               </div>
             ) : null}
             <Input
@@ -371,6 +385,16 @@ export default function AddPlantWizard() {
               value={datePlanted}
               onChange={(e) => setDatePlanted(e.target.value)}
             />
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700">Notes (optional)</span>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Where you bought it, care quirks, pet safety reminders…"
+                rows={3}
+                className="mt-2 w-full rounded-2xl border border-emerald-100 px-4 py-3 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              />
+            </label>
           </Card>
 
           <Card>

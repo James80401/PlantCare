@@ -9,6 +9,7 @@ interface DiagnosisFormProps {
 export default function DiagnosisForm({ plantName, onSubmit }: DiagnosisFormProps) {
   const [symptoms, setSymptoms] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoKey, setPhotoKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -25,6 +26,8 @@ export default function DiagnosisForm({ plantName, onSubmit }: DiagnosisFormProp
       await onSubmit(symptoms.trim(), photo ?? undefined);
       setSymptoms('');
       setPhoto(null);
+      if (photoPreview?.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
+      setPhotoPreview(null);
       setPhotoKey((key) => key + 1);
     } catch {
       setError('Could not run diagnosis. Try again in a moment.');
@@ -46,7 +49,17 @@ export default function DiagnosisForm({ plantName, onSubmit }: DiagnosisFormProp
         placeholder="Yellow lower leaves, soggy soil, spots on new growth…"
         rows={4}
       />
-      <motionPhotoField photoKey={photoKey} onPick={setPhoto} />
+      <motionPhotoField
+        photoKey={photoKey}
+        previewUrl={photoPreview}
+        onPick={(file) => {
+          setPhoto(file);
+          setPhotoPreview((prev) => {
+            if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+            return file ? URL.createObjectURL(file) : null;
+          });
+        }}
+      />
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
       <button
         type="submit"
@@ -75,9 +88,11 @@ function motionHeader({ plantName }: { plantName: string }) {
 
 function motionPhotoField({
   photoKey,
+  previewUrl,
   onPick,
 }: {
   photoKey: number;
+  previewUrl: string | null;
   onPick: (file: File | null) => void;
 }) {
   return (
@@ -91,6 +106,13 @@ function motionPhotoField({
         onChange={(e) => onPick(e.target.files?.[0] ?? null)}
         className="mt-1.5 block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-800"
       />
+      {previewUrl ? (
+        <img
+          src={previewUrl}
+          alt="Symptom photo preview"
+          className="mt-3 max-h-48 w-full rounded-2xl object-cover border border-emerald-100"
+        />
+      ) : null}
     </div>
   );
 }

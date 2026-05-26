@@ -33,6 +33,18 @@ export class UsersController {
     });
   }
 
+  @Put('me/care-preferences')
+  updateCarePreferences(
+    @CurrentUser() user: JwtPayload,
+    @Body()
+    body: {
+      experienceLevel?: string;
+      defaultLightLevel?: string;
+    },
+  ) {
+    return this.usersService.updateCarePreferences(user.sub, body);
+  }
+
   @Put('me/notification-settings')
   updateSettings(
     @CurrentUser() user: JwtPayload,

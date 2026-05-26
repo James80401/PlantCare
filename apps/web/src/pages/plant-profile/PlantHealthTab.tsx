@@ -27,6 +27,18 @@ export default function PlantHealthTab() {
         description="Ask Dr. Plant about symptoms and review past diagnosis results."
       >
         <div className="space-y-5 pb-20 sm:pb-0">
+          <section className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+              Symptom check
+            </p>
+            <p className="mt-1 text-sm text-gray-600">
+              One structured diagnosis with a photo — separate from the chat below.
+            </p>
+            <div className="mt-3">
+              <DiagnosisForm plantName={ctx.plantLabel} onSubmit={ctx.submitDiagnosis} />
+            </div>
+          </section>
+
           <DrPlantChat plantId={ctx.id} plantName={ctx.plantLabel} />
 
           <RecoveryPanel
@@ -60,18 +72,6 @@ export default function PlantHealthTab() {
               }
             />
           ) : null}
-
-          <details className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
-            <summary className="cursor-pointer text-sm font-semibold text-emerald-900">
-              One-shot diagnosis (optional)
-            </summary>
-            <p className="mt-2 text-xs text-gray-600">
-              For a single structured result without a chat thread.
-            </p>
-            <div className="mt-3">
-              <DiagnosisForm plantName={ctx.plantLabel} onSubmit={ctx.submitDiagnosis} />
-            </div>
-          </details>
 
           {ctx.diagnosisEntries.length ? (
             <div>

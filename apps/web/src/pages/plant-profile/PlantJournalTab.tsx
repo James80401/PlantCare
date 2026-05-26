@@ -140,11 +140,24 @@ function JournalForm() {
           onChange={(event) => ctx.setJournalPhoto(event.target.files?.[0] ?? null)}
           className="mt-2 block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-800 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
         />
+        {ctx.journalPhotoPreview ? (
+          <img
+            src={ctx.journalPhotoPreview}
+            alt="Journal photo preview"
+            className="mt-3 max-h-48 w-full rounded-2xl object-cover border border-emerald-100"
+          />
+        ) : null}
       </label>
+
+      {ctx.journalError ? (
+        <p className="text-sm text-rose-600" role="alert">
+          {ctx.journalError}
+        </p>
+      ) : null}
 
       <button
         type="submit"
-        disabled={!ctx.journalNotes.trim() && !ctx.journalPhoto && !isEditing}
+        disabled={!ctx.journalNotes.trim() && !ctx.journalPhoto && !(isEditing && ctx.journalExistingPhotoUrl)}
         className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-emerald-800 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isEditing ? 'Save changes' : 'Save journal entry'}

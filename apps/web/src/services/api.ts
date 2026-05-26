@@ -235,6 +235,10 @@ export const usersApi = {
     defaultLightLevel: string;
     skip?: boolean;
   }) => api.put('/users/me/onboarding', data),
+  updateCarePreferences: (data: {
+    experienceLevel?: string;
+    defaultLightLevel?: string;
+  }) => api.put('/users/me/care-preferences', data),
   updateSettings: (data: Record<string, unknown>) =>
     api.put('/users/me/notification-settings', data),
   deleteAccount: () => api.delete('/users/me'),

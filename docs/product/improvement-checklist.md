@@ -313,27 +313,29 @@ Continue with **Section 10+ backlog** (structured task care guides, adaptive com
 
 ## Phase 4 - Adaptive care intelligence
 
+> **Note:** Section 8 implemented much of this. Remaining Phase 4 items are tracked in [improvement-recommendations.md](improvement-recommendations.md) (A1, A2, A5).
+
 ### Better task model
 
-- [ ] Add task types for rotate, clean leaves, inspect pests, check soil moisture, harvest, stake/support, move indoors/outdoors, and flush soil.
-- [ ] Add task feedback model:
-  - [ ] soil still wet
-  - [ ] soil very dry
-  - [ ] plant looked healthy
-  - [ ] plant looked stressed
-  - [ ] rain handled outdoor watering
-  - [ ] user was unavailable
-- [ ] Add snooze and reschedule support.
+- [x] Add task types for rotate, clean leaves, inspect pests, check soil moisture (see Prisma `TaskType`; harvest/move/flush still open).
+- [x] Add task feedback model (skip reasons shipped via `TaskFeedback`):
+  - [x] soil still wet
+  - [ ] soil very dry (complete-time — not started)
+  - [x] plant looked healthy
+  - [ ] plant looked stressed (complete-time — not started)
+  - [x] rain handled outdoor watering
+  - [x] user was unavailable (too busy / other)
+- [x] Add snooze and reschedule support (`PATCH /tasks/:id/snooze`).
 - [ ] Add task completion notes.
 
 ### Adaptive scheduling
 
-- [ ] Adjust watering when users repeatedly skip because soil is wet.
+- [x] Adjust watering when users repeatedly skip because soil is wet (schedule suggestions).
 - [ ] Increase watering suggestions when users report dry soil.
-- [ ] Delay outdoor watering after rain.
+- [ ] Delay outdoor watering after rain (manual skip reason only; auto `postponeWateringForRain` not wired).
 - [ ] Add heatwave and frost adjustments.
-- [ ] Reduce fertilizer during dormancy.
-- [ ] Add explicit user approval before applying major schedule changes.
+- [x] Reduce fertilizer during dormancy (suggestions).
+- [x] Add explicit user approval before applying major schedule changes.
 
 ## Phase 5 - Diagnosis and Dr. Plant
 
