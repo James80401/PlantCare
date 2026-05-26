@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { SharePlantCard } from '../../components/engagement/SharePlantCard';
-import { DR_PLANT_SECTION_ID, plantDrPlantPath, PROFILE_TABS } from './constants';
+import { DR_PLANT_SECTION_ID, plantDrPlantPath, plantHealthPath, PROFILE_TABS } from './constants';
 import { PlantProfileProvider, usePlantProfile } from './PlantProfileContext';
 import { SummaryTile } from './shared';
 import { taskTypeLabel } from '../../utils/tasks';
@@ -33,7 +33,7 @@ function PlantProfileShell() {
     ctx;
 
   return (
-    <div className="space-y-5 pb-24 md:pb-8">
+    <div className="space-y-5 min-w-0">
       <Link
         to="/garden"
         className="inline-flex rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
@@ -65,7 +65,18 @@ function PlantProfileShell() {
               ) : null}
             </p>
 
-            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+              <Link to={plantHealthPath(ctx.id)} className="block rounded-2xl transition hover:ring-2 hover:ring-emerald-200">
+                <SummaryTile
+                  label="Health"
+                  value={
+                    ctx.activeDiagnosisCount > 0
+                      ? `${ctx.activeDiagnosisCount} active`
+                      : 'Clear'
+                  }
+                  tone={ctx.activeDiagnosisCount > 0 ? 'rose' : 'emerald'}
+                />
+              </Link>
               <SummaryTile
                 label="Next task"
                 value={
@@ -159,8 +170,8 @@ function PlantProfileShell() {
               {section.id === 'journal' && sectionCounts.journal
                 ? ` (${sectionCounts.journal})`
                 : ''}
-              {section.id === 'health' && sectionCounts.diagnosis
-                ? ` (${sectionCounts.diagnosis})`
+              {section.id === 'health' && ctx.activeDiagnosisCount > 0
+                ? ` (${ctx.activeDiagnosisCount})`
                 : ''}
             </NavLink>
           ))}

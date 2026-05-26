@@ -127,10 +127,10 @@ export default function PestInspectionWizard() {
 
         {plantId && hasConcern && (
           <Link
-            to={`/garden/plants/${plantId}/health`}
+            to={`/garden/plants/${plantId}/health#dr-plant`}
             className="block rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-center text-sm font-semibold text-rose-950 hover:bg-rose-100"
           >
-            Open Dr. Plant for this plant →
+            Ask Dr. Plant for this plant →
           </Link>
         )}
 

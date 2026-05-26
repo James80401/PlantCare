@@ -72,7 +72,7 @@ export default function TaskRow({
             type="button"
             onClick={() => onComplete(task.id)}
             disabled={!!animState}
-            className="task-check flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
+            className="task-check flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
             aria-label={`Mark ${taskTypeLabel(task.taskType)} for ${plantLabel} as done`}
           />
         ) : (
@@ -168,14 +168,14 @@ export default function TaskRow({
               <button
                 type="button"
                 onClick={() => onSkip(task.id)}
-                className="inline-flex items-center justify-center rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-200 hover:text-gray-800"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-200 hover:text-gray-800"
               >
                 Skip
               </button>
               <button
                 type="button"
                 onClick={() => setFeedbackOpen((open) => !open)}
-                className="inline-flex items-center justify-center rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
                 aria-expanded={feedbackOpen}
               >
                 Skip reason
@@ -184,7 +184,7 @@ export default function TaskRow({
                 <button
                   type="button"
                   onClick={() => setSnoozeOpen((open) => !open)}
-                  className="inline-flex items-center justify-center rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 transition hover:bg-sky-100"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-800 transition hover:bg-sky-100"
                   aria-expanded={snoozeOpen}
                 >
                   Snooze

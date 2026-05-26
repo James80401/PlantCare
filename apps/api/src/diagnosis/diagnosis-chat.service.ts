@@ -166,6 +166,11 @@ export class DiagnosisChatService {
         createdAt: true,
         updatedAt: true,
         _count: { select: { messages: true } },
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { role: true, content: true, createdAt: true },
+        },
       },
     });
   }

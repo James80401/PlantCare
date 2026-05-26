@@ -22,7 +22,7 @@ export class PlantsService {
   ) {}
 
   async findAll(userId: string) {
-    return this.prisma.plant.findMany({
+    const rows = await this.prisma.plant.findMany({
       where: { userId },
       include: {
         species: true,
@@ -31,9 +31,25 @@ export class PlantsService {
           orderBy: { dueDate: 'asc' },
           take: 1,
         },
+        diagnoses: {
+          where: { resolved: false },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { resultLabel: true, createdAt: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return rows.map(({ diagnoses, ...plant }) => ({
+      ...plant,
+      unresolvedDiagnosis: diagnoses[0]
+        ? {
+            resultLabel: diagnoses[0].resultLabel,
+            createdAt: diagnoses[0].createdAt.toISOString(),
+          }
+        : null,
+    }));
   }
 
   async findOne(userId: string, id: string) {

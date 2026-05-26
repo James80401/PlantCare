@@ -89,6 +89,26 @@ test.describe('UAT checklist — authenticated flows', () => {
     await expectNoHorizontalScroll(page);
   });
 
+  test('Dr. Plant chat is reachable from plant health tab', async ({ page }) => {
+    const auth = loadAuth();
+    let plantId = auth.plantId;
+    if (!plantId) {
+      await openAddPlantSearch(page);
+      await page.getByLabel(/Species name/i).fill('pothos');
+      await page.getByRole('button', { name: /Pothos/i }).first().click();
+      await page.getByRole('button', { name: /Save plant/i }).click();
+      await page.waitForURL(/\/garden\/plants\/[^/]+/);
+      plantId = page.url().match(/\/garden\/plants\/([^/]+)/)?.[1]!;
+    }
+    await page.goto(`/garden/plants/${plantId}/health#dr-plant`);
+    await expect(page.getByRole('heading', { name: /^Dr\. Plant$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.locator('#dr-plant')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Send$/i })).toBeEnabled();
+    await expectNoHorizontalScroll(page);
+  });
+
   test('plant buddy home and activities load', async ({ page }) => {
     await page.goto('/garden/buddy');
     await expect(page.getByRole('heading', { name: 'UAT Buddy' })).toBeVisible({ timeout: 15_000 });
@@ -157,9 +177,11 @@ test.describe('UAT checklist — authenticated flows', () => {
     });
     const plantId = page.url().match(/\/garden\/plants\/([^/]+)/)?.[1]!;
     await page.goto(`/garden/plants/${plantId}/health`);
-    await expect(page.getByRole('button', { name: /Run diagnosis/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /^Dr\. Plant$/i })).toBeVisible({
       timeout: 15_000,
     });
+    await page.getByText(/One-shot diagnosis/i).click();
+    await expect(page.getByRole('button', { name: /Run diagnosis/i })).toBeVisible();
     await page.getByLabel(/What are you seeing/i).fill('Yellow leaves and wet soil');
     await page.getByRole('button', { name: /Run diagnosis/i }).click();
     await expect(page.getByText(/Treatment plan/i)).toBeVisible({ timeout: 15_000 });

@@ -12,9 +12,20 @@ body {
   font-family: var(--font-display);
 }
 
-/** Bottom nav clearance for mobile garden pages */
+/** Bottom nav clearance for mobile garden pages (see Layout main padding) */
 .page-garden {
-  @apply pb-24 md:pb-8;
+  @apply md:pb-8;
+}
+
+/** Sticky header / hash anchor offset */
+.scroll-anchor {
+  scroll-margin-top: 7rem;
+}
+
+@media (min-width: 640px) {
+  .scroll-anchor {
+    scroll-margin-top: 5.5rem;
+  }
 }
 
 @keyframes buddy-bob {
@@ -193,6 +204,14 @@ body {
   to {
     color: rgb(107 114 128);
     text-decoration-color: rgb(156 163 175);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-row--completing,
+  .task-row--done,
+  .task-row--skipping {
+    animation: none;
   }
 }
 

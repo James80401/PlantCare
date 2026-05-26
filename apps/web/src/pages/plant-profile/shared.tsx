@@ -70,12 +70,13 @@ export function SummaryTile({
 }: {
   label: string;
   value: string;
-  tone: 'emerald' | 'amber' | 'sky';
+  tone: 'emerald' | 'amber' | 'sky' | 'rose';
 }) {
   const toneClasses = {
     emerald: 'bg-emerald-50 text-emerald-950',
     amber: 'bg-amber-50 text-amber-950',
     sky: 'bg-sky-50 text-sky-950',
+    rose: 'bg-rose-50 text-rose-950',
   };
 
   return (

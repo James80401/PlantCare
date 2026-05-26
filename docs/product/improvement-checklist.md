@@ -47,11 +47,11 @@ building more features on top of it.
 
 Mobile QA checklist:
 
-- [ ] Empty garden: hero copy, add-plant CTA, empty task state, and empty plant state are visible without horizontal scroll.
-- [ ] Active garden: metrics wrap cleanly, today care appears before attention cards, and bottom navigation does not cover final content.
-- [ ] Overdue state: overdue metric and urgent attention card are visually distinct from normal upcoming tasks.
-- [ ] All-caught-up state: dashboard explains that nothing is due and still offers a useful next action.
-- [ ] Weather note state: rain/weather messaging remains readable and does not dominate the dashboard.
+- [x] Empty garden: hero copy, add-plant CTA, empty task state, and empty plant state are visible without horizontal scroll.
+- [x] Active garden: metrics wrap cleanly, today care appears before attention cards, and bottom navigation does not cover final content.
+- [x] Overdue state: overdue metric and urgent attention card are visually distinct from normal upcoming tasks.
+- [x] All-caught-up state: dashboard explains that nothing is due and still offers a useful next action.
+- [x] Weather note state: rain/weather messaging remains readable and does not dominate the dashboard.
 
 Acceptance check:
 
@@ -203,8 +203,8 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [x] Make bottom navigation the primary mobile navigation pattern.
 - [x] Add clear active states and accessible labels to navigation items.
 - [x] Keep subscription/upgrade navigation discoverable on mobile (beta: upgrade hidden; Community on mobile nav).
-- [ ] Move repeated page bottom padding into shared layout rules where practical.
-- [ ] Review all tap targets for a minimum comfortable mobile hit area.
+- [x] Move repeated page bottom padding into shared layout rules where practical.
+- [x] Review all tap targets for a minimum comfortable mobile hit area.
 
 ### User dashboard
 
@@ -241,16 +241,16 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 
 ### Plant profile information architecture
 
-- [ ] Convert plant profile into clear sections or tabs:
-  - [ ] Overview
-  - [ ] Care
-  - [ ] Tasks
-  - [ ] Journal
-  - [ ] Diagnosis
-- [ ] Keep the top summary compact on mobile.
-- [ ] Add next task, last care action, and health state near the hero.
+- [x] Convert plant profile into clear sections or tabs:
+  - [x] Overview
+  - [x] Care
+  - [x] Tasks
+  - [x] Journal
+  - [x] Health (Diagnosis)
+- [x] Keep the top summary compact on mobile.
+- [x] Add next task, last care action, and health state near the hero.
 - [ ] Add clear edit affordances for location, pot size, notes, and image.
-- [ ] Add a sticky or compact section index if the profile remains long.
+- [x] Add a sticky or compact section index if the profile remains long.
 
 ### Granular care guide structure
 

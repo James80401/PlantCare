@@ -370,7 +370,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
       sectionCounts: {
         tasks: pending.length,
         journal: timelineEvents.length,
-        diagnosis: diagnosisEntries.length,
+        diagnosis: activeDiagnosisCount,
       },
       activeDiagnosisCount,
       latestUnresolved,

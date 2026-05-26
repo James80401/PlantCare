@@ -81,7 +81,7 @@ export default function Layout() {
           </div>
         </div>
       </header>
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:py-6 sm:pb-6 page-garden">
+      <main className="page-garden flex-1 max-w-6xl w-full mx-auto px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:py-6 sm:pb-6">
         <Outlet />
       </main>
       <nav
