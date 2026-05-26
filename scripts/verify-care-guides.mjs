@@ -3,7 +3,7 @@
  * Run: npx tsx scripts/verify-care-guides.mjs
  */
 import { PrismaClient, TaskType } from '@prisma/client';
-import { existsSync, readFileSync, statSync } from 'fs';
+import { existsSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
@@ -14,6 +14,25 @@ const prisma = new PrismaClient();
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const TASK_TYPES = Object.values(TaskType);
+
+/** Task types migrated to structured seed content (B1). */
+const STRUCTURED_TASK_TYPES = [TaskType.WATER, TaskType.FERTILIZE, TaskType.REPOT];
+
+const MIN_SECTIONS_BY_TASK = {
+  [TaskType.WATER]: 7,
+  [TaskType.FERTILIZE]: 6,
+  [TaskType.REPOT]: 5,
+  [TaskType.PRUNE]: 6,
+  [TaskType.MIST]: 5,
+  [TaskType.PH_TEST]: 5,
+  [TaskType.PEST_CONTROL]: 4,
+  [TaskType.INSPECT_PESTS]: 4,
+  [TaskType.ROTATE]: 3,
+  [TaskType.CLEAN_LEAVES]: 3,
+  [TaskType.CHECK_MOISTURE]: 3,
+  [TaskType.HEALTH_CHECK]: 3,
+};
+
 let failed = 0;
 
 function pass(msg) {
@@ -33,6 +52,30 @@ function resolveAsset(imageKey) {
     join(root, 'apps', 'api', 'dist', 'care-guides', sub, name),
   ];
   return paths.find((p) => existsSync(p)) ?? null;
+}
+
+function sectionTextLen(sec) {
+  return (
+    (sec.body?.length ?? 0) +
+    (sec.beginnerBody?.length ?? 0) +
+    (sec.advancedBody?.length ?? 0) +
+    (sec.whyItMatters?.length ?? 0)
+  );
+}
+
+function missingStructuredFields(sections) {
+  return sections.filter((sec) => !sec.whyItMatters || !sec.beginnerBody || !sec.advancedBody);
+}
+
+function assertStructuredGuide(label, sectionsJson) {
+  const sections = JSON.parse(sectionsJson);
+  const missing = missingStructuredFields(sections);
+  if (missing.length === 0) {
+    pass(`${label} has structured fields on all ${sections.length} sections`);
+    return true;
+  }
+  fail(`${label} missing structured fields on ${missing.length} section(s)`);
+  return false;
 }
 
 async function main() {
@@ -82,9 +125,27 @@ async function main() {
     fail('Missing {waterIntervalDays} placeholder in basil water guide');
   }
 
+  for (const taskType of STRUCTURED_TASK_TYPES) {
+    const generic = await prisma.careGuide.findFirst({
+      where: { taskType, speciesId: null },
+    });
+    if (!generic) {
+      fail(`Generic ${taskType} guide missing`);
+      continue;
+    }
+    assertStructuredGuide(`${taskType} generic guide`, generic.sectionsJson);
+  }
+
+  if (waterBasilGuide) {
+    assertStructuredGuide('Basil WATER species guide', waterBasilGuide.sectionsJson);
+  }
+  if (waterSnakeGuide) {
+    assertStructuredGuide('Snake Plant WATER species guide', waterSnakeGuide.sectionsJson);
+  }
+
   const sample = await prisma.careGuide.findMany({
-    include: { images: true },
     where: { speciesId: { not: null } },
+    orderBy: { id: 'asc' },
     take: 400,
   });
 
@@ -95,10 +156,10 @@ async function main() {
     const sections = JSON.parse(g.sectionsJson);
     minSections = Math.min(minSections, sections.length);
     maxSections = Math.max(maxSections, sections.length);
-    const bodyLen = sections.reduce((n, sec) => n + (sec.body?.length ?? 0), 0);
-    const minSec =
-      g.taskType === TaskType.MIST ? 4 : g.taskType === TaskType.WATER || g.taskType === TaskType.PRUNE ? 5 : 4;
-    if (sections.length < minSec || bodyLen < 280) shallow++;
+    const contentLen = sections.reduce((n, sec) => n + sectionTextLen(sec), 0);
+    const minSec = MIN_SECTIONS_BY_TASK[g.taskType] ?? 4;
+    const minContent = STRUCTURED_TASK_TYPES.includes(g.taskType) ? 500 : 200;
+    if (sections.length < minSec || contentLen < minContent) shallow++;
   }
   if (shallow === 0) pass(`Depth OK (sample ${sample.length} guides)`);
   else fail(`${shallow} shallow guides in sample of ${sample.length}`);

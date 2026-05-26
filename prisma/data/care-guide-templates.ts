@@ -8,49 +8,98 @@ function snippetBlock(speciesId: string, taskType: TaskType): string {
   return s ? `\n\n${s}` : '';
 }
 
+function structuredSection(input: {
+  heading: string;
+  whyItMatters: string;
+  beginnerBody: string;
+  advancedBody: string;
+  warnings?: string[];
+  imageKeys?: string[];
+}): CareGuideSection {
+  return {
+    heading: input.heading,
+    body: input.beginnerBody,
+    whyItMatters: input.whyItMatters,
+    beginnerBody: input.beginnerBody,
+    advancedBody: input.advancedBody,
+    warnings: input.warnings,
+    imageKeys: input.imageKeys,
+  };
+}
+
 function waterSections(cat: PlantCategory, speciesId: string): CareGuideSection[] {
   const dry = cat === 'succulent' || cat === 'cactus';
   const wet = cat === 'moisture' || cat === 'herb' || cat === 'vegetable' || cat === 'fern';
 
+  const howMuchBeginner = dry
+    ? `{wateringStyle}\n\nFor {speciesName}, a light pass through the soil is usually enough. Stop when a little drains out — avoid soaking unless you are flushing salts.`
+    : wet
+      ? `{wateringStyle}\n\n1. Water slowly at the soil surface.\n2. Continue until a little drains from the bottom.\n3. Empty the saucer within 30 minutes.`
+      : `{wateringStyle}\n\n1. Moisten the full root zone.\n2. Allow slight drainage, then stop.\n3. Let the top inch dry before the next watering.`;
+
+  const howMuchAdvanced = dry
+    ? `${howMuchBeginner}\n\n**Advanced:** Succulent roots rot quickly in cold, wet soil. In winter, extend dry periods. A deep soak followed by full dry-out works better than frequent sips for many desert types.`
+    : wet
+      ? `${howMuchBeginner}\n\n**Advanced:** Herbs and moisture-lovers may need more volume in heat. Split watering if soil surfaces too fast — a second pass 10 minutes later improves saturation without runoff waste.`
+      : `${howMuchBeginner}\n\n**Advanced:** Lift the pot after watering — note the weight when properly moist. Use that heft as a quick check between finger tests. Avoid watering on a rigid calendar alone.`;
+
   return [
-    {
+    structuredSection({
       heading: 'Before you water',
-      body: `1. Stick your finger **1–2 inches** into the soil.\n2. If dry at that depth, it is time to water {plantName} ({speciesName}).\n3. If still cool and damp, wait 1–2 days.\n\nCatalog baseline: about every **{wateringFreqDays}** days; your **{potSize}** pot adjusts that to roughly **{waterIntervalDays}** days between sessions.\n\n☀️ Light: {sunlight}`,
+      whyItMatters:
+        'Soil moisture — not the calendar — decides when {speciesName} needs water. Checking first prevents root rot and underwater stress.',
+      beginnerBody: `1. Stick your finger **1–2 inches** into the soil.\n2. If dry at that depth, water {plantName} ({speciesName}).\n3. If still cool and damp, wait 1–2 days.\n\nBaseline: about every **{wateringFreqDays}** days; your **{potSize}** pot adjusts that to roughly **{waterIntervalDays}** days.\n\n☀️ Light: {sunlight}`,
+      advancedBody: `1. Finger-test **1–2 inches** down (deeper for large pots).\n2. Optional: lift the pot — light weight usually means dry.\n3. Water only when dry at test depth; wait if cool and damp.\n\nCadence baseline: **{wateringFreqDays}** days catalog / **{waterIntervalDays}** days for your **{potSize}** pot.\n\n☀️ {sunlight} — brighter light often means faster drying.`,
       imageKeys: ['water-soil-check', 'photo-soil-check'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'How much water',
-      body: dry
-        ? `{wateringStyle}\n\nFor {speciesName}, a light pass through the soil is usually enough. Avoid soaking unless flushing accumulated salts after months without leaching.`
-        : wet
-          ? `{wateringStyle}\n\n1. Water slowly at the soil surface.\n2. Continue until a little drains from the bottom.\n3. Empty the saucer within 30 minutes.`
-          : `{wateringStyle}\n\n1. Moisten the full root zone.\n2. Allow slight drainage, then stop.\n3. Let the top inch dry before the next watering.`,
+      whyItMatters:
+        'The right volume reaches roots without drowning them. Too little causes drought stress; too much suffocates roots.',
+      beginnerBody: howMuchBeginner,
+      advancedBody: howMuchAdvanced,
+      warnings: dry ? ['Never leave {speciesName} sitting in water — rot develops quickly.'] : undefined,
       imageKeys: dry
         ? ['water-light', 'water-underwater-signs']
         : ['water-thorough', 'photo-water-drainage'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Drainage & saucer',
-      body: `{drainageNote}\n\n- Pot must have drainage holes.\n- Use mix appropriate for {speciesName} ({scientificName}).\n- Never leave standing water in the saucer overnight.`,
+      whyItMatters:
+        'Drainage holes let excess water escape. Standing water at the bottom is the fastest path to root rot.',
+      beginnerBody: `{drainageNote}\n\n- Pot must have drainage holes.\n- Use mix appropriate for {speciesName} ({scientificName}).\n- Never leave standing water in the saucer overnight.`,
+      advancedBody: `{drainageNote}\n\n- Confirm holes are open — not blocked by roots or mesh.\n- Match mix to {speciesName}: fast drainage for succulents; more retention for ferns.\n- Empty saucers within 30 minutes; use pot feet if the saucer holds water on a tray.\n- After repotting, expect a different dry-down rate for 2–3 weeks.`,
+      warnings: ['Empty the saucer after watering — roots should not sit in water.'],
       imageKeys: ['water-thorough', 'water-overwater-signs'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Signs of trouble',
-      body: `**Overwatering:** yellow leaves, mushy stems, mold on soil, sour smell.\n\n**Underwatering:** crispy tips, wilting that recovers after water, soil pulling away from pot edges.\n\nPreferred pH: **{phRange}**.`,
+      whyItMatters:
+        'Leaf and soil cues tell you whether to water less, more, or adjust drainage before damage spreads.',
+      beginnerBody: `**Overwatering:** yellow leaves, mushy stems, mold on soil, sour smell.\n\n**Underwatering:** crispy tips, wilting that recovers after water, soil pulling away from pot edges.\n\nPreferred pH: **{phRange}**.`,
+      advancedBody: `**Overwatering:** yellow lower leaves, edema (blisters), mushy base, fungus gnats, sour soil.\n\n**Underwatering:** limp leaves that perk after water, brown crispy edges, hydrophobic soil that repels water.\n\n**pH:** target **{phRange}** — wrong pH can mimic watering problems.\n\nLog symptoms with a photo when adjusting your routine.`,
       imageKeys: ['water-overwater-signs', 'water-underwater-signs'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Seasonal adjustments',
-      body: `- **Spring/summer:** growth may need more frequent checks.\n- **Fall/winter:** slow down; many plants need less water when light is lower.\n- **After repotting:** soil dries on a different schedule — recheck weekly.`,
-    },
-    {
+      whyItMatters:
+        'Light and temperature change how fast soil dries. Seasonal tweaks keep {speciesName} on rhythm without guesswork.',
+      beginnerBody: `- **Spring/summer:** growth may need more frequent checks.\n- **Fall/winter:** slow down; many plants need less water when light is lower.\n- **After repotting:** soil dries on a different schedule — recheck weekly.`,
+      advancedBody: `- **Spring/summer:** shorter intervals in heat and active growth; watch outdoor rain.\n- **Fall/winter:** extend intervals; cold + wet soil is risky for most houseplants.\n- **After repotting:** fresh mix dries differently for 2–4 weeks.\n- **Heat waves / AC:** indoor humidity and airflow shift drying time — recheck, don't assume.`,
+    }),
+    structuredSection({
       heading: 'Species notes',
-      body: `{careNotes}\n\n{toxicityWarning}${snippetBlock(speciesId, TaskType.WATER)}`,
-    },
-    {
+      whyItMatters:
+        'Catalog notes and toxicity info help you water {speciesName} safely for your household and environment.',
+      beginnerBody: `{careNotes}\n\n{toxicityWarning}${snippetBlock(speciesId, TaskType.WATER)}`,
+      advancedBody: `{careNotes}\n\n{toxicityWarning}${snippetBlock(speciesId, TaskType.WATER)}\n\nCross-check with your **{potSize}** pot and **{waterIntervalDays}**-day schedule — adjust when soil or weather says otherwise.`,
+    }),
+    structuredSection({
       heading: 'Common mistakes',
-      body: `- Watering on a rigid calendar instead of checking soil.\n- Misting leaves as a substitute for root watering.\n- Using cold tap water on sensitive tropicals (let it sit overnight if needed).`,
-    },
+      whyItMatters: 'Most watering problems come from habit, not neglect. Avoiding these saves {speciesName} from repeat stress.',
+      beginnerBody: `- Watering on a rigid calendar instead of checking soil.\n- Misting leaves as a substitute for root watering.\n- Using cold tap water on sensitive tropicals (let it sit overnight if needed).`,
+      advancedBody: `- Calendar watering without a soil check.\n- Misting instead of watering roots.\n- Cold shock from icy tap water on tropical roots.\n- Watering at night when leaves stay wet in cool rooms.\n- Reusing saucer water or bottom-watering without ever flushing salts.`,
+    }),
   ];
 }
 
@@ -123,36 +172,57 @@ function pruneSections(cat: PlantCategory, speciesId: string): CareGuideSection[
 function fertilizeSections(cat: PlantCategory, speciesId: string): CareGuideSection[] {
   const heavy = cat === 'vegetable' || cat === 'fruit' || cat === 'citrus';
   return [
-    {
+    structuredSection({
       heading: 'When to feed',
-      body: heavy
+      whyItMatters:
+        'Fertilizer supports growth when {speciesName} is actively producing leaves — not when it is dormant or stressed.',
+      beginnerBody: heavy
         ? `Feed **{speciesName}** during active growth and fruiting. Pause or halve strength in low light or winter unless under grow lights.`
         : `Feed **{speciesName}** in spring and summer when you see new leaves. Reduce or stop in fall/winter dormancy.`,
-    },
-    {
+      advancedBody: heavy
+        ? `Feed during vegetative growth and fruit set. Pause in dormancy, after repot (4–6 weeks), or when soil is dry/cold.\n\nHeavy feeders may need weekly half-strength doses in peak season vs. monthly full doses — watch leaf color.`
+        : `Feed when new growth appears (spring–summer). Stop or halve in fall/winter or when light drops below ~10 hours.\n\nNever feed a dry, wilted, or recently repotted plant until it shows recovery.`,
+    }),
+    structuredSection({
       heading: 'Product & dilution',
-      body: `1. Use balanced liquid fertilizer (e.g. 10-10-10).\n2. Mix at **half** label strength.\n3. Target soil pH **{phRange}** for nutrient uptake.`,
+      whyItMatters:
+        'Half-strength liquid feed reduces salt burn while still delivering nutrients {speciesName} needs at pH **{phRange}**.',
+      beginnerBody: `1. Use balanced liquid fertilizer (e.g. 10-10-10).\n2. Mix at **half** label strength.\n3. Target soil pH **{phRange}** for nutrient uptake.`,
+      advancedBody: `1. Balanced liquid (10-10-10) or species-appropriate blend.\n2. **Half** label strength; quarter strength for seedlings or stressed plants.\n3. pH **{phRange}** — test if leaves stay pale despite feeding.\n4. Alternate organic and synthetic if building long-term soil biology in containers.`,
       imageKeys: ['fertilize-dilute', 'fertilize-apply'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Application steps',
-      body: `1. Water soil lightly first if it is bone dry.\n2. Apply fertilizer to **moist** soil only.\n3. Never foliar-feed edibles unless product is labeled food-safe.`,
+      whyItMatters:
+        'Applying to moist soil distributes nutrients evenly and avoids root burn on dry roots.',
+      beginnerBody: `1. Water soil lightly first if it is bone dry.\n2. Apply fertilizer to **moist** soil only.\n3. Never foliar-feed edibles unless product is labeled food-safe.`,
+      advancedBody: `1. Pre-moisten if soil is dry — never feed bone-dry roots.\n2. Pour evenly over soil surface, not the crown or fuzzy leaves.\n3. Flush with plain water monthly in containers to prevent salt buildup.\n4. Edibles: soil drench only unless product is explicitly food-safe for foliar use.`,
+      warnings: ['Do not fertilize bone-dry soil — water first.'],
       imageKeys: ['fertilize-apply', 'photo-fertilize'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'pH interaction',
-      body: `Wrong pH locks out nutrients even when you fertilize. Test pH if leaves stay pale despite feeding.`,
+      whyItMatters:
+        'Even perfect fertilizer fails if pH locks out nutrients. {speciesName} needs **{phRange}** for uptake.',
+      beginnerBody: `Wrong pH locks out nutrients even when you fertilize. Test pH if leaves stay pale despite feeding.`,
+      advancedBody: `Iron and manganese lock out above ~7.0 for many acid-lovers; phosphorus locks out below ~5.5.\n\nIf feeding does not green new growth within 2–3 weeks, test pH before increasing dose.`,
       imageKeys: ['ph-test'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Signs of over-fertilizing',
-      body: `Crispy leaf edges, white crust on soil, stunted growth, or sudden leaf drop. Flush pot with plain water if you suspect burn.`,
+      whyItMatters:
+        'Salt burn damages roots quickly. Catching early signs lets you flush and recover {speciesName}.',
+      beginnerBody: `Crispy leaf edges, white crust on soil, stunted growth, or sudden leaf drop. Flush pot with plain water if you suspect burn.`,
+      advancedBody: `Crispy margins, white mineral crust, leaf tip burn, sudden drop, or no new growth despite feeding.\n\n**Recovery:** flush with plain water 2–3 times (let drain fully); hold fertilizer 4–6 weeks.`,
+      warnings: ['White crust on soil often means salt buildup — flush before feeding again.'],
       imageKeys: ['fertilize-burn-signs'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Species notes',
-      body: `{careNotes}${snippetBlock(speciesId, TaskType.FERTILIZE)}`,
-    },
+      whyItMatters: 'Catalog care notes tailor feeding cadence and product choice for {speciesName}.',
+      beginnerBody: `{careNotes}${snippetBlock(speciesId, TaskType.FERTILIZE)}`,
+      advancedBody: `{careNotes}${snippetBlock(speciesId, TaskType.FERTILIZE)}\n\nPause feed after repotting or diagnosis recovery until you see stable new growth.`,
+    }),
   ];
 }
 
@@ -264,28 +334,43 @@ function repotSections(cat: PlantCategory, speciesId: string): CareGuideSection[
   };
 
   return [
-    {
+    structuredSection({
       heading: 'When to repot',
-      body: `Repot **{speciesName}** when:\n- Roots circle the bottom or exit drainage holes.\n- Water runs straight through dry soil.\n- Growth stalled despite good care.\n\nMove up only **1–2 inches** in pot diameter.`,
+      whyItMatters:
+        'Repotting at the right time gives {speciesName} fresh mix and room without shocking roots unnecessarily.',
+      beginnerBody: `Repot **{speciesName}** when:\n- Roots circle the bottom or exit drainage holes.\n- Water runs straight through dry soil.\n- Growth stalled despite good care.\n\nMove up only **1–2 inches** in pot diameter.`,
+      advancedBody: `Repot when roots are circling, top-heavy, or water channels through dry soil.\n\n**Wait if:** plant is flowering, recently stressed, or in peak summer heat outdoors.\n\nSize up **1–2 inches** only — oversized pots stay wet too long.`,
       imageKeys: ['repot-root', 'photo-repot'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Soil mix',
-      body: `Use **${mix[cat]}** for {speciesName}.`,
-    },
-    {
+      whyItMatters:
+        'The right mix balances drainage and moisture for {speciesName} — wrong mix causes watering problems for months.',
+      beginnerBody: `Use **${mix[cat]}** for {speciesName}.`,
+      advancedBody: `Use **${mix[cat]}** for {speciesName}.\n\nRefresh at least one-third of volume even if staying in the same pot. Avoid garden soil alone in containers.`,
+    }),
+    structuredSection({
       heading: 'Step-by-step',
-      body: `1. Water lightly the day before.\n2. Slide plant out; loosen outer circling roots.\n3. Place at the **same depth** as before.\n4. Fill gaps with fresh mix; tamp lightly.\n5. Water thoroughly once; empty saucer.`,
+      whyItMatters:
+        'Gentle handling and correct depth prevent rot and transplant shock after repotting {speciesName}.',
+      beginnerBody: `1. Water lightly the day before.\n2. Slide plant out; loosen outer circling roots.\n3. Place at the **same depth** as before.\n4. Fill gaps with fresh mix; tamp lightly.\n5. Water thoroughly once; empty saucer.`,
+      advancedBody: `1. Water lightly 24h before — easier removal, less root tear.\n2. Tease circling roots; trim only mushy or dead tissue.\n3. Same depth as before — burying the stem invites rot.\n4. Backfill in layers; tamp lightly — don't compact.\n5. One thorough water; no fertilizer for 4–6 weeks.`,
+      warnings: ['Do not bury the stem deeper than before — keep the same soil line.'],
       imageKeys: ['repot-step-sequence', 'repot-root'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'After repot care',
-      body: `- Keep out of harsh direct sun 1–2 weeks.\n- Hold fertilizer 4–6 weeks while roots settle.\n- Expect mild wilt — normal while roots establish.`,
-    },
-    {
+      whyItMatters:
+        'Roots need time to explore new mix. Over-care (sun, feed, water) after repot is a common cause of decline.',
+      beginnerBody: `- Keep out of harsh direct sun 1–2 weeks.\n- Hold fertilizer 4–6 weeks while roots settle.\n- Expect mild wilt — normal while roots establish.`,
+      advancedBody: `- Bright indirect light; no harsh direct sun for 1–2 weeks.\n- Hold fertilizer 4–6 weeks.\n- Mild wilt is normal — avoid overwatering "to help."\n- Recheck watering cadence; fresh mix dries differently.`,
+    }),
+    structuredSection({
       heading: 'Species notes',
-      body: `{careNotes}${snippetBlock(speciesId, TaskType.REPOT)}`,
-    },
+      whyItMatters: 'Species-specific timing and mix preferences help {speciesName} recover faster after repot.',
+      beginnerBody: `{careNotes}${snippetBlock(speciesId, TaskType.REPOT)}`,
+      advancedBody: `{careNotes}${snippetBlock(speciesId, TaskType.REPOT)}\n\nLog repot date in your journal — schedules and dry-down rates change afterward.`,
+    }),
   ];
 }
 
