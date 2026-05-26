@@ -1,5 +1,5 @@
 import { format, isToday } from 'date-fns';
-import type { TaskSkipFeedback } from '../../utils/taskFeedback';
+import type { TaskCompleteFeedback, TaskSkipFeedback } from '../../utils/taskFeedback';
 import { groupTasksByType, TASK_TYPE_ICONS, type DayGroup } from '../../utils/taskGroups';
 import { taskTypeLabel } from '../../utils/tasks';
 import TaskRow from './TaskRow';
@@ -9,7 +9,7 @@ type AnimMap = Record<string, 'completing' | 'skipping'>;
 interface TaskDayGroupProps {
   group: DayGroup;
   animating: AnimMap;
-  onComplete: (id: string) => void;
+  onComplete: (id: string, feedback?: TaskCompleteFeedback) => void;
   onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
   onSnooze?: (id: string, days: 1 | 3 | 7) => void;
 }

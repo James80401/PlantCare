@@ -7,6 +7,9 @@ import {
   TASK_SKIP_REASONS,
   type TaskSkipFeedback,
   type TaskSkipReason,
+  TASK_COMPLETE_REASONS,
+  type TaskCompleteFeedback,
+  type TaskCompleteReason,
 } from '../../utils/taskFeedback';
 import { taskTypeLabel } from '../../utils/tasks';
 import { SNOOZE_OPTIONS } from '../../utils/taskSnooze';
@@ -17,7 +20,7 @@ type AnimState = 'completing' | 'skipping' | null;
 interface TaskRowProps {
   task: TaskItem;
   animState: AnimState;
-  onComplete: (id: string) => void;
+  onComplete: (id: string, feedback?: TaskCompleteFeedback) => void;
   onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
   onSnooze?: (id: string, days: 1 | 3 | 7) => void;
   /** When true, type icon/label is omitted (parent section shows category). */
@@ -39,6 +42,11 @@ export default function TaskRow({
   const [snoozeOpen, setSnoozeOpen] = useState(false);
   const [selectedReason, setSelectedReason] = useState<TaskSkipReason>('SOIL_STILL_WET');
   const [note, setNote] = useState('');
+  const [completeFeedbackOpen, setCompleteFeedbackOpen] = useState(false);
+  const [selectedCompleteReason, setSelectedCompleteReason] = useState<TaskCompleteReason>(
+    'SOIL_VERY_DRY',
+  );
+  const [completeNote, setCompleteNote] = useState('');
   const due = parseISO(task.dueDate);
   const isDone = task.status === 'DONE';
   const isSkipped = task.status === 'SKIPPED';
@@ -70,10 +78,17 @@ export default function TaskRow({
         {isPending ? (
           <button
             type="button"
-            onClick={() => onComplete(task.id)}
+            onClick={() => {
+              if (task.taskType === 'WATER') {
+                setCompleteFeedbackOpen((open) => !open);
+              } else {
+                onComplete(task.id);
+              }
+            }}
             disabled={!!animState}
             className="task-check flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
             aria-label={`Mark ${taskTypeLabel(task.taskType)} for ${plantLabel} as done`}
+            aria-expanded={completeFeedbackOpen}
           />
         ) : (
           <span
@@ -272,6 +287,74 @@ export default function TaskRow({
                     className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
                   >
                     Skip without reason
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {completeFeedbackOpen && task.taskType === 'WATER' && (
+              <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
+                  Quick feedback (water)
+                </p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {TASK_COMPLETE_REASONS.map((r) => (
+                    <label
+                      key={r.value}
+                      className={`cursor-pointer rounded-xl border px-3 py-2 text-xs transition ${
+                        selectedCompleteReason === r.value
+                          ? 'border-sky-300 bg-white text-sky-950 shadow-sm'
+                          : 'border-sky-100 bg-white/60 text-gray-700 hover:bg-white'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={`complete-reason-${task.id}`}
+                        value={r.value}
+                        checked={selectedCompleteReason === r.value}
+                        onChange={() => setSelectedCompleteReason(r.value)}
+                        className="sr-only"
+                      />
+                      <span className="font-semibold">{r.label}</span>
+                      <span className="mt-0.5 block leading-5 text-gray-500">{r.helper}</span>
+                    </label>
+                  ))}
+                </div>
+                <label className="mt-3 block">
+                  <span className="text-xs font-medium text-gray-600">Optional note</span>
+                  <input
+                    value={completeNote}
+                    onChange={(event) => setCompleteNote(event.target.value)}
+                    maxLength={240}
+                    placeholder="Example: soil was dry 2 inches down"
+                    className="mt-1 w-full rounded-xl border border-sky-100 bg-white px-3 py-2 text-sm focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-100"
+                  />
+                </label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onComplete(task.id, {
+                        reason: selectedCompleteReason,
+                        note: completeNote.trim() || undefined,
+                      });
+                      setCompleteFeedbackOpen(false);
+                      setCompleteNote('');
+                    }}
+                    className="rounded-full bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800"
+                  >
+                    Save feedback & complete
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onComplete(task.id);
+                      setCompleteFeedbackOpen(false);
+                      setCompleteNote('');
+                    }}
+                    className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
+                  >
+                    Complete without feedback
                   </button>
                 </div>
               </div>

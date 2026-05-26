@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PlanTier, PotSize, TaskStatus, TaskType } from '@prisma/client';
-import { subDays } from 'date-fns';
+import { addDays, startOfDay, subDays } from 'date-fns';
 import {
   buildScheduleExplanation,
   type ScheduleExplanation,
@@ -11,6 +11,7 @@ import {
   shouldScheduleMist,
 } from '../care-guides/growing-environment';
 import { PrismaService } from '../prisma/prisma.service';
+import { TASK_COMPLETE_REASONS } from '../tasks/dto/complete-task-feedback.dto';
 
 const DAYS_AHEAD = 90;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -310,32 +311,72 @@ export class SchedulerService {
   }
 
   async postponeWateringForRain(plantId: string, days = 2) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date();
-    dayAfter.setDate(dayAfter.getDate() + 2);
+    const now = new Date();
+    const tomorrow = startOfDay(addDays(now, 1));
+    const dayAfter = startOfDay(addDays(now, 2));
 
-    await this.prisma.task.updateMany({
+    const tasks = await this.prisma.task.findMany({
       where: {
         plantId,
         taskType: TaskType.WATER,
         status: TaskStatus.PENDING,
         dueDate: { gte: tomorrow, lte: dayAfter },
       },
-      data: {
-        dueDate: new Date(dayAfter.getTime() + days * 24 * 60 * 60 * 1000),
-      },
+      select: { id: true, dueDate: true },
     });
+
+    const minDue = startOfDay(now);
+    for (const t of tasks) {
+      const nextDue = new Date(t.dueDate);
+      nextDue.setDate(nextDue.getDate() + days);
+      if (nextDue.getTime() < minDue.getTime()) nextDue.setTime(minDue.getTime());
+      await this.prisma.task.update({
+        where: { id: t.id },
+        data: { dueDate: nextDue },
+      });
+    }
+  }
+
+  async autoPostponeOutdoorWateringFromWeather(userId: string, days = 2, rainThreshold = 0.6) {
+    const weatherCache = await this.prisma.weatherAdviceCache.findUnique({ where: { userId } });
+    const weatherPayload = weatherCache?.payload ? (JSON.parse(weatherCache.payload) as any) : null;
+    const rainTomorrow = weatherPayload?.summary?.days?.[1]?.rainProbability as number | undefined;
+    const rainNext = weatherPayload?.summary?.days?.[2]?.rainProbability as number | undefined;
+    const maxRainProbability =
+      rainTomorrow != null && rainNext != null ? Math.max(rainTomorrow, rainNext) : rainTomorrow ?? rainNext;
+    if (typeof maxRainProbability !== 'number' || maxRainProbability < rainThreshold) return;
+
+    const plants = await this.prisma.plant.findMany({
+      where: { userId },
+      select: { id: true, location: true },
+    });
+
+    for (const p of plants) {
+      const env = inferGrowingEnvironment(p.location);
+      if (env !== 'outdoor' && env !== 'semi_outdoor') continue;
+      await this.postponeWateringForRain(p.id, days);
+    }
   }
 
   async getScheduleSuggestionsForUser(userId: string): Promise<ScheduleSuggestion[]> {
     const since = new Date(Date.now() - 60 * MS_PER_DAY);
+    const now = new Date();
+    const tomorrow = startOfDay(addDays(now, 1));
+    const dayAfter = startOfDay(addDays(now, 2));
     const feedback = await this.prisma.taskFeedback.findMany({
       where: {
         userId,
-        action: 'SKIP',
         createdAt: { gte: since },
-        reason: { in: ['SOIL_STILL_WET', 'RAIN_HANDLED_WATERING'] },
+        OR: [
+          {
+            action: 'SKIP',
+            reason: { in: ['SOIL_STILL_WET', 'RAIN_HANDLED_WATERING'] },
+          },
+          {
+            action: 'COMPLETE',
+            reason: { in: [...TASK_COMPLETE_REASONS] },
+          },
+        ],
       },
       include: {
         task: { include: { plant: { include: { species: true } } } },
@@ -345,6 +386,15 @@ export class SchedulerService {
 
     const suggestions: ScheduleSuggestion[] = [];
     const plantIds = new Set(feedback.map((item) => item.task.plantId));
+    const suggestionIds = new Set<string>();
+
+    const weatherCache = await this.prisma.weatherAdviceCache.findUnique({ where: { userId } });
+    const weatherPayload = weatherCache?.payload ? (JSON.parse(weatherCache.payload) as any) : null;
+    const rainTomorrow = weatherPayload?.summary?.days?.[1]?.rainProbability as number | undefined;
+    const rainNext = weatherPayload?.summary?.days?.[2]?.rainProbability as number | undefined;
+    const maxRainProbability =
+      rainTomorrow != null && rainNext != null ? Math.max(rainTomorrow, rainNext) : rainTomorrow ?? rainNext;
+    const shouldRainDelay = typeof maxRainProbability === 'number' && maxRainProbability >= 0.6;
 
     for (const plantId of plantIds) {
       const plantFeedback = feedback.filter((item) => item.task.plantId === plantId);
@@ -352,13 +402,16 @@ export class SchedulerService {
       if (!plant) continue;
 
       const wetWaterSkips = plantFeedback.filter(
-        (item) => item.reason === 'SOIL_STILL_WET' && item.task.taskType === TaskType.WATER,
+        (item) => item.action === 'SKIP' && item.reason === 'SOIL_STILL_WET' && item.task.taskType === TaskType.WATER,
       ).length;
       if (wetWaterSkips >= 2) {
         const affectedTaskCount = await this.countUpcomingTasks(plantId, TaskType.WATER);
         if (affectedTaskCount > 0) {
-          suggestions.push({
-            id: `${plantId}:water-extend`,
+          const suggestionId = `${plantId}:water-extend`;
+          if (!suggestionIds.has(suggestionId)) {
+            suggestionIds.add(suggestionId);
+            suggestions.push({
+              id: suggestionId,
             plantId,
             plantName: plant.nickname || plant.species.commonName,
             taskType: TaskType.WATER,
@@ -369,19 +422,35 @@ export class SchedulerService {
             affectedTaskCount,
             confidence: wetWaterSkips >= 3 ? 'high' : 'medium',
             reversible: true,
-          });
+            });
+          }
         }
       }
 
       const rainWaterSkips = plantFeedback.filter(
-        (item) => item.reason === 'RAIN_HANDLED_WATERING' && item.task.taskType === TaskType.WATER,
+        (item) =>
+          item.action === 'SKIP' &&
+          item.reason === 'RAIN_HANDLED_WATERING' &&
+          item.task.taskType === TaskType.WATER,
       ).length;
       const env = inferGrowingEnvironment(plant.location);
       if (rainWaterSkips > 0 && env === 'outdoor') {
-        const affectedTaskCount = await this.countUpcomingTasks(plantId, TaskType.WATER, 1);
+        const affectedTasks = await this.prisma.task.findMany({
+          where: {
+            plantId,
+            taskType: TaskType.WATER,
+            status: TaskStatus.PENDING,
+            dueDate: { gte: tomorrow, lte: dayAfter },
+          },
+          select: { id: true },
+        });
+        const affectedTaskCount = affectedTasks.length;
         if (affectedTaskCount > 0) {
-          suggestions.push({
-            id: `${plantId}:water-rain-delay`,
+          const suggestionId = `${plantId}:water-rain-delay`;
+          if (!suggestionIds.has(suggestionId)) {
+            suggestionIds.add(suggestionId);
+            suggestions.push({
+              id: suggestionId,
             plantId,
             plantName: plant.nickname || plant.species.commonName,
             taskType: TaskType.WATER,
@@ -392,8 +461,110 @@ export class SchedulerService {
             affectedTaskCount,
             confidence: 'medium',
             reversible: true,
-          });
+            });
+          }
         }
+      }
+
+      const drySoilCompletions = plantFeedback.filter(
+        (item) =>
+          item.action === 'COMPLETE' &&
+          item.reason === 'SOIL_VERY_DRY' &&
+          item.task.taskType === TaskType.WATER,
+      ).length;
+      const stressedCompletions = plantFeedback.filter(
+        (item) =>
+          item.action === 'COMPLETE' &&
+          item.reason === 'PLANT_LOOKS_STRESSED' &&
+          item.task.taskType === TaskType.WATER,
+      ).length;
+
+      if (drySoilCompletions >= 2) {
+        const affectedTaskCount = await this.countUpcomingTasks(plantId, TaskType.WATER);
+        if (affectedTaskCount > 0) {
+          const suggestionId = `${plantId}:water-accelerate`;
+          if (!suggestionIds.has(suggestionId)) {
+            suggestionIds.add(suggestionId);
+            suggestions.push({
+              id: suggestionId,
+              plantId,
+              plantName: plant.nickname || plant.species.commonName,
+              taskType: TaskType.WATER,
+              title: 'Water more often',
+              explanation:
+                'You completed watering because the soil was very dry multiple times recently. Shift the next few watering tasks 2 days earlier.',
+              adjustmentDays: -2,
+              affectedTaskCount,
+              confidence: drySoilCompletions >= 3 ? 'high' : 'medium',
+              reversible: true,
+            });
+          }
+        }
+      } else if (stressedCompletions >= 2) {
+        const affectedTaskCount = await this.countUpcomingTasks(plantId, TaskType.WATER);
+        if (affectedTaskCount > 0) {
+          const suggestionId = `${plantId}:water-accelerate`;
+          if (!suggestionIds.has(suggestionId)) {
+            suggestionIds.add(suggestionId);
+            suggestions.push({
+              id: suggestionId,
+              plantId,
+              plantName: plant.nickname || plant.species.commonName,
+              taskType: TaskType.WATER,
+              title: 'Check watering cadence',
+              explanation:
+                'You completed watering because your plant looked stressed multiple times recently. Shift the next few watering tasks 1 day earlier.',
+              adjustmentDays: -1,
+              affectedTaskCount,
+              confidence: stressedCompletions >= 3 ? 'high' : 'medium',
+              reversible: true,
+            });
+          }
+        }
+      }
+    }
+
+    if (shouldRainDelay) {
+      const eligiblePlants = await this.prisma.plant.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          nickname: true,
+          location: true,
+          species: { select: { commonName: true } },
+        },
+      });
+      const rainPct = Math.round(maxRainProbability * 100);
+      for (const p of eligiblePlants) {
+        const env = inferGrowingEnvironment(p.location);
+        if (env !== 'outdoor') continue;
+        const affectedTasks = await this.prisma.task.findMany({
+          where: {
+            plantId: p.id,
+            taskType: TaskType.WATER,
+            status: TaskStatus.PENDING,
+            dueDate: { gte: tomorrow, lte: dayAfter },
+          },
+          select: { id: true },
+        });
+        const affectedTaskCount = affectedTasks.length;
+        if (affectedTaskCount <= 0) continue;
+
+        const suggestionId = `${p.id}:water-rain-delay`;
+        if (suggestionIds.has(suggestionId)) continue;
+        suggestionIds.add(suggestionId);
+        suggestions.push({
+          id: suggestionId,
+          plantId: p.id,
+          plantName: p.nickname || p.species.commonName,
+          taskType: TaskType.WATER,
+          title: 'Delay outdoor watering (forecast)',
+          explanation: `Forecast suggests rain (~${rainPct}% chance over the next couple days). Delay the next outdoor watering by 2 days.`,
+          adjustmentDays: 2,
+          affectedTaskCount,
+          confidence: 'medium',
+          reversible: true,
+        });
       }
     }
 
@@ -444,11 +615,39 @@ export class SchedulerService {
     }
 
     if (kind === 'water-rain-delay') {
+      const now = new Date();
+      const tomorrow = startOfDay(addDays(now, 1));
+      const dayAfter = startOfDay(addDays(now, 2));
+      const pending = await this.prisma.task.findMany({
+        where: {
+          plantId,
+          taskType: TaskType.WATER,
+          status: TaskStatus.PENDING,
+          dueDate: { gte: tomorrow, lte: dayAfter },
+        },
+        select: { id: true },
+      });
+      if (pending.length <= 0) {
+        return {
+          applied: false,
+          updatedTasks: [],
+          message: 'Outdoor watering was already delayed for the forecast.',
+        };
+      }
       const updatedTasks = await this.shiftNextTasks(plantId, TaskType.WATER, 2, 1);
       return {
         applied: updatedTasks.length > 0,
         updatedTasks,
         message: `Delayed the next watering task by 2 days.`,
+      };
+    }
+
+    if (kind === 'water-accelerate') {
+      const updatedTasks = await this.shiftNextTasks(plantId, TaskType.WATER, -2, 3);
+      return {
+        applied: updatedTasks.length > 0,
+        updatedTasks,
+        message: `Shifted the next watering tasks earlier to match your feedback.`,
       };
     }
 
@@ -497,9 +696,14 @@ export class SchedulerService {
     });
 
     const updated = [];
+    const clampToToday = days < 0;
+    const minDue = clampToToday ? startOfDay(new Date()) : null;
     for (const task of tasks) {
       const nextDue = new Date(task.dueDate);
       nextDue.setDate(nextDue.getDate() + days);
+      if (minDue && nextDue.getTime() < minDue.getTime()) {
+        nextDue.setTime(minDue.getTime());
+      }
       updated.push(
         await this.prisma.task.update({
           where: { id: task.id },

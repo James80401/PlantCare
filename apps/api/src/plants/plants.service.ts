@@ -24,6 +24,7 @@ export class PlantsService {
   ) {}
 
   async findAll(userId: string) {
+    await this.scheduler.autoPostponeOutdoorWateringFromWeather(userId);
     const rows = await this.prisma.plant.findMany({
       where: { userId },
       include: {
@@ -55,6 +56,9 @@ export class PlantsService {
   }
 
   async findOne(userId: string, id: string) {
+    const weatherStatus = await this.weather.getAdviceStatus(userId);
+    await this.scheduler.autoPostponeOutdoorWateringFromWeather(userId);
+
     const plant = await this.prisma.plant.findFirst({
       where: { id },
       include: {
@@ -74,7 +78,6 @@ export class PlantsService {
     if (!plant || !userCanViewPlantTasks(userId, plant)) {
       throw new NotFoundException('Plant not found');
     }
-    const weatherStatus = await this.weather.getAdviceStatus(userId);
     const careOverview = this.careGuides.buildPlantCareOverview(
       plant,
       weatherStatus.cachedAdvice,
