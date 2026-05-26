@@ -16,7 +16,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TASK_TYPES = Object.values(TaskType);
 
 /** Task types migrated to structured seed content (B1). */
-const STRUCTURED_TASK_TYPES = [TaskType.WATER, TaskType.FERTILIZE, TaskType.REPOT];
+const STRUCTURED_TASK_TYPES = [TaskType.WATER, TaskType.FERTILIZE, TaskType.REPOT, TaskType.PRUNE];
 
 const MIN_SECTIONS_BY_TASK = {
   [TaskType.WATER]: 7,

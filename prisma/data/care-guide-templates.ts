@@ -139,33 +139,48 @@ function pruneSections(cat: PlantCategory, speciesId: string): CareGuideSection[
   };
 
   return [
-    {
+    structuredSection({
       heading: 'Why prune {speciesName}',
-      body: `Pruning improves shape, airflow, and new growth for **{plantName}**. Timing: active growth season is safest for most cuts.`,
+      whyItMatters:
+        'Pruning shapes {speciesName}, improves airflow, and redirects energy into healthy new growth.',
+      beginnerBody: `Pruning improves shape, airflow, and new growth for **{plantName}**. Active growth season is safest for most cuts.`,
+      advancedBody: `Pruning removes competing growth, opens the canopy for light, and triggers branching at nodes.\n\nFor **{plantName}**, time heavy cuts to active growth — avoid major pruning when the plant is stressed or dormant unless removing dead tissue.`,
       imageKeys: ['prune-dead'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Where and how to cut',
-      body: technique[cat],
+      whyItMatters:
+        'Cutting above the right node directs new growth and avoids stubs that rot or fail to heal.',
+      beginnerBody: technique[cat],
+      advancedBody: `${technique[cat]}\n\n**Advanced:** Sterilize blades between plants; angle cuts slightly above nodes so water runs off. On woody stems, cut just outside the branch collar when removing whole branches.`,
       imageKeys: keys[cat],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Tools & sanitizing',
-      body: `1. Use sharp bypass pruners or scissors.\n2. Wipe blades with rubbing alcohol between plants.\n3. Dull tools crush stems and invite disease.`,
+      whyItMatters: 'Clean, sharp tools make precise cuts that heal faster and reduce disease spread.',
+      beginnerBody: `1. Use sharp bypass pruners or scissors.\n2. Wipe blades with rubbing alcohol between plants.\n3. Dull tools crush stems and invite disease.`,
+      advancedBody: `1. Bypass pruners for live stems; anvil pruners only for dead wood.\n2. Disinfect between plants and after diseased tissue.\n3. Sharpen or replace blades that crush rather than slice.`,
       imageKeys: ['prune-cut', 'photo-prune-cut'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'How much to remove',
-      body: `- Maximum **one-third** of healthy growth per session.\n- Spread heavy pruning across weeks if needed.\n- Stop if the plant looks stressed — wait for recovery.`,
-    },
-    {
+      whyItMatters: 'Removing too much at once stresses {speciesName} and can stall growth or cause dieback.',
+      beginnerBody: `- Maximum **one-third** of healthy growth per session.\n- Spread heavy pruning across weeks if needed.\n- Stop if the plant looks stressed — wait for recovery.`,
+      advancedBody: `- Never remove more than **one-third** of live foliage in one session.\n- For rejuvenation pruning, spread across 2–3 sessions weeks apart.\n- Pause if wilt, leaf drop, or sap bleeding persists beyond 48 hours.`,
+      warnings: ['Do not remove more than one-third of healthy growth in a single session.'],
+    }),
+    structuredSection({
       heading: 'After-care',
-      body: `- Water normally unless you removed a large portion of roots/leaves.\n- Avoid direct hot sun on freshly cut tropicals for a few days.\n- Resume fertilizer after you see new growth.`,
-    },
-    {
+      whyItMatters: 'Fresh cuts need stable conditions while {speciesName} seals wounds and pushes new growth.',
+      beginnerBody: `- Water normally unless you removed a large portion of roots/leaves.\n- Avoid direct hot sun on freshly cut tropicals for a few days.\n- Resume fertilizer after you see new growth.`,
+      advancedBody: `- Maintain normal watering unless you removed substantial foliage.\n- Keep out of harsh direct sun for 3–5 days on tropicals.\n- Hold fertilizer 2–4 weeks; resume when new buds appear.\n- Watch cut sites for oozing or blackening — trim back to healthy tissue if needed.`,
+    }),
+    structuredSection({
       heading: 'Species tips',
-      body: `{careNotes}${snippetBlock(speciesId, TaskType.PRUNE)}\n\n{toxicityWarning}`,
-    },
+      whyItMatters: 'Species-specific notes help you prune {speciesName} at the right time and intensity.',
+      beginnerBody: `{careNotes}${snippetBlock(speciesId, TaskType.PRUNE)}\n\n{toxicityWarning}`,
+      advancedBody: `{careNotes}${snippetBlock(speciesId, TaskType.PRUNE)}\n\n{toxicityWarning}\n\nWhen in doubt, remove less — you can always prune again next month.`,
+    }),
   ];
 }
 
