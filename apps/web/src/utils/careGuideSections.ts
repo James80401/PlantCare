@@ -3,6 +3,90 @@ export interface CareGuideSectionLike {
   body: string;
 }
 
+export type PlantCareTopicId =
+  | 'water'
+  | 'light'
+  | 'soil'
+  | 'humidity'
+  | 'temperature'
+  | 'fertilizer'
+  | 'pruning'
+  | 'repotting'
+  | 'propagation'
+  | 'pests'
+  | 'toxicity'
+  | 'notes';
+
+const TOPIC_META: Record<PlantCareTopicId, CareSectionMeta> = {
+  water: {
+    label: 'Water',
+    intent: 'How often and how much to water this plant.',
+    tone: 'action',
+  },
+  light: {
+    label: 'Light',
+    intent: 'Placement and sun exposure for healthy growth.',
+    tone: 'why',
+  },
+  soil: {
+    label: 'Soil',
+    intent: 'Mix, drainage, and pH for strong roots.',
+    tone: 'reference',
+  },
+  humidity: {
+    label: 'Humidity',
+    intent: 'Where it grows and moisture in the air.',
+    tone: 'seasonal',
+  },
+  temperature: {
+    label: 'Temperature',
+    intent: 'Avoid drafts and cold or heat stress.',
+    tone: 'reference',
+  },
+  fertilizer: {
+    label: 'Feed',
+    intent: 'When and how to fertilize during active growth.',
+    tone: 'action',
+  },
+  pruning: {
+    label: 'Prune',
+    intent: 'Trim damaged growth and shape the plant.',
+    tone: 'action',
+  },
+  repotting: {
+    label: 'Repot',
+    intent: 'When to move up a pot size and refresh soil.',
+    tone: 'seasonal',
+  },
+  propagation: {
+    label: 'Propagate',
+    intent: 'Start new plants from healthy material.',
+    tone: 'reference',
+  },
+  pests: {
+    label: 'Pests',
+    intent: 'Spot problems early before they spread.',
+    tone: 'warning',
+  },
+  toxicity: {
+    label: 'Safety',
+    intent: 'Pet, child, and handling safety.',
+    tone: 'warning',
+  },
+  notes: {
+    label: 'Your notes',
+    intent: 'Personal reminders for this plant.',
+    tone: 'reference',
+  },
+};
+
+export function getStructuredCareSectionMeta(
+  topicId: PlantCareTopicId,
+  heading: string,
+): CareSectionMeta {
+  return TOPIC_META[topicId] ?? getCareSectionMeta(heading);
+}
+
 export interface CareSectionMeta {
   label: string;
   intent: string;

@@ -12,6 +12,11 @@ import {
   inferGrowingEnvironment,
   type GrowingEnvironment,
 } from './growing-environment';
+import {
+  buildOverviewContext,
+  buildStructuredPlantCareSections,
+  type StructuredCareSection,
+} from './plant-care-overview.builder';
 
 
 
@@ -71,7 +76,7 @@ export interface PlantCareOverviewDto {
 
   environmentLabel: string;
 
-  sections: { heading: string; body: string }[];
+  sections: StructuredCareSection[];
 
 }
 
@@ -171,52 +176,19 @@ export class CareGuidesService {
   }): PlantCareOverviewDto {
     const species = plant.species;
     const plantName = plant.nickname || species.commonName;
-    const location = plant.location?.trim() || 'Not set';
-    const env = inferGrowingEnvironment(plant.location);
-    const category = classifySpeciesForCare(species);
-    const ctx = this.buildContext(plantName, species, plant.potSize, plant.location);
-
-    const sections: { heading: string; body: string }[] = [
-      {
-        heading: 'General care',
-        body: [
-          `**${species.commonName}** (${ctx.scientificName})`,
-          '',
-          ctx.careNotes,
-          '',
-          `☀️ **Light:** ${ctx.sunlight}`,
-          '',
-          `💧 **Watering:** About every **${ctx.waterIntervalDays}** days in a **${ctx.potSize}** pot (catalog base: ${ctx.wateringFreqDays} days). ${ctx.wateringStyle}`,
-          '',
-          ctx.drainageNote,
-          '',
-          `**Soil pH:** ${ctx.phRange}`,
-          ctx.toxicityWarning,
-        ]
-          .filter(Boolean)
-          .join('\n\n'),
-      },
-      {
-        heading: 'Where you grow it',
-        body: buildLocationCareParagraph(env, location, plantName),
-      },
-      {
-        heading: 'Humidity & misting',
-        body: buildMistCareParagraph(env, category, plantName),
-      },
-    ];
-
-    if (plant.notes?.trim()) {
-      sections.push({
-        heading: 'Your notes',
-        body: plant.notes.trim(),
-      });
-    }
+    const overviewCtx = buildOverviewContext(
+      plantName,
+      species,
+      plant.potSize,
+      plant.location,
+      plant.notes,
+      (freq, pot) => this.waterIntervalDays(freq, pot),
+    );
 
     return {
-      growingEnvironment: env,
-      environmentLabel: growingEnvironmentLabel(env),
-      sections,
+      growingEnvironment: overviewCtx.growingEnvironment,
+      environmentLabel: overviewCtx.environmentLabel,
+      sections: buildStructuredPlantCareSections(overviewCtx),
     };
   }
 

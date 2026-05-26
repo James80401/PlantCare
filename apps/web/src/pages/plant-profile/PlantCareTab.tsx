@@ -1,8 +1,19 @@
+import { useAuth } from '../../context/AuthContext';
 import { usePlantProfile } from './PlantProfileContext';
+import type { CareDetailLevel } from './types';
 import { CareGuideCard, ProfileSection, SectionEmptyState } from './shared';
+
+function defaultCareDetailLevel(experienceLevel?: string | null): CareDetailLevel {
+  if (experienceLevel === 'advanced' || experienceLevel === 'expert') {
+    return 'advanced';
+  }
+  return 'beginner';
+}
 
 export default function PlantCareTab() {
   const ctx = usePlantProfile();
+  const { user } = useAuth();
+  const defaultDetailLevel = defaultCareDetailLevel(user?.experienceLevel);
 
   return (
     <ProfileSection
@@ -13,7 +24,11 @@ export default function PlantCareTab() {
       {ctx.careOverview?.sections?.length ? (
         <div className="grid gap-4 lg:grid-cols-2">
           {ctx.careOverview.sections.map((section) => (
-            <CareGuideCard key={section.heading} section={section} />
+            <CareGuideCard
+              key={section.id}
+              section={section}
+              defaultDetailLevel={defaultDetailLevel}
+            />
           ))}
         </div>
       ) : (

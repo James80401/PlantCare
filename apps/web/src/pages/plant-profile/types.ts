@@ -2,9 +2,29 @@ export type PlantTab = 'overview' | 'care' | 'tasks' | 'journal' | 'health';
 
 export type PlantRecord = Record<string, unknown>;
 
+export type PlantCareTopicId =
+  | 'water'
+  | 'light'
+  | 'soil'
+  | 'humidity'
+  | 'temperature'
+  | 'fertilizer'
+  | 'pruning'
+  | 'repotting'
+  | 'propagation'
+  | 'pests'
+  | 'toxicity'
+  | 'notes';
+
+export type CareDetailLevel = 'beginner' | 'advanced';
+
 export interface CareOverviewSection {
+  id: PlantCareTopicId;
   heading: string;
-  body: string;
+  whyItMatters: string;
+  beginnerBody: string;
+  advancedBody: string;
+  warnings: string[];
 }
 
 export interface CareOverview {

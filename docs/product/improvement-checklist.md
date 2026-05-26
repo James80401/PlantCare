@@ -254,23 +254,23 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 
 ### Granular care guide structure
 
-- [ ] Split care into consistent sections:
-  - [ ] Water
-  - [ ] Light
-  - [ ] Soil
-  - [ ] Humidity
-  - [ ] Temperature
-  - [ ] Fertilizer
-  - [ ] Pruning
-  - [ ] Repotting
-  - [ ] Propagation
-  - [ ] Pests and diseases
-  - [ ] Toxicity and safety
-- [ ] Add beginner and advanced versions of instructions.
-- [ ] Add "why this matters" explanations to care sections.
-- [ ] Add warning blocks for common mistakes.
-- [ ] Tailor guidance by indoor/outdoor location.
-- [ ] Tailor guidance by pot size and drainage.
+- [x] Split care into consistent sections:
+  - [x] Water
+  - [x] Light
+  - [x] Soil
+  - [x] Humidity
+  - [x] Temperature
+  - [x] Fertilizer
+  - [x] Pruning
+  - [x] Repotting
+  - [x] Propagation
+  - [x] Pests and diseases
+  - [x] Toxicity and safety
+- [x] Add beginner and advanced versions of instructions.
+- [x] Add "why this matters" explanations to care sections.
+- [x] Add warning blocks for common mistakes.
+- [x] Tailor guidance by indoor/outdoor location.
+- [x] Tailor guidance by pot size and drainage.
 - [ ] Tailor guidance by season and weather.
 - [ ] Tailor guidance by growth stage.
 
