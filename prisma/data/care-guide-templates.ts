@@ -245,60 +245,97 @@ function mistSections(cat: PlantCategory, speciesId: string): CareGuideSection[]
   const skip = cat === 'succulent' || cat === 'cactus';
   const needs = ['fern', 'palm', 'moisture', 'orchid', 'aroid'].includes(cat);
 
+  const needsMistBeginner = skip
+    ? `**Usually no.** {speciesName} prefers correct watering over wet leaves. Low humidity? Use a **pebble tray** or humidifier instead.`
+    : needs
+      ? `**Often helpful.** {speciesName} benefits from higher humidity. Misting supplements other methods but does not replace watering.`
+      : `**Optional.** Mist only if you see crisp leaf edges or tips. Consistent soil moisture matters more.`;
+
+  const needsMistAdvanced = skip
+    ? `${needsMistBeginner}\n\n**Advanced:** Wet leaves on succulents invite rot and sunburn spots. Raise humidity around the pot, not on the leaf surface.`
+    : needs
+      ? `${needsMistBeginner}\n\n**Advanced:** Pair misting with a humidifier for ferns and calatheas — brief mist alone rarely shifts room RH enough.`
+      : `${needsMistBeginner}\n\n**Advanced:** If crisp tips persist with good watering, check airflow and heat — mist is a band-aid, not the fix.`;
+
   return [
-    {
+    structuredSection({
       heading: 'Does {speciesName} need misting?',
-      body: skip
-        ? `**Usually no.** {speciesName} prefers correct watering over wet leaves. Low humidity? Use a **pebble tray** or humidifier instead.`
-        : needs
-          ? `**Often helpful.** {speciesName} benefits from higher humidity. Misting supplements other methods but does not replace watering.`
-          : `**Optional.** Mist only if you see crisp leaf edges or tips. Consistent soil moisture matters more.`,
-    },
-    {
+      whyItMatters:
+        'Misting only helps certain plants in certain conditions. Using it on the wrong species can cause fungal problems.',
+      beginnerBody: needsMistBeginner,
+      advancedBody: needsMistAdvanced,
+    }),
+    structuredSection({
       heading: 'Technique',
-      body: `1. Use room-temperature water in a fine spray.\n2. Mist in the **morning** so leaves dry by evening.\n3. Avoid soaking fuzzy leaves, flowers, or crown of rosette plants.`,
+      whyItMatters:
+        'Fine spray and timing keep leaves from staying wet too long — wet foliage overnight is a common cause of mildew.',
+      beginnerBody: `1. Use room-temperature water in a fine spray.\n2. Mist in the **morning** so leaves dry by evening.\n3. Avoid soaking fuzzy leaves, flowers, or crown of rosette plants.`,
+      advancedBody: `1. Fine mist at room temperature — not cold tap shock.\n2. Morning only; leaves should dry before evening.\n3. Skip fuzzy leaves, blooms, and rosette crowns.\n4. Mist the air around the plant, not a heavy drench on foliage.`,
       imageKeys: ['mist-leaves', 'photo-mist'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Better alternatives',
-      body: `- **Pebble tray:** pot sits above water, not in it.\n- **Grouping plants** raises local humidity.\n- **Humidifier:** best for ferns, calatheas, orchids indoors.`,
+      whyItMatters:
+        'Raising ambient humidity around {speciesName} often works better than wetting leaves directly.',
+      beginnerBody: `- **Pebble tray:** pot sits above water, not in it.\n- **Grouping plants** raises local humidity.\n- **Humidifier:** best for ferns, calatheas, orchids indoors.`,
+      advancedBody: `- **Pebble tray:** water below pot level; refill when low.\n- **Grouping:** microclimate bump of a few percent RH.\n- **Humidifier:** target 50–60% for tropicals; place near plants, not blasting one leaf.\n- **Bathroom / kitchen:** temporary boost during dry winter months.`,
       imageKeys: ['humidity-pebble-tray'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'When to skip',
-      body: `- Succulents and plants with powdery leaves.\n- When fungal spots or mildew are present.\n- Cold rooms where water sits on leaves overnight.`,
-    },
-    {
+      whyItMatters: 'Skipping mist when conditions are wrong prevents leaf spot and rot on {speciesName}.',
+      beginnerBody: `- Succulents and plants with powdery leaves.\n- When fungal spots or mildew are present.\n- Cold rooms where water sits on leaves overnight.`,
+      advancedBody: `- Succulents, cacti, and powdery or fuzzy-leaved species.\n- Active fungal spots, mildew, or recent pest treatment on leaves.\n- Cold rooms (<65°F / 18°C) where water lingers overnight.\n- During flowering if blooms are sensitive to moisture.`,
+      warnings: skip ? ['Do not mist {speciesName} — use humidity around the pot instead.'] : undefined,
+    }),
+    structuredSection({
       heading: 'Species notes',
-      body: `☀️ {sunlight}\n\n{careNotes}${snippetBlock(speciesId, TaskType.MIST)}`,
-    },
+      whyItMatters: 'Light and catalog notes tell you whether misting fits {speciesName} in your setup.',
+      beginnerBody: `☀️ {sunlight}\n\n{careNotes}${snippetBlock(speciesId, TaskType.MIST)}`,
+      advancedBody: `☀️ {sunlight}\n\n{careNotes}${snippetBlock(speciesId, TaskType.MIST)}\n\nIf humidity is chronically low, a humidifier beats daily misting for {speciesName}.`,
+    }),
   ];
 }
 
 function phSections(speciesId: string): CareGuideSection[] {
   return [
-    {
+    structuredSection({
       heading: 'Target pH for {speciesName}',
-      body: `**{speciesName}** prefers pH **{phRange}**. Outside this range, nutrients may be unavailable and leaves can yellow despite feeding.`,
+      whyItMatters:
+        'Soil pH controls which nutrients {speciesName} can absorb. Wrong pH mimics fertilizer and watering problems.',
+      beginnerBody: `**{speciesName}** prefers pH **{phRange}**. Outside this range, nutrients may be unavailable and leaves can yellow despite feeding.`,
+      advancedBody: `**{speciesName}** target: **{phRange}**.\n\nNutrient lockout at wrong pH shows as yellowing, purple stems, or stunted tips even when you feed and water correctly.`,
       imageKeys: ['ph-test', 'photo-ph-test'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'How to test',
-      body: `1. Take samples from several spots near the root ball.\n2. Use a meter or kit on **moist** (not soggy) soil.\n3. For slurry tests, follow kit directions with distilled water.`,
+      whyItMatters:
+        'Accurate sampling reflects what roots experience — surface-only tests can mislead on large pots.',
+      beginnerBody: `1. Take samples from several spots near the root ball.\n2. Use a meter or kit on **moist** (not soggy) soil.\n3. For slurry tests, follow kit directions with distilled water.`,
+      advancedBody: `1. Sample 2–3 inches down near the root ball, not just the surface.\n2. Test moist soil — dry pockets skew readings.\n3. Slurry/kits: use distilled water per label.\n4. Calibrate meters monthly; replace probe batteries as needed.\n5. Log date and reading — track drift after repot or fertilizer changes.`,
       imageKeys: ['ph-test'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Adjusting pH',
-      body: `- **Too high (alkaline):** acidifying fertilizer, sulfur products (label rates), or acid-loving mix for blueberries/azaleas.\n- **Too low (acidic):** lime products sparingly — retest in 2 weeks.`,
-    },
-    {
+      whyItMatters:
+        'Small, measured corrections are safer than large swings that shock {speciesName} roots.',
+      beginnerBody: `- **Too high (alkaline):** acidifying fertilizer, sulfur products (label rates), or acid-loving mix for blueberries/azaleas.\n- **Too low (acidic):** lime products sparingly — retest in 2 weeks.`,
+      advancedBody: `- **Too high:** acidifying fertilizer, elemental sulfur (label rate), or repot into acid-loving mix for ericaceous plants.\n- **Too low:** dolomitic lime in small doses — retest in 2 weeks.\n- Change one variable at a time; flush salts if you over-corrected.\n- Tap water pH affects soil over time — note your water report if problems recur.`,
+      warnings: ['Adjust slowly — large pH swings stress roots. Retest before a second correction.'],
+    }),
+    structuredSection({
       heading: 'Symptoms of wrong pH',
-      body: `Interveinal yellowing, stunted new growth, or poor flowering when water and light are otherwise correct.`,
-    },
-    {
+      whyItMatters:
+        'Recognizing pH-related symptoms avoids treating the wrong problem with more fertilizer or water.',
+      beginnerBody: `Interveinal yellowing, stunted new growth, or poor flowering when water and light are otherwise correct.`,
+      advancedBody: `Interveinal chlorosis, stunted new growth, poor bloom, or leaf edge burn when watering and light look fine.\n\nRule out overwatering first — then test pH before increasing fertilizer.`,
+    }),
+    structuredSection({
       heading: 'Species notes',
-      body: `{careNotes}${snippetBlock(speciesId, TaskType.PH_TEST)}`,
-    },
+      whyItMatters: 'Some species are especially sensitive to pH drift — catalog notes flag {speciesName} specifics.',
+      beginnerBody: `{careNotes}${snippetBlock(speciesId, TaskType.PH_TEST)}`,
+      advancedBody: `{careNotes}${snippetBlock(speciesId, TaskType.PH_TEST)}\n\nRetest 4–6 weeks after repotting — fresh mix changes pH and nutrient availability.`,
+    }),
   ];
 }
 
@@ -310,23 +347,34 @@ function pestSections(cat: PlantCategory, speciesId: string): CareGuideSection[]
         ? 'mealybugs, scale, spider mites'
         : 'spider mites, aphids, scale, mealybugs, thrips';
   return [
-    {
+    structuredSection({
       heading: 'Inspection checklist',
-      body: `1. Leaf **undersides** and stem joints.\n2. New growth tips.\n3. Soil surface for fungus gnats.\n4. Sticky residue (honeydew) or fine webbing.\n\nCommon on {speciesName}: ${pests}.`,
+      whyItMatters:
+        'Early detection on {speciesName} keeps pests from spreading to your whole collection.',
+      beginnerBody: `1. Leaf **undersides** and stem joints.\n2. New growth tips.\n3. Soil surface for fungus gnats.\n4. Sticky residue (honeydew) or fine webbing.\n\nCommon on {speciesName}: ${pests}.`,
+      advancedBody: `1. Undersides, axils, and soil line — pests hide in joints.\n2. New growth and flower buds first.\n3. Soil surface and saucer for gnats and larvae.\n4. Honeydew, webbing, stippling, or cast skins.\n5. Use a magnifier for thrips and mites.\n\nCommon on {speciesName}: ${pests}.`,
       imageKeys: ['pest-inspect', 'pest-common-spots', 'photo-pest-underside'],
-    },
-    {
+    }),
+    structuredSection({
       heading: 'Treatment ladder',
-      body: `1. Isolate from other plants.\n2. Rinse foliage with lukewarm water.\n3. Insecticidal soap or neem oil — full coverage, weekly repeats.\n4. Escalate only per label if infestation persists.`,
-    },
-    {
+      whyItMatters:
+        'Escalating treatments in order protects {speciesName} and avoids unnecessary harsh chemicals.',
+      beginnerBody: `1. Isolate from other plants.\n2. Rinse foliage with lukewarm water.\n3. Insecticidal soap or neem oil — full coverage, weekly repeats.\n4. Escalate only per label if infestation persists.`,
+      advancedBody: `1. Isolate immediately; inspect neighbors.\n2. Shower or wipe leaves — dislodge adults and eggs.\n3. Insecticidal soap or neem — coat undersides; repeat weekly × 3.\n4. Systemics or stronger products only per label if still present.\n5. Replace top soil if fungus gnats persist after drying out.`,
+      warnings: ['Always follow product labels — some treatments harm sensitive foliage on {speciesName}.'],
+    }),
+    structuredSection({
       heading: 'Prevention',
-      body: `- Quarantine new plants 2 weeks.\n- Avoid overwatering (fungus gnats).\n- Increase airflow between dense foliage.`,
-    },
-    {
+      whyItMatters: 'Most infestations arrive on new plants or stressed, overwatered {speciesName}.',
+      beginnerBody: `- Quarantine new plants 2 weeks.\n- Avoid overwatering (fungus gnats).\n- Increase airflow between dense foliage.`,
+      advancedBody: `- Quarantine newcomers 14 days minimum.\n- Let soil surface dry between waterings — breaks gnat cycles.\n- Airflow between pots; don't pack collections tight.\n- Inspect weekly on high-risk species (herbs, succulents in dry heat).`,
+    }),
+    structuredSection({
       heading: 'Species notes',
-      body: `{careNotes}${snippetBlock(speciesId, TaskType.PEST_CONTROL)}\n\n{toxicityWarning}`,
-    },
+      whyItMatters: 'Toxicity and species habits affect which treatments are safe for {speciesName}.',
+      beginnerBody: `{careNotes}${snippetBlock(speciesId, TaskType.PEST_CONTROL)}\n\n{toxicityWarning}`,
+      advancedBody: `{careNotes}${snippetBlock(speciesId, TaskType.PEST_CONTROL)}\n\n{toxicityWarning}\n\nPhoto pests before treatment — helps ID if the problem returns.`,
+    }),
   ];
 }
 
@@ -391,35 +439,57 @@ function repotSections(cat: PlantCategory, speciesId: string): CareGuideSection[
 
 function rotateSections(speciesId: string): CareGuideSection[] {
   return [
-    {
+    structuredSection({
       heading: 'Why rotate',
-      body: 'Even light prevents leaning and encourages balanced growth on {speciesName}.',
-    },
-    {
+      whyItMatters:
+        'Plants grow toward light. Rotating {speciesName} keeps growth even and prevents a lopsided shape.',
+      beginnerBody: 'Even light prevents leaning and encourages balanced growth on {speciesName}.',
+      advancedBody:
+        'Phototropism pulls new growth toward the window. Regular rotation prevents permanent lean and uneven canopy on {speciesName}.',
+    }),
+    structuredSection({
       heading: 'How to rotate',
-      body: 'Turn the pot a quarter turn each time. Mark the side facing the window so you rotate consistently.',
-    },
-    {
+      whyItMatters: 'A consistent quarter turn each time is easier to remember than ad-hoc adjustments.',
+      beginnerBody:
+        'Turn the pot a quarter turn each time. Mark the side facing the window so you rotate consistently.',
+      advancedBody:
+        'Quarter turn clockwise each watering or weekly. Mark pot or saucer with tape facing the window.\n\nLarge heavy pots: rotate less often but more degrees, or supplement with a grow light on the dark side.',
+    }),
+    structuredSection({
       heading: 'Species notes',
-      body: `{careNotes}${snippetBlock(speciesId, TaskType.ROTATE)}`,
-    },
+      whyItMatters: 'Some species lean faster or need rotation less often — check notes for {speciesName}.',
+      beginnerBody: `{careNotes}${snippetBlock(speciesId, TaskType.ROTATE)}`,
+      advancedBody: `{careNotes}${snippetBlock(speciesId, TaskType.ROTATE)}\n\nAfter rotating, expect new growth to reorient within 1–2 weeks.`,
+    }),
   ];
 }
 
 function cleanLeavesSections(speciesId: string): CareGuideSection[] {
   return [
-    {
+    structuredSection({
       heading: 'When to clean',
-      body: 'Dust blocks light on {speciesName}. Wipe leaves when they look dull or every few weeks indoors.',
-    },
-    {
+      whyItMatters:
+        'Dust reduces photosynthesis on {speciesName}. Clean leaves absorb more light and look healthier.',
+      beginnerBody:
+        'Dust blocks light on {speciesName}. Wipe leaves when they look dull or every few weeks indoors.',
+      advancedBody:
+        'Clean when leaves look matte or every 2–4 weeks indoors. Near vents, roads, or kitchens — dust accumulates faster on {speciesName}.',
+    }),
+    structuredSection({
       heading: 'How to clean',
-      body: 'Use a damp soft cloth; support the leaf from underneath. Avoid leaf shine products on fuzzy or succulent leaves.',
-    },
-    {
+      whyItMatters: 'Gentle technique avoids tearing leaves or leaving residue that blocks stomata.',
+      beginnerBody:
+        'Use a damp soft cloth; support the leaf from underneath. Avoid leaf shine products on fuzzy or succulent leaves.',
+      advancedBody:
+        'Damp microfiber; support leaf from below. Wipe both sides on broad leaves.\n\nSkip leaf shine — it clogs pores. Fuzzy and succulent leaves: soft brush or rinse briefly, then dry.\n\nNever scrub hard or use soap unless labeled safe for plants.',
+      warnings: ['Do not use leaf shine on fuzzy or succulent {speciesName} leaves.'],
+    }),
+    structuredSection({
       heading: 'Species notes',
-      body: `{careNotes}${snippetBlock(speciesId, TaskType.CLEAN_LEAVES)}`,
-    },
+      whyItMatters: 'Some {speciesName} varieties have sensitive foliage — catalog notes flag what to avoid.',
+      beginnerBody: `{careNotes}${snippetBlock(speciesId, TaskType.CLEAN_LEAVES)}`,
+      advancedBody: `{careNotes}${snippetBlock(speciesId, TaskType.CLEAN_LEAVES)}\n\nClean in the morning so leaves dry before cooler evening temps.`,
+    }),
   ];
 }
 
@@ -429,35 +499,57 @@ function inspectPestsSections(cat: PlantCategory, speciesId: string): CareGuideS
 
 function checkMoistureSections(speciesId: string): CareGuideSection[] {
   return [
-    {
+    structuredSection({
       heading: 'Finger test',
-      body: 'Stick your finger 1–2 inches into the soil. Water {speciesName} only when the top feels dry for most houseplants.',
-    },
-    {
+      whyItMatters:
+        'Checking soil before watering prevents the most common cause of {speciesName} decline — wrong moisture.',
+      beginnerBody:
+        'Stick your finger 1–2 inches into the soil. Water {speciesName} only when the top feels dry for most houseplants.',
+      advancedBody:
+        'Finger 1–2 inches deep (deeper for large pots). Dry at that depth → OK to water soon.\n\nOptional: lift the pot — lighter weight usually means drier soil on {speciesName}.',
+    }),
+    structuredSection({
       heading: 'Signs to adjust',
-      body: 'Yellowing lower leaves with wet soil may mean overwatering. Crispy tips with dry soil may mean underwatering.',
-    },
-    {
+      whyItMatters: 'Leaf and soil cues together tell you whether to water more or less on {speciesName}.',
+      beginnerBody:
+        'Yellowing lower leaves with wet soil may mean overwatering. Crispy tips with dry soil may mean underwatering.',
+      advancedBody:
+        '**Too wet:** yellow lower leaves, mushy base, gnats, sour soil smell.\n\n**Too dry:** limp leaves that perk after water, crispy edges, soil pulling from pot sides.\n\nAdjust interval — do not wait for severe symptoms on {speciesName}.',
+    }),
+    structuredSection({
       heading: 'Species notes',
-      body: `{careNotes}${snippetBlock(speciesId, TaskType.CHECK_MOISTURE)}`,
-    },
+      whyItMatters: 'Dry-down rate varies by species, pot size, and season for {speciesName}.',
+      beginnerBody: `{careNotes}${snippetBlock(speciesId, TaskType.CHECK_MOISTURE)}`,
+      advancedBody: `{careNotes}${snippetBlock(speciesId, TaskType.CHECK_MOISTURE)}\n\nBaseline schedule: about every **{waterIntervalDays}** days — always confirm with a soil check.`,
+    }),
   ];
 }
 
 function healthCheckSections(speciesId: string): CareGuideSection[] {
   return [
-    {
+    structuredSection({
       heading: 'Recovery check',
-      body: 'Note new growth, leaf color, and soil moisture for {speciesName}. Compare to before your diagnosis or treatment.',
-    },
-    {
+      whyItMatters:
+        'Tracking progress after a problem helps you know if {speciesName} is recovering or needs a different fix.',
+      beginnerBody:
+        'Note new growth, leaf color, and soil moisture for {speciesName}. Compare to before your diagnosis or treatment.',
+      advancedBody:
+        'Compare today to your last journal entry: new leaves, color, firmness, soil moisture, pest signs.\n\nRecovery is often slow — look for **stopped decline** before expecting full bounce-back on {speciesName}.',
+    }),
+    structuredSection({
       heading: 'What to log',
-      body: 'Take a photo, jot symptoms that improved or worsened, and adjust watering or light if needed.',
-    },
-    {
+      whyItMatters: 'Photos and notes make patterns visible when {speciesName} has recurring issues.',
+      beginnerBody:
+        'Take a photo, jot symptoms that improved or worsened, and adjust watering or light if needed.',
+      advancedBody:
+        'Same angle and lighting for photos. Log: symptoms better/worse/same, watering changes, light moves, treatments applied.\n\nIf unchanged after 2 weeks, revisit diagnosis — not every problem is watering.',
+    }),
+    structuredSection({
       heading: 'Species notes',
-      body: `{careNotes}${snippetBlock(speciesId, TaskType.HEALTH_CHECK)}`,
-    },
+      whyItMatters: 'Species-specific recovery timelines help set realistic expectations for {speciesName}.',
+      beginnerBody: `{careNotes}${snippetBlock(speciesId, TaskType.HEALTH_CHECK)}`,
+      advancedBody: `{careNotes}${snippetBlock(speciesId, TaskType.HEALTH_CHECK)}\n\nSchedule the next health check when symptoms are still evolving — usually 7–14 days out.`,
+    }),
   ];
 }
 
