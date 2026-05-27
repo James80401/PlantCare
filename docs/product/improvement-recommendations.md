@@ -1,6 +1,6 @@
 # Plant Care improvement recommendations
 
-> **Status:** researched backlog (2026-05-19)  
+> **Status:** researched backlog (last updated 2026-05-26)  
 > **Navigation:** [Product INDEX](INDEX.md) · [Improvement checklist](improvement-checklist.md) · [Feature availability](../reference/feature-availability.md)
 
 This document captures **research-backed recommendations** for improving Plant Care: user value, content quality, reliability, and release readiness. It complements the living [improvement-checklist.md](improvement-checklist.md), which remains the implementation queue with acceptance checks.
@@ -51,16 +51,16 @@ Recommendations below are **additive** — they assume the foundation already sh
 
 | ID | Title | User value | Effort | Priority | Area |
 |----|-------|------------|--------|----------|------|
-| **B1** | Structured fields in seeded task care guides | Task instructions match profile Care tab quality (beginner/advanced, warnings) | L | P1 | Content / API |
-| **A1** | Complete-time task feedback + scheduler rules | Schedules adapt when soil is dry or plant stressed, not only on skip | M | P1 | Core care loop |
-| **C1** | One-shot diagnosis UI on Health tab | Users can diagnose without Swagger/API | M | P1 | Diagnosis |
+| **C2** | Auto recovery tasks from diagnosis | Faster path from symptom → scheduled care | M | P1 | Diagnosis |
 | **G1** | FCM HTTP v1 + real device push verification | Trustworthy reminders on phones | M | P1 | Mobile / ops |
 | **D1** | Journal photo UX on plant profile | Photo journal matches API capability | S | P1 | Journal |
-| **A3** | Show skip reason and schedule explanations on profile | Users understand why dates changed | S | P2 | Core care loop |
-| **E1** | Notes + toxicity preview in Add Plant wizard | Safer, complete plant setup at create time | S | P2 | Onboarding |
-| **A2** | Auto-postpone watering from cached weather | Outdoor care adapts to rain without manual skip | M | P2 | Scheduler / weather |
+| **B3** | Species catalog Phase 3 attributes + filters | Browse and recommendations match guide depth | L | P2 | Species / content |
+| **A5** | Optional completion notes on tasks | Richer journal and Dr. Plant context | S | P2 | Core care loop |
 | **H1** | Slim dashboard API aggregates | Faster dashboard; less client fanout | M | P2 | API |
-| **H4** | Fix stale docs (snooze, diagnosis API, Phase 4 drift) | Team and testers trust documentation | S | P2 | Docs (shipped 2026-05) |
+| **F1** | Community post images | Social posts match user expectations | M | P2 | Community |
+| **C4** | Enrich Dr. Plant with skips, weather, care summary | Chat advice matches live plant state | M | P2 | Diagnosis |
+| **G2** | Richer push (overdue, multi-task, deep links) | Mobile reminders feel actionable | M | P2 | Mobile / ops |
+| **H3** | E2E for structured instructions + snooze | Regression safety on care UI | S | P2 | Quality |
 
 ---
 
@@ -73,11 +73,13 @@ Sections 0–9 of the [improvement-checklist](improvement-checklist.md) are larg
 - **Plant profile IA** — Overview, Care, Tasks, Journal, Health tabs; edit details; Dr. Plant deep links.
 - **Structured plant care overview** — Eleven topics plus season/weather/growth tailoring; beginner/advanced toggle on Care tab ([`plant-care-overview.builder.ts`](../../apps/api/src/care-guides/plant-care-overview.builder.ts)).
 - **Task loop** — Complete, skip with reasons, snooze (1/3/7 days), instructions modal, schedule suggestions with user approval.
-- **Adaptive scheduling (partial)** — Wet-soil skip shifts watering; dormant fertilizer suggestions; explanations ([`scheduler.service.ts`](../../apps/api/src/scheduler/scheduler.service.ts)).
+- **Adaptive scheduling** — Wet-soil skip shifts watering; dry-soil/stressed **complete** feedback can suggest faster watering; rain skip and **cached-forecast auto-postpone** for outdoor watering; dormant fertilizer suggestions; explanations ([`scheduler.service.ts`](../../apps/api/src/scheduler/scheduler.service.ts)).
+- **Complete-time task feedback** — Optional reasons on `PATCH /tasks/:id/complete` (WATER quick feedback in web); persisted as `TaskFeedback` with `action: COMPLETE`.
+- **Structured task care guides (B1)** — All 12 `TaskType` seeds include `whyItMatters`, `beginnerBody`, `advancedBody`, optional `warnings`; ~3,852 guides; verifier asserts coverage ([`care-guide-templates.ts`](../../prisma/data/care-guide-templates.ts), [`verify-care-guides.mjs`](../../scripts/verify-care-guides.mjs)).
 - **Weather** — On-demand 7-day advice, per-plant lines, integration into care overview when cache exists.
 - **Diagnosis** — One-shot API, Dr. Plant chat, follow-up HEALTH_CHECK tasks, recovery status.
 - **Journal** — CRUD, measurements on API, timeline on profile.
-- **Species** — 320 species, 2247 care guides, browse and filters.
+- **Species** — 320 species, ~3,852 care guides (12 task types × species + generics), browse and filters.
 - **Social** — Household share, community posts/comments/likes.
 - **Plant Buddy** — Progression, shop, quests (separate lane; see theme I).
 - **Quality** — `npm run verify`, Playwright UAT, demo garden seed (`demo@plantcare.local`).
@@ -91,7 +93,7 @@ Some **Phase 4–7** checklist items are open in the checklist but **partially i
 | Task snooze | Phase 4 open; UAT says “not implemented” | Shipped: `PATCH /tasks/:id/snooze`, [`TaskRow.tsx`](../../apps/web/src/components/tasks/TaskRow.tsx) |
 | Skip feedback | Phase 4 open | Shipped: `TaskFeedback` on skip |
 | Schedule suggestions | Phase 4 open | Shipped: Section 8 complete |
-| Structured care copy | Section 3 noted future work | Shipped on profile; not in DB task guides |
+| Structured care copy | Section 3 noted future work | Shipped on profile and in seeded task guides (B1, 2026-05) |
 
 **Recommendation H4:** Update [uat-checklist.md](uat-checklist.md), [api/diagnosis.md](../api/diagnosis.md), and Phase 4 bullets when touching those areas.
 
@@ -105,8 +107,8 @@ Some **Phase 4–7** checklist items are open in the checklist but **partially i
 
 | ID | Recommendation | Type | Effort | Priority | Key paths |
 |----|----------------|------|--------|----------|-----------|
-| **A1** | Add **complete-time** feedback (e.g. soil very dry, plant stressed, rain handled watering) and scheduler rules (e.g. shorten interval when dry soil reported repeatedly) | Strategic bet | M | P1 | [`tasks.service.ts`](../../apps/api/src/tasks/tasks.service.ts), [`scheduler.service.ts`](../../apps/api/src/scheduler/scheduler.service.ts) |
-| **A2** | Call **`postponeWateringForRain()`** (or equivalent) when cached weather indicates rain for outdoor/semi-outdoor plants — not only when user picks skip reason `RAIN_HANDLED_WATERING` | Strategic bet | M | P2 | [`scheduler.service.ts`](../../apps/api/src/scheduler/scheduler.service.ts), [`weather.service.ts`](../../apps/api/src/weather/weather.service.ts) |
+| **A1** | ~~Complete-time feedback + dry-soil scheduler rules~~ **Done (2026-05)** | — | — | — | [`complete-task-feedback.dto.ts`](../../apps/api/src/tasks/dto/complete-task-feedback.dto.ts), [`scheduler.service.ts`](../../apps/api/src/scheduler/scheduler.service.ts) |
+| **A2** | ~~Auto-postpone outdoor watering from cached weather~~ **Done (2026-05)** | — | — | — | [`autoPostponeOutdoorWateringFromWeather`](../../apps/api/src/scheduler/scheduler.service.ts) |
 | **A3** | Surface **skip reason**, optional note, and **schedule explanation** on profile Tasks tab and timeline | Quick win | S | P2 | [`PlantTasksTab.tsx`](../../apps/web/src/pages/plant-profile/PlantTasksTab.tsx), [`shared.tsx`](../../apps/web/src/pages/plant-profile/shared.tsx) |
 | **A4** | **Unify skip UX** — single flow that encourages feedback without hiding one-tap skip; avoid divergent data quality between dashboard and profile | Quick win | S | P2 | [`TaskRow.tsx`](../../apps/web/src/components/tasks/TaskRow.tsx) |
 | **A5** | Optional **completion notes** (one line) on complete — stored for journal/Dr. Plant context | Quick win | S | P2 | tasks API + complete UI |
@@ -117,17 +119,15 @@ Some **Phase 4–7** checklist items are open in the checklist but **partially i
 
 ## Theme B — Care content and instructions
 
-**Problem:** Profile **Care** tab uses rich structured sections from code ([`plant-care-overview.builder.ts`](../../apps/api/src/care-guides/plant-care-overview.builder.ts)). Task **instructions** still rely on ~2247 database guides with flat `heading` + `body` JSON; only the appended “Your plant right now” section uses structured fields.
+**Problem (resolved for B1/B2):** Task instructions now use the same structured section shape as the profile Care tab. Ongoing work is catalog depth (B3), not flat copy.
 
-**Opportunity:** One consistent instruction experience everywhere users learn how to care.
+**Opportunity:** Extend species metadata and discovery filters so browse and recommendations match guide quality.
 
 | ID | Recommendation | Type | Effort | Priority | Key paths |
 |----|----------------|------|--------|----------|-----------|
-| **B1** | Migrate seeded **`CareGuide.sectionsJson`** to include `whyItMatters`, `beginnerBody`, `advancedBody`, `warnings` (start with top task types: WATER, FERTILIZE, REPOT) | Strategic bet | L | P1 | [`prisma/data/care-guide-types.ts`](../../prisma/data/care-guide-types.ts), [`care-guides.service.ts`](../../apps/api/src/care-guides/care-guides.service.ts) |
-| **B2** | Extend **`scripts/verify-care-guides.mjs`** to assert structured field coverage per task type | Quick win | S | P2 | `scripts/verify-care-guides.mjs` |
 | **B3** | **Species catalog Phase 3** — difficulty, zones, pests, dormancy, filters, recommendations ([checklist Phase 3](improvement-checklist.md)) | Strategic bet | L | P2 | [`apps/api/src/species/`](../../apps/api/src/species/) |
 
-**Suggested slice (1 week):** B1 for WATER + FERTILIZE templates; re-seed; verify modal shows toggles for those tasks.
+**Shipped (2026-05):** **B1** — all 12 task types in [`care-guide-templates.ts`](../../prisma/data/care-guide-templates.ts); **B2** — [`verify-care-guides.mjs`](../../scripts/verify-care-guides.mjs) asserts structured fields on every generic guide. Re-seed with `npx tsx prisma/seed-care-guides.ts` after template edits.
 
 **Reference:** [Guide 06 — Care guides](../guides/06-care-guides-and-content.md), [`TaskInstructionsModal.tsx`](../../apps/web/src/components/TaskInstructionsModal.tsx) (already uses [`StructuredCareSectionCard`](../../apps/web/src/components/care/StructuredCareSectionCard.tsx)).
 
@@ -244,31 +244,31 @@ For buddy-specific phases and APIs, use [docs/guides/buddy/](../guides/buddy/IND
 
 ### Now (2–4 weeks)
 
-Focus: visible quality in care content and core loops; doc trust; low-risk UX.
+Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
-1. **B1** (partial) — Structured seed for WATER, FERTILIZE, REPOT
-2. **A3 + A4** — Skip reason + unified skip UX on profile/dashboard
-3. **C1 + D1** — Diagnosis create UI + journal photos
-4. **E1 + E2** — Add plant notes/toxicity; settings for experience/light
-5. **H4** — UAT and API doc corrections
+1. **C2 + C4** — Diagnosis → tasks + richer Dr. Plant context
+2. **D1** — Journal photo UX polish (preview, photo-only, edit)
+3. **G1 + G3** — FCM v1 + production deploy sign-off
+4. **H3** — E2E for structured task instructions + snooze
+5. **A5** — Optional completion notes
+
+**Recently shipped:** A1 (complete-time feedback + water-accelerate suggestions), A2 (weather auto-postpone), B1 + B2 (structured task guides + verifier).
 
 ### Next (1–2 months)
 
-Focus: adaptive intelligence, mobile trust, diagnosis recovery.
+Focus: scale, social, API shape.
 
-1. **A1 + A2** — Complete feedback + weather postpone wiring
-2. **G1 + G2** — FCM v1 and richer push content
-3. **C2 + C4** — Diagnosis → tasks + richer Dr. Plant context
-4. **H1** — Dashboard aggregates
-5. **F1 + F2** — Community images + household journal permission
+1. **G2** — Richer push content and deep links
+2. **H1** — Dashboard aggregates
+3. **F1 + F2** — Community images + household journal permission
+4. **B3** — Species catalog Phase 3 attributes and filters
 
 ### Later (backlog)
 
-1. **B3** — Full species attribute program
-2. **C5** — Structured diagnosis intake
-3. **D3 + D4** — Timeline API + persisted milestones
-4. **G4** — Store release program
-5. **H2** — Full accessibility audit
+1. **C5** — Structured diagnosis intake
+2. **D3 + D4** — Timeline API + persisted milestones
+3. **G4** — Store release program
+4. **H2** — Full accessibility audit
 
 ---
 
@@ -278,7 +278,7 @@ Track whether recommendations improve outcomes (baseline before/after each slice
 
 | Metric | Why it matters |
 |--------|----------------|
-| Task feedback submission rate (skip + complete when A1 ships) | Adaptive scheduling needs signal |
+| Task feedback submission rate (skip + complete) | Adaptive scheduling needs signal |
 | Schedule suggestion **accept** vs dismiss | User trust in automation |
 | Weather advice **fetch** rate (dashboard) | Season/weather tailoring used |
 | Care tab engagement (time on tab, toggle usage) | Structured content value |
@@ -294,13 +294,13 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 
 | ID | Status | Summary |
 |----|--------|---------|
-| A1 | Not started | Complete-time feedback + dry-soil scheduler rules |
-| A2 | Partial | `postponeWateringForRain` exists, not wired to weather cache |
+| A1 | Done | Complete-time feedback; `water-accelerate` suggestions after repeated dry/stressed WATER completes |
+| A2 | Done | `autoPostponeOutdoorWateringFromWeather` on task/plant loads when cache ≥60% rain next 2 days |
 | A3 | Done | Skip reason on profile timeline |
 | A4 | Done | Unified skip opens feedback panel |
 | A5 | Not started | Task completion notes |
-| B1 | Partial | Profile overview structured; DB task guides flat |
-| B2 | Not started | Verify structured guide coverage in CI |
+| B1 | Done | All 12 task types seeded with structured sections; UI toggle in task instructions modal |
+| B2 | Done | `verify-care-guides.mjs` asserts structured fields per task type |
 | B3 | Partial | Browse/filters exist; Phase 3 attributes open |
 | C1 | Done | One-shot diagnosis on Health tab |
 | C2 | Partial | Manual follow-up only |
@@ -335,6 +335,9 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | Skip with reasons | `TaskFeedback`, skip DTO |
 | Schedule suggestions + approval | `scheduler.service.ts`, dashboard UI |
 | Structured plant care overview | `plant-care-overview.builder.ts`, Care tab |
+| Structured task care guides | `care-guide-templates.ts`, `TaskInstructionsModal`, `StructuredCareSectionCard` |
+| Complete-time task feedback | `complete-task-feedback.dto.ts`, `TaskRow` WATER panel |
+| Weather auto-postpone outdoor water | `autoPostponeOutdoorWateringFromWeather` in scheduler |
 | Weather in care overview | `plants.service.ts` + weather cache |
 | Dr. Plant per plant | Health tab, `DrPlantChat` |
 | Demo garden seed | `prisma/seed-demo-garden.ts` |

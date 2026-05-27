@@ -9,7 +9,7 @@
 - [x] Copy `.env.example` → `.env` (secrets filled, file saved)
 - [x] `npm run db:generate`
 - [x] `npm run db:push`
-- [x] `npm run db:seed` (320 species, 2247 care guides)
+- [x] `npm run db:seed` (320 species, ~3852 care guides across 12 task types)
 - [x] API starts: `npm run dev:api` (port 3001)
 - [x] Web starts: `npm run dev:web` (port 5173)
 

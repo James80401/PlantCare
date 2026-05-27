@@ -96,16 +96,19 @@ Goal: improve care instructions using the data already returned by the API.
 - [x] Improve task instruction modal hierarchy.
 - [x] Add warning/tip styling consistency.
 - [x] Identify missing care-guide data that needs future content work. Future content work should add explicit structured fields for beginner/expert guidance and separate "why this matters" copy instead of deriving it from section headings.
+- [x] Seed task care guides with structured fields for all 12 task types (B1/B2, 2026-05); verify with `scripts/verify-care-guides.mjs`.
 
 Acceptance check:
 
 - [x] Plant profile care guide is easier to scan.
-- [x] Task instructions modal remains accessible and mobile-friendly.
-- [x] No backend schema changes required for this slice.
+- [x] Task instructions modal remains accessible and mobile-friendly; beginner/advanced toggle when structured sections are present.
+- [x] No backend schema changes required for the original Section 3 slice (structured fields live in `sectionsJson`).
 
 ### Section 4 - Task feedback MVP
 
 Goal: start collecting why users skip or complete care so future schedules can adapt.
+
+> **2026-05:** Complete-time reasons shipped (A1); see Phase 4 adaptive scheduling for scheduler wiring.
 
 - [x] Design minimal skip reason choices.
 - [x] Add API/data model for task feedback.
@@ -193,7 +196,9 @@ Acceptance check:
 
 ### Current next slice
 
-Continue with **Section 10+ backlog** (structured task care guides, adaptive completion feedback, deploy/UAT sign-off) or native packaging polish. See [improvement-recommendations.md](improvement-recommendations.md) for the suggested **Now** horizon.
+**Shipped (2026-05):** structured task care guides (B1/B2), complete-time feedback + water-accelerate suggestions (A1), weather-driven outdoor water postpone (A2).
+
+Continue with **diagnosis recovery (C2/C4)**, **journal photos (D1)**, **FCM v1 + deploy sign-off (G1/G3)**, or **species catalog Phase 3 (B3)**. See [improvement-recommendations.md](improvement-recommendations.md) for the **Now** horizon.
 
 ## Phase 1 - Mobile-first shell and dashboard foundation
 
@@ -313,16 +318,16 @@ Continue with **Section 10+ backlog** (structured task care guides, adaptive com
 
 ## Phase 4 - Adaptive care intelligence
 
-> **Note:** Section 8 implemented much of this. Remaining Phase 4 items are tracked in [improvement-recommendations.md](improvement-recommendations.md) (A1, A2, A5).
+> **Note:** Section 8 implemented much of this. Remaining Phase 4 items are tracked in [improvement-recommendations.md](improvement-recommendations.md) (A5, heat/frost rules).
 
 ### Better task model
 
 - [x] Add task types for rotate, clean leaves, inspect pests, check soil moisture (see Prisma `TaskType`; harvest/move/flush still open).
 - [x] Add task feedback model (skip reasons shipped via `TaskFeedback`):
   - [x] soil still wet
-  - [ ] soil very dry (complete-time — not started)
+  - [x] soil very dry (complete-time on `PATCH /tasks/:id/complete`)
   - [x] plant looked healthy
-  - [ ] plant looked stressed (complete-time — not started)
+  - [x] plant looked stressed (complete-time)
   - [x] rain handled outdoor watering
   - [x] user was unavailable (too busy / other)
 - [x] Add snooze and reschedule support (`PATCH /tasks/:id/snooze`).
@@ -331,8 +336,8 @@ Continue with **Section 10+ backlog** (structured task care guides, adaptive com
 ### Adaptive scheduling
 
 - [x] Adjust watering when users repeatedly skip because soil is wet (schedule suggestions).
-- [ ] Increase watering suggestions when users report dry soil.
-- [ ] Delay outdoor watering after rain (manual skip reason only; auto `postponeWateringForRain` not wired).
+- [x] Increase watering suggestions when users report dry soil (repeated `SOIL_VERY_DRY` / `PLANT_LOOKS_STRESSED` on WATER complete → `water-accelerate` suggestion).
+- [x] Delay outdoor watering after rain (manual skip + `autoPostponeOutdoorWateringFromWeather` when forecast cache ≥60% rain).
 - [ ] Add heatwave and frost adjustments.
 - [x] Reduce fertilizer during dormancy (suggestions).
 - [x] Add explicit user approval before applying major schedule changes.

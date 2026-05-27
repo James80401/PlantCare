@@ -24,7 +24,8 @@ Creates next task at `completedAt + interval`. Mist may not reschedule if rules 
 
 ## Rain
 
-`postponeWateringForRain` shifts near-term water tasks.
+- `postponeWateringForRain(plantId, days)` shifts pending outdoor/semi-outdoor **WATER** tasks due in the near window.
+- `autoPostponeOutdoorWateringFromWeather(userId)` runs when tasks or plants are loaded for a user: if `weatherAdviceCache` shows ≥60% rain probability on either of the next two forecast days, pending outdoor watering tasks due tomorrow–day after are postponed (same helper as manual rain handling).
 
 ## Adaptive suggestions
 
@@ -33,8 +34,10 @@ without changing schedules automatically. Current rules:
 
 - Repeated `SOIL_STILL_WET` skip feedback on watering suggests shifting the next
   few water tasks 2 days later.
-- `RAIN_HANDLED_WATERING` feedback for outdoor plants suggests delaying the next
+- Repeated `SOIL_VERY_DRY` or `PLANT_LOOKS_STRESSED` **complete** feedback on watering suggests **water-accelerate** (shift next water tasks earlier, clamped to not before today).
+- `RAIN_HANDLED_WATERING` skip feedback for outdoor plants suggests delaying the next
   water task 2 days.
+- Dashboard may surface forecast rain delay when weather cache qualifies (companion to auto-postpone).
 - Fertilizer reminders outside the main growing season suggest delaying the next
   fertilizer task 30 days.
 

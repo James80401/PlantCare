@@ -15,7 +15,7 @@ Content is **data-driven**: thousands of guides live in the database; images are
 | Concept | Storage |
 |---------|---------|
 | Template guide | `CareGuide` row: `taskType`, `speciesId`, `sectionsJson` |
-| Sections | JSON array: title, body, optional image key |
+| Sections | JSON array: `heading`, `body`, `whyItMatters`, `beginnerBody`, `advancedBody`, optional `warnings`, `imageKeys` |
 | Images | SVG in `apps/api/src/care-guides/images/`; photos in `photos/` |
 | Personalization | Runtime merge in `CareGuidesService` |
 

@@ -7,7 +7,7 @@
 | GET | `/tasks?from=&to=` | Tasks in date range |
 | GET | `/tasks/schedule-suggestions` | Explainable adaptive schedule suggestions |
 | POST | `/tasks/schedule-suggestions/:suggestionId/apply` | Apply an approved schedule suggestion |
-| PATCH | `/tasks/:id/complete` | Mark done + schedule next |
+| PATCH | `/tasks/:id/complete` | Mark done + schedule next; optional feedback body |
 | PATCH | `/tasks/:id/skip` | Skip task, optionally with feedback |
 | GET | `/tasks/:id/instructions` | Care guide payload |
 
@@ -17,7 +17,27 @@ Returns `TaskInstructionsDto`: title, summary, sections (markdown body + images)
 
 **Service chain:** `TasksService` → `CareGuidesService.getInstructionsForTask`
 
-**Task types:** `WATER`, `FERTILIZE`, `PRUNE`, `MIST`, `PH_TEST`, `PEST_CONTROL`, `REPOT`
+**Task types:** all 12 Prisma `TaskType` values (see schema). Instructions return structured sections when seeded (beginner/advanced toggle in web).
+
+## Complete feedback
+
+`PATCH /tasks/:id/complete` accepts an optional body:
+
+```json
+{
+  "reason": "SOIL_VERY_DRY",
+  "note": "Top two inches were bone dry."
+}
+```
+
+Allowed reasons:
+
+- `SOIL_VERY_DRY`
+- `PLANT_LOOKS_STRESSED`
+- `PLANT_LOOKS_HEALTHY`
+- `OTHER`
+
+Stored as `TaskFeedback` with `action: COMPLETE`. Repeated dry/stressed feedback on **WATER** completions can surface a **water-accelerate** schedule suggestion (see schedule suggestions below). Web: quick feedback panel on WATER complete in [`TaskRow.tsx`](../../apps/web/src/components/tasks/TaskRow.tsx).
 
 ## Skip feedback
 
@@ -48,7 +68,9 @@ not change schedules until the user approves one.
 Current suggestion types:
 
 - Water less often after repeated wet-soil skips.
-- Delay the next outdoor watering after rain handled watering.
+- Water sooner after repeated dry-soil or stressed-plant **complete** feedback on watering (`water-accelerate`).
+- Delay the next outdoor watering after rain handled watering (skip feedback).
+- Forecast-based rain delay for outdoor/semi-outdoor plants when weather cache shows high rain probability (dashboard copy; auto-postpone may shift due dates on load).
 - Delay fertilizer outside the growing season.
 
 Applying a suggestion only updates pending tasks returned by the suggestion.
