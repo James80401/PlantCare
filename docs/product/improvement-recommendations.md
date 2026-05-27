@@ -247,17 +247,15 @@ For buddy-specific phases and APIs, use [docs/guides/buddy/](../guides/buddy/IND
 Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
 1. **G3** — Production deploy sign-off on your public URL (manual §F checklist)
-2. **G2** — Richer push content and deep links
 
-**Recently shipped:** A1, A2, B1, B2, C2, C3, C4, D1.
+**Recently shipped:** A1, A2, B1, B2, C2, C3, C4, D1, G1, G2, F2, E4.
 
 ### Next (1–2 months)
 
 Focus: scale, social, API shape.
 
-1. **G2** — Richer push content and deep links
-2. **H1** — Dashboard aggregates
-3. **F1 + F2** — Community images + household journal permission
+1. **H1** — Dashboard aggregates
+2. **F1** — Community post images
 4. **B3** — Species catalog Phase 3 attributes and filters
 
 ### Later (backlog)
@@ -315,8 +313,8 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | F1 | Not started | Community post images |
 | F2 | Not started | canJournal on household share |
 | F3 | Partial | Community shipped; pagination/a11y gaps |
-| G1 | Partial | Legacy FCM; mock without key |
-| G2 | Partial | Cron today/tomorrow only; single-line body |
+| G1 | Done | FCM HTTP v1 + legacy fallback |
+| G2 | Done | Overdue cron, multi-task body, plant deep links |
 | G3 | Not started | Production URL sign-off (UAT §F) |
 | G4 | Partial | Capacitor scripts; store TBD |
 | H1 | Partial | Dashboard endpoint exists; still heavy payload |
@@ -337,6 +335,10 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | Weather auto-postpone outdoor water | `autoPostponeOutdoorWateringFromWeather` in scheduler |
 | Weather in care overview | `plants.service.ts` + weather cache |
 | Dr. Plant per plant | Health tab, `DrPlantChat` |
+| FCM HTTP v1 push | `fcm.client.ts`, service account env |
+| Rich care push (overdue, deep links) | `task-reminder-copy.ts`, `notifications.cron.ts` |
+| Household canJournal on share | `Household.tsx`, `gardensApi.sharePlant` |
+| Delete plant (owner) | `PlantDetailsEditor.tsx`, `DELETE /plants/:id` |
 | Demo garden seed | `prisma/seed-demo-garden.ts` |
 
 ---
