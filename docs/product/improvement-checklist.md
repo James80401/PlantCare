@@ -331,7 +331,7 @@ Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, 
   - [x] rain handled outdoor watering
   - [x] user was unavailable (too busy / other)
 - [x] Add snooze and reschedule support (`PATCH /tasks/:id/snooze`).
-- [ ] Add task completion notes.
+- [x] Add task completion notes (optional note on complete for all task types).
 
 ### Adaptive scheduling
 

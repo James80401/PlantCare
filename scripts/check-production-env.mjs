@@ -56,8 +56,19 @@ if (apiBase && !apiBase.endsWith('/api/v1')) {
   warnings.push('VITE_API_BASE_URL should end with /api/v1');
 }
 
-if (!vars.FCM_SERVER_KEY) {
-  warnings.push('FCM_SERVER_KEY unset — push will log only until Firebase is configured');
+const hasFcmV1 =
+  vars.FIREBASE_PROJECT_ID &&
+  (vars.GOOGLE_APPLICATION_CREDENTIALS ||
+    vars.FIREBASE_SERVICE_ACCOUNT_PATH ||
+    (vars.FIREBASE_CLIENT_EMAIL && vars.FIREBASE_PRIVATE_KEY));
+if (!hasFcmV1 && !vars.FCM_SERVER_KEY) {
+  warnings.push(
+    'FCM not configured — set FIREBASE_PROJECT_ID + service account (v1) or FCM_SERVER_KEY (legacy)',
+  );
+} else if (hasFcmV1) {
+  console.log('  ✓ FCM HTTP v1 credentials detected');
+} else if (vars.FCM_SERVER_KEY) {
+  warnings.push('Using legacy FCM_SERVER_KEY — prefer HTTP v1 service account for new Firebase projects');
 }
 if (!vars.OPENAI_API_KEY) {
   warnings.push('OPENAI_API_KEY unset — Dr. Plant and diagnosis will not work');

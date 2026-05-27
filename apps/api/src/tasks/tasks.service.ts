@@ -58,14 +58,15 @@ export class TasksService {
         include: { plant: { include: { species: true } } },
       });
 
-      if (feedback?.reason) {
+      const note = feedback?.note?.trim();
+      if (feedback?.reason || note) {
         await tx.taskFeedback.create({
           data: {
             taskId,
             userId,
             action: 'COMPLETE',
-            reason: feedback.reason,
-            note: feedback.note?.trim() || undefined,
+            reason: feedback.reason ?? 'OTHER',
+            note: note || undefined,
           },
         });
       }

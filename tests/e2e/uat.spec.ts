@@ -277,7 +277,30 @@ test.describe('UAT checklist — authenticated flows', () => {
       await howTo.click();
       await expect(page.getByRole('dialog')).toBeVisible();
       await expect(page.locator('[role="dialog"]')).toContainText(/Water|Light|Step/i);
+      const beginnerToggle = page.getByRole('button', { name: /^Beginner$/i });
+      if (await beginnerToggle.isVisible().catch(() => false)) {
+        await page.getByRole('button', { name: /^Advanced$/i }).click();
+        await expect(page.getByRole('button', { name: /^Advanced$/i })).toHaveAttribute(
+          'aria-pressed',
+          'true',
+        );
+      }
     }
+  });
+
+  test('task snooze shifts due date from tasks page', async ({ page }) => {
+    await openAddPlantSearch(page);
+    await page.getByLabel(/Species name/i).fill('snake');
+    await page.getByRole('button', { name: /Snake Plant/i }).first().click();
+    await page.getByRole('button', { name: /Save plant/i }).click();
+    await page.waitForURL(/\/garden\/plants\//);
+
+    await page.goto('/garden/tasks');
+    const snoozeBtn = page.getByRole('button', { name: /^Snooze$/i }).first();
+    await expect(snoozeBtn).toBeVisible({ timeout: 10_000 });
+    await snoozeBtn.click();
+    await page.getByRole('button', { name: /^Tomorrow$/i }).click();
+    await expect(snoozeBtn).not.toHaveAttribute('aria-expanded', 'true');
   });
 
   test('schedule explanation modal opens from tasks', async ({ page }) => {

@@ -67,7 +67,7 @@ describe('NotificationsService', () => {
     );
 
     expect(sendSpy).toHaveBeenCalledWith(
-      'fcm-secret',
+      { mode: 'legacy', serverKey: 'fcm-secret' },
       ['device-1'],
       'Buddy',
       'Back from journey',

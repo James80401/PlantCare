@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NotificationChannel, TaskStatus } from '@prisma/client';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
-import { sendFcmNotification } from './fcm.client';
+import { resolveFcmTransport, sendFcmNotification } from './fcm.client';
 
 @Injectable()
 export class NotificationsService {
@@ -152,8 +152,8 @@ export class NotificationsService {
       return;
     }
 
-    const fcmKey = this.config.get<string>('FCM_SERVER_KEY');
-    if (!fcmKey) {
+    const transport = resolveFcmTransport((key) => this.config.get<string>(key));
+    if (transport.mode === 'none') {
       this.logger.log(`[push mock] ${userId} (${rows.length} devices): ${message}`);
       await this.log(userId, NotificationChannel.PUSH, logTag);
       return;
@@ -161,7 +161,7 @@ export class NotificationsService {
 
     try {
       const result = await sendFcmNotification(
-        fcmKey,
+        transport,
         rows.map((r) => r.token),
         title,
         body,
@@ -176,7 +176,7 @@ export class NotificationsService {
         );
       }
       this.logger.log(
-        `FCM sent ${result.sent}/${rows.length} to user ${userId} (${result.failed} failed)`,
+        `FCM ${transport.mode} sent ${result.sent}/${rows.length} to user ${userId} (${result.failed} failed)`,
       );
       await this.log(userId, NotificationChannel.PUSH, logTag);
     } catch (err) {

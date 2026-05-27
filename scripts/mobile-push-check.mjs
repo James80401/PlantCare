@@ -53,6 +53,25 @@ if (existsSync(gServices)) {
   pass('Android', 'Native project not added yet (npm run mobile:add:android)');
 }
 
+const envPath = resolve(root, '.env');
+if (existsSync(envPath)) {
+  const envText = readFileSync(envPath, 'utf8');
+  const hasV1 =
+    /FIREBASE_PROJECT_ID=.+/.test(envText) &&
+    (/GOOGLE_APPLICATION_CREDENTIALS=.+/.test(envText) ||
+      /FIREBASE_CLIENT_EMAIL=.+/.test(envText));
+  const hasLegacy = /FCM_SERVER_KEY=.+/.test(envText);
+  if (hasV1) {
+    pass('API FCM', 'HTTP v1 credentials in .env');
+  } else if (hasLegacy) {
+    pass('API FCM', 'legacy FCM_SERVER_KEY in .env');
+  } else {
+    fail('API FCM', 'Set FIREBASE_PROJECT_ID + service account or FCM_SERVER_KEY in .env');
+  }
+} else {
+  fail('API FCM', 'No .env — copy .env.example');
+}
+
 for (const c of checks) {
   console.log(`${c.ok ? '✓' : '✗'} ${c.label}${c.detail ? `: ${c.detail}` : ''}`);
 }

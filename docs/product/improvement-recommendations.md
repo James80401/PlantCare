@@ -246,9 +246,8 @@ For buddy-specific phases and APIs, use [docs/guides/buddy/](../guides/buddy/IND
 
 Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
-1. **G1 + G3** — FCM v1 + production deploy sign-off
-4. **H3** — E2E for structured task instructions + snooze
-5. **A5** — Optional completion notes
+1. **G3** — Production deploy sign-off on your public URL (manual §F checklist)
+2. **G2** — Richer push content and deep links
 
 **Recently shipped:** A1, A2, B1, B2, C2, C3, C4, D1.
 
@@ -296,7 +295,7 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | A2 | Done | `autoPostponeOutdoorWateringFromWeather` on task/plant loads when cache ≥60% rain next 2 days |
 | A3 | Done | Skip reason on profile timeline |
 | A4 | Done | Unified skip opens feedback panel |
-| A5 | Not started | Task completion notes |
+| A5 | Done | Optional completion note on all tasks; WATER keeps reason radios |
 | B1 | Done | All 12 task types seeded with structured sections; UI toggle in task instructions modal |
 | B2 | Done | `verify-care-guides.mjs` asserts structured fields per task type |
 | B3 | Partial | Browse/filters exist; Phase 3 attributes open |
@@ -322,7 +321,7 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | G4 | Partial | Capacitor scripts; store TBD |
 | H1 | Partial | Dashboard endpoint exists; still heavy payload |
 | H2 | Not started | Systematic a11y pass |
-| H3 | Not started | E2E for new care UI + snooze |
+| H3 | Done | E2E: instructions beginner/advanced toggle + snooze |
 | H4 | Done | UAT snooze note, diagnosis API doc, Phase 4 reconciliation |
 
 ### Already shipped (related work — do not re-implement blindly)

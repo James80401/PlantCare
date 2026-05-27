@@ -78,13 +78,7 @@ export default function TaskRow({
         {isPending ? (
           <button
             type="button"
-            onClick={() => {
-              if (task.taskType === 'WATER') {
-                setCompleteFeedbackOpen((open) => !open);
-              } else {
-                onComplete(task.id);
-              }
-            }}
+            onClick={() => setCompleteFeedbackOpen((open) => !open)}
             disabled={!!animState}
             className="task-check flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
             aria-label={`Mark ${taskTypeLabel(task.taskType)} for ${plantLabel} as done`}
@@ -292,11 +286,12 @@ export default function TaskRow({
               </div>
             )}
 
-            {completeFeedbackOpen && task.taskType === 'WATER' && (
+            {completeFeedbackOpen && (
               <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
-                  Quick feedback (water)
+                  {task.taskType === 'WATER' ? 'Quick feedback (water)' : 'Complete task'}
                 </p>
+                {task.taskType === 'WATER' ? (
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   {TASK_COMPLETE_REASONS.map((r) => (
                     <label
@@ -320,13 +315,18 @@ export default function TaskRow({
                     </label>
                   ))}
                 </div>
-                <label className="mt-3 block">
+                ) : null}
+                <label className={`block ${task.taskType === 'WATER' ? 'mt-3' : 'mt-2'}`}>
                   <span className="text-xs font-medium text-gray-600">Optional note</span>
                   <input
                     value={completeNote}
                     onChange={(event) => setCompleteNote(event.target.value)}
                     maxLength={240}
-                    placeholder="Example: soil was dry 2 inches down"
+                    placeholder={
+                      task.taskType === 'WATER'
+                        ? 'Example: soil was dry 2 inches down'
+                        : 'Example: removed dead leaves, fertilized lightly'
+                    }
                     className="mt-1 w-full rounded-xl border border-sky-100 bg-white px-3 py-2 text-sm focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-100"
                   />
                 </label>
@@ -334,16 +334,23 @@ export default function TaskRow({
                   <button
                     type="button"
                     onClick={() => {
-                      onComplete(task.id, {
-                        reason: selectedCompleteReason,
-                        note: completeNote.trim() || undefined,
-                      });
+                      onComplete(
+                        task.id,
+                        task.taskType === 'WATER'
+                          ? {
+                              reason: selectedCompleteReason,
+                              note: completeNote.trim() || undefined,
+                            }
+                          : completeNote.trim()
+                            ? { note: completeNote.trim() }
+                            : undefined,
+                      );
                       setCompleteFeedbackOpen(false);
                       setCompleteNote('');
                     }}
                     className="rounded-full bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800"
                   >
-                    Save feedback & complete
+                    {task.taskType === 'WATER' ? 'Save feedback & complete' : 'Complete with note'}
                   </button>
                   <button
                     type="button"
@@ -354,7 +361,7 @@ export default function TaskRow({
                     }}
                     className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
                   >
-                    Complete without feedback
+                    {task.taskType === 'WATER' ? 'Complete without feedback' : 'Complete'}
                   </button>
                 </div>
               </div>
