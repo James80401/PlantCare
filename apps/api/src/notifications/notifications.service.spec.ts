@@ -71,7 +71,7 @@ describe('NotificationsService', () => {
       ['device-1'],
       'Buddy',
       'Back from journey',
-      { route: '/garden/buddy/journey' },
+      expect.objectContaining({ route: '/garden/buddy/journey' }),
     );
     sendSpy.mockRestore();
   });

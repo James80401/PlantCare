@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PhotoCaptureZone } from '../../components/plants/PhotoCaptureZone';
 import { plantsApi } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { PLANT_DETAILS_SECTION_ID } from '../../utils/gardenPaths';
 import { usePlantProfile } from './PlantProfileContext';
 
@@ -12,6 +14,9 @@ const POT_OPTIONS = [
 
 export function PlantDetailsEditor() {
   const ctx = usePlantProfile();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isOwner = (ctx.plant?.userId as string | undefined) === user?.id;
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState('');
   const [potSize, setPotSize] = useState('MEDIUM');
@@ -74,7 +79,30 @@ export function PlantDetailsEditor() {
     }
   };
 
-  const busy = saving || uploadingPhoto;
+  const deletePlant = async () => {
+    const name =
+      (ctx.plant?.nickname as string) ||
+      (ctx.plant?.species as { commonName?: string })?.commonName ||
+      'this plant';
+    if (
+      !window.confirm(
+        `Remove ${name} from your garden? All tasks, journal entries, and diagnoses for this plant will be deleted.`,
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    setMessage('');
+    try {
+      await plantsApi.delete(ctx.id);
+      navigate('/garden');
+    } catch {
+      setMessage('Could not delete this plant. Try again.');
+      setDeleting(false);
+    }
+  };
+
+  const busy = saving || uploadingPhoto || deleting;
 
   return (
     <div
@@ -196,6 +224,23 @@ export function PlantDetailsEditor() {
 
       {message ? (
         <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{message}</p>
+      ) : null}
+
+      {isOwner && !editing ? (
+        <div className="mt-4 border-t border-emerald-100 pt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-rose-800">Danger zone</p>
+          <p className="mt-1 text-sm text-gray-600">
+            Permanently remove this plant and its care history from your garden.
+          </p>
+          <button
+            type="button"
+            onClick={() => void deletePlant()}
+            disabled={busy}
+            className="mt-3 min-h-11 rounded-full bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-800 ring-1 ring-rose-200 hover:bg-rose-100 disabled:opacity-50"
+          >
+            {deleting ? 'Removing…' : 'Delete plant'}
+          </button>
+        </div>
       ) : null}
     </div>
   );

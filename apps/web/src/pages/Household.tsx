@@ -21,6 +21,7 @@ export default function Household() {
   const [lastInviteToken, setLastInviteToken] = useState('');
   const [shareGardenId, setShareGardenId] = useState<string | null>(null);
   const [sharePlantId, setSharePlantId] = useState('');
+  const [shareCanJournal, setShareCanJournal] = useState(true);
   const [activity, setActivity] = useState<ActivityEventSummary[]>([]);
   const [acceptToken, setAcceptToken] = useState('');
   const [message, setMessage] = useState('');
@@ -214,9 +215,14 @@ export default function Household() {
                           >
                             {share.plant.nickname || share.plant.species.commonName}
                           </Link>
-                          {share.canComplete ? (
-                            <span className="ml-2 text-xs text-gray-500">caregivers can complete tasks</span>
-                          ) : null}
+                          <span className="ml-2 text-xs text-gray-500">
+                            {[
+                              share.canComplete ? 'can complete tasks' : null,
+                              share.canJournal ? 'can journal' : null,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ') || 'view only'}
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -247,6 +253,15 @@ export default function Household() {
                       </option>
                     ))}
                   </select>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={shareCanJournal}
+                      onChange={(e) => setShareCanJournal(e.target.checked)}
+                      className="h-4 w-4 rounded border-emerald-200 text-emerald-700"
+                    />
+                    Allow caregivers to add journal entries
+                  </label>
                   <Button type="submit" variant="secondary" fullWidth disabled={!sharePlantId}>
                     Share to household
                   </Button>
