@@ -198,7 +198,7 @@ Acceptance check:
 
 **Shipped (2026-05):** structured task care guides (B1/B2), complete-time feedback + water-accelerate suggestions (A1), weather-driven outdoor water postpone (A2).
 
-Continue with **diagnosis recovery (C2/C4)**, **journal photos (D1)**, **FCM v1 + deploy sign-off (G1/G3)**, or **species catalog Phase 3 (B3)**. See [improvement-recommendations.md](improvement-recommendations.md) for the **Now** horizon.
+Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, or **species catalog Phase 3 (B3)**. **C2** and **D1** shipped 2026-05. See [improvement-recommendations.md](improvement-recommendations.md) for the **Now** horizon.
 
 ## Phase 1 - Mobile-first shell and dashboard foundation
 
@@ -352,7 +352,7 @@ Continue with **diagnosis recovery (C2/C4)**, **journal photos (D1)**, **FCM v1 
 - [ ] Capture environment changes.
 - [ ] Capture pest visibility and leaf/root symptoms.
 - [ ] Show confidence and alternative causes.
-- [ ] Create recovery tasks from a diagnosis result.
+- [x] Create recovery tasks from a diagnosis result (C2: confirm suggested tasks from `immediateActions`).
 - [ ] Track diagnosis resolution status.
 
 ### Dr. Plant context

@@ -166,13 +166,20 @@ export const journalApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  update: (plantId: string, entryId: string, payload: JournalPayload, photo?: File) => {
+  update: (
+    plantId: string,
+    entryId: string,
+    payload: JournalPayload,
+    photo?: File,
+    removePhoto?: boolean,
+  ) => {
     const form = new FormData();
     if (payload.notes !== undefined) form.append('notes', payload.notes);
     if (payload.heightCm != null) form.append('heightCm', String(payload.heightCm));
     if (payload.widthCm != null) form.append('widthCm', String(payload.widthCm));
     if (payload.leafCount != null) form.append('leafCount', String(payload.leafCount));
     if (photo) form.append('photo', photo);
+    if (removePhoto) form.append('removePhoto', 'true');
     return api.patch(`/plants/${plantId}/journal/${entryId}`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
@@ -202,6 +209,18 @@ export const diagnosisApi = {
       dueInDays,
       note,
     }),
+  getRecoverySuggestions: (plantId: string, diagnosisId: string) =>
+    api.get<
+      {
+        key: string;
+        label: string;
+        taskType: string;
+        dueInDays: number;
+        alreadyScheduled: boolean;
+      }[]
+    >(`/plants/${plantId}/diagnose/${diagnosisId}/recovery-suggestions`),
+  applyRecoveryTasks: (plantId: string, diagnosisId: string, keys: string[]) =>
+    api.post(`/plants/${plantId}/diagnose/${diagnosisId}/recovery-tasks`, { keys }),
 };
 
 export const diagnosisChatApi = {

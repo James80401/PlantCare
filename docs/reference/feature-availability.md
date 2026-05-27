@@ -15,8 +15,8 @@ Use this matrix when writing tutorials or testing — avoids documenting UI that
 | Change plant location | Yes | Yes | Profile dropdown; reschedules pending tasks |
 | Dr. Plant chat | Yes | Yes | Profile section; requires OpenAI for best results |
 | One-shot diagnosis | Yes | Yes | Health tab symptom check form; API also available |
-| Journal (text) | Yes | Yes | Profile text field |
-| Journal photo | No | Yes | Multipart on API |
+| Journal (text + photo) | Yes | Yes | Journal tab; photo-only entries supported |
+| Diagnosis recovery tasks | Yes | Yes | Health tab: confirm suggested tasks from diagnosis |
 | Plant identify (photo) | Yes | Yes | Add plant flow; monthly quota on free tier |
 | Settings / weather | Yes | Yes | Lat/lon for rain skip |
 | Account delete | Yes | Yes | Settings page |

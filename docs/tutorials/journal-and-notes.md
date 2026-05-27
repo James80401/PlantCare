@@ -4,18 +4,17 @@
 
 ## Journal on plant profile (web)
 
-1. Open **/garden/plants/:id**
-2. Scroll to the **Journal** section
-3. Type a note in the text field and save — text-only in the current web app
-4. Entries appear with a timestamp
+1. Open **/garden/plants/:id** → **Journal** tab
+2. Add **notes**, optional **measurements**, and/or a **progress photo**
+3. Photo-only entries are supported (notes optional when a photo is attached)
+4. Use **Compare growth photos** when you have two or more photo entries
+5. **Edit** or **Delete** from the timeline (delete asks for confirmation)
 
-## API-only (not in web UI yet)
+## API
 
 | Capability | API | Web |
 |------------|-----|-----|
-| Journal entry with photo | `POST /plants/:plantId/journal` (multipart) | No file upload on profile |
-| Plant `notes` at create | `POST /plants` body field | Add Plant form has no notes field |
-
-Use Swagger or API clients for photo journal entries and plant notes until the web app adds those fields.
-
-Future: edit notes on profile via PATCH (supported in API DTO).
+| Journal with photo | `POST /plants/:plantId/journal` (multipart) | Journal tab |
+| Photo-only create | Same | Journal tab |
+| Update / remove photo | `PATCH .../journal/:id` with `removePhoto=true` | Remove photo when editing |
+| Plant `notes` at create | `POST /plants` body field | Add Plant wizard |

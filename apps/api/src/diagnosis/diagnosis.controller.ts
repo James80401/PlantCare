@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Param,
   Patch,
   Post,
@@ -13,6 +14,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { DiagnosisService } from './diagnosis.service';
+import { ApplyRecoveryTasksDto } from './dto/apply-recovery-tasks.dto';
 import { FollowUpTaskDto } from './dto/follow-up-task.dto';
 import { UpdateDiagnosisDto } from './dto/update-diagnosis.dto';
 
@@ -32,6 +34,34 @@ export class DiagnosisController {
     @Body('symptomsText') symptomsText?: string,
   ) {
     return this.diagnosisService.diagnose(user.sub, plantId, file, symptomsText);
+  }
+
+  @Get(':diagnosisId/recovery-suggestions')
+  getRecoverySuggestions(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('diagnosisId') diagnosisId: string,
+  ) {
+    return this.diagnosisService.getRecoverySuggestions(
+      user.sub,
+      plantId,
+      diagnosisId,
+    );
+  }
+
+  @Post(':diagnosisId/recovery-tasks')
+  applyRecoveryTasks(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('diagnosisId') diagnosisId: string,
+    @Body() dto: ApplyRecoveryTasksDto,
+  ) {
+    return this.diagnosisService.applyRecoveryTasks(
+      user.sub,
+      plantId,
+      diagnosisId,
+      dto,
+    );
   }
 
   @Post(':diagnosisId/follow-up-task')

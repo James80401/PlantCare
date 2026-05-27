@@ -48,6 +48,10 @@ export default function PlantJournalTab() {
 function JournalForm() {
   const ctx = usePlantProfile();
   const isEditing = Boolean(ctx.editingJournalId);
+  const hasContent =
+    Boolean(ctx.journalNotes.trim()) ||
+    Boolean(ctx.journalPhoto) ||
+    (isEditing && Boolean(ctx.journalExistingPhotoUrl) && !ctx.journalRemovePhoto);
 
   return (
     <form
@@ -71,6 +75,7 @@ function JournalForm() {
 
       <label className="block">
         <span className="text-sm font-medium text-gray-700">Notes</span>
+        <span className="ml-1 text-xs font-normal text-gray-500">(optional if you add a photo)</span>
         <textarea
           value={ctx.journalNotes}
           onChange={(e) => ctx.setJournalNotes(e.target.value)}
@@ -137,15 +142,27 @@ function JournalForm() {
           key={ctx.journalPhotoInputKey}
           type="file"
           accept="image/*"
-          onChange={(event) => ctx.setJournalPhoto(event.target.files?.[0] ?? null)}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) ctx.setJournalPhoto(file);
+          }}
           className="mt-2 block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-800 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
         />
         {ctx.journalPhotoPreview ? (
-          <img
-            src={ctx.journalPhotoPreview}
-            alt="Journal photo preview"
-            className="mt-3 max-h-48 w-full rounded-2xl object-cover border border-emerald-100"
-          />
+          <div className="mt-3 space-y-2">
+            <img
+              src={ctx.journalPhotoPreview}
+              alt="Journal entry photo preview"
+              className="max-h-48 w-full rounded-2xl object-cover border border-emerald-100"
+            />
+            <button
+              type="button"
+              onClick={() => ctx.clearJournalPhoto()}
+              className="text-xs font-semibold text-rose-700 hover:underline"
+            >
+              Remove photo
+            </button>
+          </div>
         ) : null}
       </label>
 
@@ -157,7 +174,7 @@ function JournalForm() {
 
       <button
         type="submit"
-        disabled={!ctx.journalNotes.trim() && !ctx.journalPhoto && !(isEditing && ctx.journalExistingPhotoUrl)}
+        disabled={!hasContent}
         className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-emerald-800 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isEditing ? 'Save changes' : 'Save journal entry'}

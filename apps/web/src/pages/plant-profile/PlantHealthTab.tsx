@@ -51,6 +51,7 @@ export default function PlantHealthTab() {
 
           {ctx.latestUnresolved ? (
             <TreatmentPlanCard
+              plantId={ctx.id}
               diagnosis={{
                 id: ctx.latestUnresolved.id as string,
                 resultLabel: ctx.latestUnresolved.resultLabel as string,
@@ -70,6 +71,7 @@ export default function PlantHealthTab() {
               onCreateFollowUp={(dueInDays) =>
                 ctx.createFollowUpTask(ctx.latestUnresolved!.id as string, dueInDays)
               }
+              onRecoveryTasksApplied={() => ctx.load()}
             />
           ) : null}
 

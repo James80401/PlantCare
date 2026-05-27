@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { CreateJournalDto } from './dto/create-journal.dto';
@@ -26,6 +26,9 @@ export class JournalService {
     file?: Express.Multer.File,
   ) {
     await this.assertPlant(userId, plantId);
+    if (!file && !dto.notes?.trim()) {
+      throw new BadRequestException('Add a note or photo.');
+    }
     let photoUrl: string | undefined;
     if (file) photoUrl = await this.upload.saveFile(file);
 
@@ -55,7 +58,13 @@ export class JournalService {
     if (!entry) throw new NotFoundException('Journal entry not found');
 
     let photoUrl = entry.photoUrl;
+    if (dto.removePhoto) photoUrl = null;
     if (file) photoUrl = await this.upload.saveFile(file);
+
+    const nextNotes = dto.notes !== undefined ? dto.notes : entry.notes;
+    if (!file && !dto.removePhoto && !nextNotes?.trim() && !photoUrl) {
+      throw new BadRequestException('Add a note or photo.');
+    }
 
     return this.prisma.journalEntry.update({
       where: { id: entryId },
@@ -64,7 +73,7 @@ export class JournalService {
         ...(dto.heightCm !== undefined ? { heightCm: dto.heightCm } : {}),
         ...(dto.widthCm !== undefined ? { widthCm: dto.widthCm } : {}),
         ...(dto.leafCount !== undefined ? { leafCount: dto.leafCount } : {}),
-        ...(file ? { photoUrl } : {}),
+        photoUrl,
       },
     });
   }

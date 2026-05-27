@@ -19,6 +19,23 @@ Status update body:
 
 Use this to mark a diagnosis as active/recovered from the plant profile.
 
+## Recovery tasks from diagnosis (shipped)
+
+| Method | Path |
+|--------|------|
+| GET | `/plants/:plantId/diagnose/:diagnosisId/recovery-suggestions` |
+| POST | `/plants/:plantId/diagnose/:diagnosisId/recovery-tasks` |
+
+`GET` returns suggested tasks mapped from `immediateActions` in `detailJson` (or advice lines), each with `key`, `label`, `taskType`, `dueInDays`, and `alreadyScheduled`.
+
+`POST` body:
+
+```json
+{ "keys": ["diagnosis-id:abc123", "diagnosis-id:def456"] }
+```
+
+Creates **pending** tasks linked via `sourceDiagnosisId`. Skips types already scheduled for that diagnosis.
+
 ## Follow-up task (shipped)
 
 | Method | Path |

@@ -51,6 +51,8 @@ interface PlantProfileContextValue {
   journalPhotoInputKey: number;
   journalExistingPhotoUrl: string | null;
   journalPhotoPreview: string | null;
+  journalRemovePhoto: boolean;
+  clearJournalPhoto: () => void;
   journalError: string;
   journalHeightCm: string;
   setJournalHeightCm: (value: string) => void;
@@ -94,6 +96,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
   const [journalPhotoInputKey, setJournalPhotoInputKey] = useState(0);
   const [journalExistingPhotoUrl, setJournalExistingPhotoUrl] = useState<string | null>(null);
   const [journalPhotoPreview, setJournalPhotoPreview] = useState<string | null>(null);
+  const [journalRemovePhoto, setJournalRemovePhoto] = useState(false);
   const [journalError, setJournalError] = useState('');
   const [journalHeightCm, setJournalHeightCm] = useState('');
   const [journalWidthCm, setJournalWidthCm] = useState('');
@@ -141,6 +144,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     }
     setJournalPhotoPreview(null);
     setJournalExistingPhotoUrl(null);
+    setJournalRemovePhoto(false);
     setJournalHeightCm('');
     setJournalWidthCm('');
     setJournalLeafCount('');
@@ -151,10 +155,23 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
 
   const setJournalPhotoWithPreview = (file: File | null) => {
     setJournalPhoto(file);
+    if (file) setJournalRemovePhoto(false);
     setJournalPhotoPreview((prev) => {
       if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
-      return file ? URL.createObjectURL(file) : journalExistingPhotoUrl;
+      if (file) return URL.createObjectURL(file);
+      if (journalRemovePhoto) return null;
+      return journalExistingPhotoUrl;
     });
+  };
+
+  const clearJournalPhoto = () => {
+    setJournalPhoto(null);
+    setJournalRemovePhoto(true);
+    setJournalPhotoPreview((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setJournalPhotoInputKey((key) => key + 1);
   };
 
   const journalPayload = () => ({
@@ -182,7 +199,13 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     if (!id || !editingJournalId) return;
     setJournalError('');
     try {
-      await journalApi.update(id, editingJournalId, journalPayload(), journalPhoto ?? undefined);
+      await journalApi.update(
+        id,
+        editingJournalId,
+        journalPayload(),
+        journalPhoto ?? undefined,
+        journalRemovePhoto,
+      );
       resetJournalForm();
       load();
     } catch {
@@ -192,6 +215,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
 
   const deleteJournalEntry = async (entryId: string) => {
     if (!id) return;
+    if (!window.confirm('Delete this journal entry? This cannot be undone.')) return;
     setBusyJournalId(entryId);
     try {
       await journalApi.remove(id, entryId);
@@ -216,6 +240,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
       const photoUrl = (entry.photoUrl as string | null) ?? null;
       setJournalExistingPhotoUrl(photoUrl);
       setJournalPhotoPreview(photoUrl);
+      setJournalRemovePhoto(false);
     },
     [plant],
   );
@@ -385,6 +410,8 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
       journalPhotoInputKey,
       journalExistingPhotoUrl,
       journalPhotoPreview,
+      journalRemovePhoto,
+      clearJournalPhoto,
       journalError,
       journalHeightCm,
       setJournalHeightCm,
@@ -432,6 +459,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     locationMessage,
     journalNotes,
     journalPhoto,
+    journalRemovePhoto,
     journalPhotoInputKey,
     journalHeightCm,
     journalWidthCm,

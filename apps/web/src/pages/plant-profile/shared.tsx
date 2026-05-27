@@ -152,7 +152,7 @@ export function PlantTimeline({
               {event.imageUrl ? (
                 <img
                   src={event.imageUrl}
-                  alt=""
+                  alt={event.type === 'journal' ? 'Journal entry photo' : 'Plant health photo'}
                   className="mt-3 max-h-64 w-full rounded-2xl object-cover"
                   loading="lazy"
                 />

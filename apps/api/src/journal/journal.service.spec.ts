@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { JournalService } from './journal.service';
 
 describe('JournalService', () => {
@@ -19,6 +19,14 @@ describe('JournalService', () => {
     const service = new JournalService(prisma as never, {} as never);
     return { service, prisma };
   }
+
+  it('requires a note or photo when creating', async () => {
+    const { service } = createService();
+
+    await expect(service.create('user-1', 'plant-1', {})).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
 
   it('updates a journal entry for the owning user', async () => {
     const { service, prisma } = createService();

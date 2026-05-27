@@ -51,9 +51,9 @@ Recommendations below are **additive** — they assume the foundation already sh
 
 | ID | Title | User value | Effort | Priority | Area |
 |----|-------|------------|--------|----------|------|
-| **C2** | Auto recovery tasks from diagnosis | Faster path from symptom → scheduled care | M | P1 | Diagnosis |
 | **G1** | FCM HTTP v1 + real device push verification | Trustworthy reminders on phones | M | P1 | Mobile / ops |
-| **D1** | Journal photo UX on plant profile | Photo journal matches API capability | S | P1 | Journal |
+| **G3** | Production deploy sign-off | Ship-ready hosting and UAT | S | P1 | Ops |
+| **D2** | Growth measurements UI + photo compare polish | Credible plant progress story | M | P2 | Journal |
 | **B3** | Species catalog Phase 3 attributes + filters | Browse and recommendations match guide depth | L | P2 | Species / content |
 | **A5** | Optional completion notes on tasks | Richer journal and Dr. Plant context | S | P2 | Core care loop |
 | **H1** | Slim dashboard API aggregates | Faster dashboard; less client fanout | M | P2 | API |
@@ -246,13 +246,12 @@ For buddy-specific phases and APIs, use [docs/guides/buddy/](../guides/buddy/IND
 
 Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
-1. **C2 + C4** — Diagnosis → tasks + richer Dr. Plant context
-2. **D1** — Journal photo UX polish (preview, photo-only, edit)
-3. **G1 + G3** — FCM v1 + production deploy sign-off
+1. **C4 + C3** — Richer Dr. Plant context; diagnosis history photos/notes
+2. **G1 + G3** — FCM v1 + production deploy sign-off
 4. **H3** — E2E for structured task instructions + snooze
 5. **A5** — Optional completion notes
 
-**Recently shipped:** A1 (complete-time feedback + water-accelerate suggestions), A2 (weather auto-postpone), B1 + B2 (structured task guides + verifier).
+**Recently shipped:** A1, A2, B1, B2; **C2** (diagnosis recovery tasks); **D1** (journal photo UX).
 
 ### Next (1–2 months)
 
@@ -303,11 +302,11 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | B2 | Done | `verify-care-guides.mjs` asserts structured fields per task type |
 | B3 | Partial | Browse/filters exist; Phase 3 attributes open |
 | C1 | Done | One-shot diagnosis on Health tab |
-| C2 | Partial | Manual follow-up only |
+| C2 | Done | Recovery task suggestions + user confirm on Health tab |
 | C3 | Partial | Follow-up note not persisted; images hidden in list |
 | C4 | Partial | Chat has context; not full care/skip/weather |
 | C5 | Not started | Structured pre-diagnosis intake |
-| D1 | Partial | Photo preview, photo-only create, edit preview |
+| D1 | Done | Journal photos: preview, photo-only, edit, remove photo, delete confirm |
 | D2 | Partial | API measurements; limited UI |
 | D3 | Partial | Client-side timeline merge |
 | D4 | Partial | Ephemeral dashboard milestones only |

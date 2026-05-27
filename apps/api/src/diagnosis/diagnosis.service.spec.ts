@@ -10,6 +10,7 @@ describe('DiagnosisService', () => {
       },
       task: {
         findFirst: jest.fn().mockResolvedValue(null),
+        findMany: jest.fn().mockResolvedValue([]),
         create: jest.fn().mockResolvedValue({
           id: 'task-1',
           taskType: 'HEALTH_CHECK',
@@ -52,6 +53,57 @@ describe('DiagnosisService', () => {
     await expect(
       service.updateStatus('user-1', 'plant-1', 'diagnosis-1', { resolved: true }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('returns recovery suggestions from immediateActions', async () => {
+    const { service } = createService({
+      id: 'diagnosis-1',
+      detailJson: JSON.stringify({
+        immediateActions: ['Water lightly', 'Inspect for pests'],
+      }),
+      adviceText: null,
+    });
+
+    const suggestions = await service.getRecoverySuggestions(
+      'user-1',
+      'plant-1',
+      'diagnosis-1',
+    );
+
+    expect(suggestions.length).toBe(2);
+    expect(suggestions[0].taskType).toBe('WATER');
+    expect(suggestions[0].alreadyScheduled).toBe(false);
+  });
+
+  it('applies selected recovery tasks', async () => {
+    const detailJson = JSON.stringify({
+      immediateActions: ['Water lightly'],
+    });
+    const { service, prisma } = createService({
+      id: 'diagnosis-1',
+      detailJson,
+      adviceText: null,
+    });
+
+    const suggestions = await service.getRecoverySuggestions(
+      'user-1',
+      'plant-1',
+      'diagnosis-1',
+    );
+
+    prisma.task.findFirst = jest.fn().mockResolvedValue(null);
+    prisma.task.create = jest.fn().mockResolvedValue({
+      id: 'task-water',
+      taskType: 'WATER',
+      plantId: 'plant-1',
+    });
+
+    const created = await service.applyRecoveryTasks('user-1', 'plant-1', 'diagnosis-1', {
+      keys: [suggestions[0].key],
+    });
+
+    expect(created).toHaveLength(1);
+    expect(prisma.task.create).toHaveBeenCalled();
   });
 
   it('creates a health check follow-up task linked to the diagnosis', async () => {
