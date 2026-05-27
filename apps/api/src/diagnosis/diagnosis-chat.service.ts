@@ -103,6 +103,24 @@ export class DiagnosisChatService {
       lines.push('Recent skip reasons:', ...skipNotes.map((note) => `- ${note}`));
     }
 
+    const completeNotes = recentFeedback
+      .filter((f) => f.action === 'COMPLETE' && (f.reason || f.note))
+      .map((f) => {
+        const label = f.reason ? f.reason.replace(/_/g, ' ').toLowerCase() : '';
+        return f.note ? `${label}: ${f.note}`.trim() : label;
+      })
+      .filter(Boolean);
+    if (completeNotes.length) {
+      lines.push(
+        'Recent feedback when completing tasks:',
+        ...completeNotes.map((note) => `- ${note}`),
+      );
+    }
+
+    lines.push(
+      `Care snapshot: ${plant.location} · ${plant.potSize} pot · water about every ${plant.species.wateringFreqDays} days (catalog baseline) · light: ${plant.species.sunlight || 'see species'}`,
+    );
+
     if (lastDiagnosis && !lastDiagnosis.resolved) {
       lines.push(
         `Active diagnosis (${format(lastDiagnosis.createdAt, 'MMM d')}): ${lastDiagnosis.resultLabel}` +

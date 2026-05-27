@@ -246,12 +246,11 @@ For buddy-specific phases and APIs, use [docs/guides/buddy/](../guides/buddy/IND
 
 Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
-1. **C4 + C3** — Richer Dr. Plant context; diagnosis history photos/notes
-2. **G1 + G3** — FCM v1 + production deploy sign-off
+1. **G1 + G3** — FCM v1 + production deploy sign-off
 4. **H3** — E2E for structured task instructions + snooze
 5. **A5** — Optional completion notes
 
-**Recently shipped:** A1, A2, B1, B2; **C2** (diagnosis recovery tasks); **D1** (journal photo UX).
+**Recently shipped:** A1, A2, B1, B2, C2, C3, C4, D1.
 
 ### Next (1–2 months)
 
@@ -303,8 +302,8 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | B3 | Partial | Browse/filters exist; Phase 3 attributes open |
 | C1 | Done | One-shot diagnosis on Health tab |
 | C2 | Done | Recovery task suggestions + user confirm on Health tab |
-| C3 | Partial | Follow-up note not persisted; images hidden in list |
-| C4 | Partial | Chat has context; not full care/skip/weather |
+| C3 | Done | Follow-up note → journal; diagnosis photos in history cards |
+| C4 | Done | Dr. Plant context: skips, completes, care snapshot, weather, journal, tasks |
 | C5 | Not started | Structured pre-diagnosis intake |
 | D1 | Done | Journal photos: preview, photo-only, edit, remove photo, delete confirm |
 | D2 | Partial | API measurements; limited UI |

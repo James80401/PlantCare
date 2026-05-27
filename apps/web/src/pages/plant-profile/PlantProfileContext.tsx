@@ -75,7 +75,7 @@ interface PlantProfileContextValue {
   updatingDiagnosisId: string | null;
   followUpCreatingId: string | null;
   submitDiagnosis: (symptomsText: string, image?: File) => Promise<void>;
-  createFollowUpTask: (diagnosisId: string, dueInDays: number) => Promise<void>;
+  createFollowUpTask: (diagnosisId: string, dueInDays: number, note?: string) => Promise<void>;
   updateDiagnosisStatus: (diagnosisId: string, resolved: boolean) => Promise<void>;
   sharingPlant: boolean;
   setSharingPlant: (value: boolean) => void;
@@ -278,11 +278,16 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const createFollowUpTask = async (diagnosisId: string, dueInDays: number) => {
+  const createFollowUpTask = async (diagnosisId: string, dueInDays: number, note?: string) => {
     if (!id) return;
     setFollowUpCreatingId(diagnosisId);
     try {
-      const { data: task } = await diagnosisApi.createFollowUpTask(id, diagnosisId, dueInDays);
+      const { data: task } = await diagnosisApi.createFollowUpTask(
+        id,
+        diagnosisId,
+        dueInDays,
+        note,
+      );
       setPlant((current) => {
         if (!current) return current;
         const currentTasks = (current.tasks as PlantRecord[] | undefined) || [];
@@ -294,6 +299,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
           ),
         };
       });
+      if (note?.trim()) load();
     } finally {
       setFollowUpCreatingId(null);
     }

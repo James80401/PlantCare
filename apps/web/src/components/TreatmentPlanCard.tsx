@@ -19,7 +19,7 @@ interface TreatmentPlanCardProps {
   followUpCreating?: boolean;
   hasFollowUpTask?: boolean;
   onResolvedChange?: (resolved: boolean) => void;
-  onCreateFollowUp?: (dueInDays: number) => Promise<void>;
+  onCreateFollowUp?: (dueInDays: number, note?: string) => Promise<void>;
 }
 
 export default function TreatmentPlanCard({

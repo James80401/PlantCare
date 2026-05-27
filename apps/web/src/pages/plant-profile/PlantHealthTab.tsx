@@ -68,8 +68,8 @@ export default function PlantHealthTab() {
               onResolvedChange={(resolved) =>
                 ctx.updateDiagnosisStatus(ctx.latestUnresolved!.id as string, resolved)
               }
-              onCreateFollowUp={(dueInDays) =>
-                ctx.createFollowUpTask(ctx.latestUnresolved!.id as string, dueInDays)
+              onCreateFollowUp={(dueInDays, note) =>
+                ctx.createFollowUpTask(ctx.latestUnresolved!.id as string, dueInDays, note)
               }
               onRecoveryTasksApplied={() => ctx.load()}
             />
@@ -94,6 +94,9 @@ export default function PlantHealthTab() {
                         source: diagnosis.source as string | undefined,
                         detailJson: diagnosis.detailJson as string | null,
                         resolved: Boolean(diagnosis.resolved),
+                        imageUrl: diagnosis.imageUrl as string | null,
+                        symptomsText: diagnosis.symptomsText as string | null,
+                        createdAt: diagnosis.createdAt as string | undefined,
                       }}
                       updating={ctx.updatingDiagnosisId === diagnosis.id}
                       followUpCreating={ctx.followUpCreatingId === diagnosis.id}
@@ -104,8 +107,8 @@ export default function PlantHealthTab() {
                       onCreateFollowUp={
                         diagnosis.id === ctx.latestUnresolved?.id
                           ? undefined
-                          : (dueInDays) =>
-                              ctx.createFollowUpTask(diagnosis.id as string, dueInDays)
+                          : (dueInDays, note) =>
+                              ctx.createFollowUpTask(diagnosis.id as string, dueInDays, note)
                       }
                     />
                   </li>

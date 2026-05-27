@@ -51,7 +51,7 @@ Body:
 }
 ```
 
-Creates a **`HEALTH_CHECK`** task linked via `sourceDiagnosisId`. The optional `note` is accepted by the API; persisting it on the task or journal is a follow-up improvement (see [improvement-recommendations.md](../product/improvement-recommendations.md) C3).
+Creates a **`HEALTH_CHECK`** task linked via `sourceDiagnosisId`. Optional `note` is saved as a **journal entry** so follow-up intent appears on the plant timeline.
 
 ## Conversations
 

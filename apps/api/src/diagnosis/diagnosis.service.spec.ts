@@ -18,6 +18,9 @@ describe('DiagnosisService', () => {
           sourceDiagnosisId: 'diagnosis-1',
         }),
       },
+      journalEntry: {
+        create: jest.fn().mockResolvedValue({ id: 'journal-1' }),
+      },
     };
 
     const service = new DiagnosisService(
@@ -126,5 +129,22 @@ describe('DiagnosisService', () => {
         }),
       }),
     );
+    expect(prisma.journalEntry.create).not.toHaveBeenCalled();
+  });
+
+  it('logs follow-up note to journal when provided', async () => {
+    const { service, prisma } = createService();
+
+    await service.createFollowUpTask('user-1', 'plant-1', 'diagnosis-1', {
+      dueInDays: 3,
+      note: 'Check lower leaves',
+    });
+
+    expect(prisma.journalEntry.create).toHaveBeenCalledWith({
+      data: {
+        plantId: 'plant-1',
+        notes: 'Health check follow-up in 3 days: Check lower leaves',
+      },
+    });
   });
 });

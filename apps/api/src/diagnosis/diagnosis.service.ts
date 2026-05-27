@@ -237,7 +237,7 @@ export class DiagnosisService {
       );
     }
 
-    return this.prisma.task.create({
+    const task = await this.prisma.task.create({
       data: {
         plantId,
         taskType: TaskType.HEALTH_CHECK,
@@ -251,6 +251,18 @@ export class DiagnosisService {
         },
       },
     });
+
+    const note = dto.note?.trim();
+    if (note) {
+      await this.prisma.journalEntry.create({
+        data: {
+          plantId,
+          notes: `Health check follow-up in ${dueInDays} day${dueInDays === 1 ? '' : 's'}: ${note}`,
+        },
+      });
+    }
+
+    return task;
   }
 
   async updateStatus(
