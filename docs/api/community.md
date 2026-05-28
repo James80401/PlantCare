@@ -10,15 +10,17 @@
 
 Public-style **feed of posts** inside the app: growers share tips, photos, or species references.
 
-**Note:** Prisma models `Comment` and `PostLike` exist; current API exposes **posts only** (no comment/like endpoints yet).
-
 ## Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/community/posts?limit=` | List recent posts (newest first) |
-| POST | `/community/posts` | Create post (body, optional `speciesId`, `plantId`, `imageUrl`) |
+| GET | `/community/posts?limit=&cursor=` | Paginated feed `{ posts, nextCursor, hasMore }` (newest first) |
+| POST | `/community/posts` | Create post (body, optional `speciesId`, `imageUrl`) |
 | DELETE | `/community/posts/:id` | Delete own post |
+| GET | `/community/posts/:id/comments` | List comments |
+| POST | `/community/posts/:id/comments` | Add comment |
+| DELETE | `/community/comments/:id` | Delete own comment |
+| POST | `/community/posts/:id/like` | Toggle like `{ liked, likeCount }` |
 
 ## Post shape (typical)
 
