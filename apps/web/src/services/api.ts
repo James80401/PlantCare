@@ -101,6 +101,9 @@ export const speciesApi = {
     droughtTolerant?: string;
     indoor?: string;
     outdoor?: string;
+    highHumidity?: string;
+    pollinatorFriendly?: string;
+    bloomsIndoors?: string;
   }) => api.get('/species/browse', { params }),
   get: (id: string) => api.get(`/species/${id}`),
   recommended: (limit = 12) =>

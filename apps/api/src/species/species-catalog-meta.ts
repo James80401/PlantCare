@@ -1,4 +1,5 @@
 import type { PlantSpecies } from '@prisma/client';
+import { resolveSpeciesMetadata } from './species-metadata';
 
 export type SpeciesDifficulty = 'Beginner' | 'Moderate' | 'Advanced';
 export type SpeciesToxicitySummary = 'Pet-safe' | 'Toxic' | 'Caution' | 'Unknown';
@@ -131,16 +132,27 @@ export function buildSpeciesCatalogMeta(species: PlantSpecies): SpeciesCatalogMe
   };
 }
 
+const DIFFICULTY_ORDER: Record<string, number> = {
+  Beginner: 0,
+  Moderate: 1,
+  Advanced: 2,
+};
+
 export function compareSpeciesForSort(
   a: PlantSpecies,
   b: PlantSpecies,
-  sort: 'name' | 'waterAsc' | 'waterDesc',
+  sort: 'name' | 'waterAsc' | 'waterDesc' | 'difficulty',
 ): number {
   if (sort === 'waterAsc') {
     return b.wateringFreqDays - a.wateringFreqDays || a.commonName.localeCompare(b.commonName);
   }
   if (sort === 'waterDesc') {
     return a.wateringFreqDays - b.wateringFreqDays || a.commonName.localeCompare(b.commonName);
+  }
+  if (sort === 'difficulty') {
+    const da = DIFFICULTY_ORDER[inferDifficulty(a)] ?? 1;
+    const db = DIFFICULTY_ORDER[inferDifficulty(b)] ?? 1;
+    return da - db || a.commonName.localeCompare(b.commonName);
   }
   return a.commonName.localeCompare(b.commonName);
 }

@@ -36,6 +36,9 @@ export class SpeciesController {
     @Query('outdoor') outdoor?: string,
     @Query('beginnerFriendly') beginnerFriendly?: string,
     @Query('succulent') succulent?: string,
+    @Query('highHumidity') highHumidity?: string,
+    @Query('pollinatorFriendly') pollinatorFriendly?: string,
+    @Query('bloomsIndoors') bloomsIndoors?: string,
   ) {
     return this.perenual.search(
       q || '',
@@ -48,6 +51,9 @@ export class SpeciesController {
         outdoor,
         beginnerFriendly,
         succulent,
+        highHumidity,
+        pollinatorFriendly,
+        bloomsIndoors,
       }),
     );
   }
@@ -65,10 +71,15 @@ export class SpeciesController {
     @Query('outdoor') outdoor?: string,
     @Query('beginnerFriendly') beginnerFriendly?: string,
     @Query('succulent') succulent?: string,
+    @Query('highHumidity') highHumidity?: string,
+    @Query('pollinatorFriendly') pollinatorFriendly?: string,
+    @Query('bloomsIndoors') bloomsIndoors?: string,
     @Query('sort') sort?: string,
   ) {
     const sortMode =
-      sort === 'waterAsc' || sort === 'waterDesc' || sort === 'name' ? sort : 'name';
+      sort === 'waterAsc' || sort === 'waterDesc' || sort === 'difficulty' || sort === 'name'
+        ? sort
+        : 'name';
     return this.perenual.browse(
       q || '',
       parseSpeciesSearchFilters({
@@ -80,6 +91,9 @@ export class SpeciesController {
         outdoor,
         beginnerFriendly,
         succulent,
+        highHumidity,
+        pollinatorFriendly,
+        bloomsIndoors,
       }),
       parseInt(page || '1', 10),
       parseInt(pageSize || '24', 10),

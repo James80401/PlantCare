@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { inferDifficulty, isSucculentSpecies, speciesDiscoveryTags } from './species-catalog-meta';
 import { enrichSpeciesRecord } from './species-enrich';
+import { resolveSpeciesMetadata } from './species-metadata';
 
 @Injectable()
 export class SpeciesRecommendationsService {
@@ -40,6 +41,7 @@ export class SpeciesRecommendationsService {
     let score = 1;
     const difficulty = inferDifficulty(species);
     const tags = speciesDiscoveryTags(species);
+    const metadata = resolveSpeciesMetadata(species);
     const sunlight = species.sunlight?.toLowerCase() ?? '';
 
     if (experience === 'beginner') {
@@ -64,6 +66,11 @@ export class SpeciesRecommendationsService {
     }
 
     if (tags.includes('Pet-safe') && experience === 'beginner') score += 1;
+
+    if (metadata.bloomsIndoors && experience !== 'advanced') score += 1;
+    if (metadata.pollinatorFriendly && tags.includes('Outdoor-friendly')) score += 2;
+    if (metadata.humidity === 'high' && lightLevel === 'low') score -= 2;
+    if (metadata.humidity === 'high' && (lightLevel === 'medium' || !lightLevel)) score += 1;
 
     return score;
   }

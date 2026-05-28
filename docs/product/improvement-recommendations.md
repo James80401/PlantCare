@@ -248,15 +248,14 @@ Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
 1. **G3** — Production deploy sign-off on your public URL (manual §F checklist)
 
-**Recently shipped:** A1, A2, B1, B2, C2, C3, C4, D1, G1, G2, F2, E4, H1.
+**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, D1, G1, G2, F2, E4, H1.
 
 ### Next (1–2 months)
 
 Focus: scale, social, API shape.
 
-1. **B3** — Species catalog Phase 3 attributes and filters
-2. **F1** — Community post images
-3. **E3** — Surface `defaultLightLevel` in plant UX
+1. **F1** — Community post images
+2. **E3** — Surface `defaultLightLevel` in plant UX
 
 ### Later (backlog)
 
@@ -296,7 +295,7 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | A5 | Done | Optional completion note on all tasks; WATER keeps reason radios |
 | B1 | Done | All 12 task types seeded with structured sections; UI toggle in task instructions modal |
 | B2 | Done | `verify-care-guides.mjs` asserts structured fields per task type |
-| B3 | Partial | Browse/filters exist; Phase 3 attributes open |
+| B3 | Done | Phase 3 metadata, filters (humidity/bloom/pollinator), difficulty sort |
 | C1 | Done | One-shot diagnosis on Health tab |
 | C2 | Done | Recovery task suggestions + user confirm on Health tab |
 | C3 | Done | Follow-up note → journal; diagnosis photos in history cards |

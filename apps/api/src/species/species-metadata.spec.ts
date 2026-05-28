@@ -13,6 +13,8 @@ describe('species metadata', () => {
     wateringFreqDays: 7,
     toxicity: 'Toxic to pets',
     careNotes: 'Climbing aroid; high humidity helps.',
+    phMin: 5.5,
+    phMax: 7,
   };
 
   it('builds override metadata for known species', () => {
@@ -38,5 +40,29 @@ describe('species metadata', () => {
   it('falls back when metadataJson is invalid', () => {
     const resolved = resolveSpeciesMetadata({ ...monstera, metadataJson: 'not-json' });
     expect(resolved.pests?.length).toBeGreaterThan(0);
+  });
+
+  it('infers phase-3 fields for edibles and ferns', () => {
+    const basil = {
+      ...monstera,
+      commonName: 'Basil',
+      scientificName: 'Ocimum basilicum',
+      sunlight: 'Full sun',
+      careNotes: 'Harvest regularly; kitchen herb for outdoor garden.',
+      phMin: 6,
+      phMax: 7,
+    };
+    const meta = buildMetadataForSpecies(basil);
+    expect(meta.pollinatorFriendly).toBe(true);
+    expect(meta.propagation).toEqual(expect.arrayContaining(['Seed']));
+
+    const fern = {
+      ...monstera,
+      commonName: 'Boston Fern',
+      careNotes: 'Needs higher humidity; mist regularly.',
+    };
+    const fernMeta = buildMetadataForSpecies(fern);
+    expect(fernMeta.humidity).toBe('high');
+    expect(fernMeta.bloomSeason).toMatch(/non-flowering/i);
   });
 });

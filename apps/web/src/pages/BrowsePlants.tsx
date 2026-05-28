@@ -55,7 +55,7 @@ function filtersToParams(
 
 function sortFromParams(params: URLSearchParams): SpeciesBrowseSort {
   const sort = params.get('sort');
-  if (sort === 'waterAsc' || sort === 'waterDesc') return sort;
+  if (sort === 'waterAsc' || sort === 'waterDesc' || sort === 'difficulty') return sort;
   return 'name';
 }
 

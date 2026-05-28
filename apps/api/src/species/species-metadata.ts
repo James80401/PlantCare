@@ -9,11 +9,24 @@ export interface SpeciesMetadata {
   tempMaxF?: number;
   growthRate?: 'slow' | 'medium' | 'fast';
   matureSize?: string;
+  bloomSeason?: string;
+  dormancySeason?: string;
+  propagation?: string[];
+  soilType?: string;
+  pollinatorFriendly?: boolean;
+  bloomsIndoors?: boolean;
 }
 
 export type SpeciesMetadataInput = Pick<
   PlantSpecies,
-  'commonName' | 'scientificName' | 'sunlight' | 'wateringFreqDays' | 'toxicity' | 'careNotes'
+  | 'commonName'
+  | 'scientificName'
+  | 'sunlight'
+  | 'wateringFreqDays'
+  | 'toxicity'
+  | 'careNotes'
+  | 'phMin'
+  | 'phMax'
 >;
 
 const HOUSEPLANT_PESTS = ['Spider mites', 'Mealybugs', 'Scale', 'Fungus gnats'];
@@ -40,6 +53,9 @@ const OVERRIDES: Record<string, Partial<SpeciesMetadata>> = {
     tempMaxF: 85,
     growthRate: 'slow',
     matureSize: '2–4 ft tall',
+    propagation: ['Leaf cuttings', 'Division'],
+    bloomSeason: 'Rare fragrant spikes outdoors',
+    bloomsIndoors: false,
   },
   Pothos: {
     pests: ['Spider mites', 'Mealybugs'],
@@ -60,6 +76,9 @@ const OVERRIDES: Record<string, Partial<SpeciesMetadata>> = {
     tempMaxF: 80,
     growthRate: 'medium',
     matureSize: '1–4 ft',
+    bloomsIndoors: true,
+    bloomSeason: 'Spring through fall indoors',
+    propagation: ['Division'],
   },
   'ZZ Plant': {
     pests: ['Aphids', 'Scale'],
@@ -90,6 +109,10 @@ const OVERRIDES: Record<string, Partial<SpeciesMetadata>> = {
     tempMaxF: 85,
     growthRate: 'fast',
     matureSize: '12–24 in',
+    propagation: ['Stem cuttings', 'Seed'],
+    bloomSeason: 'Pinch flowers for best leaf flavor',
+    pollinatorFriendly: true,
+    soilType: 'Rich, well-draining potting mix',
   },
   Tomato: {
     pests: ['Hornworms', 'Aphids', 'Whiteflies'],
@@ -100,6 +123,10 @@ const OVERRIDES: Record<string, Partial<SpeciesMetadata>> = {
     tempMaxF: 85,
     growthRate: 'fast',
     matureSize: '3–6 ft',
+    propagation: ['Seed', 'Stem cuttings (suckers)'],
+    bloomSeason: 'Summer outdoors',
+    pollinatorFriendly: true,
+    soilType: 'Rich garden soil or large containers',
   },
   'Fiddle Leaf Fig': {
     pests: ['Spider mites', 'Mealybugs', 'Scale'],
@@ -120,6 +147,16 @@ const OVERRIDES: Record<string, Partial<SpeciesMetadata>> = {
     tempMaxF: 75,
     growthRate: 'medium',
     matureSize: '2–3 ft spread',
+    bloomSeason: 'Non-flowering (spores)',
+    propagation: ['Division'],
+    soilType: 'Peaty, well-draining potting mix',
+  },
+  'Orchid Phalaenopsis': {
+    bloomsIndoors: true,
+    bloomSeason: 'Winter–spring bloom cycle',
+    dormancySeason: 'Brief rest after flowering',
+    propagation: ['Keiki plantlets', 'Division'],
+    soilType: 'Orchid bark mix',
   },
 };
 
@@ -201,8 +238,112 @@ function inferTemps(species: SpeciesMetadataInput): { tempMinF: number; tempMaxF
   return { tempMinF: 60, tempMaxF: 82 };
 }
 
+function inferBloomSeason(species: SpeciesMetadataInput): string {
+  const text = searchableText(species);
+  const name = species.commonName.toLowerCase();
+
+  if (/fern|moss/i.test(name) || /fern/i.test(species.scientificName ?? '')) {
+    return 'Non-flowering (spores)';
+  }
+  if (/orchid/i.test(name)) return 'Winter–spring bloom cycle';
+  if (/anthurium|bromeliad|african violet|peace lily|begonia/i.test(name)) {
+    return 'Blooms indoors with bright light';
+  }
+  if (/lavender|rose|sunflower|coneflower|milkweed|bee balm|zinnia|marigold/i.test(text)) {
+    return 'Summer blooms; pollinator favorite';
+  }
+  if (isEdible(species)) {
+    return 'Pinch flowers for best harvest';
+  }
+  if (isSucculent(species)) {
+    return 'Occasional flowers; rare indoors';
+  }
+  if (/bloom|flower|spike/i.test(text)) {
+    return 'Seasonal blooms with enough light';
+  }
+  return 'Varies; brighter light often helps';
+}
+
+function inferDormancySeason(species: SpeciesMetadataInput): string | undefined {
+  const text = searchableText(species);
+  if (/dormant|dormancy|winter rest|goes dormant|growth slows in winter/i.test(text)) {
+    if (/reduce water in winter/i.test(text)) return 'Winter rest — reduce water and feed';
+    return 'Winter dormancy or slow growth';
+  }
+  if (isSucculent(species) || species.wateringFreqDays >= 12) {
+    return 'Winter rest — water less often';
+  }
+  return undefined;
+}
+
+function inferPropagation(species: SpeciesMetadataInput): string[] {
+  const text = searchableText(species);
+  const methods: string[] = [];
+
+  if (/plantlet|pup|keiki/i.test(text)) methods.push('Plantlets');
+  if (/division|divide/i.test(text)) methods.push('Division');
+  if (/stem cutting|cutting|propagat/i.test(text)) methods.push('Stem cuttings');
+  if (/leaf cutting/i.test(text)) methods.push('Leaf cuttings');
+  if (/seed|sow/i.test(text)) methods.push('Seed');
+
+  if (methods.length > 0) return [...new Set(methods)].slice(0, 4);
+
+  if (isFern(species)) return ['Division'];
+  if (isSucculent(species)) return ['Leaf cuttings', 'Division'];
+  if (/pothos|philodendron|tradescantia|ivy|pilea/i.test(text)) {
+    return ['Stem cuttings'];
+  }
+  if (isEdible(species)) return ['Seed', 'Stem cuttings'];
+  return ['Stem cuttings', 'Division'];
+}
+
+function inferSoilType(species: SpeciesMetadataInput): string {
+  const text = searchableText(species);
+  const name = species.commonName.toLowerCase();
+
+  if (/orchid/i.test(name)) return 'Orchid bark mix';
+  if (/cactus|succulent|jade|aloe|haworthia|lithops/i.test(text)) {
+    return 'Cactus/succulent mix with drainage';
+  }
+  if (isFern(species) || /calathea|maranta|maidenhair/i.test(text)) {
+    return 'Peaty, well-draining potting mix';
+  }
+  if (isEdible(species)) {
+    return 'Rich, well-draining potting mix or garden soil';
+  }
+  if (species.phMin != null && species.phMax != null) {
+    return `Well-draining potting mix (pH ${species.phMin}–${species.phMax})`;
+  }
+  return 'All-purpose potting mix with drainage';
+}
+
+function inferPollinatorFriendly(species: SpeciesMetadataInput): boolean {
+  const text = searchableText(species);
+  return (
+    /pollinator|butterfly|bee-friendly|native meadow|wildflower|hummingbird/i.test(text) ||
+    /lavender|sunflower|coneflower|milkweed|bee balm|zinnia|marigold|borage|echinacea/i.test(
+      text,
+    ) ||
+    (isEdible(species) &&
+      (/outdoor|garden|full sun/i.test(species.sunlight?.toLowerCase() ?? '') ||
+        /garden|outdoor|harvest/i.test(text)))
+  );
+}
+
+function inferBloomsIndoors(species: SpeciesMetadataInput, bloomSeason: string): boolean {
+  if (/non-flowering|pinch flowers|occasional flowers|rare/i.test(bloomSeason.toLowerCase())) {
+    return false;
+  }
+  const name = species.commonName.toLowerCase();
+  if (/orchid|anthurium|bromeliad|african violet|peace lily|begonia|christmas cactus/i.test(name)) {
+    return true;
+  }
+  return /blooms indoors|bloom cycle/i.test(bloomSeason.toLowerCase());
+}
+
 export function buildMetadataForSpecies(species: SpeciesMetadataInput): SpeciesMetadata {
   const override = OVERRIDES[species.commonName];
+  const bloomSeason = override?.bloomSeason ?? inferBloomSeason(species);
   const base: SpeciesMetadata = {
     pests: inferPests(species),
     diseases: inferDiseases(species),
@@ -211,8 +352,20 @@ export function buildMetadataForSpecies(species: SpeciesMetadataInput): SpeciesM
     ...inferTemps(species),
     growthRate: inferGrowthRate(species),
     matureSize: inferMatureSize(species),
+    bloomSeason,
+    dormancySeason: inferDormancySeason(species),
+    propagation: inferPropagation(species),
+    soilType: inferSoilType(species),
+    pollinatorFriendly: inferPollinatorFriendly(species),
+    bloomsIndoors: inferBloomsIndoors(species, bloomSeason),
   };
-  return { ...base, ...override };
+  const merged = { ...base, ...override };
+  if (override?.bloomsIndoors !== undefined) {
+    merged.bloomsIndoors = override.bloomsIndoors;
+  } else if (merged.bloomsIndoors === undefined) {
+    merged.bloomsIndoors = inferBloomsIndoors(species, merged.bloomSeason ?? bloomSeason);
+  }
+  return merged;
 }
 
 export function serializeSpeciesMetadata(metadata: SpeciesMetadata): string {

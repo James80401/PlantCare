@@ -15,8 +15,8 @@ From the garden area: **Browse plants** (route `/garden/plants/browse`).
 | Feature | Description |
 |---------|-------------|
 | **Pagination** | Move through catalog pages |
-| **Filters** | Beginner-friendly, light requirements, etc. |
-| **Sort** | Name and other sort options |
+| **Filters** | Beginner-friendly, pet-safe, light, edible, humidity, blooms, pollinator-friendly, and more |
+| **Sort** | Name, watering cadence, easiest-first (difficulty) |
 | **Recommended row** | Personalized suggestions on first page |
 | **Species detail** | Full profile; **Add to garden** from detail |
 
