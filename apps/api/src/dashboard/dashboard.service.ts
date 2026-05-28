@@ -10,12 +10,18 @@ import {
   getGardenScore,
   getOldestPlantAgeDays,
   getOverdueTasks,
+  getPendingTasks,
   getStatusLine,
   getTasksCompletedToday,
   getTodayTasks,
   pickTodayTasks,
   type TaskLike,
 } from './dashboard-helpers';
+import {
+  mapDashboardPlant,
+  mapDashboardTask,
+  mapSharedPlantsForUser,
+} from './dashboard.mapper';
 
 @Injectable()
 export class DashboardService {
@@ -26,11 +32,13 @@ export class DashboardService {
   ) {}
 
   async getDashboard(userId: string, from?: string, to?: string) {
+    await this.scheduler.autoPostponeOutdoorWateringFromWeather(userId);
+
     const now = new Date();
     const fromDate = from ? new Date(from) : addDays(startOfDay(now), -45);
     const toDate = to ? new Date(to) : addDays(startOfDay(now), 14);
 
-    const [user, plants, tasks, unresolvedDiagnoses] = await Promise.all([
+    const [user, plants, gardens, tasks, unresolvedDiagnoses] = await Promise.all([
       this.prisma.user.findUnique({
         where: { id: userId },
         select: { name: true },
@@ -41,7 +49,47 @@ export class DashboardService {
           species: {
             select: {
               commonName: true,
+              scientificName: true,
+              sunlight: true,
               wateringFreqDays: true,
+            },
+          },
+          tasks: {
+            where: { status: 'PENDING' },
+            orderBy: { dueDate: 'asc' },
+            take: 1,
+            select: { dueDate: true, taskType: true, status: true },
+          },
+          diagnoses: {
+            where: { resolved: false },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { resultLabel: true, createdAt: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.garden.findMany({
+        where: {
+          OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+        },
+        include: {
+          members: { select: { userId: true, role: true } },
+          plants: {
+            include: {
+              plant: {
+                include: {
+                  species: {
+                    select: {
+                      commonName: true,
+                      scientificName: true,
+                      sunlight: true,
+                      wateringFreqDays: true,
+                      defaultImageUrl: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -104,6 +152,9 @@ export class DashboardService {
       streak,
     );
 
+    const todayTaskRows = pickTodayTasks(taskRows, 5, currentDate);
+    const pendingTaskRows = getPendingTasks(taskRows);
+
     return {
       greeting: {
         name: firstName,
@@ -117,7 +168,10 @@ export class DashboardService {
         completedToday: completedToday.length,
         gardenScore: score,
       },
-      todayTasks: pickTodayTasks(taskRows, 5, currentDate),
+      plants: plants.map((p) => mapDashboardPlant(p)),
+      sharedPlants: mapSharedPlantsForUser(gardens, userId),
+      pendingTasks: pendingTaskRows.map((t) => mapDashboardTask(t)),
+      todayTasks: todayTaskRows.map((t) => mapDashboardTask(t)),
       attention: buildAttention(
         plants,
         taskRows,
@@ -137,6 +191,7 @@ export class DashboardService {
       engagement: {
         score,
         streak,
+        completedInRange,
         milestones,
       },
     };

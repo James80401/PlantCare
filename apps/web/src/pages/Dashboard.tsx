@@ -3,16 +3,14 @@ import { Link, useLocation, type To } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import TaskRow from '../components/tasks/TaskRow';
 import { useDashboard, type DashboardAttention } from '../hooks/useDashboard';
-import { useTasksInRange } from '../hooks/useTasksInRange';
-import { gardensApi, plantsApi, tasksApi } from '../services/api';
-import { useAuth } from '../context/AuthContext';
-import { plantsSharedWithUser, type SharedPlantView } from '../utils/household';
+import { useDashboardTaskActions } from '../hooks/useDashboardTaskActions';
+import { tasksApi } from '../services/api';
+import type { SharedPlantView } from '../utils/household';
 import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
 import BuddyDashboardPanel from '../components/buddy/BuddyDashboardPanel';
 import SeasonalBanner from '../components/buddy/SeasonalBanner';
 import {
   findNextTaskForPlant,
-  getTasksCompletedToday,
   getOverdueTasks,
   getPendingTasks,
   getSeasonalTip,
@@ -22,10 +20,10 @@ import {
 } from '../utils/dashboard';
 import { EngagementProgress } from '../components/engagement/EngagementProgress';
 import {
-  buildEngagementContext,
   deriveMilestones,
   getGardenWellness,
   getMilestoneHighlights,
+  getOldestPlantAgeDays,
 } from '../utils/engagement';
 import { TASK_TYPE_ICONS, type TaskItem } from '../utils/taskGroups';
 import { taskTypeLabel } from '../utils/tasks';
@@ -53,12 +51,7 @@ type PlantScope = 'all' | 'mine' | 'shared';
 
 export default function Dashboard() {
   const location = useLocation();
-  const { user } = useAuth();
-  const [plants, setPlants] = useState<DashboardPlant[]>([]);
-  const [gardens, setGardens] = useState<Awaited<ReturnType<typeof gardensApi.mine>>['data']>([]);
   const [plantScope, setPlantScope] = useState<PlantScope>('all');
-  const [plantsLoading, setPlantsLoading] = useState(true);
-  const [plantsError, setPlantsError] = useState('');
   const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null);
   const [scheduleMessage, setScheduleMessage] = useState('');
   const [metricsOpen, setMetricsOpen] = useState(false);
@@ -66,41 +59,24 @@ export default function Dashboard() {
   const { data: dash, loading: dashLoading, error: dashError, reload: reloadDash } =
     useDashboard();
 
+  const refreshAfterTask = async () => {
+    await reloadDash();
+  };
+
   const {
-    loading: tasksLoading,
-    tasks,
+    tasks: todayCareTasks,
     animating,
+    syncTasks,
     handleComplete,
     handleSkip,
     handleSnooze,
-    load: reloadTasks,
-  } = useTasksInRange({ pastDays: 45, futureDays: 14 });
+  } = useDashboardTaskActions(dash?.todayTasks ?? [], refreshAfterTask);
 
   useEffect(() => {
-    let cancelled = false;
-    setPlantsLoading(true);
-    setPlantsError('');
-    Promise.all([plantsApi.list(), gardensApi.mine()])
-      .then(([plantRes, gardenRes]) => {
-        if (!cancelled) {
-          setPlants(plantRes.data);
-          setGardens(gardenRes.data);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setPlantsError('Could not load your garden right now.');
-      })
-      .finally(() => {
-        if (!cancelled) setPlantsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const refreshAfterTask = async () => {
-    await Promise.all([reloadTasks(), reloadDash()]);
-  };
+    if (dash?.todayTasks) {
+      syncTasks(dash.todayTasks);
+    }
+  }, [dash?.todayTasks, syncTasks]);
 
   const applyScheduleSuggestion = async (suggestionId: string) => {
     setApplyingSuggestionId(suggestionId);
@@ -118,15 +94,14 @@ export default function Dashboard() {
 
   const scheduleSuggestions = dash?.scheduleSuggestions ?? [];
   const firstName = dash?.greeting.name ?? 'there';
+  const plants = dash?.plants ?? [];
+  const sharedPlants = dash?.sharedPlants ?? [];
+  const pendingTasks = useMemo(
+    () => getPendingTasks(dash?.pendingTasks ?? []),
+    [dash?.pendingTasks],
+  );
 
   const currentDate = useMemo(() => new Date(), []);
-
-  const pendingTasks = useMemo(() => getPendingTasks(tasks), [tasks]);
-
-  const sharedPlants = useMemo(
-    () => (user ? plantsSharedWithUser(gardens, user.id) : []),
-    [gardens, user],
-  );
 
   const visiblePlants = useMemo((): Array<DashboardPlant | SharedPlantView> => {
     if (plantScope === 'mine') return plants;
@@ -145,15 +120,17 @@ export default function Dashboard() {
   }, [location.hash, location.pathname]);
 
   const overdueTasks = useMemo(
-    () => getOverdueTasks(tasks, currentDate),
-    [currentDate, tasks],
+    () => getOverdueTasks(pendingTasks, currentDate),
+    [currentDate, pendingTasks],
   );
 
-  const todayTasks = useMemo(() => getTodayTasks(tasks, currentDate), [currentDate, tasks]);
+  const todayTasks = useMemo(
+    () => getTodayTasks(pendingTasks, currentDate),
+    [currentDate, pendingTasks],
+  );
 
   const weekPreview = dash?.weekPreview ?? [];
   const attentionItems = dash?.attention ?? [];
-  const todayTasksPreview = dash?.todayTasks ?? [];
   const metrics = dash?.metrics;
 
   const drPlantAction = useMemo((): To => {
@@ -189,20 +166,15 @@ export default function Dashboard() {
   }, [attentionItems, allGardenPlants, plants]);
 
   const recommendedAction = getSuggestedAction(plants, overdueTasks, todayTasks);
-  const completedToday = useMemo(
-    () => getTasksCompletedToday(tasks, currentDate),
-    [currentDate, tasks],
-  );
-  const completedTodayCount = completedToday.length;
+  const completedTodayCount = metrics?.completedToday ?? 0;
   const engagementContext = useMemo(
-    () =>
-      buildEngagementContext(
-        plants.length,
-        plants.map((plant) => plant.createdAt),
-        tasks,
-        currentDate,
-      ),
-    [currentDate, plants, tasks],
+    () => ({
+      plantCount: plants.length,
+      oldestPlantAgeDays: getOldestPlantAgeDays(plants.map((plant) => plant.createdAt)),
+      completedInRange: dash?.engagement.completedInRange ?? 0,
+      streak: dash?.engagement.streak ?? 0,
+    }),
+    [dash?.engagement, plants],
   );
   const gardenWellness = useMemo(
     () =>
@@ -221,7 +193,7 @@ export default function Dashboard() {
   );
   const gardenScore = dash?.engagement.score ?? gardenWellness.score;
   const needsAttentionCount = attentionItems.filter((item) => item.priority !== 'info').length;
-  const dashboardLoading = dashLoading || tasksLoading || plantsLoading;
+  const dashboardLoading = dashLoading;
   const plantCount = metrics?.totalPlants ?? plants.length;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
 
@@ -381,7 +353,7 @@ export default function Dashboard() {
               actionLabel="Add your first plant"
               actionTo="/garden/plants/new"
             />
-          ) : todayTasksPreview.length === 0 ? (
+          ) : todayCareTasks.length === 0 ? (
             <EmptyState
               title="You're all caught up for today"
               body="No tasks due right now. Log a journal note, browse species, or ask Dr. Plant if something looks off."
@@ -396,11 +368,11 @@ export default function Dashboard() {
             />
           ) : (
             <ul className="space-y-2">
-              {todayTasksPreview.map((task) => (
+              {todayCareTasks.map((task) => (
                 <TaskRow
                   key={task.id}
                   task={task}
-                  animating={animating[task.id] ?? null}
+                  animState={animating[task.id] ?? null}
                   onComplete={(id, feedback) => {
                     handleComplete(id, feedback);
                     window.setTimeout(() => void refreshAfterTask(), 700);
@@ -561,13 +533,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {plantsError && (
-          <p className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
-            {plantsError}
-          </p>
-        )}
-
-        {plantsLoading ? (
+        {dashboardLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {[0, 1, 2].map((index) => (
               <div

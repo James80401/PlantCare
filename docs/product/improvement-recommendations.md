@@ -248,15 +248,15 @@ Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
 1. **G3** — Production deploy sign-off on your public URL (manual §F checklist)
 
-**Recently shipped:** A1, A2, B1, B2, C2, C3, C4, D1, G1, G2, F2, E4.
+**Recently shipped:** A1, A2, B1, B2, C2, C3, C4, D1, G1, G2, F2, E4, H1.
 
 ### Next (1–2 months)
 
 Focus: scale, social, API shape.
 
-1. **H1** — Dashboard aggregates
+1. **B3** — Species catalog Phase 3 attributes and filters
 2. **F1** — Community post images
-4. **B3** — Species catalog Phase 3 attributes and filters
+3. **E3** — Surface `defaultLightLevel` in plant UX
 
 ### Later (backlog)
 
@@ -337,6 +337,7 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | Dr. Plant per plant | Health tab, `DrPlantChat` |
 | FCM HTTP v1 push | `fcm.client.ts`, service account env |
 | Rich care push (overdue, deep links) | `task-reminder-copy.ts`, `notifications.cron.ts` |
+| Slim dashboard (one fetch) | `dashboard.service.ts`, `Dashboard.tsx` |
 | Household canJournal on share | `Household.tsx`, `gardensApi.sharePlant` |
 | Delete plant (owner) | `PlantDetailsEditor.tsx`, `DELETE /plants/:id` |
 | Demo garden seed | `prisma/seed-demo-garden.ts` |

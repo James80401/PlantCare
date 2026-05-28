@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { dashboardApi } from '../services/api';
+import type { DashboardPlant } from '../utils/dashboard';
+import type { SharedPlantView } from '../utils/household';
 import type { TaskItem } from '../utils/taskGroups';
 
 export interface DashboardAttention {
@@ -38,6 +40,9 @@ export interface DashboardPayload {
     completedToday: number;
     gardenScore: number;
   };
+  plants: DashboardPlant[];
+  sharedPlants: SharedPlantView[];
+  pendingTasks: TaskItem[];
   todayTasks: TaskItem[];
   attention: DashboardAttention[];
   weekPreview: DashboardWeekDay[];
@@ -51,6 +56,7 @@ export interface DashboardPayload {
   engagement: {
     score: number;
     streak: number;
+    completedInRange: number;
     milestones: Array<{ id: string; title: string; unlocked: boolean }>;
   };
 }

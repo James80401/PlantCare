@@ -391,7 +391,7 @@ Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, 
 ### Dashboard aggregation
 
 - [x] Add `GET /api/v1/dashboard` when the frontend dashboard outgrows client-side aggregation.
-- [ ] Include targeted aggregates rather than duplicating large plant/task payloads.
+- [x] Include targeted aggregates rather than duplicating large plant/task payloads (`plants`, `sharedPlants`, `pendingTasks` on `GET /dashboard`).
 - [ ] Add recent journal and diagnosis summaries across all user plants.
 - [ ] Add care streak and garden score calculations server-side.
 
