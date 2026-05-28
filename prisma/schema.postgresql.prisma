@@ -53,6 +53,12 @@ enum SubscriptionStatus {
   TRIALING
 }
 
+enum AccountApprovalStatus {
+  APPROVED
+  PENDING
+  REJECTED
+}
+
 model User {
   id                    String         @id @default(cuid())
   email                 String         @unique
@@ -73,6 +79,7 @@ model User {
   identifyCountThisMonth Int           @default(0)
   identifyCountResetAt  DateTime       @default(now())
   emailVerified         Boolean        @default(true)
+  accountApprovalStatus AccountApprovalStatus @default(APPROVED)
   emailVerificationToken String?       @unique
   emailVerificationExpires DateTime?
   passwordResetToken    String?        @unique

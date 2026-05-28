@@ -1,6 +1,6 @@
 # Deployment
 
-> **Navigation:** [Operations INDEX](INDEX.md) · [DEPLOY.md](../DEPLOY.md)
+> **Navigation:** [Operations INDEX](INDEX.md) · [private-online-setup.md](private-online-setup.md) · [DEPLOY.md](../DEPLOY.md)
 
 ## API Docker
 

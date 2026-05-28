@@ -5,11 +5,12 @@ describe('UsersService.resolveLocationFields', () => {
   const weather = { geocodeLocation: jest.fn() };
   const prisma = {} as never;
   const upload = {} as never;
+  const config = { get: () => undefined } as never;
   let service: UsersService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new UsersService(prisma, upload, weather as never);
+    service = new UsersService(prisma, upload, weather as never, config);
   });
 
   const resolve = (data: Parameters<UsersService['updateNotificationSettings']>[1]) =>

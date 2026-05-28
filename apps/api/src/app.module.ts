@@ -21,6 +21,7 @@ import { UploadModule } from './upload/upload.module';
 import { GardensModule } from './gardens/gardens.module';
 import { CommunityModule } from './community/community.module';
 import { BuddyModule } from './buddy/buddy.module';
+import { AdminModule } from './admin/admin.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -52,6 +53,7 @@ import { HealthController } from './health.controller';
     GardensModule,
     CommunityModule,
     BuddyModule,
+    AdminModule,
   ],
   controllers: [HealthController],
 })

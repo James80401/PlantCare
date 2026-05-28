@@ -146,6 +146,50 @@ export class EmailService implements OnModuleInit {
     });
   }
 
+  async sendAdminRegistrationPendingEmail(
+    adminTo: string,
+    registrantEmail: string,
+    registrantName: string | null,
+  ): Promise<SendResult> {
+    const reviewUrl = this.frontendUrl('/admin/registrations');
+    const who = registrantName ? `${registrantName} (${registrantEmail})` : registrantEmail;
+    return this.deliver({
+      to: adminTo,
+      subject: 'Plant Care — new registration awaiting approval',
+      text: `A user completed email verification and needs approval:\n${who}\n\nReview: ${reviewUrl}`,
+      html: this.wrapHtml(
+        'Registration pending',
+        `
+        <p>A user completed email verification and is waiting for admin approval:</p>
+        <p><strong>${who}</strong></p>
+        <p style="text-align:center;margin:24px 0">
+          <a href="${reviewUrl}" style="${EmailService.buttonStyle}">Review registrations</a>
+        </p>
+      `,
+      ),
+    });
+  }
+
+  async sendAccountApprovedEmail(to: string, name: string | null): Promise<SendResult> {
+    const loginUrl = this.frontendUrl('/login');
+    const greeting = name ? `Hi ${name},` : 'Hi,';
+    return this.deliver({
+      to,
+      subject: 'Your Plant Care account is approved',
+      text: `${greeting}\n\nYour account was approved. You can sign in now: ${loginUrl}`,
+      html: this.wrapHtml(
+        'Account approved',
+        `
+        <p>${greeting}</p>
+        <p>Your Plant Care account was approved. You can sign in and start using the app.</p>
+        <p style="text-align:center;margin:24px 0">
+          <a href="${loginUrl}" style="${EmailService.buttonStyle}">Sign in</a>
+        </p>
+      `,
+      ),
+    });
+  }
+
   async sendPasswordResetEmail(to: string, name: string | null, token: string): Promise<SendResult> {
     const url = this.frontendUrl(`/reset-password/${token}`);
     const greeting = name ? `Hi ${name},` : 'Hi,';

@@ -34,6 +34,8 @@ export default function Login() {
       if (msg?.toLowerCase().includes('verify')) {
         setNeedsVerification(true);
         setError(msg);
+      } else if (msg?.toLowerCase().includes('admin approval')) {
+        setError(msg);
       } else {
         setError(msg || 'Invalid email or password');
       }

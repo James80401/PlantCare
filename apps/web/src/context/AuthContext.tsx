@@ -28,7 +28,11 @@ interface AuthContextValue {
     email: string,
     password: string,
     name?: string,
-  ) => Promise<{ requiresVerification?: boolean; message?: string }>;
+  ) => Promise<{
+    requiresVerification?: boolean;
+    requiresAdminApproval?: boolean;
+    message?: string;
+  }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isPremium: boolean;
@@ -78,6 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await authApi.register(email, password, name);
     if (data.requiresVerification) {
       return { requiresVerification: true, message: data.message };
+    }
+    if (data.requiresAdminApproval) {
+      return { requiresAdminApproval: true, message: data.message };
     }
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);

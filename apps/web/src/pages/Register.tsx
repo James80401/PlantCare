@@ -23,8 +23,11 @@ export default function Register() {
     setLoading(true);
     try {
       const result = await register(email, password, name || undefined);
-      if (result.requiresVerification) {
-        setSuccess(result.message || 'Check your email to verify your account before signing in.');
+      if (result.requiresVerification || result.requiresAdminApproval) {
+        setSuccess(
+          result.message ||
+            'Check your email to verify your account before signing in.',
+        );
         trackEvent('UserSignedUp');
         return;
       }

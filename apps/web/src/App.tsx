@@ -44,6 +44,7 @@ import BuddyActivityFlowPage from './pages/buddy/activities/flow';
 import BuddyQuestsPage from './pages/buddy/quests';
 import GardenTownPage from './pages/buddy/town/index';
 import FriendTerrariumPage from './pages/buddy/town/terrarium';
+import AdminRegistrations from './pages/admin/AdminRegistrations';
 
 export default function App() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
       <Route path="/resend-verification" element={<ResendVerification />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/admin/registrations" element={<AdminRegistrations />} />
       <Route path="/garden" element={<ProtectedRoute />}>
         <Route path="onboarding" element={<OnboardingWizard />} />
         <Route element={<OnboardingGate />}>

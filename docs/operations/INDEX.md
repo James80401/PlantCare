@@ -5,6 +5,7 @@
 | Document | Topics |
 |----------|--------|
 | [deployment.md](deployment.md) | Docker, production |
+| [private-online-setup.md](private-online-setup.md) | Step-by-step private online setup with password protection |
 | [production-signoff.md](production-signoff.md) | G3 env check, live probes, verify/smoke gate |
 | [ci.md](ci.md) | GitHub Actions |
 | [scripts.md](scripts.md) | verify.mjs, integrations |

@@ -10,9 +10,14 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { PlanTier } from '@prisma/client';
+import { AccountApprovalStatus, PlanTier } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import {
+  adminEmails,
+  isAdminEmail,
+  requiresAdminApproval,
+} from '../config/registration-policy';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -33,6 +38,8 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const smtpEnabled = this.email.isConfigured();
+    const approvalRequired = requiresAdminApproval(this.config);
+    const autoApprove = !approvalRequired || isAdminEmail(this.config, dto.email);
     const verificationToken = smtpEnabled ? randomBytes(32).toString('hex') : null;
     const verificationExpires = smtpEnabled ? new Date(Date.now() + 24 * 60 * 60 * 1000) : null;
 
@@ -43,6 +50,9 @@ export class AuthService {
         name: dto.name,
         planTier: PlanTier.PREMIUM,
         emailVerified: !smtpEnabled,
+        accountApprovalStatus: autoApprove
+          ? AccountApprovalStatus.APPROVED
+          : AccountApprovalStatus.PENDING,
         emailVerificationToken: verificationToken,
         emailVerificationExpires: verificationExpires,
       },
@@ -67,7 +77,18 @@ export class AuthService {
       }
       return {
         requiresVerification: true,
-        message: 'Please check your email to verify your account before signing in.',
+        message: approvalRequired
+          ? 'Check your email to verify your account. After verification, an admin must approve your account before you can sign in.'
+          : 'Please check your email to verify your account before signing in.',
+        email: user.email,
+      };
+    }
+
+    if (!autoApprove) {
+      return {
+        requiresAdminApproval: true,
+        message:
+          'Your account was created and is awaiting admin approval. You will receive an email when you can sign in.',
         email: user.email,
       };
     }
@@ -95,6 +116,16 @@ export class AuthService {
         emailVerificationExpires: null,
       },
     });
+
+    if (user.accountApprovalStatus === AccountApprovalStatus.PENDING) {
+      await this.notifyAdminsOfPendingRegistration(user.email, user.name);
+      return {
+        message:
+          'Email verified. Your account is awaiting admin approval. You will receive an email when you can sign in.',
+        requiresAdminApproval: true,
+        email: user.email,
+      };
+    }
 
     const tokens = await this.issueTokens(user.id, user.email);
     return {
@@ -207,6 +238,15 @@ export class AuthService {
       );
     }
 
+    if (user.accountApprovalStatus === AccountApprovalStatus.REJECTED) {
+      throw new UnauthorizedException('Your registration was not approved.');
+    }
+    if (user.accountApprovalStatus === AccountApprovalStatus.PENDING) {
+      throw new UnauthorizedException(
+        'Your account is awaiting admin approval. You will receive an email when you can sign in.',
+      );
+    }
+
     await this.ensurePremium(user.id);
 
     const tokens = await this.issueTokens(user.id, user.email);
@@ -232,6 +272,12 @@ export class AuthService {
       if (user && this.email.isConfigured() && !user.emailVerified) {
         throw new UnauthorizedException('Email not verified');
       }
+      if (user?.accountApprovalStatus === AccountApprovalStatus.REJECTED) {
+        throw new UnauthorizedException('Account not approved');
+      }
+      if (user?.accountApprovalStatus === AccountApprovalStatus.PENDING) {
+        throw new UnauthorizedException('Account awaiting admin approval');
+      }
       const tokens = await this.issueTokens(payload.sub, payload.email);
       await this.ensurePremium(payload.sub);
       const fresh = await this.prisma.user.findUnique({
@@ -253,6 +299,16 @@ export class AuthService {
       where: { id: userId, planTier: PlanTier.FREE },
       data: { planTier: PlanTier.PREMIUM },
     });
+  }
+
+  private async notifyAdminsOfPendingRegistration(email: string, name: string | null) {
+    if (!this.email.isConfigured()) return;
+    const admins = adminEmails(this.config);
+    await Promise.all(
+      admins.map((admin) =>
+        this.email.sendAdminRegistrationPendingEmail(admin, email, name),
+      ),
+    );
   }
 
   private async issueTokens(userId: string, email: string) {

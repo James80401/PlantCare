@@ -78,6 +78,14 @@ if (!vars.OPENAI_API_KEY) {
 if (!vars.SMTP_USER || !vars.SMTP_PASS) {
   warnings.push('SMTP unset — email verification and password reset use auto-verify in dev only');
 }
+if (vars.REGISTRATION_REQUIRES_ADMIN_APPROVAL === 'true') {
+  if (!vars.SMTP_USER || !vars.SMTP_PASS) {
+    errors.push('REGISTRATION_REQUIRES_ADMIN_APPROVAL=true requires SMTP_USER and SMTP_PASS');
+  }
+  if (!vars.ADMIN_EMAILS?.trim()) {
+    errors.push('REGISTRATION_REQUIRES_ADMIN_APPROVAL=true requires ADMIN_EMAILS (comma-separated)');
+  }
+}
 
 if (missing.length) {
   console.error('Fix required values in .env.production:');

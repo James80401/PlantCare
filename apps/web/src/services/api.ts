@@ -54,6 +54,12 @@ export const authApi = {
     api.post('/auth/reset-password', { token, password }),
 };
 
+export const adminApi = {
+  listPending: () => api.get('/admin/registrations/pending'),
+  approve: (userId: string) => api.post(`/admin/registrations/${userId}/approve`),
+  reject: (userId: string) => api.post(`/admin/registrations/${userId}/reject`),
+};
+
 export const plantsApi = {
   list: () => api.get('/plants'),
   get: (id: string) => api.get(`/plants/${id}`),

@@ -17,8 +17,18 @@ export default function VerifyEmail() {
     authApi
       .verifyEmail(token)
       .then(({ data }) => {
-        localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
+        if (data.requiresAdminApproval) {
+          setStatus('ok');
+          setMessage(
+            data.message ||
+              'Email verified. Your account is awaiting admin approval.',
+          );
+          return;
+        }
+        if (data.accessToken && data.refreshToken) {
+          localStorage.setItem('accessToken', data.accessToken);
+          localStorage.setItem('refreshToken', data.refreshToken);
+        }
         setStatus('ok');
         setMessage(data.message || 'Email verified!');
         setTimeout(() => navigate('/garden'), 1500);
@@ -36,7 +46,14 @@ export default function VerifyEmail() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center space-y-4">
         <h1 className="text-2xl font-bold text-emerald-800">Email verification</h1>
         {status === 'loading' && <p className="text-gray-600">Verifying your email…</p>}
-        {status === 'ok' && <p className="text-emerald-700">{message} Redirecting…</p>}
+        {status === 'ok' && (
+          <>
+            <p className="text-emerald-700">{message}</p>
+            <Link to="/login" className="text-emerald-800 font-medium text-sm block mt-2">
+              Go to sign in
+            </Link>
+          </>
+        )}
         {status === 'error' && (
           <>
             <p className="text-red-600 text-sm">{message}</p>
