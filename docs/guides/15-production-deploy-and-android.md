@@ -103,16 +103,23 @@ If using Neon/Supabase/RDS instead of the compose `postgres` service:
 
 ## §3 — Verify from your PC
 
+**Recommended (single command after deploy):**
+
+```bash
+npm run production:check
+npm run production:signoff
+npm run production:signoff -- --e2e   # optional Playwright on production web
+```
+
+Manual equivalents:
+
 ```bash
 API_URL=https://api.yourdomain.com/api/v1 npm run verify
 API_URL=https://api.yourdomain.com/api/v1 npm run smoke:buddy
-```
-
-Optional web UAT:
-
-```bash
 UAT_WEB_URL=https://app.yourdomain.com API_URL=https://api.yourdomain.com/api/v1 npm run uat:e2e
 ```
+
+Full runbook: [docs/operations/production-signoff.md](../operations/production-signoff.md)
 
 Share [tester-5-minute.md](../product/tester-5-minute.md) with remote testers.
 

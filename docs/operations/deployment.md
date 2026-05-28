@@ -76,3 +76,5 @@ UAT_WEB_URL=https://your-app.example.com STAGING_E2E=1 npm run uat:e2e
 For remote hosts, point `DATABASE_URL` at the same Postgres as the API when running `verify` / Playwright global setup (or use `npm run db:generate:postgres` first).
 
 Mark UAT checklist section F when URLs are live.
+
+**Production sign-off (G3):** [production-signoff.md](production-signoff.md) — `npm run production:signoff` after `production:check`.

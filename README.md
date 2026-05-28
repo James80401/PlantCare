@@ -64,6 +64,7 @@ See [docs/guides/13-operations-deployment-and-quality.md](docs/guides/13-operati
 ```bash
 cp .env.production.example .env.production   # edit domain + secrets
 npm run production:check
+npm run production:signoff   # after deploy: live probes + verify + smoke
 npm run production:up   # on VPS behind HTTPS reverse proxy
 ```
 

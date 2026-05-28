@@ -71,10 +71,12 @@
 
 - [x] Local dev: `FRONTEND_URL` / `CORS_ORIGIN` = `http://localhost:5173` (`.env.example`)
 - [x] Docker staging: `FRONTEND_URL` / `CORS_ORIGIN` = `http://localhost:8080` (`.env.staging.example` + `npm run staging:smoke`)
-- [ ] Production: set `FRONTEND_URL` and `CORS_ORIGINS` to your public URL, run `npm run production:check` (must pass URL/CORS checks), then run:
-  - [ ] `API_URL=https://<public-api>/api/v1 npm run verify`
-  - [ ] `API_URL=https://<public-api>/api/v1 npm run smoke:buddy`
-  - [ ] `UAT_WEB_URL=https://<public-web> API_URL=https://<public-api>/api/v1 npm run uat:e2e`
+- [ ] Production: set `FRONTEND_URL` and `CORS_ORIGINS` in `.env.production`, deploy stack, then:
+  - [ ] `npm run production:check` (static secrets + HTTPS/CORS rules)
+  - [ ] `npm run production:signoff` (live health/CORS/web + `verify` + `smoke:buddy`)
+  - [ ] Optional: `npm run production:signoff -- --e2e` (Playwright on public web)
+  - [ ] Record: `npm run production:signoff -- --write docs/operations/signoffs/<date>.md`
+  - [ ] Runbook: [production-signoff.md](../operations/production-signoff.md)
 - [x] Tester instructions below
 - [x] Known limitations listed below
 

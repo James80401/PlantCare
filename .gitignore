@@ -17,3 +17,5 @@ apps/api/uploads/
 tests/e2e/.uat-auth.json
 playwright-report/
 test-results/
+docs/operations/signoffs/*.md
+!docs/operations/signoffs/.gitkeep

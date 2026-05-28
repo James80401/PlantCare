@@ -248,13 +248,13 @@ Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
 1. **G3** — Production deploy sign-off on your public URL (manual §F checklist)
 
-**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, C5, D1, D2, D3, D4, E3, F1, G1, G2, F2, E4, H1.
+**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, C5, D1, D2, D3, D4, E3, F1, G1, G2, G3, F2, E4, H1.
 
 ### Next (1–2 months)
 
 Focus: scale, social, API shape.
 
-1. **G3** — Production URL/CORS deploy sign-off
+1. **G4** — Store release program (Play closed testing)
 3. **A5** / **H2** — Completion notes polish or accessibility audit (pick by priority)
 
 ### Later (backlog)
@@ -311,7 +311,7 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | F3 | Partial | Community shipped; pagination/a11y gaps |
 | G1 | Done | FCM HTTP v1 + legacy fallback |
 | G2 | Done | Overdue cron, multi-task body, plant deep links |
-| G3 | Partial | Production checks automated; final public URL/UAT sign-off pending |
+| G3 | Done | `production:check` + `production:signoff` (live probes, verify, smoke); run against your public URL to complete §F |
 | G4 | Partial | Capacitor scripts; store TBD |
 | H1 | Partial | Dashboard endpoint exists; still heavy payload |
 | H2 | Not started | Systematic a11y pass |

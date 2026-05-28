@@ -32,6 +32,8 @@ Write-Host 'From this machine (after DNS + TLS):'
 Write-Host "  `$env:API_URL = '$apiBase'; npm run verify"
 Write-Host "  `$env:API_URL = '$apiBase'; npm run smoke:buddy"
 Write-Host "  `$env:UAT_WEB_URL = '$($vars['FRONTEND_URL'])'; `$env:API_URL = '$apiBase'; npm run uat:e2e"
+Write-Host '  npm run production:signoff'
+Write-Host '  npm run production:signoff -- --e2e'
 Write-Host ''
 Write-Host 'Android release build:'
 Write-Host '  Copy apps/web/.env.production.example to apps/web/.env.local with your API URL'

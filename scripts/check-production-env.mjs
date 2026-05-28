@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { parseEnvText } from './lib/parse-env.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const envPath = resolve(root, process.argv[2] || '.env.production');
@@ -19,19 +20,7 @@ if (!existsSync(envPath)) {
   process.exit(1);
 }
 
-function parseEnv(text) {
-  const vars = {};
-  for (const line of text.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eq = trimmed.indexOf('=');
-    if (eq === -1) continue;
-    vars[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim();
-  }
-  return vars;
-}
-
-const vars = parseEnv(readFileSync(envPath, 'utf8'));
+const vars = parseEnvText(readFileSync(envPath, 'utf8'));
 const placeholder = /yourdomain|replace-with|change-me/i;
 
 const required = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'FRONTEND_URL', 'VITE_API_BASE_URL'];
@@ -110,4 +99,5 @@ console.log('\nAfter deploy:');
 console.log(`  API_URL=${apiUrl} npm run verify`);
 console.log(`  API_URL=${apiUrl} npm run smoke:buddy`);
 console.log(`  UAT_WEB_URL=${frontend} API_URL=${apiUrl} npm run uat:e2e`);
-console.log('\nGuide: docs/guides/15-production-deploy-and-android.md');
+console.log('  npm run production:signoff   # env + live probes + verify + smoke');
+console.log('\nGuide: docs/operations/production-signoff.md');
