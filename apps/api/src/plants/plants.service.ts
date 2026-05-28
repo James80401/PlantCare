@@ -10,6 +10,7 @@ import { PerenualService } from '../species/perenual.service';
 import { WeatherService } from '../weather/weather.service';
 import { CreatePlantDto } from './dto/create-plant.dto';
 import { UpdatePlantDto } from './dto/update-plant.dto';
+import { buildPlantTimeline } from './plant-timeline.builder';
 
 @Injectable()
 export class PlantsService {
@@ -83,6 +84,43 @@ export class PlantsService {
       weatherStatus.cachedAdvice,
     );
     return { ...plant, careOverview };
+  }
+
+  async getTimeline(userId: string, id: string) {
+    const plant = await this.prisma.plant.findFirst({
+      where: { id },
+      include: sharedPlantInclude,
+    });
+    if (!plant || !userCanViewPlantTasks(userId, plant)) {
+      throw new NotFoundException('Plant not found');
+    }
+
+    const [journalEntries, tasks, diagnoses] = await Promise.all([
+      this.prisma.journalEntry.findMany({
+        where: { plantId: id },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+      this.prisma.task.findMany({
+        where: {
+          plantId: id,
+          status: { in: ['DONE', 'SKIPPED'] },
+          completedAt: { not: null },
+        },
+        orderBy: { completedAt: 'desc' },
+        take: 50,
+        include: {
+          feedback: { orderBy: { createdAt: 'desc' }, take: 1 },
+        },
+      }),
+      this.prisma.diagnosis.findMany({
+        where: { plantId: id },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }),
+    ]);
+
+    return buildPlantTimeline(journalEntries, tasks, diagnoses);
   }
 
   async create(userId: string, planTier: PlanTier, dto: CreatePlantDto) {

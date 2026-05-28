@@ -248,19 +248,17 @@ Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
 1. **G3** — Production deploy sign-off on your public URL (manual §F checklist)
 
-**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, C5, D1, D2, E3, F1, G1, G2, F2, E4, H1.
+**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, C5, D1, D2, D3, E3, F1, G1, G2, F2, E4, H1.
 
 ### Next (1–2 months)
 
 Focus: scale, social, API shape.
 
 1. **G3** — Production URL/CORS deploy sign-off
-2. **A5** / **H2** — Completion notes polish or accessibility audit (pick by priority)
+2. **D4** — Persisted plant milestones
+3. **A5** / **H2** — Completion notes polish or accessibility audit (pick by priority)
 
 ### Later (backlog)
-
-1. **C5** — Structured diagnosis intake
-2. **D3 + D4** — Timeline API + persisted milestones
 3. **G4** — Store release program
 4. **H2** — Full accessibility audit
 
@@ -303,7 +301,7 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | C5 | Done | Structured intake (duration, recent changes, pests visible) |
 | D1 | Done | Journal photos: preview, photo-only, edit, remove photo, delete confirm |
 | D2 | Done | Growth panel (stats, deltas, height sparkline), measurement-only journal saves, photo compare defaults |
-| D3 | Partial | Client-side timeline merge |
+| D3 | Done | `GET /plants/:id/timeline` aggregates journal, care, diagnosis; profile loads via API |
 | D4 | Partial | Ephemeral dashboard milestones only |
 | E1 | Done | Notes + toxicity preview on Add Plant |
 | E2 | Done | Settings care preferences |

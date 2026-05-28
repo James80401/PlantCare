@@ -361,7 +361,7 @@ Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, 
 
 ### Journal timeline
 
-- [ ] Build a richer plant journal timeline.
+- [x] Build a richer plant journal timeline (`GET /plants/:id/timeline` + profile journal tab).
 - [ ] Show photos, care actions, notes, diagnoses, and treatments together.
 - [x] Add growth measurements such as height, spread, and leaf count (journal form + growth panel with trends).
 - [ ] Add photo comparison views.

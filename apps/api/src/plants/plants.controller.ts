@@ -51,6 +51,11 @@ export class PlantsController {
     return this.plantsService.create(user.sub, user.planTier as import('@prisma/client').PlanTier, dto);
   }
 
+  @Get(':id/timeline')
+  timeline(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.plantsService.getTimeline(user.sub, id);
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.plantsService.findOne(user.sub, id);

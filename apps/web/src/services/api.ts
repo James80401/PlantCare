@@ -57,6 +57,7 @@ export const authApi = {
 export const plantsApi = {
   list: () => api.get('/plants'),
   get: (id: string) => api.get(`/plants/${id}`),
+  timeline: (id: string) => api.get(`/plants/${id}/timeline`),
   update: (
     id: string,
     data: {

@@ -225,6 +225,7 @@ export function RecoveryPanel({
   );
 }
 
+/** @deprecated Profile uses `GET /plants/:id/timeline`; kept for reference and local tooling. */
 export function buildTimelineEvents({
   journalEntries,
   tasks,

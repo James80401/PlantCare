@@ -15,8 +15,9 @@ import { useTasksInRange } from '../../hooks/useTasksInRange';
 import { plantsApi, journalApi, diagnosisApi } from '../../services/api';
 import type { TaskCompleteFeedback, TaskSkipFeedback } from '../../utils/taskFeedback';
 import { taskTypeLabel } from '../../utils/tasks';
-import { appendJournalPrompt, buildTimelineEvents } from './shared';
-import type { CareOverview, PlantRecord } from './types';
+import { mapTimelineFromApi } from '../../utils/plantTimeline';
+import { appendJournalPrompt } from './shared';
+import type { CareOverview, PlantRecord, TimelineEvent } from './types';
 
 interface PlantProfileContextValue {
   id: string;
@@ -68,7 +69,7 @@ interface PlantProfileContextValue {
   saveJournalEdit: (e: FormEvent) => Promise<void>;
   deleteJournalEntry: (entryId: string) => Promise<void>;
   appendJournalPrompt: (prompt: string) => void;
-  timelineEvents: ReturnType<typeof buildTimelineEvents>;
+  timelineEvents: TimelineEvent[];
   sectionCounts: { tasks: number; journal: number; diagnosis: number };
   activeDiagnosisCount: number;
   latestUnresolved?: PlantRecord;
@@ -122,6 +123,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
   const [photoCompareUrls, setPhotoCompareUrls] = useState<{ before: string; after: string } | null>(
     null,
   );
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
 
   const {
     tasks: rangeTasks,
@@ -131,8 +133,14 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     handleSnooze,
   } = useTasksInRange({ pastDays: 0, futureDays: 120 });
 
-  const load = useCallback(() => {
-    if (id) plantsApi.get(id).then((r) => setPlant(r.data));
+  const load = useCallback(async () => {
+    if (!id) return;
+    const [plantRes, timelineRes] = await Promise.all([
+      plantsApi.get(id),
+      plantsApi.timeline(id),
+    ]);
+    setPlant(plantRes.data);
+    setTimelineEvents(mapTimelineFromApi(timelineRes.data.events));
   }, [id]);
 
   useEffect(() => {
@@ -405,11 +413,6 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
           task.taskType === 'HEALTH_CHECK' &&
           task.status === 'PENDING',
       );
-    const timelineEvents = buildTimelineEvents({
-      journalEntries,
-      tasks,
-      diagnoses: diagnosisEntries,
-    });
 
     return {
       id,
@@ -500,6 +503,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     journalHeightCm,
     journalWidthCm,
     journalLeafCount,
+    timelineEvents,
     editingJournalId,
     busyJournalId,
     updatingDiagnosisId,
