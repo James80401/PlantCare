@@ -12,6 +12,7 @@ import {
   type SpeciesDiscoveryFilterKey,
 } from '../constants/speciesDiscovery';
 import { plantsApi, speciesApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { trackEvent } from '../utils/analytics';
 
 interface Species {
@@ -29,6 +30,7 @@ type Step = 'photo' | 'confirm' | 'search' | 'details';
 
 export default function AddPlantWizard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<Step>('photo');
 
@@ -51,6 +53,17 @@ export default function AddPlantWizard() {
   const [identifying, setIdentifying] = useState(false);
   const [activeFilters, setActiveFilters] =
     useState<Record<SpeciesDiscoveryFilterKey, boolean>>(defaultSpeciesDiscoveryFilters);
+
+  const defaultLightLevel = user?.defaultLightLevel || 'medium';
+
+  useEffect(() => {
+    // Surface default light preference by pre-selecting a matching discovery filter.
+    setActiveFilters((current) => {
+      const next = { ...current };
+      if (defaultLightLevel === 'low') next.lowLight = true;
+      return next;
+    });
+  }, [defaultLightLevel]);
 
   useEffect(() => {
     const preselectedId = searchParams.get('speciesId');
@@ -171,6 +184,31 @@ export default function AddPlantWizard() {
     }
   }, [step]);
 
+  const lightPreferenceLabel =
+    defaultLightLevel === 'low'
+      ? 'Low light'
+      : defaultLightLevel === 'high'
+        ? 'Bright light'
+        : 'Medium light';
+
+  const lightFitLabel = useMemo(() => {
+    if (!selectedSpecies?.sunlight) return null;
+    const sunlight = selectedSpecies.sunlight.toLowerCase();
+    if (defaultLightLevel === 'low') {
+      return sunlight.includes('low')
+        ? 'Good fit for your low-light setup.'
+        : 'May need a brighter spot than your default setup.';
+    }
+    if (defaultLightLevel === 'high') {
+      return sunlight.includes('bright') || sunlight.includes('full sun')
+        ? 'Good fit for your bright-light setup.'
+        : 'Can work in bright spaces, but avoid harsh direct sun if noted.';
+    }
+    return sunlight.includes('medium') || sunlight.includes('indirect')
+      ? 'Good fit for your medium-light setup.'
+      : 'Check this plant’s light notes against your space.';
+  }, [defaultLightLevel, selectedSpecies?.sunlight]);
+
   return (
     <div className="mx-auto max-w-lg space-y-5">
       <PageHeader
@@ -178,6 +216,10 @@ export default function AddPlantWizard() {
         title="Add a plant"
         description={stepTitle}
       />
+      <p className="text-xs text-gray-600">
+        Typical light from Settings: <span className="font-semibold text-emerald-900">{lightPreferenceLabel}</span>{' '}
+        · used to guide discovery and care fit.
+      </p>
 
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
@@ -291,6 +333,11 @@ export default function AddPlantWizard() {
                 );
               })}
             </div>
+            {defaultLightLevel === 'low' ? (
+              <p className="mt-2 text-xs text-gray-500">
+                Low-light filter is preselected from your care preferences.
+              </p>
+            ) : null}
           </div>
           {speciesList.length > 0 && (
             <ul className="max-h-72 space-y-2 overflow-auto">
@@ -337,6 +384,7 @@ export default function AddPlantWizard() {
                     <span className="font-medium text-emerald-900">Light:</span> {selectedSpecies.sunlight}
                   </p>
                 ) : null}
+                {lightFitLabel ? <p className="text-xs text-emerald-700">{lightFitLabel}</p> : null}
                 {selectedSpecies.toxicity ? (
                   <p className="text-gray-700">
                     <span className="font-medium text-emerald-900">Safety:</span> {selectedSpecies.toxicity}
