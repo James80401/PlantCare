@@ -27,6 +27,21 @@ export type RecoverySuggestionView = RecoveryTaskSuggestion & {
 };
 
 type DiagnosisSource = 'openai' | 'huggingface' | 'rules';
+type SymptomDuration = 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
+type RecentCareChange =
+  | 'NONE'
+  | 'WATERING'
+  | 'LIGHT'
+  | 'REPOT'
+  | 'FERTILIZER'
+  | 'TEMPERATURE'
+  | 'PEST_TREATMENT';
+
+export interface DiagnosisIntake {
+  symptomDuration?: SymptomDuration;
+  recentCareChange?: RecentCareChange;
+  pestsVisible?: boolean;
+}
 
 @Injectable()
 export class DiagnosisService {
@@ -48,6 +63,7 @@ export class DiagnosisService {
     plantId: string,
     file: Express.Multer.File | undefined,
     symptomsText?: string,
+    intake?: DiagnosisIntake,
   ) {
     const plant = await this.prisma.plant.findFirst({
       where: { id: plantId, userId },
@@ -68,6 +84,8 @@ export class DiagnosisService {
     let adviceText: string;
     let detailJson: string | undefined;
 
+    const intakeSummary = this.formatIntakeSummary(intake);
+
     if (this.llm.isAvailable()) {
       try {
         const structured = await this.llm.diagnose({
@@ -79,6 +97,7 @@ export class DiagnosisService {
           careNotes: plant.species.careNotes,
           location: plant.location,
           symptomsText,
+          caregiverContext: intakeSummary,
           imageHint: imageHint
             ? { label: formatLabel(imageHint.label), confidence: imageHint.confidence }
             : undefined,
@@ -91,7 +110,7 @@ export class DiagnosisService {
           resultLabel = structured.issueName;
           confidence = structured.confidence;
           adviceText = this.llm.formatAdviceText(structured);
-          detailJson = JSON.stringify(structured);
+          detailJson = JSON.stringify({ ...structured, intake });
         } else {
           ({ resultLabel, confidence, adviceText, source } = this.rulesFallback(
             imageHint,
@@ -114,6 +133,10 @@ export class DiagnosisService {
         imageHint,
         symptomsText,
       ));
+    }
+
+    if (!detailJson && intake) {
+      detailJson = JSON.stringify({ intake });
     }
 
     return this.prisma.diagnosis.create({
@@ -343,5 +366,35 @@ export class DiagnosisService {
     if (lower.includes('root rot') || lower.includes('mushy')) return 'overwatering';
     if (lower.includes('brown tip') || lower.includes('crispy')) return 'underwatering';
     return 'healthy';
+  }
+
+  private formatIntakeSummary(intake?: DiagnosisIntake): string | undefined {
+    if (!intake) return undefined;
+    const lines: string[] = [];
+    if (intake.symptomDuration) {
+      const duration = {
+        TODAY: 'today',
+        DAYS_2_3: '2-3 days',
+        DAYS_4_7: '4-7 days',
+        WEEKS_2_PLUS: '2+ weeks',
+      }[intake.symptomDuration];
+      lines.push(`Symptom duration: ${duration}`);
+    }
+    if (intake.recentCareChange && intake.recentCareChange !== 'NONE') {
+      const change = {
+        WATERING: 'watering routine changed',
+        LIGHT: 'light exposure changed',
+        REPOT: 'recently repotted',
+        FERTILIZER: 'fertilizer routine changed',
+        TEMPERATURE: 'temperature/humidity shifted',
+        PEST_TREATMENT: 'recent pest treatment',
+        NONE: 'no recent care changes',
+      }[intake.recentCareChange];
+      lines.push(`Recent care change: ${change}`);
+    }
+    if (intake.pestsVisible != null) {
+      lines.push(`Visible pests/webbing: ${intake.pestsVisible ? 'yes' : 'no'}`);
+    }
+    return lines.length ? lines.join('\n') : undefined;
   }
 }

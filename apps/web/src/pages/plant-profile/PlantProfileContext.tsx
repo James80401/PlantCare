@@ -74,7 +74,15 @@ interface PlantProfileContextValue {
   diagnosisHasFollowUp: (diagnosisId: string) => boolean;
   updatingDiagnosisId: string | null;
   followUpCreatingId: string | null;
-  submitDiagnosis: (symptomsText: string, image?: File) => Promise<void>;
+  submitDiagnosis: (
+    payload: {
+      symptomsText?: string;
+      symptomDuration?: 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
+      recentCareChange?: 'NONE' | 'WATERING' | 'LIGHT' | 'REPOT' | 'FERTILIZER' | 'TEMPERATURE' | 'PEST_TREATMENT';
+      pestsVisible?: boolean;
+    },
+    image?: File,
+  ) => Promise<void>;
   createFollowUpTask: (diagnosisId: string, dueInDays: number, note?: string) => Promise<void>;
   updateDiagnosisStatus: (diagnosisId: string, resolved: boolean) => Promise<void>;
   sharingPlant: boolean;
@@ -265,9 +273,17 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const submitDiagnosis = async (symptomsText: string, image?: File) => {
+  const submitDiagnosis = async (
+    payload: {
+      symptomsText?: string;
+      symptomDuration?: 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
+      recentCareChange?: 'NONE' | 'WATERING' | 'LIGHT' | 'REPOT' | 'FERTILIZER' | 'TEMPERATURE' | 'PEST_TREATMENT';
+      pestsVisible?: boolean;
+    },
+    image?: File,
+  ) => {
     if (!id) return;
-    const { data } = await diagnosisApi.submit(id, symptomsText, image);
+    const { data } = await diagnosisApi.submit(id, payload, image);
     setPlant((current) => {
       if (!current) return current;
       const currentDiagnoses = (current.diagnoses as PlantRecord[] | undefined) || [];

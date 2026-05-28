@@ -192,9 +192,21 @@ export const journalApi = {
 };
 
 export const diagnosisApi = {
-  submit: (plantId: string, symptomsText: string, image?: File) => {
+  submit: (
+    plantId: string,
+    payload: {
+      symptomsText?: string;
+      symptomDuration?: 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
+      recentCareChange?: 'NONE' | 'WATERING' | 'LIGHT' | 'REPOT' | 'FERTILIZER' | 'TEMPERATURE' | 'PEST_TREATMENT';
+      pestsVisible?: boolean;
+    },
+    image?: File,
+  ) => {
     const form = new FormData();
-    if (symptomsText) form.append('symptomsText', symptomsText);
+    if (payload.symptomsText) form.append('symptomsText', payload.symptomsText);
+    if (payload.symptomDuration) form.append('symptomDuration', payload.symptomDuration);
+    if (payload.recentCareChange) form.append('recentCareChange', payload.recentCareChange);
+    if (payload.pestsVisible != null) form.append('pestsVisible', String(payload.pestsVisible));
     if (image) form.append('image', image);
     return api.post(`/plants/${plantId}/diagnose`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },

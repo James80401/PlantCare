@@ -32,8 +32,24 @@ export class DiagnosisController {
     @Param('plantId') plantId: string,
     @UploadedFile() file: Express.Multer.File,
     @Body('symptomsText') symptomsText?: string,
+    @Body('symptomDuration') symptomDuration?: 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS',
+    @Body('recentCareChange')
+    recentCareChange?:
+      | 'NONE'
+      | 'WATERING'
+      | 'LIGHT'
+      | 'REPOT'
+      | 'FERTILIZER'
+      | 'TEMPERATURE'
+      | 'PEST_TREATMENT',
+    @Body('pestsVisible') pestsVisible?: string,
   ) {
-    return this.diagnosisService.diagnose(user.sub, plantId, file, symptomsText);
+    return this.diagnosisService.diagnose(user.sub, plantId, file, symptomsText, {
+      symptomDuration,
+      recentCareChange,
+      pestsVisible:
+        pestsVisible == null ? undefined : pestsVisible === 'true' || pestsVisible === '1',
+    });
   }
 
   @Get(':diagnosisId/recovery-suggestions')

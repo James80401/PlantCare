@@ -7,6 +7,18 @@ interface StructuredDetail {
   immediateActions?: string[];
   longTermCare?: string[];
   whenToSeekHelp?: string;
+  intake?: {
+    symptomDuration?: 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
+    recentCareChange?:
+      | 'NONE'
+      | 'WATERING'
+      | 'LIGHT'
+      | 'REPOT'
+      | 'FERTILIZER'
+      | 'TEMPERATURE'
+      | 'PEST_TREATMENT';
+    pestsVisible?: boolean;
+  };
 }
 
 interface DiagnosisResultProps {
@@ -48,6 +60,42 @@ function sourceLabel(source?: string): string {
   }
 }
 
+function intakeLabel(detail: StructuredDetail | null): string[] {
+  if (!detail?.intake) return [];
+  const labels: string[] = [];
+  if (detail.intake.symptomDuration) {
+    labels.push(
+      `Duration: ${
+        {
+          TODAY: 'Today',
+          DAYS_2_3: '2-3 days',
+          DAYS_4_7: '4-7 days',
+          WEEKS_2_PLUS: '2+ weeks',
+        }[detail.intake.symptomDuration]
+      }`,
+    );
+  }
+  if (detail.intake.recentCareChange && detail.intake.recentCareChange !== 'NONE') {
+    labels.push(
+      `Recent change: ${
+        {
+          WATERING: 'Watering',
+          LIGHT: 'Light exposure',
+          REPOT: 'Repotting',
+          FERTILIZER: 'Fertilizer',
+          TEMPERATURE: 'Temperature/humidity',
+          PEST_TREATMENT: 'Pest treatment',
+          NONE: 'None',
+        }[detail.intake.recentCareChange]
+      }`,
+    );
+  }
+  if (detail.intake.pestsVisible != null) {
+    labels.push(`Visible pests: ${detail.intake.pestsVisible ? 'Yes' : 'No'}`);
+  }
+  return labels;
+}
+
 export default function DiagnosisResult({
   diagnosis,
   onResolvedChange,
@@ -63,6 +111,7 @@ export default function DiagnosisResult({
     (detail.likelyCauses?.length ||
       detail.immediateActions?.length ||
       detail.longTermCare?.length);
+  const intakeDetails = intakeLabel(detail);
 
   return (
     <div
@@ -119,6 +168,18 @@ export default function DiagnosisResult({
           <span className="font-medium text-emerald-800">Reported: </span>
           {diagnosis.symptomsText}
         </p>
+      ) : null}
+      {intakeDetails.length ? (
+        <div className="flex flex-wrap gap-1.5">
+          {intakeDetails.map((item) => (
+            <span
+              key={item}
+              className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-600"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
       ) : null}
 
       {diagnosis.imageUrl ? (
