@@ -1,4 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormError } from '../components/a11y/FormError';
+import { StatusMessage } from '../components/a11y/StatusMessage';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -118,7 +120,7 @@ function PostComments({
               {posting ? '…' : 'Reply'}
             </Button>
           </form>
-          {error ? <p className="text-xs text-red-600">{error}</p> : null}
+          {error ? <FormError className="text-xs">{error}</FormError> : null}
         </div>
       ) : null}
     </div>
@@ -327,12 +329,10 @@ export default function Community() {
         </form>
       </Card>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <FormError>{error}</FormError> : null}
 
       {loading ? (
-        <p className="text-sm text-gray-500" role="status">
-          Loading feed…
-        </p>
+        <StatusMessage>Loading feed…</StatusMessage>
       ) : posts.length === 0 ? (
         <p className="rounded-2xl border border-emerald-100 bg-white p-6 text-center text-sm text-gray-500">
           No posts yet — be the first to share a tip.

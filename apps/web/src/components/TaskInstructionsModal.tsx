@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
+import { FormError } from './a11y/FormError';
+import { StatusMessage } from './a11y/StatusMessage';
 import { useAuth } from '../context/AuthContext';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 import { StructuredCareSectionCard } from './care/StructuredCareSectionCard';
 import { tasksApi } from '../services/api';
 import { taskTypeLabel } from '../utils/tasks';
@@ -60,6 +63,7 @@ export default function TaskInstructionsModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [guide, setGuide] = useState<Instructions | null>(null);
+  const { initialFocusRef } = useDialogA11y(true, onClose);
 
   useEffect(() => {
     setLoading(true);
@@ -100,27 +104,31 @@ export default function TaskInstructionsModal({
             </h2>
           </div>
           <button
+            ref={initialFocusRef}
             type="button"
             onClick={onClose}
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-2xl leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-            aria-label="Close"
+            aria-label="Close care instructions"
           >
             ×
           </button>
         </div>
 
         <div className="p-4 space-y-5 sm:p-5">
-          {loading && (
-            <div className="space-y-3">
-              <div className="h-24 animate-pulse rounded-2xl bg-emerald-50" />
-              <div className="h-32 animate-pulse rounded-2xl bg-gray-100" />
-            </div>
-          )}
-          {error && (
-            <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {loading ? (
+            <>
+              <StatusMessage className="sr-only">Loading care instructions…</StatusMessage>
+              <div className="space-y-3" aria-hidden>
+                <div className="h-24 animate-pulse rounded-2xl bg-emerald-50" />
+                <div className="h-32 animate-pulse rounded-2xl bg-gray-100" />
+              </div>
+            </>
+          ) : null}
+          {error ? (
+            <FormError className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-700">
               {error}
-            </p>
-          )}
+            </FormError>
+          ) : null}
           {guide && (
             <>
               <section className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
@@ -143,7 +151,10 @@ export default function TaskInstructionsModal({
                 <p className="mt-3 text-sm leading-6 text-gray-700">{guide.summary}</p>
               </section>
               {showToc && (
-                <nav className="text-sm border border-emerald-100 rounded-2xl p-3 bg-white">
+                <nav
+                  className="text-sm border border-emerald-100 rounded-2xl p-3 bg-white"
+                  aria-label="Care guide sections"
+                >
                   <p className="font-semibold text-emerald-900 mb-2">Jump to</p>
                   <ul className="flex flex-wrap gap-2">
                     {guide.sections.map((sec, i) => (

@@ -404,8 +404,8 @@ Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, 
 - [ ] Add focused component tests for dashboard summary calculations.
 - [ ] Add API tests for any dashboard endpoint.
 - [ ] Add mobile viewport QA checklist.
-- [ ] Verify keyboard navigation and screen reader labels.
-- [ ] Verify color contrast for warning/success states.
+- [x] Verify keyboard navigation and screen reader labels (H2 — see [a11y-checklist.md](a11y-checklist.md)).
+- [ ] Verify color contrast for warning/success states (manual pass per release).
 - [ ] Verify empty, loading, and error states.
 - [ ] Verify public preview/mobile testing workflow stays documented.
 

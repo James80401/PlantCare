@@ -89,6 +89,20 @@ test.describe('UAT checklist — authenticated flows', () => {
     await expectNoHorizontalScroll(page);
   });
 
+  test('core accessibility landmarks are present', async ({ page }) => {
+    await page.goto('/garden');
+    await expect(page.locator('main#main-content')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Skip to main content/i })).toBeAttached();
+    await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible();
+    await page.goto('/garden/tasks');
+    await expect(page.getByRole('heading', { name: /Care tasks/i })).toBeVisible();
+    const snooze = page.getByRole('button', { name: /^Snooze$/i }).first();
+    if (await snooze.isVisible()) {
+      await snooze.click();
+      await expect(page.getByRole('region', { name: /Snooze options/i })).toBeVisible();
+    }
+  });
+
   test('Dr. Plant chat is reachable from plant health tab', async ({ page }) => {
     const auth = loadAuth();
     let plantId = auth.plantId;

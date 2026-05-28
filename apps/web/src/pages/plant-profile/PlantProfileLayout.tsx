@@ -46,7 +46,11 @@ function PlantProfileShell() {
         <div className="grid gap-5 p-5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:p-6">
           <div className="h-36 w-full overflow-hidden rounded-3xl bg-emerald-100 sm:h-36 sm:w-36">
             {(plant.imageUrl as string) ? (
-              <img src={plant.imageUrl as string} alt="" className="h-full w-full object-cover" />
+              <img
+                src={plant.imageUrl as string}
+                alt={`Photo of ${plantLabel}`}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <span className="flex h-full items-center justify-center text-5xl" aria-hidden>
                 🌿
@@ -109,8 +113,12 @@ function PlantProfileShell() {
             </div>
 
             {species.toxicity ? (
-              <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                ⚠️ {String(species.toxicity)}
+              <p
+                role="note"
+                className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+              >
+                <span aria-hidden>⚠️ </span>
+                {String(species.toxicity)}
               </p>
             ) : null}
 

@@ -55,6 +55,9 @@ export default function TaskRow({
   const plantLabel = task.plant.nickname || task.plant.species.commonName;
   const icon = TASK_TYPE_ICONS[task.taskType] ?? '🌿';
   const dueLabel = isToday(due) ? 'Due today' : `Due ${format(due, 'MMM d')}`;
+  const skipPanelId = `skip-panel-${task.id}`;
+  const snoozePanelId = `snooze-panel-${task.id}`;
+  const completePanelId = `complete-panel-${task.id}`;
 
   const rowClass = [
     'task-row group relative flex gap-3 rounded-2xl border px-3 py-3.5 transition-all duration-300 sm:px-4',
@@ -83,6 +86,7 @@ export default function TaskRow({
             className="task-check flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
             aria-label={`Mark ${taskTypeLabel(task.taskType)} for ${plantLabel} as done`}
             aria-expanded={completeFeedbackOpen}
+            aria-controls={completePanelId}
           />
         ) : (
           <span
@@ -154,7 +158,10 @@ export default function TaskRow({
         {isSkipped && <p className="mt-0.5 text-xs text-gray-500">Skipped</p>}
 
         {overdue && isPending && (
-          <p className="mt-0.5 text-xs font-medium text-red-600">Overdue</p>
+          <p className="mt-0.5 text-xs font-semibold text-red-700">
+            <span aria-hidden>⚠ </span>
+            Overdue
+          </p>
         )}
 
         {isPending && !overdue && (
@@ -179,6 +186,7 @@ export default function TaskRow({
                 onClick={() => setFeedbackOpen((open) => !open)}
                 className="inline-flex min-h-11 items-center justify-center rounded-full bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
                 aria-expanded={feedbackOpen}
+                aria-controls={skipPanelId}
               >
                 Skip
               </button>
@@ -188,6 +196,7 @@ export default function TaskRow({
                   onClick={() => setSnoozeOpen((open) => !open)}
                   className="inline-flex min-h-11 items-center justify-center rounded-full bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-800 transition hover:bg-sky-100"
                   aria-expanded={snoozeOpen}
+                  aria-controls={snoozePanelId}
                 >
                   Snooze
                 </button>
@@ -195,7 +204,12 @@ export default function TaskRow({
             </div>
 
             {snoozeOpen && onSnooze ? (
-              <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3">
+              <div
+                id={snoozePanelId}
+                role="region"
+                aria-label="Snooze options"
+                className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3"
+              >
                 <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
                   Remind me
                 </p>
@@ -217,8 +231,13 @@ export default function TaskRow({
               </div>
             ) : null}
 
-            {feedbackOpen && (
-              <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3">
+            {feedbackOpen ? (
+              <div
+                id={skipPanelId}
+                role="region"
+                aria-label="Skip task feedback"
+                className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3"
+              >
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
                   Why skip this task?
                 </p>
@@ -284,10 +303,15 @@ export default function TaskRow({
                   </button>
                 </div>
               </div>
-            )}
+            ) : null}
 
-            {completeFeedbackOpen && (
-              <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3">
+            {completeFeedbackOpen ? (
+              <div
+                id={completePanelId}
+                role="region"
+                aria-label="Complete task feedback"
+                className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3"
+              >
                 <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
                   {task.taskType === 'WATER' ? 'Quick feedback (water)' : 'Complete task'}
                 </p>
@@ -365,7 +389,7 @@ export default function TaskRow({
                   </button>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         )}
       </div>

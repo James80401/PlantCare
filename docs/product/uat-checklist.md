@@ -59,6 +59,14 @@
 - [x] Plant Buddy: home + activities pages (Playwright `uat.spec.ts`)
 - [x] Device push token registration API (`verify.mjs` POST `/devices`)
 
+## E2. Accessibility (H2)
+
+- [x] Skip link targets `#main-content`
+- [x] Form errors use `role="alert"`; loading uses `role="status"`
+- [x] Task snooze/skip panels expose `aria-controls` + named regions
+- [x] Playwright: landmarks test in `uat.spec.ts`
+- [ ] Manual: VoiceOver/NVDA on one complete + skip flow per release
+
 ## E. Mobile QA (browser / device)
 
 - [x] Empty garden state readable, no horizontal scroll (Playwright mobile)

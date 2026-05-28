@@ -18,6 +18,8 @@ import {
   getTodayTasks,
   type DashboardPlant,
 } from '../utils/dashboard';
+import { FormError } from '../components/a11y/FormError';
+import { StatusMessage } from '../components/a11y/StatusMessage';
 import { EngagementProgress } from '../components/engagement/EngagementProgress';
 import {
   resolveMilestones,
@@ -298,9 +300,9 @@ export default function Dashboard() {
       <SeasonalBanner />
 
       {dashError ? (
-        <p className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <FormError className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-rose-700">
           {dashError}
-        </p>
+        </FormError>
       ) : null}
 
       {(scheduleSuggestions.length > 0 || scheduleMessage) && (
@@ -349,7 +351,10 @@ export default function Dashboard() {
           />
 
           {dashboardLoading ? (
-            <DashboardSkeleton />
+            <>
+              <StatusMessage className="sr-only">Loading dashboard…</StatusMessage>
+              <DashboardSkeleton />
+            </>
           ) : plants.length === 0 ? (
             <EmptyState
               title="Build your first care plan"

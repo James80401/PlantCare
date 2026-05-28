@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { SkipLink } from './a11y/SkipLink';
 import { navIcons } from './icons/NavIcons';
 import { useAuth } from '../context/AuthContext';
 import { BuddyCompanionProvider } from '../context/BuddyCompanionContext';
@@ -30,13 +31,14 @@ export default function Layout() {
   return (
     <BuddyCompanionProvider>
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-page, #f7f6f2)' }}>
+      <SkipLink />
       <header className="sticky top-0 z-30 bg-emerald-900 text-white shadow-md">
         <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
             <Link to="/garden" className="min-w-0 text-xl font-bold tracking-tight font-display">
               <span className="block truncate">Plant Care</span>
             </Link>
-            <nav className="hidden sm:flex items-center gap-1 text-sm">
+            <nav className="hidden sm:flex items-center gap-1 text-sm" aria-label="Main">
               {desktopNav.map(({ to, label, exact }) => {
                 const active = isActivePath(location.pathname, to, exact);
                 return (
@@ -73,7 +75,8 @@ export default function Layout() {
               <button
                 type="button"
                 onClick={logout}
-                className="rounded-full min-h-11 min-w-11 px-2 py-1 text-emerald-200 hover:bg-white/10 hover:text-white"
+                aria-label="Log out"
+                className="rounded-full min-h-11 min-w-11 px-3 py-1 text-emerald-200 hover:bg-white/10 hover:text-white"
               >
                 Log out
               </button>
@@ -81,7 +84,11 @@ export default function Layout() {
           </div>
         </div>
       </header>
-      <main className="page-garden flex-1 max-w-6xl w-full mx-auto px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:py-6 sm:pb-6">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="page-garden flex-1 max-w-6xl w-full mx-auto px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:py-6 sm:pb-6 focus:outline-none"
+      >
         <Outlet />
       </main>
       <nav
@@ -106,14 +113,19 @@ export default function Layout() {
                 }`}
               >
                 <Icon className="h-6 w-6" aria-hidden />
-                {showQuestBadge && (
+                {showQuestBadge ? (
                   <span
                     className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-emerald-950"
                     aria-hidden
                   >
                     {buddyQuestClaims > 9 ? '9+' : buddyQuestClaims}
                   </span>
-                )}
+                ) : null}
+                {showQuestBadge ? (
+                  <span className="sr-only">
+                    , {buddyQuestClaims} quest{buddyQuestClaims === 1 ? '' : 's'} ready to claim
+                  </span>
+                ) : null}
                 <span className="mt-1 font-medium">{mobileLabel}</span>
               </Link>
             );
