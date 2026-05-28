@@ -59,6 +59,18 @@
 - [x] Plant Buddy: home + activities pages (Playwright `uat.spec.ts`)
 - [x] Device push token registration API (`verify.mjs` POST `/devices`)
 
+## G4. Play closed testing (Android)
+
+- [ ] `npm run mobile:store-check` passes locally
+- [ ] `npm run mobile:store-check -- --live` passes against production URLs
+- [ ] `apps/web/.env.local` has production `VITE_API_BASE_URL`
+- [ ] Signed AAB uploaded to Internal or Closed track
+- [ ] Privacy policy URL live in Play Console
+- [ ] Listing copy from [play-store-listing.md](play-store-listing.md)
+- [ ] At least one tester installed via opt-in link
+
+Runbook: [google-play-closed-testing.md](google-play-closed-testing.md)
+
 ## E2. Accessibility (H2)
 
 - [x] Skip link targets `#main-content`

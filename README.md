@@ -65,6 +65,8 @@ See [docs/guides/13-operations-deployment-and-quality.md](docs/guides/13-operati
 cp .env.production.example .env.production   # edit domain + secrets
 npm run production:check
 npm run production:signoff   # after deploy: live probes + verify + smoke
+npm run mobile:store-check   # Play closed testing preflight (G4)
+npm run mobile:preflight     # store-check + push-check
 npm run production:up   # on VPS behind HTTPS reverse proxy
 ```
 

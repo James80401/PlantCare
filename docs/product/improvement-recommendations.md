@@ -248,14 +248,14 @@ Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
 1. **G3** — Production deploy sign-off on your public URL (manual §F checklist)
 
-**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, C5, D1, D2, D3, D4, E3, F1, F3, G1, G2, G3, F2, E4, H1, H2.
+**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, C5, D1, D2, D3, D4, E3, F1, F3, G1, G2, G3, G4, F2, E4, H1, H2.
 
 ### Next (1–2 months)
 
 Focus: scale, social, API shape.
 
-1. **G4** — Store release program (Play closed testing)
-2. **Phase 4** — Heatwave/frost scheduling rules
+1. **Phase 4** — Heatwave/frost scheduling rules
+2. **H1** — Dashboard cross-plant journal/diagnosis snippets
 
 ### Later (backlog)
 
@@ -310,7 +310,7 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | G1 | Done | FCM HTTP v1 + legacy fallback |
 | G2 | Done | Overdue cron, multi-task body, plant deep links |
 | G3 | Done | `production:check` + `production:signoff` (live probes, verify, smoke); run against your public URL to complete §F |
-| G4 | Partial | Capacitor scripts; store TBD |
+| G4 | Done | `mobile:store-check`, `mobile:preflight`, Play closed testing runbook + listing copy |
 | H1 | Partial | Dashboard endpoint exists; still heavy payload |
 | H2 | Done | Skip link, form alerts, dialog focus, task panel labels, a11y checklist + e2e landmarks |
 | H3 | Done | E2E: instructions beginner/advanced toggle + snooze |

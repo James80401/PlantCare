@@ -168,7 +168,9 @@ Opens Android Studio. Then:
 
 Stay on Closed testing until ready for Production.
 
-Detail: [google-play-closed-testing.md](../product/google-play-closed-testing.md).
+Preflight: `npm run mobile:store-check -- --live` and `npm run mobile:preflight`.
+
+Detail: [google-play-closed-testing.md](../product/google-play-closed-testing.md) · Listing copy: [play-store-listing.md](../product/play-store-listing.md).
 
 ---
 
