@@ -63,10 +63,10 @@ services:
       - plantcare_prod_uploads:/app/apps/api/uploads
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3001/api/v1/health']
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 180s
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 600s
 
   web:
     build:
