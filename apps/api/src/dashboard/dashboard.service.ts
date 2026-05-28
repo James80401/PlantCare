@@ -3,12 +3,12 @@ import { addDays, format, startOfDay, subDays } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
 import { WeatherService } from '../weather/weather.service';
+import { PlantMilestonesService } from '../milestones/plant-milestones.service';
 import {
   buildAttention,
   buildWeekPreview,
   getCareStreak,
   getGardenScore,
-  getOldestPlantAgeDays,
   getOverdueTasks,
   getPendingTasks,
   getStatusLine,
@@ -29,6 +29,7 @@ export class DashboardService {
     private prisma: PrismaService,
     private scheduler: SchedulerService,
     private weather: WeatherService,
+    private plantMilestones: PlantMilestonesService,
   ) {}
 
   async getDashboard(userId: string, from?: string, to?: string) {
@@ -145,12 +146,12 @@ export class DashboardService {
       ? this.summarizeWeather(weatherStatus.cachedAdvice, weatherStatus.locationLabel)
       : null;
 
-    const milestones = this.buildMilestones(
+    const milestones = await this.plantMilestones.syncAndListForUser(userId, {
       plantCount,
-      plants.map((p) => p.createdAt),
+      plantCreatedAts: plants.map((p) => p.createdAt),
       completedInRange,
       streak,
-    );
+    });
 
     const todayTaskRows = pickTodayTasks(taskRows, 5, currentDate);
     const pendingTaskRows = getPendingTasks(taskRows);
@@ -214,21 +215,4 @@ export class DashboardService {
     return `Weather loaded for ${where}`;
   }
 
-  private buildMilestones(
-    plantCount: number,
-    createdAts: Date[],
-    completedInRange: number,
-    streak: number,
-  ) {
-    const oldestDays = getOldestPlantAgeDays(createdAts);
-    const defs = [
-      { id: 'first_plant', title: 'First plant', unlocked: plantCount >= 1 },
-      { id: 'growing_garden', title: 'Growing garden', unlocked: plantCount >= 3 },
-      { id: 'first_care', title: 'First care win', unlocked: completedInRange >= 1 },
-      { id: 'care_rhythm_3', title: '3-day rhythm', unlocked: streak >= 3 },
-      { id: 'care_rhythm_7', title: '7-day rhythm', unlocked: streak >= 7 },
-      { id: 'thirty_days', title: '30 days together', unlocked: oldestDays >= 30 },
-    ];
-    return defs;
-  }
 }

@@ -20,7 +20,7 @@ import {
 } from '../utils/dashboard';
 import { EngagementProgress } from '../components/engagement/EngagementProgress';
 import {
-  deriveMilestones,
+  resolveMilestones,
   getGardenWellness,
   getMilestoneHighlights,
   getOldestPlantAgeDays,
@@ -187,9 +187,13 @@ export default function Dashboard() {
       ),
     [engagementContext, overdueTasks.length, plants.length, todayTasks.length],
   );
+  const milestones = useMemo(
+    () => resolveMilestones(dash?.engagement.milestones, engagementContext),
+    [dash?.engagement.milestones, engagementContext],
+  );
   const milestoneHighlights = useMemo(
-    () => getMilestoneHighlights(deriveMilestones(engagementContext)),
-    [engagementContext],
+    () => getMilestoneHighlights(milestones),
+    [milestones],
   );
   const gardenScore = dash?.engagement.score ?? gardenWellness.score;
   const needsAttentionCount = attentionItems.filter((item) => item.priority !== 'info').length;

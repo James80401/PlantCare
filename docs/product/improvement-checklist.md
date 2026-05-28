@@ -369,13 +369,13 @@ Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, 
 
 ### Engagement
 
-- [ ] Add plant milestones:
-  - [ ] first plant added
-  - [ ] first new leaf
-  - [ ] first bloom
-  - [ ] 30 days cared for
-  - [ ] recovered from issue
-  - [ ] successful propagation
+- [x] Add plant milestones (garden-level keys persisted on dashboard load):
+  - [x] first plant added
+  - [ ] first new leaf (per-plant — future)
+  - [ ] first bloom (per-plant — future)
+  - [x] 30 days cared for
+  - [ ] recovered from issue (future)
+  - [ ] successful propagation (future)
 - [ ] Add encouraging garden score.
 - [ ] Add streaks without punishing missed days.
 - [ ] Add shareable plant cards.
@@ -396,7 +396,7 @@ Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, 
 - [ ] Add `TaskSnooze` or reschedule metadata.
 - [ ] Add `PlantHealthLog`.
 - [ ] Add `GrowthMeasurement`.
-- [ ] Add `PlantMilestone`.
+- [x] Add `PlantMilestone`.
 - [ ] Add `CarePreference` for beginner/advanced mode.
 
 ## Phase 8 - Quality gates

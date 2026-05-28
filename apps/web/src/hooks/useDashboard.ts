@@ -57,7 +57,15 @@ export interface DashboardPayload {
     score: number;
     streak: number;
     completedInRange: number;
-    milestones: Array<{ id: string; title: string; unlocked: boolean }>;
+    milestones: Array<{
+      id: string;
+      title: string;
+      description: string;
+      emoji: string;
+      unlocked: boolean;
+      unlockedAt: string | null;
+      progressLabel?: string;
+    }>;
   };
 }
 

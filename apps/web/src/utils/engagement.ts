@@ -17,8 +17,19 @@ export interface Milestone {
   description: string;
   emoji: string;
   unlocked: boolean;
+  unlockedAt?: string | null;
   progressLabel?: string;
 }
+
+export type MilestoneApiRow = {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+  progressLabel?: string;
+};
 
 export interface EngagementContext {
   plantCount: number;
@@ -150,6 +161,26 @@ export function getOldestPlantAgeDays(
 
   const oldest = dates.reduce((min, date) => (date < min ? date : min), dates[0]);
   return Math.max(0, differenceInCalendarDays(startOfDay(currentDate), oldest));
+}
+
+export function milestonesFromApi(rows: MilestoneApiRow[] | undefined): Milestone[] | null {
+  if (!rows?.length) return null;
+  return rows.map((row) => ({
+    id: row.id as MilestoneId,
+    title: row.title,
+    description: row.description,
+    emoji: row.emoji,
+    unlocked: row.unlocked,
+    unlockedAt: row.unlockedAt,
+    progressLabel: row.progressLabel,
+  }));
+}
+
+export function resolveMilestones(
+  apiRows: MilestoneApiRow[] | undefined,
+  ctx: EngagementContext,
+): Milestone[] {
+  return milestonesFromApi(apiRows) ?? deriveMilestones(ctx);
 }
 
 export function deriveMilestones(ctx: EngagementContext): Milestone[] {

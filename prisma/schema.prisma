@@ -95,6 +95,7 @@ model User {
   postLikes             PostLike[]
   activityEvents        ActivityEvent[]
   buddy                 Buddy?
+  plantMilestones       PlantMilestone[]
 }
 
 model WeatherAdviceCache {
@@ -187,8 +188,24 @@ model Plant {
   diagnoses              Diagnosis[]
   diagnosisConversations DiagnosisConversation[]
   shares                 PlantShare[]
+  milestones             PlantMilestone[]
 
   @@index([userId])
+}
+
+model PlantMilestone {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plantId      String?
+  plant        Plant?   @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  milestoneKey String
+  title        String
+  unlockedAt   DateTime @default(now())
+
+  @@unique([userId, milestoneKey])
+  @@index([userId])
+  @@index([plantId])
 }
 
 model Task {
