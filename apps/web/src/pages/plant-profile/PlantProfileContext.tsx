@@ -54,6 +54,7 @@ interface PlantProfileContextValue {
   journalRemovePhoto: boolean;
   clearJournalPhoto: () => void;
   journalError: string;
+  hasJournalContent: boolean;
   journalHeightCm: string;
   setJournalHeightCm: (value: string) => void;
   journalWidthCm: string;
@@ -189,9 +190,20 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     leafCount: journalLeafCount ? Number(journalLeafCount) : undefined,
   });
 
+  const hasJournalMeasurements = Boolean(
+    journalHeightCm.trim() || journalWidthCm.trim() || journalLeafCount.trim(),
+  );
+
+  const hasJournalContent = Boolean(
+    journalNotes.trim() ||
+      journalPhoto ||
+      hasJournalMeasurements ||
+      (editingJournalId && journalExistingPhotoUrl && !journalRemovePhoto),
+  );
+
   const addJournal = async (e: FormEvent) => {
     e.preventDefault();
-    if (!id || (!journalNotes.trim() && !journalPhoto)) return;
+    if (!id || !hasJournalContent) return;
     setJournalError('');
     try {
       await journalApi.create(id, journalPayload(), journalPhoto ?? undefined);
@@ -435,6 +447,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
       journalRemovePhoto,
       clearJournalPhoto,
       journalError,
+      hasJournalContent,
       journalHeightCm,
       setJournalHeightCm,
       journalWidthCm,
@@ -483,6 +496,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     journalPhoto,
     journalRemovePhoto,
     journalPhotoInputKey,
+    journalExistingPhotoUrl,
     journalHeightCm,
     journalWidthCm,
     journalLeafCount,

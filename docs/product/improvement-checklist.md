@@ -295,25 +295,19 @@ Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, 
 
 ### Species attributes
 
-- [ ] Add or normalize common names and scientific names.
-- [ ] Add difficulty level.
-- [ ] Add growth rate.
-- [ ] Add mature size.
-- [ ] Add bloom season.
-- [ ] Add dormancy season.
-- [ ] Add USDA/climate zone guidance.
-- [ ] Add pet and child toxicity details.
-- [ ] Add common pests.
-- [ ] Add common diseases.
-- [ ] Add propagation methods.
-- [ ] Add soil pH and soil type guidance.
-- [ ] Add humidity and temperature thresholds.
+- [x] Add or normalize common names and scientific names (catalog seed).
+- [x] Add difficulty level (inferred + browse tags).
+- [x] Add growth rate, mature size, bloom/dormancy, propagation, soil type (inferred metadata).
+- [x] Add USDA/climate zone guidance (hardiness zones in growing profile).
+- [x] Add pet and child toxicity details (toxicity field + summary).
+- [x] Add common pests and diseases (inferred metadata).
+- [x] Add humidity and temperature thresholds (growing profile).
 
 ### Search and discovery
 
-- [ ] Search by common name and scientific name.
-- [ ] Add filters for pet-safe, low-light, beginner-friendly, edible, drought-tolerant, indoor, and outdoor plants.
-- [ ] Add recommended plants based on user location and experience.
+- [x] Search by common name and scientific name.
+- [x] Discovery filters including high humidity, blooms indoors, pollinator-friendly.
+- [x] Recommended plants based on experience and light (settings); bloom/pollinator scoring added.
 - [x] Add "complete your plant profile" suggestions when species data is missing.
 
 ## Phase 4 - Adaptive care intelligence
@@ -369,7 +363,7 @@ Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, 
 
 - [ ] Build a richer plant journal timeline.
 - [ ] Show photos, care actions, notes, diagnoses, and treatments together.
-- [ ] Add growth measurements such as height, spread, and leaf count.
+- [x] Add growth measurements such as height, spread, and leaf count (journal form + growth panel with trends).
 - [ ] Add photo comparison views.
 - [ ] Add prompts for useful observations after care tasks.
 

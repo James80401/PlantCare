@@ -1,6 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { GrowthMeasurementsPanel } from '../../components/journal/GrowthMeasurementsPanel';
 import JournalPhotoCompare from '../../components/JournalPhotoCompare';
+import {
+  extractMeasurementPoints,
+  measurementSummaryForEntry,
+  pickPhotoCompareIds,
+} from '../../utils/journalMeasurements';
 import { journalPrompts } from './constants';
 import { usePlantProfile } from './PlantProfileContext';
 import { PlantTimeline, ProfileSection, SectionEmptyState } from './shared';
@@ -12,8 +18,19 @@ export default function PlantJournalTab() {
     () => ctx.journalEntries.filter((e) => e.photoUrl),
     [ctx.journalEntries],
   );
+  const measurementPoints = useMemo(
+    () => extractMeasurementPoints(ctx.journalEntries),
+    [ctx.journalEntries],
+  );
   const [compareBeforeId, setCompareBeforeId] = useState('');
   const [compareAfterId, setCompareAfterId] = useState('');
+
+  useEffect(() => {
+    const defaults = pickPhotoCompareIds(photoEntries);
+    if (!defaults) return;
+    setCompareBeforeId((current) => current || defaults.beforeId);
+    setCompareAfterId((current) => current || defaults.afterId);
+  }, [photoEntries]);
 
   const compareUrls = useMemo(() => {
     const before = photoEntries.find((e) => e.id === compareBeforeId);
@@ -33,6 +50,7 @@ export default function PlantJournalTab() {
 
         <JournalSidebar
           photoEntries={photoEntries}
+          measurementPoints={measurementPoints}
           compareUrls={compareUrls}
           compareBeforeId={compareBeforeId}
           compareAfterId={compareAfterId}
@@ -48,10 +66,7 @@ export default function PlantJournalTab() {
 function JournalForm() {
   const ctx = usePlantProfile();
   const isEditing = Boolean(ctx.editingJournalId);
-  const hasContent =
-    Boolean(ctx.journalNotes.trim()) ||
-    Boolean(ctx.journalPhoto) ||
-    (isEditing && Boolean(ctx.journalExistingPhotoUrl) && !ctx.journalRemovePhoto);
+  const hasContent = ctx.hasJournalContent;
 
   return (
     <form
@@ -85,6 +100,13 @@ function JournalForm() {
         />
       </label>
 
+      <fieldset className="rounded-xl border border-emerald-100/80 bg-white/60 p-3">
+        <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+          Growth measurements (optional)
+        </legend>
+        <p className="mb-3 text-xs text-gray-500">
+          Log numbers on their own or with notes and photos — trends appear in the sidebar.
+        </p>
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block text-sm">
           <span className="font-medium text-gray-700">Height (cm)</span>
@@ -94,6 +116,7 @@ function JournalForm() {
             value={ctx.journalHeightCm}
             onChange={(e) => ctx.setJournalHeightCm(e.target.value)}
             className="mt-1 w-full rounded-xl border border-emerald-100 px-3 py-2 text-sm"
+            placeholder="e.g. 42"
           />
         </label>
         <label className="block text-sm">
@@ -104,6 +127,7 @@ function JournalForm() {
             value={ctx.journalWidthCm}
             onChange={(e) => ctx.setJournalWidthCm(e.target.value)}
             className="mt-1 w-full rounded-xl border border-emerald-100 px-3 py-2 text-sm"
+            placeholder="e.g. 28"
           />
         </label>
         <label className="block text-sm">
@@ -114,9 +138,11 @@ function JournalForm() {
             value={ctx.journalLeafCount}
             onChange={(e) => ctx.setJournalLeafCount(e.target.value)}
             className="mt-1 w-full rounded-xl border border-emerald-100 px-3 py-2 text-sm"
+            placeholder="e.g. 42"
           />
         </label>
       </div>
+      </fieldset>
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
@@ -185,6 +211,7 @@ function JournalForm() {
 
 function JournalSidebar({
   photoEntries,
+  measurementPoints,
   compareUrls,
   compareBeforeId,
   compareAfterId,
@@ -193,6 +220,7 @@ function JournalSidebar({
   ctx,
 }: {
   photoEntries: PlantRecord[];
+  measurementPoints: ReturnType<typeof extractMeasurementPoints>;
   compareUrls: { before: string; after: string } | null;
   compareBeforeId: string;
   compareAfterId: string;
@@ -200,11 +228,37 @@ function JournalSidebar({
   onAfterChange: (id: string) => void;
   ctx: ReturnType<typeof usePlantProfile>;
 }) {
+  const beforeEntry = photoEntries.find((e) => e.id === compareBeforeId);
+  const afterEntry = photoEntries.find((e) => e.id === compareAfterId);
+  const compareMeasurementNote =
+    beforeEntry && afterEntry
+      ? [measurementSummaryForEntry(beforeEntry), measurementSummaryForEntry(afterEntry)]
+          .filter(Boolean)
+          .join(' → ')
+      : null;
+
   return (
     <div className="space-y-4">
+      <GrowthMeasurementsPanel points={measurementPoints} />
+
       {photoEntries.length >= 2 ? (
         <div className="rounded-2xl border border-emerald-100 bg-white p-4 space-y-3">
-          <p className="text-sm font-semibold text-emerald-950">Compare growth photos</p>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <p className="text-sm font-semibold text-emerald-950">Compare growth photos</p>
+            <button
+              type="button"
+              onClick={() => {
+                const defaults = pickPhotoCompareIds(photoEntries);
+                if (defaults) {
+                  onBeforeChange(defaults.beforeId);
+                  onAfterChange(defaults.afterId);
+                }
+              }}
+              className="text-xs font-semibold text-emerald-700 hover:underline"
+            >
+              Oldest → newest
+            </button>
+          </div>
           <div className="grid gap-2 sm:grid-cols-2">
             <label className="text-xs font-medium text-gray-600">
               Earlier photo
@@ -238,7 +292,25 @@ function JournalSidebar({
             </label>
           </div>
           {compareUrls ? (
-            <JournalPhotoCompare beforeUrl={compareUrls.before} afterUrl={compareUrls.after} />
+            <>
+              {compareMeasurementNote ? (
+                <p className="text-xs text-gray-600">{compareMeasurementNote}</p>
+              ) : null}
+              <JournalPhotoCompare
+                beforeUrl={compareUrls.before}
+                afterUrl={compareUrls.after}
+                beforeLabel={
+                  beforeEntry
+                    ? format(new Date(beforeEntry.createdAt as string), 'MMM d, yyyy')
+                    : 'Earlier'
+                }
+                afterLabel={
+                  afterEntry
+                    ? format(new Date(afterEntry.createdAt as string), 'MMM d, yyyy')
+                    : 'Later'
+                }
+              />
+            </>
           ) : null}
         </div>
       ) : null}
@@ -262,6 +334,7 @@ function JournalSidebar({
 
 function formatJournalOption(entry: PlantRecord) {
   const date = format(new Date(entry.createdAt as string), 'MMM d, yyyy');
-  const note = ((entry.notes as string) || 'Photo').slice(0, 40);
-  return `${date} — ${note}`;
+  const measurements = measurementSummaryForEntry(entry);
+  const note = ((entry.notes as string) || (measurements ? 'Measurements' : 'Photo')).slice(0, 32);
+  return measurements ? `${date} — ${measurements}` : `${date} — ${note}`;
 }
