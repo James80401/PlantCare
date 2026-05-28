@@ -75,11 +75,13 @@ function PostComments({
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="text-xs font-semibold text-emerald-800 hover:underline"
+        aria-expanded={open}
+        aria-controls={`comments-${postId}`}
       >
         {open ? 'Hide' : 'View'} comments ({commentCount})
       </button>
       {open ? (
-        <div className="mt-2 space-y-2">
+        <div id={`comments-${postId}`} className="mt-2 space-y-2" role="region" aria-label="Comments">
           {loading ? (
             <p className="text-xs text-gray-500">Loading comments…</p>
           ) : comments.length === 0 ? (
@@ -123,10 +125,15 @@ function PostComments({
   );
 }
 
+const PAGE_SIZE = 15;
+
 export default function Community() {
   const { user } = useAuth();
   const [posts, setPosts] = useState<CommunityPostSummary[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
   const [body, setBody] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -146,18 +153,27 @@ export default function Community() {
     return () => URL.revokeObjectURL(objectUrl);
   }, [imageFile]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const loadPage = useCallback(async (cursor?: string) => {
+    const loadingMorePage = Boolean(cursor);
+    if (loadingMorePage) setLoadingMore(true);
+    else setLoading(true);
     setError('');
     try {
-      const { data } = await communityApi.listPosts(40);
-      setPosts(data);
+      const { data } = await communityApi.listPosts({ limit: PAGE_SIZE, cursor });
+      setPosts((current) => (loadingMorePage ? [...current, ...data.posts] : data.posts));
+      setNextCursor(data.nextCursor);
+      setHasMore(data.hasMore);
     } catch {
-      setError('Could not load community posts.');
+      setError(
+        loadingMorePage ? 'Could not load more posts.' : 'Could not load community posts.',
+      );
     } finally {
-      setLoading(false);
+      if (loadingMorePage) setLoadingMore(false);
+      else setLoading(false);
     }
   }, []);
+
+  const load = useCallback(() => loadPage(), [loadPage]);
 
   useEffect(() => {
     load();
@@ -314,18 +330,22 @@ export default function Community() {
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       {loading ? (
-        <p className="text-sm text-gray-500">Loading feed…</p>
+        <p className="text-sm text-gray-500" role="status">
+          Loading feed…
+        </p>
       ) : posts.length === 0 ? (
         <p className="rounded-2xl border border-emerald-100 bg-white p-6 text-center text-sm text-gray-500">
           No posts yet — be the first to share a tip.
         </p>
       ) : (
+        <section aria-label="Community feed">
         <ul className="space-y-3">
           {posts.map((post) => (
             <li key={post.id}>
+              <article aria-labelledby={`post-${post.id}-author`}>
               <Card className="space-y-2">
                 <div>
-                  <p className="text-sm font-semibold text-emerald-900">
+                  <p id={`post-${post.id}-author`} className="text-sm font-semibold text-emerald-900">
                     {post.author?.name || 'Gardener'}
                   </p>
                   <p className="text-xs text-gray-400">
@@ -340,7 +360,7 @@ export default function Community() {
                 {post.imageUrl ? (
                   <img
                     src={post.imageUrl}
-                    alt="Community post"
+                    alt={`Photo shared by ${post.author?.name || 'gardener'}`}
                     className="max-h-96 w-full rounded-2xl border border-emerald-100 object-cover"
                     loading="lazy"
                   />
@@ -350,9 +370,10 @@ export default function Community() {
                   <button
                     type="button"
                     onClick={() => handleLike(post.id)}
-                    className={`text-xs font-semibold ${
+                    className={`inline-flex min-h-11 items-center text-xs font-semibold ${
                       post.likedByMe ? 'text-rose-700' : 'text-emerald-800 hover:underline'
                     }`}
+                    aria-pressed={Boolean(post.likedByMe)}
                   >
                     {post.likedByMe ? '♥ Liked' : '♡ Like'} ({post._count?.likes ?? 0})
                   </button>
@@ -375,9 +396,24 @@ export default function Community() {
                   </button>
                 ) : null}
               </Card>
+              </article>
             </li>
           ))}
         </ul>
+        {hasMore ? (
+          <div className="mt-4 flex justify-center">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={loadingMore || !nextCursor}
+              aria-busy={loadingMore}
+              onClick={() => nextCursor && loadPage(nextCursor)}
+            >
+              {loadingMore ? 'Loading…' : 'Load more posts'}
+            </Button>
+          </div>
+        ) : null}
+        </section>
       )}
     </div>
   );

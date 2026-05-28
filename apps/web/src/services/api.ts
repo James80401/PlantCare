@@ -474,8 +474,17 @@ export const buddyApi = {
   socialFeed: () => api.get('/buddy/social/feed'),
 };
 
+export type CommunityPostsPage = {
+  posts: CommunityPostSummary[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export const communityApi = {
-  listPosts: (limit = 30) => api.get<CommunityPostSummary[]>('/community/posts', { params: { limit } }),
+  listPosts: (params?: { limit?: number; cursor?: string }) =>
+    api.get<CommunityPostsPage>('/community/posts', {
+      params: { limit: params?.limit ?? 20, cursor: params?.cursor },
+    }),
   createPost: (data: { body: string; speciesId?: string; imageUrl?: string }) =>
     api.post<CommunityPostSummary>('/community/posts', data),
   deletePost: (postId: string) => api.delete(`/community/posts/${postId}`),

@@ -570,8 +570,13 @@ async function main() {
   }
 
   const communityList = await api('GET', '/community/posts?limit=5', null, token);
-  if (communityList.status === 200 && Array.isArray(communityList.data) && communityList.data.length > 0) {
-    pass('Community posts list', `${communityList.data.length} post(s)`);
+  const feedPosts = communityList.data?.posts ?? communityList.data;
+  if (
+    communityList.status === 200 &&
+    Array.isArray(feedPosts) &&
+    feedPosts.length > 0
+  ) {
+    pass('Community posts list', `${feedPosts.length} post(s)`);
   } else {
     fail('Community posts list', JSON.stringify(communityList.data)?.slice(0, 120));
   }
