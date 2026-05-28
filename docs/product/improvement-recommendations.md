@@ -248,14 +248,14 @@ Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
 1. **G3** — Production deploy sign-off on your public URL (manual §F checklist)
 
-**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, D1, G1, G2, F2, E4, H1.
+**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, D1, F1, G1, G2, F2, E4, H1.
 
 ### Next (1–2 months)
 
 Focus: scale, social, API shape.
 
-1. **F1** — Community post images
-2. **E3** — Surface `defaultLightLevel` in plant UX
+1. **E3** — Surface `defaultLightLevel` in plant UX
+2. **C5** — Structured diagnosis intake
 
 ### Later (backlog)
 
@@ -309,7 +309,7 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | E2 | Done | Settings care preferences |
 | E3 | Not started | defaultLightLevel surfaced in UX |
 | E4 | Not started | Delete plant UI |
-| F1 | Not started | Community post images |
+| F1 | Done | Community post composer image upload + feed rendering |
 | F2 | Not started | canJournal on household share |
 | F3 | Partial | Community shipped; pagination/a11y gaps |
 | G1 | Done | FCM HTTP v1 + legacy fallback |

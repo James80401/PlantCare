@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import {
   communityApi,
+  plantsApi,
   speciesApi,
   type CommunityCommentSummary,
   type CommunityPostSummary,
@@ -128,10 +129,22 @@ export default function Community() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [body, setBody] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [speciesQuery, setSpeciesQuery] = useState('');
   const [speciesId, setSpeciesId] = useState('');
   const [speciesOptions, setSpeciesOptions] = useState<Array<{ id: string; commonName: string }>>([]);
   const [posting, setPosting] = useState(false);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(imageFile);
+    setImagePreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [imageFile]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -170,11 +183,19 @@ export default function Community() {
     if (!body.trim()) return;
     setPosting(true);
     try {
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        const upload = await plantsApi.upload(imageFile);
+        imageUrl = upload.data.url;
+      }
       await communityApi.createPost({
         body: body.trim(),
         speciesId: speciesId || undefined,
+        imageUrl,
       });
       setBody('');
+      setImageFile(null);
+      setImagePreview(null);
       setSpeciesId('');
       setSpeciesQuery('');
       await load();
@@ -253,6 +274,37 @@ export default function Community() {
               </ul>
             ) : null}
           </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-emerald-800" htmlFor="community-image">
+              Photo (optional)
+            </label>
+            <input
+              id="community-image"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                setImageFile(file);
+              }}
+              className="w-full rounded-2xl border border-emerald-100 px-3 py-2 text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-emerald-800"
+            />
+            {imagePreview ? (
+              <div className="space-y-2">
+                <img
+                  src={imagePreview}
+                  alt="Post preview"
+                  className="max-h-56 w-full rounded-2xl border border-emerald-100 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setImageFile(null)}
+                  className="text-xs font-semibold text-red-700 hover:underline"
+                >
+                  Remove photo
+                </button>
+              </div>
+            ) : null}
+          </div>
           <Button type="submit" fullWidth disabled={posting || !body.trim()}>
             {posting ? 'Posting…' : 'Share with community'}
           </Button>
@@ -284,6 +336,14 @@ export default function Community() {
                   <span className="inline-block rounded-full bg-lime-100 px-2.5 py-0.5 text-xs font-semibold text-lime-900">
                     {post.species.commonName}
                   </span>
+                ) : null}
+                {post.imageUrl ? (
+                  <img
+                    src={post.imageUrl}
+                    alt="Community post"
+                    className="max-h-96 w-full rounded-2xl border border-emerald-100 object-cover"
+                    loading="lazy"
+                  />
                 ) : null}
                 <p className="text-sm leading-6 text-gray-700 whitespace-pre-wrap">{post.body}</p>
                 <div className="flex flex-wrap items-center gap-3">
