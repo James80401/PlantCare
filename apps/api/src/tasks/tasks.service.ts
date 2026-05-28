@@ -59,7 +59,7 @@ export class TasksService {
       });
 
       const note = feedback?.note?.trim();
-      if (feedback?.reason || note) {
+      if (feedback && (feedback.reason || note)) {
         await tx.taskFeedback.create({
           data: {
             taskId,

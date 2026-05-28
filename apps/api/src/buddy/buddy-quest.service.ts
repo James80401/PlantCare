@@ -393,11 +393,11 @@ export class BuddyQuestService {
   }
 
   private parseRequirement(quest: Quest): QuestRequirement {
-    const raw =
+    const raw: unknown =
       typeof quest.requirement === 'string'
-        ? (JSON.parse(quest.requirement) as QuestRequirement)
-        : (quest.requirement as QuestRequirement);
-    return raw;
+        ? JSON.parse(quest.requirement)
+        : quest.requirement;
+    return raw as QuestRequirement;
   }
 
   private parseSteps(value: unknown): { id: string; label: string }[] {
