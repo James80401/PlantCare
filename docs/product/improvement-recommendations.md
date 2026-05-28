@@ -314,7 +314,7 @@ Status: **Done** = shipped; **Partial** = some code exists; **Not started** = ga
 | F3 | Partial | Community shipped; pagination/a11y gaps |
 | G1 | Done | FCM HTTP v1 + legacy fallback |
 | G2 | Done | Overdue cron, multi-task body, plant deep links |
-| G3 | Not started | Production URL sign-off (UAT §F) |
+| G3 | Partial | Production checks automated; final public URL/UAT sign-off pending |
 | G4 | Partial | Capacitor scripts; store TBD |
 | H1 | Partial | Dashboard endpoint exists; still heavy payload |
 | H2 | Not started | Systematic a11y pass |
