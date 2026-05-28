@@ -23,6 +23,7 @@ COPY --from=builder /app/apps/api/docker-entrypoint.sh ./apps/api/docker-entrypo
 COPY --from=builder /app/packages/shared ./packages/shared/
 COPY --from=builder /app/prisma ./prisma/
 COPY --from=builder /app/apps/api/src/species ./apps/api/src/species
+COPY --from=builder /app/apps/api/src/buddy ./apps/api/src/buddy
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/apps/api/src/care-guides/photos ./apps/api/src/care-guides/photos
 COPY --from=builder /app/apps/api/dist/care-guides ./apps/api/dist/care-guides
