@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  OnModuleInit,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -22,7 +23,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
@@ -31,6 +32,18 @@ export class AuthService {
     private config: ConfigService,
     private email: EmailService,
   ) {}
+
+  onModuleInit() {
+    if (!requiresAdminApproval(this.config)) return;
+    const admins = adminEmails(this.config);
+    if (admins.length === 0) {
+      this.logger.error(
+        'Admin approval is enabled but ADMIN_EMAILS is empty — set admin emails in .env.production',
+      );
+      return;
+    }
+    this.logger.log(`Registration requires admin approval (admins: ${admins.join(', ')})`);
+  }
 
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });

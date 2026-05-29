@@ -77,13 +77,23 @@ if (!vars.OPENAI_API_KEY) {
 }
 if (!vars.SMTP_USER || !vars.SMTP_PASS) {
   warnings.push('SMTP unset — email verification and password reset use auto-verify in dev only');
+} else {
+  console.log('  ✓ SMTP credentials detected');
 }
-if (vars.REGISTRATION_REQUIRES_ADMIN_APPROVAL === 'true') {
+
+const adminApprovalExplicit = vars.REGISTRATION_REQUIRES_ADMIN_APPROVAL?.trim().toLowerCase();
+const adminApprovalEnabled =
+  adminApprovalExplicit !== 'false' &&
+  (adminApprovalExplicit === 'true' || Boolean(vars.SMTP_USER?.trim() && vars.SMTP_PASS?.trim()));
+
+if (adminApprovalEnabled) {
   if (!vars.SMTP_USER || !vars.SMTP_PASS) {
-    errors.push('REGISTRATION_REQUIRES_ADMIN_APPROVAL=true requires SMTP_USER and SMTP_PASS');
+    errors.push('Admin approval requires SMTP_USER and SMTP_PASS');
   }
   if (!vars.ADMIN_EMAILS?.trim()) {
-    errors.push('REGISTRATION_REQUIRES_ADMIN_APPROVAL=true requires ADMIN_EMAILS (comma-separated)');
+    errors.push('Admin approval requires ADMIN_EMAILS (comma-separated admin login emails)');
+  } else {
+    console.log('  ✓ Admin approval enabled (new users need email verify + admin approve)');
   }
 }
 
