@@ -55,6 +55,9 @@ export class EmailService implements OnModuleInit {
       port,
       secure: port === 465,
       requireTLS: port === 587,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000,
       auth: {
         user: this.config.get<string>('SMTP_USER')!.trim(),
         pass: this.smtpPassword(),

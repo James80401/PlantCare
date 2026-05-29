@@ -18,13 +18,20 @@ export default function ForgotPassword() {
       setMessage(data.message);
     } catch (err: unknown) {
       const ax = err as {
+        code?: string;
         response?: { data?: { message?: string | string[]; error?: string }; status?: number };
         message?: string;
       };
       const raw = ax.response?.data?.message ?? ax.response?.data?.error;
       const msg = Array.isArray(raw) ? raw.join(' ') : raw;
-      if (!ax.response) {
-        setError('Cannot reach the API. Start the server (npm run dev:api) and try again.');
+      if (ax.code === 'ECONNABORTED') {
+        setError(
+          'Request timed out. The server may be stuck sending email — check SMTP on the server or try again shortly.',
+        );
+      } else if (!ax.response) {
+        setError(
+          'Cannot reach the API. Check your connection, or try again from https://drplant.app (not an old bookmark).',
+        );
       } else if (ax.response.status === 503) {
         setError(
           msg ||

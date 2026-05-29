@@ -8,11 +8,32 @@ const apiBaseURL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/ap
 const api = axios.create({
   baseURL: apiBaseURL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 60_000,
 });
 
+/** Public auth routes — no Bearer token (avoids refresh loops on forgot-password). */
+function isPublicAuthPath(url?: string) {
+  const path = url?.split('?')[0] ?? '';
+  return (
+    path === '/auth/register' ||
+    path === '/auth/login' ||
+    path === '/auth/forgot-password' ||
+    path === '/auth/reset-password' ||
+    path === '/auth/resend-verification' ||
+    path === '/auth/refresh' ||
+    path === '/auth/verify-email' ||
+    path.startsWith('/auth/verify-email/')
+  );
+}
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (isPublicAuthPath(config.url)) {
+    config.headers.delete('Authorization');
+    (config as { skipAuthRefresh?: boolean }).skipAuthRefresh = true;
+  } else {
+    const token = localStorage.getItem('accessToken');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
   // FormData needs a multipart boundary; a preset Content-Type breaks uploads and fields.
   if (config.data instanceof FormData) {
     config.headers.delete('Content-Type');
@@ -23,7 +44,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !(error.config as { skipAuthRefresh?: boolean })?.skipAuthRefresh) {
       const refresh = localStorage.getItem('refreshToken');
       if (refresh && !error.config._retry) {
         error.config._retry = true;
@@ -49,7 +70,8 @@ export const authApi = {
   login: (email: string, password: string) => api.post('/auth/login', { email, password }),
   verifyEmail: (token: string) => api.post(`/auth/verify-email/${token}`),
   resendVerification: (email: string) => api.post('/auth/resend-verification', { email }),
-  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }, { timeout: 30_000, skipAuthRefresh: true }),
   resetPassword: (token: string, password: string) =>
     api.post('/auth/reset-password', { token, password }),
 };
