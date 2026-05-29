@@ -2,7 +2,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { SkipLink } from './a11y/SkipLink';
 import { navIcons } from './icons/NavIcons';
 import { useAuth } from '../context/AuthContext';
-import { BuddyCompanionProvider } from '../context/BuddyCompanionContext';
+import { BuddyCompanionProvider, useBuddyCompanion } from '../context/BuddyCompanionContext';
 import BuddyFloatingCompanion from './buddy/BuddyFloatingCompanion';
 import { useBuddyQuestBadge } from '../hooks/buddy/useBuddyQuestBadge';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -142,7 +142,6 @@ export default function Layout() {
       </nav>
       <BuddyFloatingCompanion />
     </div>
-    </BuddyCompanionProvider>
   );
 }
 
