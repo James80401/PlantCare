@@ -15,7 +15,7 @@
 | `SMTP_HOST` | Mail server |
 | `SMTP_PORT` | Mail port (587) |
 | `SMTP_USER` | SMTP username |
-| `SMTP_PASS` | SMTP password |
+| `SMTP_PASS` | SMTP password (Gmail app password locally; Twilio SendGrid `SG.…` API key in production) |
 | `EMAIL_FROM` | From header |
 | `PERENUAL_API_KEY` | Species API |
 | `PLANTNET_API_KEY` | Plant ID API |
@@ -27,8 +27,8 @@
 | `STRIPE_SECRET_KEY` | Stripe |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signature |
 | `STRIPE_PRICE_ID_PREMIUM` | Price ID |
-| `SENDGRID_API_KEY` | SendGrid email |
-| `SENDGRID_FROM_EMAIL` | SendGrid from |
+| `SENDGRID_API_KEY` | Legacy name — use `SMTP_PASS` with Twilio SendGrid API key |
+| `SENDGRID_FROM_EMAIL` | Legacy — use `EMAIL_FROM` |
 | `TWILIO_ACCOUNT_SID` | SMS |
 | `TWILIO_AUTH_TOKEN` | SMS |
 | `TWILIO_FROM_NUMBER` | SMS from |
