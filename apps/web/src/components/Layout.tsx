@@ -23,13 +23,25 @@ const desktopNav = mobileNav;
 const SHOW_UPGRADE = false;
 
 export default function Layout() {
-  const { user, logout, isPremium } = useAuth();
+  const auth = useAuth();
+  return (
+    <BuddyCompanionProvider>
+      <LayoutShell {...auth} />
+    </BuddyCompanionProvider>
+  );
+}
+
+function LayoutShell({
+  user,
+  logout,
+  isPremium,
+}: ReturnType<typeof useAuth>) {
   const location = useLocation();
-  const buddyQuestClaims = useBuddyQuestBadge(Boolean(user));
+  const { missing: buddyMissing } = useBuddyCompanion();
+  const buddyQuestClaims = useBuddyQuestBadge(Boolean(user) && !buddyMissing);
   usePushNotifications(Boolean(user));
 
   return (
-    <BuddyCompanionProvider>
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-page, #f7f6f2)' }}>
       <SkipLink />
       <header className="sticky top-0 z-30 bg-emerald-900 text-white shadow-md">
