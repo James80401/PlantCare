@@ -66,6 +66,14 @@ $payloadJson = ($payload.GetEnumerator() | Sort-Object Name | ForEach-Object {
 }) | ConvertTo-Json -Compress
 $payloadB64 = To-B64 $payloadJson
 
+$agentKeys = ssh-add -l 2>$null
+if ($LASTEXITCODE -ne 0) {
+  Write-Host 'Tip: Your SSH key has a passphrase. In PowerShell run:'
+  Write-Host '  Get-Service ssh-agent | Set-Service -StartupType Manual; Start-Service ssh-agent'
+  Write-Host "  ssh-add `"$KeyPath`""
+  Write-Host 'Then run this script again.'
+}
+
 Write-Host "Connecting to ${SshUser}@${SshHost} ..."
 Write-Host 'Steps: git pull, merge SMTP into .env.production, remove Caddy basic auth, rebuild containers.'
 
