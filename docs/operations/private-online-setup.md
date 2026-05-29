@@ -13,7 +13,7 @@ Work through **Phase A → Phase G** in order. Check each box, then tell your as
 | Item | Your value |
 |------|------------|
 | Domain | e.g. `yourdomain.com` |
-| Web URL | `https://app.____________` |
+| Web URL | `https://____________` (apex, e.g. `drplant.app`) |
 | API URL | `https://api.____________/api/v1` |
 | VPS provider | e.g. DigitalOcean, Hetzner, Linode |
 | VPS public IP | e.g. `203.0.113.10` |
@@ -46,22 +46,22 @@ Work through **Phase A → Phase G** in order. Check each box, then tell your as
 
 | Type | Name | Value |
 |------|------|--------|
-| A | `app` | your VPS IP |
+| A | `@` | your VPS IP |
 | A | `api` | your VPS IP |
 
-(Or one A for `@` and CNAME `app` / `api` if your host supports it.)
+(Optional: A or CNAME `www` → same IP or `@`.)
 
 - [ ] **B2.** Wait for DNS (often 5–30 minutes; up to 48h worst case).
 - [ ] **B3.** From your PC, verify:
 
 ```powershell
-nslookup app.yourdomain.com
+nslookup yourdomain.com
 nslookup api.yourdomain.com
 ```
 
 Both should return your VPS IP.
 
-**Done when:** `app` and `api` resolve to the VPS.
+**Done when:** apex (`@`) and `api` resolve to the VPS.
 
 **Report:** `Phase B done — DNS resolves`
 
@@ -132,8 +132,8 @@ Set at minimum (use your real URLs, **https**, no trailing slash on FRONTEND_URL
 ```env
 JWT_SECRET=<run: openssl rand -hex 32>
 JWT_REFRESH_SECRET=<run again, different value>
-FRONTEND_URL=https://app.yourdomain.com
-CORS_ORIGINS=https://app.yourdomain.com
+FRONTEND_URL=https://yourdomain.com
+CORS_ORIGINS=https://yourdomain.com
 VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
 ```
 
@@ -194,7 +194,7 @@ api.yourdomain.com {
   reverse_proxy 127.0.0.1:3001
 }
 
-app.yourdomain.com {
+yourdomain.com, www.yourdomain.com {
   reverse_proxy 127.0.0.1:8080
 }
 ```
@@ -209,9 +209,9 @@ sudo systemctl status caddy
 - [ ] **E4.** From your PC browser, open:
 
   - `https://api.yourdomain.com/api/v1/health` → should show `{"status":"ok",...}`
-  - `https://app.yourdomain.com` → should load Plant Care
+  - `https://yourdomain.com` → should load Plant Care
 
-**Done when:** HTTPS works for app + API (no lock yet).
+**Done when:** HTTPS works for web + API (no lock yet).
 
 **Report:** `Phase E done` or describe certificate / connection errors
 
@@ -231,7 +231,7 @@ api.drplant.app {
 	reverse_proxy 127.0.0.1:3001
 }
 
-app.drplant.app {
+drplant.app, www.drplant.app {
 	reverse_proxy 127.0.0.1:8080
 }
 EOF
@@ -269,7 +269,7 @@ First boot runs `prisma db push` and adds `accountApprovalStatus` (existing user
 ### F3 — How access works
 
 1. New user **registers** → must **verify email** (SMTP).
-2. You get an email → open **https://app.drplant.app/admin/registrations** (sign in as an admin first).
+2. You get an email → open **https://drplant.app/admin/registrations** (sign in as an admin first).
 3. **Approve** the user → they get an approval email → they can **sign in**.
 
 Users in `ADMIN_EMAILS` are auto-approved when they register.
@@ -278,7 +278,7 @@ Users in `ADMIN_EMAILS` are auto-approved when they register.
 
 - [ ] Incognito: register a throwaway email → verify → cannot sign in until approved.
 - [ ] Admin: approve at `/admin/registrations` → user can sign in.
-- [ ] `https://app.drplant.app` loads **without** a browser password popup.
+- [ ] `https://drplant.app` loads **without** a browser password popup.
 
 **Done when:** Unapproved users cannot use the app; site has no Caddy basic auth.
 
@@ -295,7 +295,7 @@ On your **Windows dev machine** (in `PlantCare` repo):
 ```powershell
 cd c:\Source\Repos\PlantCare
 $env:API_URL = "https://api.yourdomain.com/api/v1"
-$env:FRONTEND_URL = "https://app.yourdomain.com"
+$env:FRONTEND_URL = "https://yourdomain.com"
 npm run production:signoff -- --live-only
 ```
 
@@ -363,7 +363,7 @@ The phases above are the checklist. For extra detail:
 | CORS errors in browser | `CORS_ORIGINS` must **exactly** match `FRONTEND_URL` (same scheme, host, no trailing slash) |
 | TLS / certificate fails | DNS not propagated; firewall blocks 80/443 |
 | Web loads, API fails | Wrong `VITE_API_BASE_URL`; rebuild: `npm run production:up` after env change |
-| Basic auth breaks login | Put basicauth on **app** only, not api (see Phase F1) |
+| Basic auth breaks login | Put basicauth on the **web** host only, not api (see Phase F0) |
 | verify fails species count | Wait for API seed to finish; check `docker compose ... logs api` |
 
 ### Related docs

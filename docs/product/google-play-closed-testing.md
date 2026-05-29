@@ -52,7 +52,7 @@ Neither track lists the app in public Play search.
 - [ ] `npm run mobile:store-check -- --live` passes
 - [ ] Signed **AAB** (upload keystore saved securely; enable Play App Signing)
 - [ ] Package ID `com.plantcare.app` matches Capacitor + Play Console
-- [ ] Privacy policy URL: `https://app.yourdomain.com/privacy`
+- [ ] Privacy policy URL: `https://yourdomain.com/privacy`
 - [ ] Store listing copy from [play-store-listing.md](play-store-listing.md)
 - [ ] Content rating questionnaire completed
 - [ ] Data safety form completed (draft answers in listing doc)

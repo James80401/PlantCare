@@ -6,7 +6,7 @@ api.drplant.app {
 	reverse_proxy 127.0.0.1:3001
 }
 
-app.drplant.app {
+drplant.app, www.drplant.app {
 	reverse_proxy 127.0.0.1:8080
 }
 EOF

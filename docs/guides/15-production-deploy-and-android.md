@@ -23,11 +23,11 @@ Step-by-step runbook after local dev is working. Goal: **HTTPS API** for Capacit
 
 1. Point DNS:
    - `api.yourdomain.com` → your server IP
-   - `app.yourdomain.com` → same IP (or CDN)
+   - `yourdomain.com` → same IP (or CDN)
 2. Install **Caddy** or **nginx** on the host.
 3. Proxy:
    - `api.yourdomain.com` → `http://127.0.0.1:3001`
-   - `app.yourdomain.com` → `http://127.0.0.1:8080`
+   - `yourdomain.com` → `http://127.0.0.1:8080`
 4. Obtain Let's Encrypt certificates (Caddy does this automatically).
 
 **Example Caddyfile snippet:**
@@ -36,7 +36,7 @@ Step-by-step runbook after local dev is working. Goal: **HTTPS API** for Capacit
 api.yourdomain.com {
   reverse_proxy 127.0.0.1:3001
 }
-app.yourdomain.com {
+yourdomain.com, www.yourdomain.com {
   reverse_proxy 127.0.0.1:8080
 }
 ```
@@ -61,8 +61,8 @@ Required edits in `.env.production`:
 ```env
 JWT_SECRET=<64-char hex>
 JWT_REFRESH_SECRET=<64-char hex>
-FRONTEND_URL=https://app.yourdomain.com
-CORS_ORIGINS=https://app.yourdomain.com
+FRONTEND_URL=https://yourdomain.com
+CORS_ORIGINS=https://yourdomain.com
 VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
 ```
 
@@ -116,7 +116,7 @@ Manual equivalents:
 ```bash
 API_URL=https://api.yourdomain.com/api/v1 npm run verify
 API_URL=https://api.yourdomain.com/api/v1 npm run smoke:buddy
-UAT_WEB_URL=https://app.yourdomain.com API_URL=https://api.yourdomain.com/api/v1 npm run uat:e2e
+UAT_WEB_URL=https://yourdomain.com API_URL=https://api.yourdomain.com/api/v1 npm run uat:e2e
 ```
 
 Full runbook: [docs/operations/production-signoff.md](../operations/production-signoff.md)
@@ -129,7 +129,7 @@ Share [tester-5-minute.md](../product/tester-5-minute.md) with remote testers.
 
 The web app includes a public route:
 
-**`https://app.yourdomain.com/privacy`**
+**`https://yourdomain.com/privacy`**
 
 Use that URL in Play Console. Customize copy in `apps/web/src/pages/Privacy.tsx` before release.
 

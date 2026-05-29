@@ -1,7 +1,7 @@
 # Production-like stack on a VPS. Terminate TLS at reverse proxy (Caddy/nginx), not here.
 #
 #   https://api.yourdomain.com -> api:3001
-#   https://app.yourdomain.com -> web:80
+#   https://yourdomain.com -> web:80
 #
 # Usage:
 #   copy .env.production.example .env.production

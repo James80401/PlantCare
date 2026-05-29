@@ -6,7 +6,7 @@ Automated gate before marking production ready for remote testers or Play Store 
 
 ## Prerequisites
 
-1. DNS + TLS reverse proxy pointing at Docker (`api.*` → port 3001, `app.*` → port 8080).
+1. DNS + TLS reverse proxy pointing at Docker (`api.*` → port 3001, apex/www → port 8080).
 2. `.env.production` on the server (never commit) — copy from [`.env.production.example`](../../.env.production.example).
 3. Stack running: `npm run production:up` (first boot: migrations + seed — allow several minutes).
 
@@ -32,7 +32,7 @@ npm run production:signoff -- --write docs/operations/signoffs/2026-05-27.md
 
 ```bash
 API_URL=https://api.yourdomain.com/api/v1 \
-FRONTEND_URL=https://app.yourdomain.com \
+FRONTEND_URL=https://yourdomain.com \
 npm run production:signoff -- --live-only
 ```
 
@@ -53,8 +53,8 @@ npm run production:signoff -- --live-only
 ```env
 JWT_SECRET=<64+ char secret>
 JWT_REFRESH_SECRET=<different secret>
-FRONTEND_URL=https://app.yourdomain.com
-CORS_ORIGINS=https://app.yourdomain.com
+FRONTEND_URL=https://yourdomain.com
+CORS_ORIGINS=https://yourdomain.com
 VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
 ```
 

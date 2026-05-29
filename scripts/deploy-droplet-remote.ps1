@@ -155,5 +155,5 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host ''
 Write-Host 'Deploy finished. From this machine run Phase G sign-off:'
 Write-Host '  $env:API_URL = "https://api.drplant.app/api/v1"'
-Write-Host '  $env:FRONTEND_URL = "https://app.drplant.app"'
+Write-Host '  $env:FRONTEND_URL = "https://drplant.app"'
 Write-Host '  npm run production:signoff -- --live-only'

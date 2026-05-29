@@ -11,7 +11,7 @@ Paste and customize before **Closed testing** or **Production**. Replace `yourdo
 | App name | Plant Care |
 | Package | `com.plantcare.app` |
 | Category | House & home (or Lifestyle) |
-| Privacy policy | `https://app.yourdomain.com/privacy` |
+| Privacy policy | `https://yourdomain.com/privacy` |
 
 ## Short description (max 80 characters)
 
@@ -90,6 +90,6 @@ You're invited to test Plant Care on Android (closed beta).
 3. Register with your email and verify if prompted.
 4. Add a plant and try completing a care task.
 
-Privacy: https://app.yourdomain.com/privacy
+Privacy: https://yourdomain.com/privacy
 Questions: [your contact]
 ```
