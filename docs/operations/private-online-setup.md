@@ -240,17 +240,35 @@ systemctl reload caddy
 
 ### F1 — SMTP in `.env.production`
 
-Gmail example (use an [App Password](https://myaccount.google.com/apppasswords), not your normal Gmail password):
+**DigitalOcean droplets block outbound SMTP on ports 25, 587, and 465** ([docs](https://docs.digitalocean.com/support/why-is-smtp-blocked/)). Gmail SMTP will **timeout** from the server even with a correct App Password. Use a transactional provider on port **2525** (SendGrid, Mailgun, SMTP2GO) or request an unblock from DO support.
+
+**SendGrid (recommended on DO)** — free tier, port 2525:
+
+1. [SendGrid](https://sendgrid.com) → Settings → **API Keys** → Create (Mail Send permission).
+2. Settings → **Sender Authentication** → **Verify a Single Sender** (your email, e.g. `you@gmail.com`).
+3. On the VPS:
+
+```env
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=2525
+SMTP_USER=apikey
+SMTP_PASS=SG.your_sendgrid_api_key
+EMAIL_FROM="Plant Care <you@gmail.com>"
+
+REGISTRATION_REQUIRES_ADMIN_APPROVAL=true
+ADMIN_EMAILS=you@gmail.com
+```
+
+Test from the droplet: `nc -vz smtp.sendgrid.net 2525` (should connect). Then `docker compose ... up -d --force-recreate api` and check logs for `SMTP ready`.
+
+**Gmail (local dev or hosts that allow port 587)** — [App Password](https://myaccount.google.com/apppasswords):
 
 ```env
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=you@gmail.com
 SMTP_PASS=your-16-char-app-password
-EMAIL_FROM="Plant Care" <you@gmail.com>
-
-REGISTRATION_REQUIRES_ADMIN_APPROVAL=true
-ADMIN_EMAILS=you@gmail.com
+EMAIL_FROM="Plant Care <you@gmail.com>"
 ```
 
 `ADMIN_EMAILS` must include **your** login email (comma-separated for multiple admins).
