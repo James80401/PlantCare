@@ -15,10 +15,9 @@ interface BuddyCompanionAnimatedProps {
   phraseContext?: BuddyPhraseContext | null;
 }
 
-/** Floating companion chip — ~2.5× previous emoji scale. */
 const sizeClass = {
-  sm: 'text-7xl',
-  md: 'text-8xl',
+  sm: 'text-5xl',
+  md: 'text-7xl',
 };
 
 const faceSize = { sm: 'md' as const, md: 'lg' as const };

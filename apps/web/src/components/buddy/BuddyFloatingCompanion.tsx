@@ -94,10 +94,10 @@ export default function BuddyFloatingCompanion() {
     return (
       <div className={dockClass} aria-hidden>
         <div className="pointer-events-none mr-1 flex items-center gap-2">
-          <div className="buddy-speech-in max-w-[14rem] rounded-2xl rounded-br-sm border border-emerald-100 bg-white/95 px-4 py-3 text-base text-emerald-800 shadow-md">
+          <div className="buddy-speech-in max-w-[11rem] rounded-2xl rounded-br-sm border border-emerald-100 bg-white/95 px-3 py-2 text-sm text-emerald-800 shadow-md">
             …
           </div>
-          <div className="buddy-act-bob h-40 w-40 rounded-full border-2 border-emerald-100 bg-emerald-50/90 shadow-lg" />
+          <div className="buddy-act-bob h-28 w-28 rounded-full border-2 border-emerald-100 bg-emerald-50/90 shadow-lg" />
         </div>
       </div>
     );
@@ -107,12 +107,12 @@ export default function BuddyFloatingCompanion() {
     return (
       <div ref={panelRef} className={dockClass}>
         <div className="pointer-events-auto mr-2 flex items-center gap-2">
-          <div className="buddy-speech-in max-w-[14rem] rounded-2xl rounded-br-sm border border-emerald-200 bg-white/95 px-4 py-3 text-base font-medium leading-snug text-emerald-900 shadow-lg shadow-emerald-900/10">
+          <div className="buddy-speech-in max-w-[11rem] rounded-2xl rounded-br-sm border border-emerald-200 bg-white/95 px-3 py-2 text-sm font-medium leading-snug text-emerald-900 shadow-lg shadow-emerald-900/10">
             Adopt a buddy — they’ll cheer you on every day!
           </div>
           <Link
             to="/garden/buddy/onboarding"
-            className="buddy-act-bob relative flex h-40 w-40 translate-x-2 items-center justify-center rounded-full border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-lime-50 text-7xl shadow-lg shadow-emerald-900/15 transition hover:scale-105"
+            className="buddy-act-bob relative flex h-28 w-28 translate-x-2 items-center justify-center rounded-full border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-lime-50 text-5xl shadow-lg shadow-emerald-900/15 transition hover:scale-105"
             aria-label="Get a plant buddy"
           >
             <span className="relative" role="img" aria-hidden>
@@ -247,7 +247,7 @@ export default function BuddyFloatingCompanion() {
           {!expanded && (
             <p
               key={speechKey}
-              className="buddy-speech-in max-w-[14rem] rounded-2xl rounded-br-sm border border-emerald-100 bg-white/95 px-4 py-3 text-base font-medium leading-snug text-emerald-900 shadow-lg shadow-emerald-950/10"
+              className="buddy-speech-in max-w-[11rem] rounded-2xl rounded-br-sm border border-emerald-100 bg-white/95 px-3 py-2 text-sm font-medium leading-snug text-emerald-900 shadow-lg shadow-emerald-950/10"
               role="status"
               aria-live="polite"
             >
@@ -264,8 +264,8 @@ export default function BuddyFloatingCompanion() {
             }
             className={`buddy-hang-peek relative flex translate-x-4 items-center justify-center overflow-visible rounded-full border-[3px] shadow-xl transition hover:scale-105 active:scale-95 ${
               expanded
-                ? 'buddy-chip-expanded h-48 w-48 ring-2 ring-emerald-400 ring-offset-2'
-                : 'h-40 w-40'
+                ? 'buddy-chip-expanded h-36 w-36 ring-2 ring-emerald-400 ring-offset-2'
+                : 'h-28 w-28'
             } ${
               traveling
                 ? 'border-sky-200 bg-gradient-to-br from-sky-100 to-amber-50 shadow-sky-900/20'
