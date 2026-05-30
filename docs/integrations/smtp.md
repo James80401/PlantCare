@@ -33,6 +33,7 @@ Host stays `smtp.sendgrid.net` — that is Twilio’s SMTP relay hostname.
 3. **Sender:** Settings → Sender Authentication → **Verify a Single Sender** (your Gmail or `@drplant.app` if you add domain auth later).
 4. **Droplet test:** `nc -vz smtp.sendgrid.net 2525` → must connect (not timeout).
 5. **Deploy:** set vars in `.env.production`, `docker compose … up -d --force-recreate api`, logs should show `SMTP ready`.
+6. **Preflight:** from a repo copy that has the env file, run `node scripts/test-integrations.mjs --env .env.production --send-test-email`. A `535 Authentication failed` response means the SendGrid API key is invalid, revoked, missing Mail Send permission, or not the full `SG.…` key.
 
 Docs: [Twilio SendGrid SMTP](https://www.twilio.com/docs/sendgrid/for-developers/sending-email/getting-started-smtp) · [API keys](https://www.twilio.com/docs/sendgrid/api-reference/api-keys/create-api-keys)
 
@@ -49,6 +50,6 @@ Twilio SendGrid also offers `POST https://api.sendgrid.com/v3/mail/send` with a 
 | Symptom | Cause |
 |---------|--------|
 | Connection timeout to `smtp.gmail.com:587` on DO | Port blocked — use Twilio SendGrid on **2525** |
-| `535 Authentication failed` | `SMTP_USER` must be `apikey`; password is full `SG.…` key |
+| `535 Authentication failed` | `SMTP_USER` must be `apikey`; `SMTP_PASS` must be a current SendGrid API key with Mail Send permission (`SG.…`), not a Twilio token or revoked key |
 | Email not received | Sender not verified in Twilio SendGrid; check spam |
 | Forgot-password hangs then timeout | SMTP blocked or wrong host/port |

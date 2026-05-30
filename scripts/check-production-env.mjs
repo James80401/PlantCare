@@ -79,6 +79,20 @@ if (!vars.SMTP_USER || !vars.SMTP_PASS) {
   warnings.push('SMTP unset — email verification and password reset use auto-verify in dev only');
 } else {
   console.log('  ✓ SMTP credentials detected');
+  const smtpHost = (vars.SMTP_HOST || '').trim().toLowerCase();
+  const smtpUser = (vars.SMTP_USER || '').trim();
+  const smtpPass = (vars.SMTP_PASS || '').trim().replace(/\s+/g, '');
+  if (smtpHost === 'smtp.sendgrid.net') {
+    if (smtpUser !== 'apikey') {
+      errors.push('Twilio SendGrid SMTP requires SMTP_USER=apikey');
+    }
+    if (!smtpPass.startsWith('SG.')) {
+      errors.push('Twilio SendGrid SMTP requires SMTP_PASS to be a SendGrid API key starting with SG.');
+    }
+    if (vars.SMTP_PORT && String(vars.SMTP_PORT).trim() !== '2525') {
+      warnings.push('DigitalOcean blocks common SMTP ports — use SMTP_PORT=2525 for Twilio SendGrid on DO');
+    }
+  }
 }
 
 const adminApprovalExplicit = vars.REGISTRATION_REQUIRES_ADMIN_APPROVAL?.trim().toLowerCase();
