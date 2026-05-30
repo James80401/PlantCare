@@ -78,8 +78,10 @@ export const authApi = {
 
 export const adminApi = {
   listPending: () => api.get('/admin/registrations/pending'),
+  listUsers: () => api.get('/admin/registrations/users'),
   approve: (userId: string) => api.post(`/admin/registrations/${userId}/approve`),
   reject: (userId: string) => api.post(`/admin/registrations/${userId}/reject`),
+  disable: (userId: string) => api.post(`/admin/registrations/${userId}/disable`),
 };
 
 export const plantsApi = {

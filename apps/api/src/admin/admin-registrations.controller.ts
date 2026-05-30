@@ -16,6 +16,11 @@ export class AdminRegistrationsController {
     return this.registrations.listPending();
   }
 
+  @Get('users')
+  listUsers() {
+    return this.registrations.listUsers();
+  }
+
   @Post(':userId/approve')
   approve(@Param('userId') userId: string) {
     return this.registrations.approve(userId);
@@ -24,5 +29,10 @@ export class AdminRegistrationsController {
   @Post(':userId/reject')
   reject(@Param('userId') userId: string) {
     return this.registrations.reject(userId);
+  }
+
+  @Post(':userId/disable')
+  disable(@Param('userId') userId: string) {
+    return this.registrations.disable(userId);
   }
 }

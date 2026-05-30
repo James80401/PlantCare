@@ -297,7 +297,8 @@ First boot runs `prisma db push` and adds `accountApprovalStatus` (existing user
 
 1. New user **registers** → must **verify email** (SMTP).
 2. You get an email → open **https://drplant.app/admin/registrations** (sign in as an admin first).
-3. **Approve** the user → they get an approval email → they can **sign in**.
+3. **Approve / Enable** the user → they get an approval email → they can **sign in** and access site content.
+4. Use **Disable** in the same admin portal to revoke site access later. Disabled users cannot use JWT-protected app content until an admin enables them again.
 
 Users in `ADMIN_EMAILS` are auto-approved when they register.
 
@@ -305,6 +306,7 @@ Users in `ADMIN_EMAILS` are auto-approved when they register.
 
 - [ ] Incognito: register a throwaway email → verify → cannot sign in until approved.
 - [ ] Admin: approve at `/admin/registrations` → user can sign in.
+- [ ] Admin: disable the same user → user is blocked from site content; enable again → access returns.
 - [ ] `https://drplant.app` loads **without** a browser password popup.
 
 **Done when:** Unapproved users cannot use the app; site has no Caddy basic auth.
