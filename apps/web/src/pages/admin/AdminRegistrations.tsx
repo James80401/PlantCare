@@ -9,9 +9,11 @@ type ManagedUser = {
   name: string | null;
   emailVerified: boolean;
   accountApprovalStatus: 'APPROVED' | 'PENDING' | 'REJECTED';
+  planTier: 'FREE' | 'PREMIUM';
   createdAt: string;
   isAdmin?: boolean;
   _count?: { plants: number };
+  subscriptions?: { status: string; planName: string; createdAt: string }[];
 };
 
 export default function AdminRegistrations() {
@@ -123,6 +125,14 @@ export default function AdminRegistrations() {
                     {u.isAdmin ? (
                       <span className="rounded-full bg-indigo-50 px-2 py-1 font-semibold text-indigo-800">
                         Admin
+                      </span>
+                    ) : null}
+                    <span className={`rounded-full px-2 py-1 font-semibold ${u.planTier === 'PREMIUM' ? 'bg-violet-50 text-violet-800' : 'bg-gray-100 text-gray-700'}`}>
+                      {u.planTier === 'PREMIUM' ? 'Premium' : 'Free'}
+                    </span>
+                    {u.subscriptions?.[0] ? (
+                      <span className="rounded-full bg-blue-50 px-2 py-1 font-semibold text-blue-800">
+                        {u.subscriptions[0].status.toLowerCase()}
                       </span>
                     ) : null}
                     <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">

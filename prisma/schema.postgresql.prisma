@@ -64,7 +64,7 @@ model User {
   email                 String         @unique
   passwordHash          String
   name                  String?
-  planTier              PlanTier       @default(PREMIUM)
+  planTier              PlanTier       @default(FREE)
   stripeCustomerId      String?
   latitude              Float?
   longitude             Float?

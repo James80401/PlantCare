@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { isAdminEmail } from '../config/registration-policy';
 import { UploadService } from '../upload/upload.service';
 import { WeatherService } from '../weather/weather.service';
+import { effectivePlanTier } from '../config/premium-policy';
 
 @Injectable()
 export class UsersService {
@@ -42,6 +43,7 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
     return {
       ...user,
+      planTier: effectivePlanTier(this.config, user.planTier),
       isAdmin: isAdminEmail(this.config, user.email),
     };
   }

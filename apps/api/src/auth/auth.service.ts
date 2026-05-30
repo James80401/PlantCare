@@ -19,6 +19,7 @@ import {
   isAdminEmail,
   requiresAdminApproval,
 } from '../config/registration-policy';
+import { effectivePlanTier } from '../config/premium-policy';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -61,7 +62,7 @@ export class AuthService implements OnModuleInit {
         email: dto.email,
         passwordHash,
         name: dto.name,
-        planTier: PlanTier.PREMIUM,
+        planTier: PlanTier.FREE,
         emailVerified: !smtpEnabled,
         accountApprovalStatus: autoApprove
           ? AccountApprovalStatus.APPROVED
@@ -107,7 +108,7 @@ export class AuthService implements OnModuleInit {
     }
 
     const tokens = await this.issueTokens(user.id, user.email);
-    return { user, ...tokens };
+    return { user: { ...user, planTier: effectivePlanTier(this.config, user.planTier) }, ...tokens };
   }
 
   async verifyEmail(token: string) {
@@ -147,7 +148,7 @@ export class AuthService implements OnModuleInit {
         id: user.id,
         email: user.email,
         name: user.name,
-        planTier: PlanTier.PREMIUM,
+        planTier: effectivePlanTier(this.config, user.planTier),
         emailVerified: true,
         createdAt: user.createdAt,
       },
@@ -260,15 +261,14 @@ export class AuthService implements OnModuleInit {
       );
     }
 
-    await this.ensurePremium(user.id);
-
     const tokens = await this.issueTokens(user.id, user.email);
+    const planTier = effectivePlanTier(this.config, user.planTier);
     return {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        planTier: PlanTier.PREMIUM,
+        planTier,
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
       },
@@ -292,26 +292,18 @@ export class AuthService implements OnModuleInit {
         throw new UnauthorizedException('Account awaiting admin approval');
       }
       const tokens = await this.issueTokens(payload.sub, payload.email);
-      await this.ensurePremium(payload.sub);
       const fresh = await this.prisma.user.findUnique({
         where: { id: payload.sub },
         select: { id: true, email: true, name: true, planTier: true, emailVerified: true, createdAt: true },
       });
       return {
-        user: fresh ? { ...fresh, planTier: PlanTier.PREMIUM } : fresh,
+        user: fresh ? { ...fresh, planTier: effectivePlanTier(this.config, fresh.planTier) } : fresh,
         ...tokens,
       };
     } catch (e) {
       if (e instanceof UnauthorizedException) throw e;
       throw new UnauthorizedException('Invalid refresh token');
     }
-  }
-
-  private async ensurePremium(userId: string) {
-    await this.prisma.user.updateMany({
-      where: { id: userId, planTier: PlanTier.FREE },
-      data: { planTier: PlanTier.PREMIUM },
-    });
   }
 
   private async notifyAdminsOfPendingRegistration(email: string, name: string | null) {

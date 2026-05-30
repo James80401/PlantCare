@@ -26,8 +26,7 @@ const adminNav = {
 
 const desktopNav = mobileNav;
 
-/** Hide upgrade CTAs during beta — all features enabled */
-const SHOW_UPGRADE = false;
+const SHOW_UPGRADE = true;
 
 export default function Layout() {
   const auth = useAuth();

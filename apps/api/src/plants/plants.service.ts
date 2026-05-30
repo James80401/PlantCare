@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PlanTier } from '@prisma/client';
 import { CareGuidesService } from '../care-guides/care-guides.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,6 +9,7 @@ import { sharedPlantInclude, userCanViewPlantTasks } from '../gardens/task-acces
 import { PlantNetService } from './plantnet.service';
 import { PerenualService } from '../species/perenual.service';
 import { WeatherService } from '../weather/weather.service';
+import { freePlanLimits, IDENTIFY_WINDOW_DAYS } from '../billing/billing-limits';
 import { CreatePlantDto } from './dto/create-plant.dto';
 import { UpdatePlantDto } from './dto/update-plant.dto';
 import { buildPlantTimeline } from './plant-timeline.builder';
@@ -22,6 +24,7 @@ export class PlantsService {
     private plantNet: PlantNetService,
     private perenual: PerenualService,
     private weather: WeatherService,
+    private config: ConfigService,
   ) {}
 
   async findAll(userId: string) {
@@ -124,6 +127,8 @@ export class PlantsService {
   }
 
   async create(userId: string, planTier: PlanTier, dto: CreatePlantDto) {
+    const currentPlanTier = await this.planTierForUser(userId, planTier);
+    await this.assertCanCreatePlant(userId, currentPlanTier);
     await this.perenual.getOrFetchById(dto.speciesId);
 
     const plant = await this.prisma.plant.create({
@@ -140,7 +145,7 @@ export class PlantsService {
       include: { species: true },
     });
 
-    await this.scheduler.generateTasksForPlant(plant.id, planTier);
+    await this.scheduler.generateTasksForPlant(plant.id, currentPlanTier);
     return this.findOne(userId, plant.id);
   }
 
@@ -190,13 +195,17 @@ export class PlantsService {
   async identify(userId: string, _planTier: PlanTier, file: Express.Multer.File) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException();
+    const identifyCount = await this.assertCanIdentify(userId, user.planTier, {
+      identifyCountThisMonth: user.identifyCountThisMonth,
+      identifyCountResetAt: user.identifyCountResetAt,
+    });
 
     const result = await this.plantNet.identify(file);
     if (!result) throw new NotFoundException('Could not identify plant');
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { identifyCountThisMonth: { increment: 1 } },
+      data: { identifyCountThisMonth: identifyCount + 1 },
     });
 
     let species = await this.prisma.plantSpecies.findFirst({
@@ -224,5 +233,69 @@ export class PlantsService {
   async uploadImage(file: Express.Multer.File) {
     const url = await this.upload.saveFile(file);
     return { url };
+  }
+
+  private async assertCanCreatePlant(userId: string, planTier: PlanTier) {
+    if (this.isPremium(planTier)) return;
+    const current = await this.prisma.plant.count({ where: { userId } });
+    const limit = freePlanLimits().plants;
+    if (current >= limit) {
+      throw new HttpException({
+        code: 'PLANT_LIMIT_REACHED',
+        message: `Free accounts can track up to ${limit} plants. Upgrade to Premium for unlimited plants.`,
+        limit,
+        current,
+        planTier,
+        upgradePath: '/garden/subscription',
+      }, HttpStatus.PAYMENT_REQUIRED);
+    }
+  }
+
+  private async assertCanIdentify(
+    userId: string,
+    planTier: PlanTier,
+    usage: { identifyCountThisMonth: number; identifyCountResetAt: Date },
+  ) {
+    if (this.isPremium(planTier)) return usage.identifyCountThisMonth;
+    const now = new Date();
+    const resetAt =
+      usage.identifyCountResetAt <= now
+        ? new Date(now.getTime() + IDENTIFY_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+        : usage.identifyCountResetAt;
+    const current = usage.identifyCountResetAt <= now ? 0 : usage.identifyCountThisMonth;
+    if (usage.identifyCountResetAt <= now) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { identifyCountThisMonth: 0, identifyCountResetAt: resetAt },
+      });
+    }
+    const limit = freePlanLimits().identificationsPerWindow;
+    if (current >= limit) {
+      throw new HttpException({
+        code: 'IDENTIFY_LIMIT_REACHED',
+        message: `Free accounts include ${limit} plant identifications every ${IDENTIFY_WINDOW_DAYS} days. Upgrade to Premium for more.`,
+        limit,
+        current,
+        planTier,
+        resetAt,
+        upgradePath: '/garden/subscription',
+      }, HttpStatus.PAYMENT_REQUIRED);
+    }
+    return current;
+  }
+
+  private isPremium(planTier: PlanTier) {
+    return (
+      planTier === PlanTier.PREMIUM ||
+      this.config.get<string>('ALL_USERS_PREMIUM')?.trim().toLowerCase() === 'true'
+    );
+  }
+
+  private async planTierForUser(userId: string, fallback: PlanTier) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { planTier: true },
+    });
+    return user?.planTier ?? fallback;
   }
 }

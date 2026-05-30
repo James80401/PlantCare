@@ -75,6 +75,16 @@ if (!hasFcmV1 && !vars.FCM_SERVER_KEY) {
 if (!vars.OPENAI_API_KEY) {
   warnings.push('OPENAI_API_KEY unset — Dr. Plant and diagnosis will not work');
 }
+
+const allUsersPremium = vars.ALL_USERS_PREMIUM?.trim().toLowerCase() === 'true';
+if (!allUsersPremium) {
+  for (const key of ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_ID_PREMIUM']) {
+    if (!vars[key]?.trim()) {
+      errors.push(`${key} is required when ALL_USERS_PREMIUM is not true`);
+    }
+  }
+}
+
 if (!vars.SMTP_USER || !vars.SMTP_PASS) {
   warnings.push('SMTP unset — email verification and password reset use auto-verify in dev only');
 } else {

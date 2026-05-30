@@ -36,8 +36,14 @@ export class AdminRegistrationsService {
         name: true,
         emailVerified: true,
         accountApprovalStatus: true,
+        planTier: true,
         createdAt: true,
         _count: { select: { plants: true } },
+        subscriptions: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { status: true, planName: true, createdAt: true },
+        },
       },
     });
     return users.map((user) => ({

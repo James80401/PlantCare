@@ -333,6 +333,8 @@ export const usersApi = {
 
 export const billingApi = {
   checkout: () => api.post('/billing/checkout'),
+  status: () => api.get('/billing/status'),
+  portal: () => api.post('/billing/portal'),
 };
 
 export const devicesApi = {

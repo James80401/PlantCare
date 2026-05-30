@@ -49,6 +49,7 @@ export default function AddPlantWizard() {
   const [identifyPreview, setIdentifyPreview] = useState<string | null>(null);
 
   const [error, setError] = useState('');
+  const [limitError, setLimitError] = useState<{ message: string; code: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [identifying, setIdentifying] = useState(false);
   const [activeFilters, setActiveFilters] =
@@ -114,6 +115,7 @@ export default function AddPlantWizard() {
     setIdentifyPreview(URL.createObjectURL(file));
     setIdentifying(true);
     setError('');
+    setLimitError(null);
     try {
       const { data } = await plantsApi.identify(file);
       const species = data.species as Species;
@@ -125,7 +127,11 @@ export default function AddPlantWizard() {
       );
       setStep('confirm');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const data = (err as { response?: { data?: { message?: string; code?: string } } })?.response?.data;
+      if (data?.code === 'IDENTIFY_LIMIT_REACHED') {
+        setLimitError({ code: data.code, message: data.message || 'Identification limit reached.' });
+      }
+      const msg = data?.message;
       setError(msg || 'Could not identify plant. Try search or browse instead.');
     } finally {
       setIdentifying(false);
@@ -149,6 +155,7 @@ export default function AddPlantWizard() {
     }
     setLoading(true);
     setError('');
+    setLimitError(null);
     try {
       const { data } = await plantsApi.create({
         speciesId,
@@ -162,7 +169,11 @@ export default function AddPlantWizard() {
       trackEvent('PlantAdded', { speciesId });
       navigate(`/garden/plants/${data.id}`);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const data = (err as { response?: { data?: { message?: string; code?: string } } })?.response?.data;
+      if (data?.code === 'PLANT_LIMIT_REACHED') {
+        setLimitError({ code: data.code, message: data.message || 'Plant limit reached.' });
+      }
+      const msg = data?.message;
       setError(msg || 'Failed to add plant');
     } finally {
       setLoading(false);
@@ -222,6 +233,14 @@ export default function AddPlantWizard() {
       </p>
 
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {limitError ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          <p className="font-semibold">{limitError.message}</p>
+          <Link to="/garden/subscription" className="mt-2 inline-block font-semibold text-emerald-800 hover:underline">
+            View Premium options
+          </Link>
+        </div>
+      ) : null}
 
       {step === 'photo' && (
         <Card className="space-y-4">
