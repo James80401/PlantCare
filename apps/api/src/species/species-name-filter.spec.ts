@@ -1,4 +1,4 @@
-import { speciesNameContains } from './species-name-filter';
+import { speciesNameContains, speciesSearchTerms } from './species-name-filter';
 
 describe('speciesNameContains', () => {
   it('uses insensitive mode on PostgreSQL', () => {
@@ -11,5 +11,9 @@ describe('speciesNameContains', () => {
     expect(speciesNameContains('file:./dev.db', 'monstera')).toEqual({
       contains: 'monstera',
     });
+  });
+
+  it('maps cannibus searches to cannabis too', () => {
+    expect(speciesSearchTerms('cannibus')).toEqual(['cannibus', 'cannabis']);
   });
 });

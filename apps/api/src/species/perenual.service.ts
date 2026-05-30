@@ -9,7 +9,7 @@ import {
   type SpeciesSearchFilters,
 } from './species-filters';
 import { enrichSpeciesRecord } from './species-enrich';
-import { speciesNameContains } from './species-name-filter';
+import { speciesNameContains, speciesSearchTerms } from './species-name-filter';
 
 @Injectable()
 export class PerenualService {
@@ -28,6 +28,18 @@ export class PerenualService {
     return speciesNameContains(this.config.get<string>('DATABASE_URL') ?? '', text);
   }
 
+  private nameSearch(query: string) {
+    const terms = speciesSearchTerms(query);
+    if (!terms.length) return {};
+
+    return {
+      OR: terms.flatMap((term) => [
+        { commonName: this.nameContains(term) },
+        { scientificName: this.nameContains(term) },
+      ]),
+    };
+  }
+
   async browse(
     query: string,
     filters: SpeciesSearchFilters = {},
@@ -40,14 +52,7 @@ export class PerenualService {
     const hasFilters = Object.values(filters).some(Boolean);
     const q = query.trim();
 
-    const where = q
-      ? {
-          OR: [
-            { commonName: this.nameContains(q) },
-            { scientificName: this.nameContains(q) },
-          ],
-        }
-      : {};
+    const where = q ? this.nameSearch(q) : {};
 
     const enrich = (species: Awaited<ReturnType<typeof this.prisma.plantSpecies.findMany>>) =>
       species.map((item) => enrichSpeciesRecord(item));
@@ -98,12 +103,7 @@ export class PerenualService {
   async search(query: string, filters: SpeciesSearchFilters = {}) {
     const hasFilters = Object.values(filters).some(Boolean);
     const local = await this.prisma.plantSpecies.findMany({
-      where: {
-        OR: [
-          { commonName: this.nameContains(query) },
-          { scientificName: this.nameContains(query) },
-        ],
-      },
+      where: this.nameSearch(query),
       take: hasFilters ? 500 : 30,
     });
     const filteredLocal = hasFilters
