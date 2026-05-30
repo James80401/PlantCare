@@ -1,9 +1,11 @@
 import {
   Injectable,
+  BadRequestException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { addDays, format, subDays } from 'date-fns';
+import { addDays, format, startOfDay, subDays } from 'date-fns';
+import { TaskType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { WeatherService } from '../weather/weather.service';
@@ -11,6 +13,7 @@ import { LlmDiagnosisService, type ChatTurn, type PlantContext } from './llm-dia
 import { OpenAiRequestError } from './openai-errors';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { ChatHealthCheckActionDto, ChatJournalActionDto } from './dto/chat-action.dto';
 
 @Injectable()
 export class DiagnosisChatService {
@@ -344,5 +347,83 @@ export class DiagnosisChatService {
       source,
       model: this.llm.isAvailable() ? this.llm.getModelName() : null,
     };
+  }
+
+  async saveAssistantReplyToJournal(
+    userId: string,
+    plantId: string,
+    conversationId: string,
+    dto: ChatJournalActionDto,
+  ) {
+    const note = await this.resolveActionNote(userId, plantId, conversationId, dto);
+    return this.prisma.journalEntry.create({
+      data: {
+        plantId,
+        notes: `Dr. Plant note:\n\n${note}`,
+      },
+    });
+  }
+
+  async scheduleHealthCheckFromChat(
+    userId: string,
+    plantId: string,
+    conversationId: string,
+    dto: ChatHealthCheckActionDto,
+  ) {
+    const note = await this.resolveActionNote(userId, plantId, conversationId, dto);
+    const dueInDays = dto.dueInDays ?? 3;
+    const dueDate = startOfDay(addDays(new Date(), dueInDays));
+
+    const task = await this.prisma.task.create({
+      data: {
+        plantId,
+        taskType: TaskType.HEALTH_CHECK,
+        dueDate,
+      },
+      include: {
+        plant: { include: { species: true } },
+        sourceDiagnosis: {
+          select: { id: true, resultLabel: true, resolved: true },
+        },
+      },
+    });
+
+    await this.prisma.journalEntry.create({
+      data: {
+        plantId,
+        notes: `Dr. Plant health check scheduled in ${dueInDays} day${dueInDays === 1 ? '' : 's'}:\n\n${note}`,
+      },
+    });
+
+    return task;
+  }
+
+  private async resolveActionNote(
+    userId: string,
+    plantId: string,
+    conversationId: string,
+    dto: ChatJournalActionDto,
+  ): Promise<string> {
+    const conv = await this.prisma.diagnosisConversation.findFirst({
+      where: { id: conversationId, plantId, userId },
+      include: {
+        messages: {
+          where: dto.messageId ? { id: dto.messageId } : { role: 'assistant' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+    if (!conv) throw new NotFoundException('Conversation not found');
+
+    const explicit = dto.note?.trim();
+    if (explicit) return explicit;
+
+    const message = conv.messages[0];
+    if (!message || message.role !== 'assistant' || !message.content.trim()) {
+      throw new BadRequestException('Choose a Dr. Plant reply or add a note.');
+    }
+
+    return message.content.trim().slice(0, 2000);
   }
 }

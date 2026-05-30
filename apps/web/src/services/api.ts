@@ -290,6 +290,23 @@ export const diagnosisChatApi = {
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );
   },
+  saveJournalNote: (plantId: string, conversationId: string, messageId: string, note?: string) =>
+    api.post(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/journal-note`, {
+      messageId,
+      note,
+    }),
+  scheduleHealthCheck: (
+    plantId: string,
+    conversationId: string,
+    messageId: string,
+    dueInDays = 3,
+    note?: string,
+  ) =>
+    api.post(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/health-check`, {
+      messageId,
+      dueInDays,
+      note,
+    }),
 };
 
 export const usersApi = {

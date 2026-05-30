@@ -61,8 +61,24 @@ Creates a **`HEALTH_CHECK`** task linked via `sourceDiagnosisId`. Optional `note
 | POST | `/plants/:plantId/diagnose/conversations` |
 | GET | `/plants/:plantId/diagnose/conversations/:id` |
 | POST | `/plants/:plantId/diagnose/conversations/:id/messages` |
+| POST | `/plants/:plantId/diagnose/conversations/:id/actions/journal-note` |
+| POST | `/plants/:plantId/diagnose/conversations/:id/actions/health-check` |
 
 **Files:** `diagnosis.controller.ts`, `diagnosis-chat.controller.ts`, `llm-diagnosis.service.ts`
+
+Chat actions are explicit user-confirmed actions from a Dr. Plant reply:
+
+- `journal-note` saves the selected assistant reply, or an explicit `note`, as a plant journal entry.
+- `health-check` creates a pending `HEALTH_CHECK` task and logs the selected reply or `note` to the journal.
+
+Example body:
+
+```json
+{
+  "messageId": "diagnosis-message-id",
+  "dueInDays": 3
+}
+```
 
 See [diagnosis pipeline](../architecture/diagnosis-pipeline.md).
 

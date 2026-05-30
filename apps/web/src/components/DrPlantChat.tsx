@@ -44,6 +44,9 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
   const [photo, setPhoto] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [actionNotice, setActionNotice] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [actionLoading, setActionLoading] = useState('');
   const [lastReplyAt, setLastReplyAt] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastFailedPayload = useRef<{ text: string; photo: File | null } | null>(null);
@@ -86,6 +89,8 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
 
     setLoading(true);
     setError('');
+    setActionNotice('');
+    setActionError('');
     lastFailedPayload.current = { text: trimmed, photo: image ?? null };
 
     try {
@@ -141,6 +146,36 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
     setInput(last.text);
     setPhoto(last.photo);
     void sendWithPayload(last.text, last.photo ?? undefined);
+  };
+
+  const saveReplyToJournal = async (message: ChatMessage) => {
+    if (!activeId) return;
+    setActionLoading(`journal:${message.id}`);
+    setActionNotice('');
+    setActionError('');
+    try {
+      await diagnosisChatApi.saveJournalNote(plantId, activeId, message.id);
+      setActionNotice('Saved Dr. Plant reply to the journal.');
+    } catch (err: unknown) {
+      setActionError(formatApiErrorMessage(err, 'Could not save this reply to the journal.'));
+    } finally {
+      setActionLoading('');
+    }
+  };
+
+  const scheduleHealthCheck = async (message: ChatMessage, dueInDays = 3) => {
+    if (!activeId) return;
+    setActionLoading(`health:${message.id}`);
+    setActionNotice('');
+    setActionError('');
+    try {
+      await diagnosisChatApi.scheduleHealthCheck(plantId, activeId, message.id, dueInDays);
+      setActionNotice(`Scheduled a health check in ${dueInDays} days.`);
+    } catch (err: unknown) {
+      setActionError(formatApiErrorMessage(err, 'Could not schedule a health check.'));
+    } finally {
+      setActionLoading('');
+    }
   };
 
   const conversationPreview = (c: ConversationListItem) => {
@@ -234,6 +269,19 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
         </div>
       )}
 
+      {(actionNotice || actionError) && (
+        <div
+          className={`mx-4 mt-3 rounded-lg border px-3 py-2 text-sm ${
+            actionError
+              ? 'border-red-200 bg-red-50 text-red-800'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+          }`}
+          role={actionError ? 'alert' : 'status'}
+        >
+          {actionError || actionNotice}
+        </div>
+      )}
+
       {lastReplyAt && !loading && !error && messages.length > 0 && (
         <p className="mx-4 mt-2 text-xs font-medium text-emerald-700" role="status">
           Dr. Plant replied · {format(new Date(lastReplyAt), 'h:mm a')}
@@ -292,6 +340,26 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
                 >
                   {format(new Date(m.createdAt), 'h:mm a')}
                 </p>
+                {!isUser && activeId ? (
+                  <div className="mt-2 flex flex-wrap gap-2 border-t border-emerald-50 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => saveReplyToJournal(m)}
+                      disabled={Boolean(actionLoading)}
+                      className="min-h-8 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                    >
+                      {actionLoading === `journal:${m.id}` ? 'Saving…' : 'Save to journal'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scheduleHealthCheck(m, 3)}
+                      disabled={Boolean(actionLoading)}
+                      className="min-h-8 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      {actionLoading === `health:${m.id}` ? 'Scheduling…' : 'Health check in 3 days'}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </div>
           );

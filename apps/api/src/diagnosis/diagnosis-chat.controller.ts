@@ -13,6 +13,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { DiagnosisChatService } from './diagnosis-chat.service';
+import { ChatHealthCheckActionDto, ChatJournalActionDto } from './dto/chat-action.dto';
 
 @ApiTags('diagnoses')
 @ApiBearerAuth()
@@ -61,6 +62,36 @@ export class DiagnosisChatController {
       conversationId,
       message ?? '',
       file,
+    );
+  }
+
+  @Post(':conversationId/actions/journal-note')
+  saveJournalNote(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('conversationId') conversationId: string,
+    @Body() dto: ChatJournalActionDto,
+  ) {
+    return this.chat.saveAssistantReplyToJournal(
+      user.sub,
+      plantId,
+      conversationId,
+      dto,
+    );
+  }
+
+  @Post(':conversationId/actions/health-check')
+  scheduleHealthCheck(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('conversationId') conversationId: string,
+    @Body() dto: ChatHealthCheckActionDto,
+  ) {
+    return this.chat.scheduleHealthCheckFromChat(
+      user.sub,
+      plantId,
+      conversationId,
+      dto,
     );
   }
 }
