@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 import { PotSize } from '@prisma/client';
 
 export class UpdatePlantDto {
@@ -19,6 +19,7 @@ export class UpdatePlantDto {
   notes?: string;
 
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['http', 'https'], require_tld: false })
+  @MaxLength(2048)
   imageUrl?: string;
 }

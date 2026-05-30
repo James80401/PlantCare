@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
@@ -12,6 +13,25 @@ import { UploadService } from './upload/upload.service';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many auth attempts, please try again later.' },
+  });
+  const passwordResetLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many password reset requests, please try again later.' },
+  });
+  app.use('/api/v1/auth/login', authLimiter);
+  app.use('/api/v1/auth/register', authLimiter);
+  app.use('/api/v1/auth/forgot-password', passwordResetLimiter);
+  app.use('/api/v1/auth/resend-verification', passwordResetLimiter);
   const uploadService = app.get(UploadService);
   app.useStaticAssets(uploadService.getUploadDir(), { prefix: '/uploads/' });
   const resolveCarePath = (subdir: string) => {

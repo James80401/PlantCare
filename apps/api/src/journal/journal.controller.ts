@@ -14,6 +14,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
+import { imageUploadOptions } from '../common/upload-options';
 import { CreateJournalDto } from './dto/create-journal.dto';
 import { UpdateJournalDto } from './dto/update-journal.dto';
 import { JournalService } from './journal.service';
@@ -31,7 +32,7 @@ export class JournalController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('photo'))
+  @UseInterceptors(FileInterceptor('photo', imageUploadOptions))
   create(
     @CurrentUser() user: JwtPayload,
     @Param('plantId') plantId: string,
@@ -42,7 +43,7 @@ export class JournalController {
   }
 
   @Patch(':entryId')
-  @UseInterceptors(FileInterceptor('photo'))
+  @UseInterceptors(FileInterceptor('photo', imageUploadOptions))
   update(
     @CurrentUser() user: JwtPayload,
     @Param('plantId') plantId: string,

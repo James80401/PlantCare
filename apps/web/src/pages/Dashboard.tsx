@@ -103,7 +103,21 @@ export default function Dashboard() {
     [dash?.pendingTasks],
   );
 
-  const currentDate = useMemo(() => new Date(), []);
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+  useEffect(() => {
+    const tick = () => setCurrentDate(new Date());
+    const now = new Date();
+    const msUntilNextMinute = 60_000 - (now.getSeconds() * 1000 + now.getMilliseconds());
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+    const timeoutId = setTimeout(() => {
+      tick();
+      intervalId = setInterval(tick, 60_000);
+    }, msUntilNextMinute);
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, []);
 
   const visiblePlants = useMemo((): Array<DashboardPlant | SharedPlantView> => {
     if (plantScope === 'mine') return plants;

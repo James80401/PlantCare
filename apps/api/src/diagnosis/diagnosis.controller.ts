@@ -13,6 +13,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
+import { imageUploadOptions } from '../common/upload-options';
 import { DiagnosisService } from './diagnosis.service';
 import { ApplyRecoveryTasksDto } from './dto/apply-recovery-tasks.dto';
 import { FollowUpTaskDto } from './dto/follow-up-task.dto';
@@ -26,7 +27,7 @@ export class DiagnosisController {
   constructor(private diagnosisService: DiagnosisService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', imageUploadOptions))
   diagnose(
     @CurrentUser() user: JwtPayload,
     @Param('plantId') plantId: string,

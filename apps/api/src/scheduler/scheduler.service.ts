@@ -31,6 +31,8 @@ export interface ScheduleSuggestion {
 
 @Injectable()
 export class SchedulerService {
+  private weatherPostponeRunByUser = new Map<string, string>();
+
   constructor(private prisma: PrismaService) {}
 
   potMultiplier(potSize: PotSize): number {
@@ -338,6 +340,10 @@ export class SchedulerService {
   }
 
   async autoPostponeOutdoorWateringFromWeather(userId: string, days = 2, rainThreshold = 0.6) {
+    const today = startOfDay(new Date()).toISOString();
+    if (this.weatherPostponeRunByUser.get(userId) === today) return;
+    this.weatherPostponeRunByUser.set(userId, today);
+
     const weatherCache = await this.prisma.weatherAdviceCache.findUnique({ where: { userId } });
     const weatherPayload = weatherCache?.payload ? (JSON.parse(weatherCache.payload) as any) : null;
     const rainTomorrow = weatherPayload?.summary?.days?.[1]?.rainProbability as number | undefined;

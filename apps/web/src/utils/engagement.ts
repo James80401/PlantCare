@@ -180,7 +180,20 @@ export function resolveMilestones(
   apiRows: MilestoneApiRow[] | undefined,
   ctx: EngagementContext,
 ): Milestone[] {
-  return milestonesFromApi(apiRows) ?? deriveMilestones(ctx);
+  const apiMilestones = milestonesFromApi(apiRows);
+  if (!apiMilestones) return deriveMilestones(ctx);
+
+  const byId = new Map(apiMilestones.map((milestone) => [milestone.id, milestone]));
+  return MILESTONE_DEFS.map((definition) => (
+    byId.get(definition.id) ?? {
+      id: definition.id,
+      title: definition.title,
+      description: definition.description,
+      emoji: definition.emoji,
+      unlocked: false,
+      progressLabel: definition.progressLabel?.(ctx),
+    }
+  ));
 }
 
 export function deriveMilestones(ctx: EngagementContext): Milestone[] {

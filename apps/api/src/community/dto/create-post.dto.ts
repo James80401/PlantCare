@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsOptional, IsString, IsUrl, MaxLength, MinLength } from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -11,6 +11,7 @@ export class CreatePostDto {
   speciesId?: string;
 
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['http', 'https'], require_tld: false })
+  @MaxLength(2048)
   imageUrl?: string;
 }

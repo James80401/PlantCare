@@ -25,7 +25,7 @@ export class BuddySchedulerService {
     this.logger.log(`Buddy daily reset checked for ${buddies.length} buddies`);
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async completeFinishedJourneys() {
     const due = await this.prisma.buddyJourney.findMany({
       where: { completed: false, endsAt: { lte: new Date() } },

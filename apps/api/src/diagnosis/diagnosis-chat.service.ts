@@ -15,6 +15,8 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { ChatHealthCheckActionDto, ChatJournalActionDto } from './dto/chat-action.dto';
 
+const CHAT_HISTORY_TURN_LIMIT = 20;
+
 @Injectable()
 export class DiagnosisChatService {
   constructor(
@@ -241,9 +243,15 @@ export class DiagnosisChatService {
     const plant = await this.getPlantForUser(userId, plantId);
     const conv = await this.prisma.diagnosisConversation.findFirst({
       where: { id: conversationId, plantId, userId },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: CHAT_HISTORY_TURN_LIMIT,
+        },
+      },
     });
     if (!conv) throw new NotFoundException('Conversation not found');
+    conv.messages.reverse();
 
     const text = messageText.trim() || (file ? 'What do you see in this photo?' : '');
     if (!text && !file) {

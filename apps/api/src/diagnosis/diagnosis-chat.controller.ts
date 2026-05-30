@@ -12,6 +12,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
+import { imageUploadOptions } from '../common/upload-options';
 import { DiagnosisChatService } from './diagnosis-chat.service';
 import { ChatHealthCheckActionDto, ChatJournalActionDto } from './dto/chat-action.dto';
 
@@ -28,7 +29,7 @@ export class DiagnosisChatController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', imageUploadOptions))
   create(
     @CurrentUser() user: JwtPayload,
     @Param('plantId') plantId: string,
@@ -48,7 +49,7 @@ export class DiagnosisChatController {
   }
 
   @Post(':conversationId/messages')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', imageUploadOptions))
   sendMessage(
     @CurrentUser() user: JwtPayload,
     @Param('plantId') plantId: string,
