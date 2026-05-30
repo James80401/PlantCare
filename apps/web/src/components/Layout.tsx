@@ -17,6 +17,13 @@ const mobileNav = [
   { to: '/garden/settings', label: 'Settings', mobileLabel: 'Settings', icon: 'settings' as const },
 ];
 
+const adminNav = {
+  to: '/admin/registrations',
+  label: 'Admin',
+  mobileLabel: 'Admin',
+  icon: 'admin' as const,
+};
+
 const desktopNav = mobileNav;
 
 /** Hide upgrade CTAs during beta — all features enabled */
@@ -39,6 +46,7 @@ function LayoutShell({
   const location = useLocation();
   const { missing: buddyMissing } = useBuddyCompanion();
   const buddyQuestClaims = useBuddyQuestBadge(Boolean(user) && !buddyMissing);
+  const navItems = user?.isAdmin ? [...mobileNav, adminNav] : mobileNav;
   usePushNotifications(Boolean(user));
 
   return (
@@ -51,7 +59,7 @@ function LayoutShell({
               <span className="block truncate">Plant Care</span>
             </Link>
             <nav className="hidden sm:flex items-center gap-1 text-sm" aria-label="Main">
-              {desktopNav.map(({ to, label, exact }) => {
+              {(user?.isAdmin ? [...desktopNav, adminNav] : desktopNav).map(({ to, label, exact }) => {
                 const active = isActivePath(location.pathname, to, exact);
                 return (
                   <Link
@@ -108,8 +116,11 @@ function LayoutShell({
         style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
         aria-label="Primary"
       >
-        <div className="mx-auto grid max-w-lg grid-cols-7 gap-px">
-          {mobileNav.map(({ to, mobileLabel, icon, exact }) => {
+        <div
+          className="mx-auto grid max-w-lg gap-px"
+          style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+        >
+          {navItems.map(({ to, mobileLabel, icon, exact }) => {
             const active = isActivePath(location.pathname, to, exact);
             const Icon = navIcons[icon];
             const showQuestBadge = to === '/garden/buddy' && buddyQuestClaims > 0;

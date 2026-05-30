@@ -15,6 +15,7 @@ interface User {
   email: string;
   name?: string;
   planTier: 'FREE' | 'PREMIUM';
+  isAdmin?: boolean;
   onboardingCompletedAt?: string | null;
   experienceLevel?: string | null;
   defaultLightLevel?: string | null;
@@ -57,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: data.email,
         name: data.name,
         planTier: data.planTier,
+        isAdmin: Boolean(data.isAdmin),
         onboardingCompletedAt: data.onboardingCompletedAt,
         experienceLevel: data.experienceLevel,
         defaultLightLevel: data.defaultLightLevel,
