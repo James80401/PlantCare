@@ -26,7 +26,7 @@ const adminNav = {
 
 const desktopNav = mobileNav;
 
-const SHOW_UPGRADE = true;
+const SHOW_UPGRADE = import.meta.env.VITE_ENABLE_PREMIUM_BILLING === 'true';
 
 export default function Layout() {
   const auth = useAuth();

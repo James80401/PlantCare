@@ -16,6 +16,8 @@ type BillingStatus = {
   canManageSubscription: boolean;
 };
 
+const PREMIUM_BILLING_ENABLED = import.meta.env.VITE_ENABLE_PREMIUM_BILLING === 'true';
+
 export default function Subscription() {
   const { refreshUser } = useAuth();
   const [searchParams] = useSearchParams();
@@ -24,6 +26,11 @@ export default function Subscription() {
   const [busy, setBusy] = useState<'checkout' | 'portal' | null>(null);
 
   useEffect(() => {
+    if (!PREMIUM_BILLING_ENABLED) {
+      void refreshUser();
+      return;
+    }
+
     billingApi
       .status()
       .then(({ data }) => setStatus(data))
@@ -54,6 +61,29 @@ export default function Subscription() {
       setBusy(null);
     }
   };
+
+  if (!PREMIUM_BILLING_ENABLED) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6 pb-20">
+        <div>
+          <Link to="/garden" className="text-sm font-medium text-emerald-700 hover:underline">
+            Back to garden
+          </Link>
+          <h1 className="mt-3 text-2xl font-bold text-emerald-950">Premium</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Premium billing is not open yet. Current approved accounts keep full beta access.
+          </p>
+        </div>
+
+        <Card className="space-y-3 text-sm text-gray-700">
+          <p className="font-semibold text-emerald-950">Beta access is active</p>
+          <p>
+            You can keep using DrPlant while subscriptions are being prepared.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-20">
