@@ -87,6 +87,16 @@ export class EmailService implements OnModuleInit {
       const info = await transporter.sendMail({
         from: this.fromAddress(),
         ...mail,
+        headers: {
+          // SendGrid click tracking rewrites auth links through a branded tracking
+          // domain. Keep verification/reset links direct so TLS must match drplant.app.
+          'X-SMTPAPI': JSON.stringify({
+            filters: {
+              clicktrack: { settings: { enable: 0 } },
+            },
+          }),
+          ...mail.headers,
+        },
       });
       transporter.close();
       return { success: true, messageId: info.messageId };
