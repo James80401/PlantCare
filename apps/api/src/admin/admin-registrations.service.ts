@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AccountApprovalStatus } from '@prisma/client';
+import { subHours, subMinutes } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { isAdminEmail } from '../config/registration-policy';
@@ -37,6 +38,7 @@ export class AdminRegistrationsService {
         emailVerified: true,
         accountApprovalStatus: true,
         planTier: true,
+        aiPausedUntil: true,
         createdAt: true,
         _count: { select: { plants: true } },
         subscriptions: {
@@ -46,10 +48,13 @@ export class AdminRegistrationsService {
         },
       },
     });
-    return users.map((user) => ({
-      ...user,
-      isAdmin: isAdminEmail(this.config, user.email),
-    }));
+    return Promise.all(
+      users.map(async (user) => ({
+        ...user,
+        isAdmin: isAdminEmail(this.config, user.email),
+        aiUsage: await this.getAiUsageSummary(user.id),
+      })),
+    );
   }
 
   async approve(userId: string) {
@@ -80,6 +85,7 @@ export class AdminRegistrationsService {
       where: { id: userId },
       data: { accountApprovalStatus: AccountApprovalStatus.REJECTED },
     });
+    await this.revokeAllRefreshTokens(userId);
 
     return { message: 'Account rejected', userId, email: user.email };
   }
@@ -93,13 +99,59 @@ export class AdminRegistrationsService {
       where: { id: userId },
       data: { accountApprovalStatus: AccountApprovalStatus.REJECTED },
     });
+    await this.revokeAllRefreshTokens(userId);
 
     return { message: 'Account disabled', userId, email: user.email };
+  }
+
+  private async revokeAllRefreshTokens(userId: string) {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
   }
 
   private assertNotAdmin(email: string) {
     if (isAdminEmail(this.config, email)) {
       throw new BadRequestException('Admin accounts cannot be disabled from this portal.');
     }
+  }
+
+  private async getAiUsageSummary(userId: string) {
+    const now = new Date();
+    const oneHourAgo = subMinutes(now, 60);
+    const dayAgo = subHours(now, 24);
+    const [totalCalls, lastHourCalls, last24HourCalls, offTopicBlocks, rateLimitBlocks, latest] =
+      await Promise.all([
+        this.prisma.aiUsageEvent.count({
+          where: { userId, status: 'ALLOWED' },
+        }),
+        this.prisma.aiUsageEvent.count({
+          where: { userId, status: 'ALLOWED', createdAt: { gte: oneHourAgo } },
+        }),
+        this.prisma.aiUsageEvent.count({
+          where: { userId, status: 'ALLOWED', createdAt: { gte: dayAgo } },
+        }),
+        this.prisma.aiUsageEvent.count({
+          where: { userId, status: 'BLOCKED_OFF_TOPIC' },
+        }),
+        this.prisma.aiUsageEvent.count({
+          where: { userId, status: { in: ['RATE_LIMITED', 'PAUSED'] } },
+        }),
+        this.prisma.aiUsageEvent.findFirst({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true, status: true, feature: true, reason: true },
+        }),
+      ]);
+
+    return {
+      totalCalls,
+      lastHourCalls,
+      last24HourCalls,
+      offTopicBlocks,
+      rateLimitBlocks,
+      latest,
+    };
   }
 }

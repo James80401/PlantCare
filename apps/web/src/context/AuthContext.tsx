@@ -95,6 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      authApi.logout(refreshToken).catch(() => {
+        // best-effort revoke; fall through to client-side clear regardless
+      });
+    }
     void unregisterPushNative();
     localStorage.clear();
     setUser(null);

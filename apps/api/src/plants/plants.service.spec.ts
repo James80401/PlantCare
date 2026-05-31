@@ -53,6 +53,7 @@ describe('PlantsService', () => {
       { getOrFetchById: jest.fn().mockResolvedValue({}) } as never,
       {} as never,
       { get: jest.fn() } as never,
+      { assertImageAllowed: jest.fn().mockResolvedValue(null) } as never,
     );
 
     return { service, prisma, scheduler, upload };

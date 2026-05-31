@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
+import { ImageModerationService } from '../common/image-moderation.service';
 import { CreateJournalDto } from './dto/create-journal.dto';
 import { UpdateJournalDto } from './dto/update-journal.dto';
 
@@ -9,6 +10,7 @@ export class JournalService {
   constructor(
     private prisma: PrismaService,
     private upload: UploadService,
+    private imageModeration: ImageModerationService,
   ) {}
 
   async findAll(userId: string, plantId: string) {
@@ -30,7 +32,10 @@ export class JournalService {
       throw new BadRequestException('Add a note or photo.');
     }
     let photoUrl: string | undefined;
-    if (file) photoUrl = await this.upload.saveFile(file);
+    if (file) {
+      await this.imageModeration.assertImageAllowed(file);
+      photoUrl = await this.upload.saveFile(file);
+    }
 
     return this.prisma.journalEntry.create({
       data: {
@@ -59,7 +64,10 @@ export class JournalService {
 
     let photoUrl = entry.photoUrl;
     if (dto.removePhoto) photoUrl = null;
-    if (file) photoUrl = await this.upload.saveFile(file);
+    if (file) {
+      await this.imageModeration.assertImageAllowed(file);
+      photoUrl = await this.upload.saveFile(file);
+    }
 
     const nextNotes = dto.notes !== undefined ? dto.notes : entry.notes;
     if (!file && !dto.removePhoto && !nextNotes?.trim() && !photoUrl) {

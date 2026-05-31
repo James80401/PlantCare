@@ -74,6 +74,8 @@ export const authApi = {
     api.post('/auth/forgot-password', { email }, { timeout: 30_000, skipAuthRefresh: true }),
   resetPassword: (token: string, password: string) =>
     api.post('/auth/reset-password', { token, password }),
+  logout: (refreshToken: string) =>
+    api.post('/auth/logout', { refreshToken }, { skipAuthRefresh: true }),
 };
 
 export const adminApi = {

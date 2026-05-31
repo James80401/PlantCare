@@ -22,6 +22,8 @@ import { GardensModule } from './gardens/gardens.module';
 import { CommunityModule } from './community/community.module';
 import { BuddyModule } from './buddy/buddy.module';
 import { AdminModule } from './admin/admin.module';
+import { ImageModerationModule } from './common/image-moderation.module';
+import { AiUsageModule } from './ai-usage/ai-usage.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -36,6 +38,8 @@ import { HealthController } from './health.controller';
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     PrismaModule,
+    ImageModerationModule,
+    AiUsageModule,
     EmailModule,
     AuthModule,
     UsersModule,

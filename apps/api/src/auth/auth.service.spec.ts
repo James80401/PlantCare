@@ -16,6 +16,9 @@ describe('AuthService premium behavior', () => {
         findUnique: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue(createdUser),
       },
+      refreshToken: {
+        create: jest.fn().mockResolvedValue({}),
+      },
     };
     const jwt = {
       sign: jest.fn((payload: unknown) => `token-${JSON.stringify(payload)}`),

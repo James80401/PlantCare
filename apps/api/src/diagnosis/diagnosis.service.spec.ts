@@ -28,6 +28,11 @@ describe('DiagnosisService', () => {
       {} as never,
       { get: jest.fn() } as never,
       { isAvailable: jest.fn().mockReturnValue(false) } as never,
+      { assertImageAllowed: jest.fn().mockResolvedValue(null) } as never,
+      {
+        assertPlantIntentOrThrow: jest.fn().mockResolvedValue(undefined),
+        reserveCall: jest.fn().mockResolvedValue(undefined),
+      } as never,
     );
 
     return { service, prisma };

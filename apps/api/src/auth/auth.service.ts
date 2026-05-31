@@ -10,7 +10,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
 import { AccountApprovalStatus, PlanTier } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
@@ -235,6 +235,7 @@ export class AuthService implements OnModuleInit {
         emailVerified: true,
       },
     });
+    await this.revokeAllForUser(user.id);
 
     return { message: 'Password updated. You can sign in with your new password.' };
   }
@@ -277,33 +278,99 @@ export class AuthService implements OnModuleInit {
   }
 
   async refresh(refreshToken: string) {
-    try {
-      const payload = this.jwt.verify(refreshToken, {
-        secret: this.config.get<string>('JWT_REFRESH_SECRET', 'dev-refresh-secret'),
-      });
-      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-      if (user && this.email.isConfigured() && !user.emailVerified) {
-        throw new UnauthorizedException('Email not verified');
-      }
-      if (user?.accountApprovalStatus === AccountApprovalStatus.REJECTED) {
-        throw new UnauthorizedException('Account not approved');
-      }
-      if (user?.accountApprovalStatus === AccountApprovalStatus.PENDING) {
-        throw new UnauthorizedException('Account awaiting admin approval');
-      }
-      const tokens = await this.issueTokens(payload.sub, payload.email);
-      const fresh = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
-        select: { id: true, email: true, name: true, planTier: true, emailVerified: true, createdAt: true },
-      });
-      return {
-        user: fresh ? { ...fresh, planTier: effectivePlanTier(this.config, fresh.planTier) } : fresh,
-        ...tokens,
-      };
-    } catch (e) {
-      if (e instanceof UnauthorizedException) throw e;
+    if (!refreshToken || typeof refreshToken !== 'string') {
       throw new UnauthorizedException('Invalid refresh token');
     }
+
+    let payload: { sub: string; email: string };
+    try {
+      payload = this.jwt.verify(refreshToken, {
+        secret: this.config.get<string>('JWT_REFRESH_SECRET', 'dev-refresh-secret'),
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const tokenHash = this.hashRefreshToken(refreshToken);
+    const stored = await this.prisma.refreshToken.findUnique({ where: { tokenHash } });
+
+    if (!stored) {
+      throw new UnauthorizedException('Refresh token not recognized. Please sign in again.');
+    }
+
+    if (stored.userId !== payload.sub) {
+      await this.revokeFamily(stored.familyId, 'user_mismatch');
+      throw new UnauthorizedException('Refresh token user mismatch');
+    }
+
+    if (stored.expiresAt.getTime() < Date.now()) {
+      throw new UnauthorizedException('Refresh token expired');
+    }
+
+    if (stored.revokedAt) {
+      // Token reuse detected — assume compromise; nuke the whole family.
+      await this.revokeFamily(stored.familyId, 'reuse_detected');
+      throw new UnauthorizedException('Refresh token has been revoked. Please sign in again.');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user) {
+      await this.revokeFamily(stored.familyId, 'user_missing');
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+    if (this.email.isConfigured() && !user.emailVerified) {
+      throw new UnauthorizedException('Email not verified');
+    }
+    if (user.accountApprovalStatus === AccountApprovalStatus.REJECTED) {
+      throw new UnauthorizedException('Account not approved');
+    }
+    if (user.accountApprovalStatus === AccountApprovalStatus.PENDING) {
+      throw new UnauthorizedException('Account awaiting admin approval');
+    }
+
+    const tokens = await this.issueTokens(payload.sub, payload.email, {
+      familyId: stored.familyId,
+      parentId: stored.id,
+    });
+
+    const issuedRecord = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash: this.hashRefreshToken(tokens.refreshToken) },
+      select: { id: true },
+    });
+
+    await this.prisma.refreshToken.update({
+      where: { id: stored.id },
+      data: {
+        revokedAt: new Date(),
+        replacedBy: issuedRecord?.id ?? null,
+      },
+    });
+
+    const fresh = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, email: true, name: true, planTier: true, emailVerified: true, createdAt: true },
+    });
+    return {
+      user: fresh ? { ...fresh, planTier: effectivePlanTier(this.config, fresh.planTier) } : fresh,
+      ...tokens,
+    };
+  }
+
+  async revokeAllForUser(userId: string) {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  async logout(refreshToken: string) {
+    if (!refreshToken) return { message: 'Logged out.' };
+    const tokenHash = this.hashRefreshToken(refreshToken);
+    await this.prisma.refreshToken.updateMany({
+      where: { tokenHash, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    return { message: 'Logged out.' };
   }
 
   private async notifyAdminsOfPendingRegistration(email: string, name: string | null) {
@@ -316,13 +383,60 @@ export class AuthService implements OnModuleInit {
     );
   }
 
-  private async issueTokens(userId: string, email: string) {
+  private hashRefreshToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private parseRefreshExpiryMs(): number {
+    const raw = this.config.get<string>('JWT_REFRESH_EXPIRES_IN', '30d');
+    const match = /^(\d+)\s*([smhd]?)$/i.exec(raw.trim());
+    if (!match) return 30 * 24 * 60 * 60 * 1000;
+    const value = parseInt(match[1], 10);
+    const unit = (match[2] || 's').toLowerCase();
+    const mult =
+      unit === 'd' ? 86_400_000
+      : unit === 'h' ? 3_600_000
+      : unit === 'm' ? 60_000
+      : 1000;
+    return value * mult;
+  }
+
+  private async revokeFamily(familyId: string, _reason: string) {
+    await this.prisma.refreshToken.updateMany({
+      where: { familyId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  private async issueTokens(
+    userId: string,
+    email: string,
+    rotation?: { familyId: string; parentId: string },
+  ) {
     const payload = { sub: userId, email };
     const accessToken = this.jwt.sign(payload);
-    const refreshToken = this.jwt.sign(payload, {
-      secret: this.config.get<string>('JWT_REFRESH_SECRET', 'dev-refresh-secret'),
-      expiresIn: this.config.get<string>('JWT_REFRESH_EXPIRES_IN', '30d'),
+    const refreshToken = this.jwt.sign(
+      { ...payload, jti: randomUUID() },
+      {
+        secret: this.config.get<string>('JWT_REFRESH_SECRET', 'dev-refresh-secret'),
+        expiresIn: this.config.get<string>('JWT_REFRESH_EXPIRES_IN', '30d'),
+      },
+    );
+
+    const tokenHash = this.hashRefreshToken(refreshToken);
+    const expiresAt = new Date(Date.now() + this.parseRefreshExpiryMs());
+    const familyId = rotation?.familyId ?? randomUUID();
+
+    await this.prisma.refreshToken.create({
+      data: {
+        userId,
+        tokenHash,
+        familyId,
+        parentId: rotation?.parentId ?? null,
+        expiresAt,
+      },
     });
+
     return { accessToken, refreshToken };
   }
 }

@@ -38,6 +38,11 @@ describe('DiagnosisChatService actions', () => {
       {} as never,
       {} as never,
       {} as never,
+      { assertImageAllowed: jest.fn().mockResolvedValue(null) } as never,
+      {
+        assertPlantIntentOrThrow: jest.fn().mockResolvedValue(undefined),
+        reserveCall: jest.fn().mockResolvedValue(undefined),
+      } as never,
     );
 
     return { service, prisma };

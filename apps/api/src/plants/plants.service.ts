@@ -5,6 +5,7 @@ import { CareGuidesService } from '../care-guides/care-guides.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
 import { UploadService } from '../upload/upload.service';
+import { ImageModerationService } from '../common/image-moderation.service';
 import { sharedPlantInclude, userCanViewPlantTasks } from '../gardens/task-access';
 import { PlantNetService } from './plantnet.service';
 import { PerenualService } from '../species/perenual.service';
@@ -25,6 +26,7 @@ export class PlantsService {
     private perenual: PerenualService,
     private weather: WeatherService,
     private config: ConfigService,
+    private imageModeration: ImageModerationService,
   ) {}
 
   async findAll(userId: string) {
@@ -200,6 +202,8 @@ export class PlantsService {
       identifyCountResetAt: user.identifyCountResetAt,
     });
 
+    await this.imageModeration.assertImageAllowed(file);
+
     const result = await this.plantNet.identify(file);
     if (!result) throw new NotFoundException('Could not identify plant');
 
@@ -231,6 +235,7 @@ export class PlantsService {
   }
 
   async uploadImage(file: Express.Multer.File) {
+    await this.imageModeration.assertImageAllowed(file);
     const url = await this.upload.saveFile(file);
     return { url };
   }

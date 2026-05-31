@@ -16,7 +16,11 @@ describe('JournalService', () => {
       },
     };
 
-    const service = new JournalService(prisma as never, {} as never);
+    const service = new JournalService(
+      prisma as never,
+      {} as never,
+      { assertImageAllowed: jest.fn().mockResolvedValue(null) } as never,
+    );
     return { service, prisma };
   }
 

@@ -84,6 +84,7 @@ model User {
   emailVerificationExpires DateTime?
   passwordResetToken    String?        @unique
   passwordResetExpires  DateTime?
+  aiPausedUntil         DateTime?
   onboardingCompletedAt DateTime?
   experienceLevel       String?
   defaultLightLevel     String?
@@ -103,6 +104,45 @@ model User {
   activityEvents        ActivityEvent[]
   buddy                 Buddy?
   plantMilestones       PlantMilestone[]
+  refreshTokens         RefreshToken[]
+  aiUsageEvents         AiUsageEvent[]
+}
+
+model AiUsageEvent {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature        String
+  plantId        String?
+  conversationId String?
+  promptChars    Int      @default(0)
+  imageCount      Int      @default(0)
+  status         String
+  reason         String?
+  createdAt      DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([feature, createdAt])
+  @@index([status, createdAt])
+}
+
+model RefreshToken {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique
+  familyId    String
+  parentId    String?
+  replacedBy  String?
+  revokedAt   DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  userAgent   String?
+  ip          String?
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
 }
 
 model WeatherAdviceCache {

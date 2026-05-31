@@ -11,6 +11,8 @@ import axios from 'axios';
 import { addDays, startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
+import { ImageModerationService } from '../common/image-moderation.service';
+import { AiUsageService } from '../ai-usage/ai-usage.service';
 import { formatLabel, getAdvice } from './diagnosis-advice';
 import { ApplyRecoveryTasksDto } from './dto/apply-recovery-tasks.dto';
 import { FollowUpTaskDto } from './dto/follow-up-task.dto';
@@ -54,6 +56,8 @@ export class DiagnosisService {
     private upload: UploadService,
     private config: ConfigService,
     private llm: LlmDiagnosisService,
+    private imageModeration: ImageModerationService,
+    private aiUsage: AiUsageService,
   ) {
     this.hfToken = this.config.get<string>('HF_API_TOKEN');
   }
@@ -70,6 +74,20 @@ export class DiagnosisService {
       include: { species: true },
     });
     if (!plant) throw new NotFoundException('Plant not found');
+
+    await this.aiUsage.assertPlantIntentOrThrow({
+      feature: 'diagnosis',
+      userId,
+      plantId,
+      text: symptomsText,
+      hasImage: Boolean(file),
+      promptChars: symptomsText?.length ?? 0,
+      imageCount: file ? 1 : 0,
+    });
+
+    if (file) {
+      await this.imageModeration.assertImageAllowed(file);
+    }
 
     let imageUrl: string | undefined;
     if (file) {
@@ -88,6 +106,13 @@ export class DiagnosisService {
 
     if (this.llm.isAvailable()) {
       try {
+        await this.aiUsage.reserveCall({
+          feature: 'diagnosis',
+          userId,
+          plantId,
+          promptChars: symptomsText?.length ?? 0,
+          imageCount: file ? 1 : 0,
+        });
         const structured = await this.llm.diagnose({
           commonName: plant.species.commonName,
           scientificName: plant.species.scientificName,

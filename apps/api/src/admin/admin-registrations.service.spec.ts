@@ -25,6 +25,13 @@ describe('AdminRegistrationsService', () => {
         findUnique: jest.fn().mockResolvedValue(user),
         update: jest.fn().mockResolvedValue(user),
       },
+      refreshToken: {
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+      aiUsageEvent: {
+        count: jest.fn().mockResolvedValue(0),
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
     };
     const email = {
       isConfigured: jest.fn().mockReturnValue(false),

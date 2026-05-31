@@ -9,6 +9,8 @@ import { TaskType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { WeatherService } from '../weather/weather.service';
+import { ImageModerationService } from '../common/image-moderation.service';
+import { AiUsageService } from '../ai-usage/ai-usage.service';
 import { LlmDiagnosisService, type ChatTurn, type PlantContext } from './llm-diagnosis.service';
 import { OpenAiRequestError } from './openai-errors';
 import { readFileSync } from 'fs';
@@ -24,6 +26,8 @@ export class DiagnosisChatService {
     private llm: LlmDiagnosisService,
     private upload: UploadService,
     private weather: WeatherService,
+    private imageModeration: ImageModerationService,
+    private aiUsage: AiUsageService,
   ) {}
 
   private async getPlantForUser(userId: string, plantId: string) {
@@ -258,11 +262,23 @@ export class DiagnosisChatService {
       throw new ServiceUnavailableException('Message text or image is required.');
     }
 
+    await this.aiUsage.assertPlantIntentOrThrow({
+      feature: 'diagnosis_chat',
+      userId,
+      plantId,
+      conversationId,
+      text,
+      hasImage: Boolean(file),
+      promptChars: text.length,
+      imageCount: file ? 1 : 0,
+    });
+
     let imageUrl: string | undefined;
     let imageBase64: string | undefined;
     let imageMimeType: string | undefined;
 
     if (file) {
+      await this.imageModeration.assertImageAllowed(file);
       imageUrl = await this.upload.saveFile(file);
       const img = await this.imageToBase64(file);
       imageBase64 = img.base64;
@@ -305,6 +321,14 @@ export class DiagnosisChatService {
           'missing_api_key',
         );
       }
+      await this.aiUsage.reserveCall({
+        feature: 'diagnosis_chat',
+        userId,
+        plantId,
+        conversationId,
+        promptChars: text.length,
+        imageCount: file ? 1 : 0,
+      });
       assistantContent = await this.llm.chat(
         await this.buildPlantContext(plant, userId),
         history,

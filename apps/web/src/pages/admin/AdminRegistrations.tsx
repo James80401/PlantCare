@@ -10,10 +10,24 @@ type ManagedUser = {
   emailVerified: boolean;
   accountApprovalStatus: 'APPROVED' | 'PENDING' | 'REJECTED';
   planTier: 'FREE' | 'PREMIUM';
+  aiPausedUntil?: string | null;
   createdAt: string;
   isAdmin?: boolean;
   _count?: { plants: number };
   subscriptions?: { status: string; planName: string; createdAt: string }[];
+  aiUsage?: {
+    totalCalls: number;
+    lastHourCalls: number;
+    last24HourCalls: number;
+    offTopicBlocks: number;
+    rateLimitBlocks: number;
+    latest?: {
+      createdAt: string;
+      status: string;
+      feature: string;
+      reason?: string | null;
+    } | null;
+  };
 };
 
 export default function AdminRegistrations() {
@@ -110,70 +124,91 @@ export default function AdminRegistrations() {
             {users.map((u) => (
               <li
                 key={u.id}
-                className="rounded-2xl bg-white p-4 shadow-sm flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                className="rounded-2xl bg-white p-4 shadow-sm"
               >
-                <div>
-                  <p className="font-medium text-gray-900">{u.email}</p>
-                  {u.name ? <p className="text-sm text-gray-600">{u.name}</p> : null}
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                    <span className={`rounded-full px-2 py-1 font-semibold ${statusClass(u.accountApprovalStatus)}`}>
-                      {statusLabel(u.accountApprovalStatus)}
-                    </span>
-                    <span className={`rounded-full px-2 py-1 font-semibold ${u.emailVerified ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}`}>
-                      {u.emailVerified ? 'Email verified' : 'Email not verified'}
-                    </span>
-                    {u.isAdmin ? (
-                      <span className="rounded-full bg-indigo-50 px-2 py-1 font-semibold text-indigo-800">
-                        Admin
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">{u.email}</p>
+                    {u.name ? <p className="text-sm text-gray-600">{u.name}</p> : null}
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                      <span className={`rounded-full px-2 py-1 font-semibold ${statusClass(u.accountApprovalStatus)}`}>
+                        {statusLabel(u.accountApprovalStatus)}
                       </span>
-                    ) : null}
-                    <span className={`rounded-full px-2 py-1 font-semibold ${u.planTier === 'PREMIUM' ? 'bg-violet-50 text-violet-800' : 'bg-gray-100 text-gray-700'}`}>
-                      {u.planTier === 'PREMIUM' ? 'Premium' : 'Free'}
-                    </span>
-                    {u.subscriptions?.[0] ? (
-                      <span className="rounded-full bg-blue-50 px-2 py-1 font-semibold text-blue-800">
-                        {u.subscriptions[0].status.toLowerCase()}
+                      <span className={`rounded-full px-2 py-1 font-semibold ${u.emailVerified ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}`}>
+                        {u.emailVerified ? 'Email verified' : 'Email not verified'}
                       </span>
-                    ) : null}
-                    <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
-                      {u._count?.plants ?? 0} plants
-                    </span>
+                      {u.isAdmin ? (
+                        <span className="rounded-full bg-indigo-50 px-2 py-1 font-semibold text-indigo-800">
+                          Admin
+                        </span>
+                      ) : null}
+                      <span className={`rounded-full px-2 py-1 font-semibold ${u.planTier === 'PREMIUM' ? 'bg-violet-50 text-violet-800' : 'bg-gray-100 text-gray-700'}`}>
+                        {u.planTier === 'PREMIUM' ? 'Premium' : 'Free'}
+                      </span>
+                      {u.subscriptions?.[0] ? (
+                        <span className="rounded-full bg-blue-50 px-2 py-1 font-semibold text-blue-800">
+                          {u.subscriptions[0].status.toLowerCase()}
+                        </span>
+                      ) : null}
+                      {isAiPaused(u.aiPausedUntil) ? (
+                        <span className="rounded-full bg-rose-100 px-2 py-1 font-semibold text-rose-900">
+                          AI paused
+                        </span>
+                      ) : null}
+                      <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                        {u._count?.plants ?? 0} plants
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Registered {new Date(u.createdAt).toLocaleString()}
+                    </p>
                   </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Registered {new Date(u.createdAt).toLocaleString()}
-                  </p>
+                  <div className="flex gap-2 shrink-0">
+                    {u.accountApprovalStatus !== 'APPROVED' ? (
+                      <Button
+                        type="button"
+                        disabled={busyId === u.id || !u.emailVerified}
+                        onClick={() => approve(u.id)}
+                      >
+                        {u.accountApprovalStatus === 'REJECTED' ? 'Enable' : 'Approve'}
+                      </Button>
+                    ) : null}
+                    {u.accountApprovalStatus === 'PENDING' ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={busyId === u.id || Boolean(u.isAdmin)}
+                        onClick={() => reject(u.id)}
+                      >
+                        Reject
+                      </Button>
+                    ) : null}
+                    {u.accountApprovalStatus === 'APPROVED' ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={busyId === u.id || Boolean(u.isAdmin)}
+                        onClick={() => disable(u.id)}
+                      >
+                        Disable
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  {u.accountApprovalStatus !== 'APPROVED' ? (
-                    <Button
-                      type="button"
-                      disabled={busyId === u.id || !u.emailVerified}
-                      onClick={() => approve(u.id)}
-                    >
-                      {u.accountApprovalStatus === 'REJECTED' ? 'Enable' : 'Approve'}
-                    </Button>
-                  ) : null}
-                  {u.accountApprovalStatus === 'PENDING' ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      disabled={busyId === u.id || Boolean(u.isAdmin)}
-                      onClick={() => reject(u.id)}
-                    >
-                      Reject
-                    </Button>
-                  ) : null}
-                  {u.accountApprovalStatus === 'APPROVED' ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      disabled={busyId === u.id || Boolean(u.isAdmin)}
-                      onClick={() => disable(u.id)}
-                    >
-                      Disable
-                    </Button>
-                  ) : null}
+                <div className="mt-4 grid gap-2 border-t border-gray-100 pt-3 text-xs text-gray-600 sm:grid-cols-5">
+                  <AdminMetric label="AI calls total" value={u.aiUsage?.totalCalls ?? 0} />
+                  <AdminMetric label="Last hour" value={u.aiUsage?.lastHourCalls ?? 0} />
+                  <AdminMetric label="Last 24h" value={u.aiUsage?.last24HourCalls ?? 0} />
+                  <AdminMetric label="Off-topic blocks" value={u.aiUsage?.offTopicBlocks ?? 0} />
+                  <AdminMetric label="Rate blocks" value={u.aiUsage?.rateLimitBlocks ?? 0} />
                 </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  {u.aiPausedUntil && isAiPaused(u.aiPausedUntil)
+                    ? `Dr. Plant paused until ${new Date(u.aiPausedUntil).toLocaleString()}`
+                    : u.aiUsage?.latest
+                      ? `Latest AI event: ${u.aiUsage.latest.status.toLowerCase()} on ${u.aiUsage.latest.feature.replace('_', ' ')} at ${new Date(u.aiUsage.latest.createdAt).toLocaleString()}`
+                      : 'No AI usage yet'}
+                </p>
               </li>
             ))}
           </ul>
@@ -181,6 +216,19 @@ export default function AdminRegistrations() {
       </div>
     </div>
   );
+}
+
+function AdminMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <p className="font-semibold text-gray-900">{value}</p>
+      <p>{label}</p>
+    </div>
+  );
+}
+
+function isAiPaused(value?: string | null) {
+  return Boolean(value && new Date(value).getTime() > Date.now());
 }
 
 function statusLabel(status: ManagedUser['accountApprovalStatus']) {
