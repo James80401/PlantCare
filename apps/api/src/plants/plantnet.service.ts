@@ -33,7 +33,7 @@ export class PlantNetService {
       form.append('organs', 'leaf');
 
       const { data } = await axios.post(
-        'https://my-api.plantnet/v2/identify/all',
+        'https://my-api.plantnet.org/v2/identify/all',
         form,
         {
           params: { 'api-key': this.apiKey },
