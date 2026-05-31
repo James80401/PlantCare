@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBuddyCompanion } from '../../context/BuddyCompanionContext';
 import { pickBuddyPhrase, pushRecentPhraseId } from './pickBuddyPhrase';
@@ -18,6 +18,15 @@ const ACTIONS = [
 ] as const;
 
 const PHRASE_ROTATE_MS = 9_000;
+const DISPLAY_PREF_KEY = 'drplant.buddy.floatingDisplay';
+
+type BuddyDisplayMode = 'visible' | 'minimized' | 'hidden';
+
+function readDisplayMode(): BuddyDisplayMode {
+  if (typeof window === 'undefined') return 'visible';
+  const raw = window.localStorage.getItem(DISPLAY_PREF_KEY);
+  return raw === 'minimized' || raw === 'hidden' ? raw : 'visible';
+}
 
 function formatCountdown(seconds: number): string {
   if (seconds <= 0) return 'Back soon';
@@ -35,6 +44,7 @@ export default function BuddyFloatingCompanion() {
   const { buddy, missing, loading, journey, traveling, greeting, phraseContext, loadGreeting, refresh } =
     useBuddyCompanion();
   const [expanded, setExpanded] = useState(false);
+  const [displayMode, setDisplayMode] = useState<BuddyDisplayMode>(() => readDisplayMode());
   const [phraseTick, setPhraseTick] = useState(0);
   const [recentPhraseIds, setRecentPhraseIds] = useState<string[]>([]);
   const [displayPhrase, setDisplayPhrase] = useState('…');
@@ -90,7 +100,35 @@ export default function BuddyFloatingCompanion() {
     'max-sm:bottom-[calc(5.25rem+env(safe-area-inset-bottom))] max-sm:top-auto max-sm:translate-y-0 ' +
     'sm:top-1/2 sm:-translate-y-1/2';
 
+  const setBuddyDisplayMode = (mode: BuddyDisplayMode) => {
+    setDisplayMode(mode);
+    setExpanded(false);
+    window.localStorage.setItem(DISPLAY_PREF_KEY, mode);
+  };
+
+  if (displayMode === 'hidden') {
+    return (
+      <div className={dockClass}>
+        <button
+          type="button"
+          onClick={() => setBuddyDisplayMode('visible')}
+          className="pointer-events-auto mr-0 rounded-l-full border border-emerald-200 bg-white/95 px-3 py-2 text-xs font-semibold text-emerald-900 shadow-lg shadow-emerald-950/10 hover:bg-emerald-50"
+          aria-label={buddy ? `Show ${buddy.name}` : 'Show plant buddy'}
+        >
+          Buddy
+        </button>
+      </div>
+    );
+  }
+
   if (loading) {
+    if (displayMode === 'minimized') {
+      return (
+        <div className={dockClass} aria-hidden>
+          <div className="pointer-events-none mr-1 h-12 w-12 rounded-full border border-emerald-100 bg-emerald-50/90 shadow-md" />
+        </div>
+      );
+    }
     return (
       <div className={dockClass} aria-hidden>
         <div className="pointer-events-none mr-1 flex items-center gap-2">
@@ -104,6 +142,20 @@ export default function BuddyFloatingCompanion() {
   }
 
   if (missing) {
+    if (displayMode === 'minimized') {
+      return (
+        <div ref={panelRef} className={dockClass}>
+          <button
+            type="button"
+            onClick={() => setBuddyDisplayMode('visible')}
+            className="pointer-events-auto mr-1 flex h-14 w-14 items-center justify-center rounded-full border-2 border-emerald-200 bg-white text-xl shadow-lg shadow-emerald-900/10 hover:scale-105"
+            aria-label="Show plant buddy adoption prompt"
+          >
+            <span aria-hidden>+</span>
+          </button>
+        </div>
+      );
+    }
     return (
       <div ref={panelRef} className={dockClass}>
         <div className="pointer-events-auto mr-2 flex items-center gap-2">
@@ -122,6 +174,14 @@ export default function BuddyFloatingCompanion() {
               </span>
             </span>
           </Link>
+          <button
+            type="button"
+            onClick={() => setBuddyDisplayMode('hidden')}
+            className="self-start rounded-full border border-emerald-100 bg-white/95 px-2 py-1 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+            aria-label="Hide plant buddy prompt"
+          >
+            Hide
+          </button>
         </div>
       </div>
     );
@@ -134,6 +194,41 @@ export default function BuddyFloatingCompanion() {
     : 'On a grow journey';
 
   const travelPhrase = displayPhrase;
+
+  if (displayMode === 'minimized') {
+    return (
+      <div ref={panelRef} className={dockClass}>
+        <div className="pointer-events-auto mr-1 flex flex-col items-end gap-1">
+          <button
+            type="button"
+            onClick={() => setBuddyDisplayMode('visible')}
+            className={`buddy-hang-peek flex h-16 w-16 translate-x-2 items-center justify-center rounded-full border-2 shadow-lg transition hover:scale-105 ${
+              traveling
+                ? 'border-sky-200 bg-gradient-to-br from-sky-100 to-amber-50 shadow-sky-900/15'
+                : 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-lime-50 shadow-emerald-900/10'
+            }`}
+            aria-label={`Show ${buddy.name}`}
+          >
+            <BuddyCompanionAnimated
+              speciesId={buddy.speciesId}
+              size="sm"
+              traveling={traveling}
+              mood={buddy.mood}
+              phraseContext={phraseContext}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={() => setBuddyDisplayMode('hidden')}
+            className="translate-x-1 rounded-l-full border border-emerald-100 bg-white/95 px-2 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+            aria-label={`Hide ${buddy.name}`}
+          >
+            Hide
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={panelRef} className={dockClass}>
@@ -224,7 +319,7 @@ export default function BuddyFloatingCompanion() {
               ))}
             </nav>
 
-            <div className="flex gap-2 border-t border-emerald-50 px-3 py-2">
+            <div className="flex flex-wrap gap-2 border-t border-emerald-50 px-3 py-2">
               <Link
                 to="/garden/tasks"
                 onClick={() => setExpanded(false)}
@@ -239,20 +334,54 @@ export default function BuddyFloatingCompanion() {
               >
                 Refresh
               </button>
+              <button
+                type="button"
+                onClick={() => setBuddyDisplayMode('minimized')}
+                className="rounded-xl border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
+              >
+                Minimize
+              </button>
+              <button
+                type="button"
+                onClick={() => setBuddyDisplayMode('hidden')}
+                className="rounded-xl border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
+              >
+                Hide
+              </button>
             </div>
           </div>
         )}
 
         <div className="flex items-center gap-3">
           {!expanded && (
-            <p
-              key={speechKey}
-              className="buddy-speech-in max-w-[11rem] rounded-2xl rounded-br-sm border border-emerald-100 bg-white/95 px-3 py-2 text-sm font-medium leading-snug text-emerald-900 shadow-lg shadow-emerald-950/10"
-              role="status"
-              aria-live="polite"
-            >
-              {travelPhrase}
-            </p>
+            <div className="flex items-start gap-1">
+              <p
+                key={speechKey}
+                className="buddy-speech-in max-w-[11rem] rounded-2xl rounded-br-sm border border-emerald-100 bg-white/95 px-3 py-2 text-sm font-medium leading-snug text-emerald-900 shadow-lg shadow-emerald-950/10"
+                role="status"
+                aria-live="polite"
+              >
+                {travelPhrase}
+              </p>
+              <div className="flex flex-col gap-1">
+                <button
+                  type="button"
+                  onClick={() => setBuddyDisplayMode('minimized')}
+                  className="rounded-full border border-emerald-100 bg-white/95 px-2 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+                  aria-label={`Minimize ${buddy.name}`}
+                >
+                  Min
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBuddyDisplayMode('hidden')}
+                  className="rounded-full border border-emerald-100 bg-white/95 px-2 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+                  aria-label={`Hide ${buddy.name}`}
+                >
+                  Hide
+                </button>
+              </div>
+            </div>
           )}
 
           <button
