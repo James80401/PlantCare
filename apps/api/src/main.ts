@@ -12,6 +12,7 @@ import { UploadService } from './upload/upload.service';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
+  app.set('trust proxy', 1);
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
   const authLimiter = rateLimit({
