@@ -84,6 +84,7 @@ export const adminApi = {
   approve: (userId: string) => api.post(`/admin/registrations/${userId}/approve`),
   reject: (userId: string) => api.post(`/admin/registrations/${userId}/reject`),
   disable: (userId: string) => api.post(`/admin/registrations/${userId}/disable`),
+  unpauseAi: (userId: string) => api.post(`/admin/registrations/${userId}/ai/unpause`),
 };
 
 export const plantsApi = {

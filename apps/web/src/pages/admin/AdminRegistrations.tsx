@@ -90,6 +90,19 @@ export default function AdminRegistrations() {
     }
   };
 
+  const unpauseAi = async (userId: string) => {
+    setBusyId(userId);
+    setError('');
+    try {
+      await adminApi.unpauseAi(userId);
+      await load();
+    } catch {
+      setError('AI unpause failed.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (isAdmin === null) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
@@ -191,6 +204,16 @@ export default function AdminRegistrations() {
                         onClick={() => disable(u.id)}
                       >
                         Disable
+                      </Button>
+                    ) : null}
+                    {isAiPaused(u.aiPausedUntil) ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={busyId === u.id}
+                        onClick={() => unpauseAi(u.id)}
+                      >
+                        Unpause AI
                       </Button>
                     ) : null}
                   </div>

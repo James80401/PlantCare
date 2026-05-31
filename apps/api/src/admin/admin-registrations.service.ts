@@ -104,6 +104,27 @@ export class AdminRegistrationsService {
     return { message: 'Account disabled', userId, email: user.email };
   }
 
+  async unpauseAi(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { aiPausedUntil: null },
+    });
+
+    await this.prisma.aiUsageEvent.create({
+      data: {
+        userId,
+        feature: 'admin',
+        status: 'ADMIN_UNPAUSED',
+        reason: 'AI pause cleared by admin',
+      },
+    });
+
+    return { message: 'Dr. Plant AI access unpaused', userId, email: user.email };
+  }
+
   private async revokeAllRefreshTokens(userId: string) {
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },

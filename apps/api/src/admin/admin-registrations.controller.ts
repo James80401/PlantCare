@@ -35,4 +35,9 @@ export class AdminRegistrationsController {
   disable(@Param('userId') userId: string) {
     return this.registrations.disable(userId);
   }
+
+  @Post(':userId/ai/unpause')
+  unpauseAi(@Param('userId') userId: string) {
+    return this.registrations.unpauseAi(userId);
+  }
 }

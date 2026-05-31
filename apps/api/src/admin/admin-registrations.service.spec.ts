@@ -30,6 +30,7 @@ describe('AdminRegistrationsService', () => {
       },
       aiUsageEvent: {
         count: jest.fn().mockResolvedValue(0),
+        create: jest.fn().mockResolvedValue({ id: 'event-1' }),
         findFirst: jest.fn().mockResolvedValue(null),
       },
     };
@@ -102,5 +103,26 @@ describe('AdminRegistrationsService', () => {
     });
 
     await expect(service.disable('admin-1')).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('clears AI pause for a user', async () => {
+    const { service, prisma } = createService({
+      id: 'user-1',
+      email: 'user@example.com',
+      name: null,
+      accountApprovalStatus: AccountApprovalStatus.APPROVED,
+    });
+
+    await service.unpauseAi('user-1');
+
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { aiPausedUntil: null },
+    });
+    expect(prisma.aiUsageEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'ADMIN_UNPAUSED' }),
+      }),
+    );
   });
 });
