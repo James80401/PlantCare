@@ -173,37 +173,81 @@ export class GardensService {
   }
 
   /**
-   * Garden detail for the Garden Dashboard: header + members + home plants (each with a
-   * pending-task count and unresolved-diagnosis flag). Phase 2 enriches with task buckets.
+   * Garden detail for the Garden Dashboard: header + members + home plants (each with its
+   * next task and an attention flag), task buckets (due today / overdue / upcoming), the
+   * next watering date, a notes count, and the garden's pending tasks for the Tasks view.
    */
   async getDetail(userId: string, gardenId: string) {
     await this.requireRole(userId, gardenId, canViewGarden);
-    const garden = await this.prisma.garden.findUnique({
-      where: { id: gardenId },
-      select: {
-        id: true,
-        name: true,
-        location: true,
-        ownerId: true,
-        members: { include: { user: { select: { id: true, name: true, email: true } } } },
-        homePlants: {
-          orderBy: { createdAt: 'desc' },
-          select: {
-            id: true,
-            nickname: true,
-            imageUrl: true,
-            location: true,
-            species: { select: { commonName: true, scientificName: true } },
-            _count: { select: { tasks: true } },
-            diagnoses: {
-              where: { resolved: false },
-              select: { id: true },
+
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const tomorrowStart = startOfDay(addDays(now, 1));
+    const upcomingEnd = startOfDay(addDays(now, 8)); // next 7 days after today
+
+    const [garden, pendingTasks, notesCount] = await Promise.all([
+      this.prisma.garden.findUnique({
+        where: { id: gardenId },
+        select: {
+          id: true,
+          name: true,
+          location: true,
+          ownerId: true,
+          members: { include: { user: { select: { id: true, name: true, email: true } } } },
+          homePlants: {
+            orderBy: { createdAt: 'desc' },
+            select: {
+              id: true,
+              nickname: true,
+              imageUrl: true,
+              location: true,
+              species: { select: { commonName: true, scientificName: true } },
+              diagnoses: { where: { resolved: false }, select: { id: true } },
             },
           },
         },
-      },
-    });
+      }),
+      this.prisma.task.findMany({
+        where: { gardenId, status: 'PENDING' },
+        orderBy: { dueDate: 'asc' },
+        take: 200,
+        select: {
+          id: true,
+          taskType: true,
+          dueDate: true,
+          status: true,
+          completedAt: true,
+          plant: {
+            select: {
+              id: true,
+              nickname: true,
+              imageUrl: true,
+              species: { select: { commonName: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.journalEntry.count({ where: { plant: { gardenId } } }),
+    ]);
     if (!garden) throw new NotFoundException('Garden not found');
+
+    // Derive task buckets, next watering, and per-plant next task from the one task fetch.
+    let dueToday = 0;
+    let overdue = 0;
+    let upcoming = 0;
+    let nextWatering: Date | null = null;
+    const nextTaskByPlant = new Map<string, { taskType: string; dueDate: Date }>();
+    for (const t of pendingTasks) {
+      if (t.dueDate < todayStart) overdue += 1;
+      else if (t.dueDate < tomorrowStart) dueToday += 1;
+      else if (t.dueDate < upcomingEnd) upcoming += 1;
+      if (t.taskType === 'WATER' && (!nextWatering || t.dueDate < nextWatering)) {
+        nextWatering = t.dueDate;
+      }
+      if (!nextTaskByPlant.has(t.plant.id)) {
+        nextTaskByPlant.set(t.plant.id, { taskType: t.taskType, dueDate: t.dueDate });
+      }
+    }
 
     return {
       id: garden.id,
@@ -211,6 +255,9 @@ export class GardensService {
       location: garden.location,
       isOwner: garden.ownerId === userId,
       members: garden.members,
+      taskSummary: { dueToday, overdue, upcoming },
+      nextWatering: nextWatering ? nextWatering.toISOString() : null,
+      notesCount,
       plants: garden.homePlants.map((p) => ({
         id: p.id,
         nickname: p.nickname,
@@ -218,6 +265,26 @@ export class GardensService {
         location: p.location,
         species: p.species,
         needsAttention: p.diagnoses.length > 0,
+        nextTask: nextTaskByPlant.get(p.id)
+          ? {
+              taskType: nextTaskByPlant.get(p.id)!.taskType,
+              dueDate: nextTaskByPlant.get(p.id)!.dueDate.toISOString(),
+            }
+          : null,
+      })),
+      // Pending tasks (TaskItem-shaped) for the garden Tasks subsection.
+      tasks: pendingTasks.map((t) => ({
+        id: t.id,
+        taskType: t.taskType,
+        dueDate: t.dueDate.toISOString(),
+        status: t.status,
+        completedAt: t.completedAt ? t.completedAt.toISOString() : null,
+        plant: {
+          id: t.plant.id,
+          nickname: t.plant.nickname,
+          imageUrl: t.plant.imageUrl,
+          species: t.plant.species,
+        },
       })),
     };
   }

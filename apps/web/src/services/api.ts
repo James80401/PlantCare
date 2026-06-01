@@ -397,6 +397,7 @@ export interface GardenDetailPlant {
   location?: string | null;
   species: { commonName: string; scientificName?: string | null };
   needsAttention: boolean;
+  nextTask?: { taskType: string; dueDate: string } | null;
 }
 export interface GardenDetail {
   id: string;
@@ -404,7 +405,26 @@ export interface GardenDetail {
   location: string | null;
   isOwner: boolean;
   members: GardenMemberSummary[];
+  taskSummary: { dueToday: number; overdue: number; upcoming: number };
+  nextWatering: string | null;
+  notesCount: number;
   plants: GardenDetailPlant[];
+  tasks: TaskItemSummary[];
+}
+
+/** TaskItem-shaped pending task (matches the web TaskItem used by TaskRow). */
+export interface TaskItemSummary {
+  id: string;
+  taskType: string;
+  dueDate: string;
+  status: string;
+  completedAt?: string | null;
+  plant: {
+    id: string;
+    nickname?: string | null;
+    imageUrl?: string | null;
+    species: { commonName: string };
+  };
 }
 
 /** Landing/My-Gardens summary card (GET /gardens/summaries). */
