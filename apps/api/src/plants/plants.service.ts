@@ -202,7 +202,7 @@ export class PlantsService {
       identifyCountResetAt: user.identifyCountResetAt,
     });
 
-    await this.imageModeration.assertImageAllowed(file);
+    await this.imageModeration.assertImageAllowed(file, { feature: 'identify', userId });
 
     const result = await this.plantNet.identify(file);
     if (!result) throw new NotFoundException('Could not identify plant');
@@ -234,8 +234,8 @@ export class PlantsService {
     return { ...result, species };
   }
 
-  async uploadImage(file: Express.Multer.File) {
-    await this.imageModeration.assertImageAllowed(file);
+  async uploadImage(userId: string, file: Express.Multer.File) {
+    await this.imageModeration.assertImageAllowed(file, { feature: 'plant_upload', userId });
     const url = await this.upload.saveFile(file);
     return { url };
   }

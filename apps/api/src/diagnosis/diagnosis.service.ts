@@ -85,24 +85,35 @@ export class DiagnosisService {
       imageCount: file ? 1 : 0,
     });
 
-    if (file) {
-      await this.imageModeration.assertImageAllowed(file);
-    }
+    // Kick off image moderation in parallel with the slow upstream calls below
+    // (HuggingFace classify + OpenAI diagnose). On accept this saves the moderation
+    // round-trip from the user's wait time; on reject we throw before persisting.
+    // The HF + OpenAI calls may still complete after a moderation reject, paying for
+    // those tokens — acceptable since rejections are rare relative to total volume.
+    const moderationPromise: Promise<unknown> | undefined = file
+      ? this.imageModeration
+          .assertImageAllowed(file, { feature: 'diagnose', userId })
+          .catch((err) => {
+            // Wrap rejections so we can distinguish moderation errors from upstream model errors.
+            throw err;
+          })
+      : undefined;
 
-    let imageUrl: string | undefined;
-    if (file) {
-      imageUrl = await this.upload.saveFile(file);
-    }
-
-    const imageHint = file ? await this.classifyImage(file) : undefined;
+    const imageHintPromise: Promise<{ label: string; confidence: number } | undefined> = file
+      ? this.classifyImage(file)
+      : Promise.resolve(undefined);
 
     let source: DiagnosisSource = 'rules';
-    let resultLabel = imageHint?.label ?? 'General plant health review';
-    let confidence = imageHint?.confidence ?? 0.65;
+    let resultLabel: string;
+    let confidence: number;
     let adviceText: string;
     let detailJson: string | undefined;
 
     const intakeSummary = this.formatIntakeSummary(intake);
+
+    const imageHint = await imageHintPromise;
+    resultLabel = imageHint?.label ?? 'General plant health review';
+    confidence = imageHint?.confidence ?? 0.65;
 
     if (this.llm.isAvailable()) {
       try {
@@ -113,7 +124,7 @@ export class DiagnosisService {
           promptChars: symptomsText?.length ?? 0,
           imageCount: file ? 1 : 0,
         });
-        const structured = await this.llm.diagnose({
+        const structuredPromise = this.llm.diagnose({
           commonName: plant.species.commonName,
           scientificName: plant.species.scientificName,
           sunlight: plant.species.sunlight,
@@ -129,6 +140,13 @@ export class DiagnosisService {
           imageBase64: file?.buffer.toString('base64'),
           imageMimeType: file?.mimetype,
         });
+
+        // Await diagnosis and moderation together so total latency = max() not sum().
+        // If moderation rejects, its rejection propagates here.
+        const [structured] = await Promise.all([
+          structuredPromise,
+          moderationPromise ?? Promise.resolve(),
+        ]);
 
         if (structured) {
           source = 'openai';
@@ -148,16 +166,27 @@ export class DiagnosisService {
         }
         throw err;
       }
-    } else if (imageHint) {
-      source = 'huggingface';
-      resultLabel = formatLabel(imageHint.label);
-      confidence = imageHint.confidence;
-      adviceText = getAdvice(imageHint.label);
     } else {
-      ({ resultLabel, confidence, adviceText, source } = this.rulesFallback(
-        imageHint,
-        symptomsText,
-      ));
+      // No LLM available — still respect moderation if we have a file.
+      if (moderationPromise) await moderationPromise;
+      if (imageHint) {
+        source = 'huggingface';
+        resultLabel = formatLabel(imageHint.label);
+        confidence = imageHint.confidence;
+        adviceText = getAdvice(imageHint.label);
+      } else {
+        ({ resultLabel, confidence, adviceText, source } = this.rulesFallback(
+          imageHint,
+          symptomsText,
+        ));
+      }
+    }
+
+    // Only save the image after we've cleared moderation, to avoid orphaned uploads
+    // when moderation rejects.
+    let imageUrl: string | undefined;
+    if (file) {
+      imageUrl = await this.upload.saveFile(file);
     }
 
     if (!detailJson && intake) {

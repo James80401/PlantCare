@@ -70,6 +70,26 @@ describe('ImageModerationService', () => {
     await expect(svc.assertImageAllowed(makeFile())).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('audit-logs a structured reject line on reject', async () => {
+    const svc = makeService();
+    const warnSpy = jest.spyOn((svc as unknown as { logger: { warn: jest.Mock } }).logger, 'warn');
+    mockOpenAiReply({ isPlant: false, isExplicit: false, confidence: 0.9, reason: 'cat photo' });
+
+    await expect(
+      svc.assertImageAllowed(makeFile(), { feature: 'identify', userId: 'user-42' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(warnSpy).toHaveBeenCalled();
+    const logged = warnSpy.mock.calls.find(([msg]) => typeof msg === 'string' && msg.includes('image_moderation_reject'));
+    expect(logged).toBeDefined();
+    const fields = JSON.parse(logged![0] as string);
+    expect(fields.event).toBe('image_moderation_reject');
+    expect(fields.reject).toBe('not_plant');
+    expect(fields.feature).toBe('identify');
+    expect(fields.userId).toBe('user-42');
+    expect(fields.reason).toBe('cat photo');
+  });
+
   it('skips moderation entirely when no API key is configured', async () => {
     const svc = makeService({ OPENAI_API_KEY: undefined });
 

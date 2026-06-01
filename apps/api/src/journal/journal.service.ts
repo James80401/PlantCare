@@ -33,7 +33,10 @@ export class JournalService {
     }
     let photoUrl: string | undefined;
     if (file) {
-      await this.imageModeration.assertImageAllowed(file);
+      await this.imageModeration.assertImageAllowed(file, {
+        feature: 'journal_create',
+        userId,
+      });
       photoUrl = await this.upload.saveFile(file);
     }
 
@@ -65,7 +68,10 @@ export class JournalService {
     let photoUrl = entry.photoUrl;
     if (dto.removePhoto) photoUrl = null;
     if (file) {
-      await this.imageModeration.assertImageAllowed(file);
+      await this.imageModeration.assertImageAllowed(file, {
+        feature: 'journal_update',
+        userId,
+      });
       photoUrl = await this.upload.saveFile(file);
     }
 

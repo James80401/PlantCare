@@ -23,9 +23,12 @@ import { effectivePlanTier } from '../config/premium-policy';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
+const REFRESH_ROTATION_GRACE_MS = 10_000;
+
 @Injectable()
 export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
+  private warnedOnExpiryFallback = false;
 
   constructor(
     private prisma: PrismaService,
@@ -308,9 +311,22 @@ export class AuthService implements OnModuleInit {
     }
 
     if (stored.revokedAt) {
-      // Token reuse detected — assume compromise; nuke the whole family.
-      await this.revokeFamily(stored.familyId, 'reuse_detected');
-      throw new UnauthorizedException('Refresh token has been revoked. Please sign in again.');
+      const revokedAgeMs = Date.now() - stored.revokedAt.getTime();
+      const withinGraceWindow =
+        revokedAgeMs >= 0 &&
+        revokedAgeMs < REFRESH_ROTATION_GRACE_MS &&
+        stored.replacedBy != null;
+      if (!withinGraceWindow) {
+        // Token reuse detected — assume compromise; nuke the whole family.
+        await this.revokeFamily(stored.familyId, 'reuse_detected');
+        throw new UnauthorizedException('Refresh token has been revoked. Please sign in again.');
+      }
+      // Within the rotation grace window — almost certainly a concurrent /auth/refresh
+      // from the same client (flaky network retry or a second tab). Issue a fresh
+      // sibling token instead of nuking the family.
+      this.logger.warn(
+        `Refresh-token rotation grace hit for user ${stored.userId} (age=${revokedAgeMs}ms)`,
+      );
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
@@ -388,9 +404,19 @@ export class AuthService implements OnModuleInit {
   }
 
   private parseRefreshExpiryMs(): number {
+    const DEFAULT_MS = 30 * 24 * 60 * 60 * 1000;
     const raw = this.config.get<string>('JWT_REFRESH_EXPIRES_IN', '30d');
     const match = /^(\d+)\s*([smhd]?)$/i.exec(raw.trim());
-    if (!match) return 30 * 24 * 60 * 60 * 1000;
+    if (!match) {
+      if (!this.warnedOnExpiryFallback) {
+        this.logger.warn(
+          `JWT_REFRESH_EXPIRES_IN="${raw}" is not in the form \\d+[smhd] (e.g. 30d, 12h, 60m, 300s). ` +
+            `Falling back to 30d. Token expiry in the DB will diverge from the JWT exp claim.`,
+        );
+        this.warnedOnExpiryFallback = true;
+      }
+      return DEFAULT_MS;
+    }
     const value = parseInt(match[1], 10);
     const unit = (match[2] || 's').toLowerCase();
     const mult =

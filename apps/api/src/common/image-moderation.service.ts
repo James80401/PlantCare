@@ -45,8 +45,14 @@ export class ImageModerationService {
    * Throws BadRequestException when the image is rejected.
    * No-op (returns silently) when no API key is configured — that lets dev / CI run
    * without OpenAI credentials. Production deployments should set OPENAI_API_KEY.
+   *
+   * Pass an optional `context` (e.g. { feature: 'identify', userId }) so audit logs
+   * on rejects are traceable.
    */
-  async assertImageAllowed(file: Express.Multer.File): Promise<ImageModerationVerdict | null> {
+  async assertImageAllowed(
+    file: Express.Multer.File,
+    context: { feature?: string; userId?: string } = {},
+  ): Promise<ImageModerationVerdict | null> {
     if (!this.apiKey) {
       this.logger.warn('Image moderation skipped: OPENAI_API_KEY not configured.');
       return null;
@@ -55,11 +61,13 @@ export class ImageModerationService {
     const verdict = await this.classify(file);
 
     if (verdict.isExplicit) {
+      this.logReject('explicit', verdict, file, context);
       throw new BadRequestException(
         'This image cannot be processed. Please upload a different photo.',
       );
     }
     if (!verdict.isPlant) {
+      this.logReject('not_plant', verdict, file, context);
       throw new BadRequestException(
         verdict.reason && verdict.reason.length < 120
           ? `That image doesn't look like a plant — ${verdict.reason.toLowerCase()}`
@@ -67,6 +75,27 @@ export class ImageModerationService {
       );
     }
     return verdict;
+  }
+
+  private logReject(
+    rejectKind: 'explicit' | 'not_plant',
+    verdict: ImageModerationVerdict,
+    file: Express.Multer.File,
+    context: { feature?: string; userId?: string },
+  ): void {
+    // Structured single-line log so it's easy to grep / parse from log shippers.
+    const fields = {
+      event: 'image_moderation_reject',
+      reject: rejectKind,
+      feature: context.feature ?? 'unknown',
+      userId: context.userId ?? 'anonymous',
+      filename: file.originalname,
+      sizeBytes: file.size,
+      mime: file.mimetype,
+      verdictConfidence: verdict.confidence,
+      reason: verdict.reason,
+    };
+    this.logger.warn(JSON.stringify(fields));
   }
 
   async classify(file: Express.Multer.File): Promise<ImageModerationVerdict> {

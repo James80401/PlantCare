@@ -254,6 +254,36 @@ describe('SchedulerService', () => {
 
     jest.useRealTimers();
   });
+
+  it('trims stale entries from the weather-postpone dedup map across a day boundary', async () => {
+    const prisma = {
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue({ payload: '{}' }),
+      },
+      plant: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+    const map: Map<string, string> = (service as unknown as {
+      weatherPostponeRunByUser: Map<string, string>;
+    }).weatherPostponeRunByUser;
+
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-05-14T12:00:00Z'));
+    await service.autoPostponeOutdoorWateringFromWeather('user-1');
+    await service.autoPostponeOutdoorWateringFromWeather('user-2');
+    expect(map.size).toBe(2);
+
+    jest.setSystemTime(new Date('2026-05-15T12:00:00Z'));
+    await service.autoPostponeOutdoorWateringFromWeather('user-3');
+    expect(map.size).toBe(1);
+    expect(map.has('user-3')).toBe(true);
+    expect(map.has('user-1')).toBe(false);
+    expect(map.has('user-2')).toBe(false);
+
+    jest.useRealTimers();
+  });
 });
 
 function feedback(id: string, reason: string) {

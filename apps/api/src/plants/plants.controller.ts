@@ -43,8 +43,8 @@ export class PlantsController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('image', imageUploadOptions))
-  upload(@UploadedFile() file: Express.Multer.File) {
-    return this.plantsService.uploadImage(file);
+  upload(@CurrentUser() user: JwtPayload, @UploadedFile() file: Express.Multer.File) {
+    return this.plantsService.uploadImage(user.sub, file);
   }
 
   @Post()

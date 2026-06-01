@@ -39,15 +39,25 @@ const cliImages = process.argv
   .map((arg) => arg.slice('--image='.length));
 
 const defaultCases = [
-  // Real plant photos — should pass.
+  // === Clear plants — should pass ===
   { path: 'apps/api/src/care-guides/photos/species/seed-aloe-vera-aloe-barbadensis.jpg', expect: 'plant' },
   { path: 'apps/api/src/care-guides/photos/species/seed-african-violet-saintpaulia-ionantha.jpg', expect: 'plant' },
   { path: 'apps/api/src/care-guides/photos/species/seed-agave-agave-americana.jpg', expect: 'plant' },
-  // Care-action photos showing tools-on-grass — these are NOT plant subjects and SHOULD be rejected.
-  // If your team intends action shots to be accepted, replace these with a true plant photo and loosen the prompt.
+  { path: 'apps/api/src/care-guides/photos/species/seed-acorn-squash-cucurbita-pepo.jpg', expect: 'plant' },
+  { path: 'apps/api/src/care-guides/photos/species/seed-air-plant-tillandsia.jpg', expect: 'plant' },
+  // === Plant-in-context (care action with plants visible) — these SHOULD pass ===
+  // Plants in pots with hands/feet in frame — moderation should focus on the plant subject.
+  { path: 'apps/api/src/care-guides/photos/photo-fertilize.jpg', expect: 'plant' },
+  { path: 'apps/api/src/care-guides/photos/photo-water-drainage.jpg', expect: 'plant' },
+  // === Clear non-plants — should fail ===
+  // Tools-on-grass with no recognizable plant subject.
   { path: 'apps/api/src/care-guides/photos/photo-prune-cut.jpg', expect: 'non-plant' },
-  // App UI graphic — should be rejected.
+  { path: 'apps/api/src/care-guides/photos/photo-pest-underside.jpg', expect: 'non-plant' },
+  // pH meter (probe device, not a plant).
+  { path: 'apps/api/src/care-guides/photos/photo-repot.jpg', expect: 'non-plant' },
+  // UI graphic/launcher icon.
   { path: 'apps/web/android/app/src/main/res/drawable/splash.png', expect: 'non-plant' },
+  { path: 'apps/web/android/app/src/main/res/mipmap-hdpi/ic_launcher.png', expect: 'non-plant' },
 ];
 
 const cases = cliImages.length

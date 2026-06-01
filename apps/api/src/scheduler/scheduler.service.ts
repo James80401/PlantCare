@@ -32,8 +32,21 @@ export interface ScheduleSuggestion {
 @Injectable()
 export class SchedulerService {
   private weatherPostponeRunByUser = new Map<string, string>();
+  private weatherPostponeMapLastTrimKey: string | null = null;
 
   constructor(private prisma: PrismaService) {}
+
+  /**
+   * Drop entries from previous days so the dedup map can't grow unbounded.
+   * Cheap O(N) sweep, gated to run at most once per calendar day per process.
+   */
+  private trimWeatherPostponeMapIfStale(todayKey: string): void {
+    if (this.weatherPostponeMapLastTrimKey === todayKey) return;
+    this.weatherPostponeMapLastTrimKey = todayKey;
+    for (const [userId, dayKey] of this.weatherPostponeRunByUser) {
+      if (dayKey !== todayKey) this.weatherPostponeRunByUser.delete(userId);
+    }
+  }
 
   potMultiplier(potSize: PotSize): number {
     switch (potSize) {
@@ -343,6 +356,7 @@ export class SchedulerService {
     const today = startOfDay(new Date()).toISOString();
     if (this.weatherPostponeRunByUser.get(userId) === today) return;
     this.weatherPostponeRunByUser.set(userId, today);
+    this.trimWeatherPostponeMapIfStale(today);
 
     const weatherCache = await this.prisma.weatherAdviceCache.findUnique({ where: { userId } });
     const weatherPayload = weatherCache?.payload ? (JSON.parse(weatherCache.payload) as any) : null;

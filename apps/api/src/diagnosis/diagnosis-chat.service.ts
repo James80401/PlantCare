@@ -278,7 +278,10 @@ export class DiagnosisChatService {
     let imageMimeType: string | undefined;
 
     if (file) {
-      await this.imageModeration.assertImageAllowed(file);
+      await this.imageModeration.assertImageAllowed(file, {
+        feature: 'dr_plant_chat',
+        userId,
+      });
       imageUrl = await this.upload.saveFile(file);
       const img = await this.imageToBase64(file);
       imageBase64 = img.base64;
