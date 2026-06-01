@@ -10,5 +10,6 @@
 | [ci.md](ci.md) | GitHub Actions |
 | [scripts.md](scripts.md) | verify.mjs, integrations |
 | [testing.md](testing.md) | Jest, Vitest, smoke |
+| [ai-cost-and-usage.md](ai-cost-and-usage.md) | AI scope gate, rate limiting, usage events, cost |
 
 Legacy: [../DEPLOY.md](../DEPLOY.md)
