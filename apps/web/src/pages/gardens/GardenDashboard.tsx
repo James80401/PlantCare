@@ -84,7 +84,7 @@ export default function GardenDashboard() {
           accent="violet"
         />
         <SubsectionCard
-          to="/garden/household"
+          to={`${base}/members`}
           title="Members / Sharing"
           summary={
             memberCount > 1

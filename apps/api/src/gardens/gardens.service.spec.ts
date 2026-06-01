@@ -152,3 +152,59 @@ describe('GardensService.getDetail', () => {
     await expect(service.getDetail('intruder', 'g1')).rejects.toMatchObject({ status: 403 });
   });
 });
+
+describe('GardensService members & invites', () => {
+  function makeService(role: string | null = 'OWNER', ownerId = 'owner-1') {
+    const prisma = {
+      gardenMember: {
+        findUnique: jest.fn().mockResolvedValue(role ? { role } : null),
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      garden: {
+        findUnique: jest.fn().mockResolvedValue({ ownerId }),
+      },
+      careInvite: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'i1', email: 'x@y.com', role: 'CAREGIVER', token: 'tok', expiresAt: new Date(), createdAt: new Date() },
+        ]),
+      },
+      activityEvent: { create: jest.fn().mockResolvedValue({}) },
+    };
+    const service = new GardensService(prisma as never, {} as never);
+    return { service, prisma };
+  }
+
+  it('lists pending invites for an owner', async () => {
+    const { service } = makeService('OWNER');
+    const invites = await service.getInvites('owner-1', 'g1');
+    expect(invites).toHaveLength(1);
+  });
+
+  it('blocks a caretaker (non-owner) from listing invites', async () => {
+    const { service } = makeService('CAREGIVER');
+    await expect(service.getInvites('cg-1', 'g1')).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('removes a member as owner', async () => {
+    const { service, prisma } = makeService('OWNER', 'owner-1');
+    const res = await service.removeMember('owner-1', 'g1', 'member-2');
+    expect(res).toEqual({ removed: true });
+    expect(prisma.gardenMember.deleteMany).toHaveBeenCalledWith({
+      where: { gardenId: 'g1', userId: 'member-2' },
+    });
+  });
+
+  it('refuses to remove the garden owner', async () => {
+    const { service } = makeService('OWNER', 'owner-1');
+    await expect(service.removeMember('owner-1', 'g1', 'owner-1')).rejects.toMatchObject({
+      status: 400,
+    });
+  });
+
+  it('blocks a non-owner from removing members', async () => {
+    const { service } = makeService('CAREGIVER');
+    await expect(service.removeMember('cg-1', 'g1', 'member-2')).rejects.toMatchObject({
+      status: 403,
+    });
+  });
+});

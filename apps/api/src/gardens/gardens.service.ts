@@ -417,6 +417,37 @@ export class GardensService {
     return share;
   }
 
+  /** Pending (unaccepted, unexpired) invites for a garden — owner only. */
+  async getInvites(userId: string, gardenId: string) {
+    await this.requireRole(userId, gardenId, canManageGarden);
+    return this.prisma.careInvite.findMany({
+      where: { gardenId, acceptedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, email: true, role: true, token: true, expiresAt: true, createdAt: true },
+    });
+  }
+
+  /** Remove a member from a garden — owner only; the owner cannot be removed. */
+  async removeMember(userId: string, gardenId: string, memberUserId: string) {
+    await this.requireRole(userId, gardenId, canManageGarden);
+    const garden = await this.prisma.garden.findUnique({
+      where: { id: gardenId },
+      select: { ownerId: true },
+    });
+    if (!garden) throw new NotFoundException('Garden not found');
+    if (garden.ownerId === memberUserId) {
+      throw new BadRequestException('The garden owner cannot be removed.');
+    }
+    await this.prisma.gardenMember.deleteMany({ where: { gardenId, userId: memberUserId } });
+    await this.logActivity(this.prisma, {
+      gardenId,
+      actorId: userId,
+      type: 'MEMBER_REMOVED',
+      payload: { userId: memberUserId },
+    });
+    return { removed: true };
+  }
+
   async getActivity(userId: string, gardenId: string) {
     await this.requireRole(userId, gardenId, canViewGarden);
     return this.prisma.activityEvent.findMany({

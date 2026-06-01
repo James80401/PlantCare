@@ -468,6 +468,15 @@ export interface CommunityCommentSummary {
   author?: { id: string; name?: string | null; email?: string };
 }
 
+export interface GardenInviteSummary {
+  id: string;
+  email: string | null;
+  role: 'CAREGIVER' | 'VIEWER';
+  token: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
 export const gardensApi = {
   create: (name: string, location?: string) =>
     api.post<GardenSummary>('/gardens', { name, location }),
@@ -476,6 +485,10 @@ export const gardensApi = {
   detail: (gardenId: string) => api.get<GardenDetail>(`/gardens/${gardenId}`),
   createInvite: (gardenId: string, data: { email?: string; role: 'CAREGIVER' | 'VIEWER' }) =>
     api.post<{ token: string; emailSent?: boolean }>(`/gardens/${gardenId}/invites`, data),
+  listInvites: (gardenId: string) =>
+    api.get<GardenInviteSummary[]>(`/gardens/${gardenId}/invites`),
+  removeMember: (gardenId: string, memberUserId: string) =>
+    api.delete(`/gardens/${gardenId}/members/${memberUserId}`),
   acceptInvite: (token: string) => api.post('/gardens/invites/accept', { token }),
   sharePlant: (
     gardenId: string,

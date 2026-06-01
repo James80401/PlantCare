@@ -56,6 +56,7 @@ const MyGardens = lazy(() => import('./pages/gardens/MyGardens'));
 const GardenDashboard = lazy(() => import('./pages/gardens/GardenDashboard'));
 const GardenTasks = lazy(() => import('./pages/gardens/GardenTasks'));
 const GardenPlants = lazy(() => import('./pages/gardens/GardenPlants'));
+const GardenMembers = lazy(() => import('./pages/gardens/GardenMembers'));
 
 function RouteFallback() {
   return (
@@ -90,6 +91,7 @@ export default function App() {
             <Route path="gardens/:gardenId/tasks" element={<GardenTasks />} />
             <Route path="gardens/:gardenId/care" element={<GardenTasks />} />
             <Route path="gardens/:gardenId/plants" element={<GardenPlants />} />
+            <Route path="gardens/:gardenId/members" element={<GardenMembers />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="plants/browse/:speciesId" element={<SpeciesBrowseDetail />} />
             <Route path="plants/browse" element={<BrowsePlants />} />
