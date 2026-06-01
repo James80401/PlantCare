@@ -326,30 +326,46 @@ export class SchedulerService {
   }
 
   async postponeWateringForRain(plantId: string, days = 2) {
+    await this.postponeWateringForRainAcrossPlants([plantId], days);
+  }
+
+  /**
+   * Shift pending WATER tasks (due tomorrow or the day after) forward by `days`,
+   * for any number of plants, in a single query + single batched transaction.
+   *
+   * Replaces the former per-plant → per-task sequential-await pattern (an N×M N+1).
+   * Note: the old per-task floor-clamp to start-of-today is intentionally dropped —
+   * the query window is `>= tomorrow` and `days >= 2`, so the shifted date is always
+   * well past today; the clamp was dead code for this filter.
+   */
+  private async postponeWateringForRainAcrossPlants(plantIds: string[], days = 2) {
+    if (plantIds.length === 0) return;
     const now = new Date();
     const tomorrow = startOfDay(addDays(now, 1));
     const dayAfter = startOfDay(addDays(now, 2));
 
     const tasks = await this.prisma.task.findMany({
       where: {
-        plantId,
+        plantId: { in: plantIds },
         taskType: TaskType.WATER,
         status: TaskStatus.PENDING,
         dueDate: { gte: tomorrow, lte: dayAfter },
       },
       select: { id: true, dueDate: true },
     });
+    if (tasks.length === 0) return;
 
-    const minDue = startOfDay(now);
-    for (const t of tasks) {
+    const updates = tasks.map((t) => {
       const nextDue = new Date(t.dueDate);
       nextDue.setDate(nextDue.getDate() + days);
-      if (nextDue.getTime() < minDue.getTime()) nextDue.setTime(minDue.getTime());
-      await this.prisma.task.update({
+      return this.prisma.task.update({
         where: { id: t.id },
         data: { dueDate: nextDue },
       });
-    }
+    });
+
+    // One round-trip, atomic, instead of N sequential awaits.
+    await this.prisma.$transaction(updates);
   }
 
   async autoPostponeOutdoorWateringFromWeather(userId: string, days = 2, rainThreshold = 0.6) {
@@ -371,11 +387,14 @@ export class SchedulerService {
       select: { id: true, location: true },
     });
 
-    for (const p of plants) {
-      const env = inferGrowingEnvironment(p.location);
-      if (env !== 'outdoor' && env !== 'semi_outdoor') continue;
-      await this.postponeWateringForRain(p.id, days);
-    }
+    const outdoorPlantIds = plants
+      .filter((p) => {
+        const env = inferGrowingEnvironment(p.location);
+        return env === 'outdoor' || env === 'semi_outdoor';
+      })
+      .map((p) => p.id);
+
+    await this.postponeWateringForRainAcrossPlants(outdoorPlantIds, days);
   }
 
   async getScheduleSuggestionsForUser(userId: string): Promise<ScheduleSuggestion[]> {

@@ -70,7 +70,7 @@ services:
     volumes:
       - plantcare_prod_uploads:/app/apps/api/uploads
     healthcheck:
-      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3001/api/v1/health']
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3001/api/v1/health/ready']
       interval: 15s
       timeout: 10s
       retries: 20

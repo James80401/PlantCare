@@ -284,6 +284,56 @@ describe('SchedulerService', () => {
 
     jest.useRealTimers();
   });
+
+  it('postpones outdoor watering for all plants in one batched transaction (no N+1)', async () => {
+    const rainyPayload = {
+      summary: {
+        days: [
+          { rainProbability: 0.1 },
+          { rainProbability: 0.8 },
+          { rainProbability: 0.7 },
+        ],
+      },
+    };
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-05-20T12:00:00Z'));
+    const tomorrow = new Date('2026-05-21T09:00:00Z');
+
+    const prisma = {
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue({ payload: JSON.stringify(rainyPayload) }),
+      },
+      plant: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'plant-1', location: 'Backyard garden' },
+          { id: 'plant-2', location: 'Patio (outdoor)' },
+          { id: 'plant-3', location: 'Living room' }, // indoor — excluded
+        ]),
+      },
+      task: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'task-a', dueDate: tomorrow },
+          { id: 'task-b', dueDate: tomorrow },
+          { id: 'task-c', dueDate: tomorrow },
+        ]),
+        update: jest.fn((args) => args),
+      },
+      $transaction: jest.fn().mockResolvedValue([]),
+    };
+    service = new SchedulerService(prisma as never);
+
+    await service.autoPostponeOutdoorWateringFromWeather('user-batch');
+
+    // Tasks fetched in ONE query scoped to the outdoor plant IDs (indoor excluded).
+    expect(prisma.task.findMany).toHaveBeenCalledTimes(1);
+    const whereArg = prisma.task.findMany.mock.calls[0][0].where;
+    expect(whereArg.plantId).toEqual({ in: ['plant-1', 'plant-2'] });
+    // All updates flushed in a SINGLE transaction (not N sequential awaits).
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.$transaction.mock.calls[0][0]).toHaveLength(3);
+
+    jest.useRealTimers();
+  });
 });
 
 function feedback(id: string, reason: string) {

@@ -10,6 +10,12 @@ import {
 } from './species-filters';
 import { enrichSpeciesRecord } from './species-enrich';
 import { speciesNameContains, speciesSearchTerms } from './species-name-filter';
+import { TtlCache } from '../common/ttl-cache';
+
+type SpeciesRow = Awaited<ReturnType<PrismaService['plantSpecies']['findMany']>>[number];
+
+const SPECIES_CACHE_TTL_MS = 5 * 60 * 1000;
+const ALL_SPECIES_KEY = '__all__';
 
 @Injectable()
 export class PerenualService {
@@ -17,11 +23,28 @@ export class PerenualService {
   private readonly apiKey: string | undefined;
   private readonly baseUrl = 'https://perenual.com/api/v2';
 
+  // The species catalog is effectively static (changes only via upsertFromApi),
+  // so caching the full table + per-id lookups removes repeated reads on the
+  // browse/filter/detail hot paths. Invalidated on any upsert.
+  private readonly allSpeciesCache = new TtlCache<SpeciesRow[]>(SPECIES_CACHE_TTL_MS);
+  private readonly speciesByIdCache = new TtlCache<SpeciesRow>(SPECIES_CACHE_TTL_MS);
+
   constructor(
     private config: ConfigService,
     private prisma: PrismaService,
   ) {
     this.apiKey = this.config.get<string>('PERENUAL_API_KEY');
+  }
+
+  private async getAllSpeciesCached(): Promise<SpeciesRow[]> {
+    return this.allSpeciesCache.getOrSet(ALL_SPECIES_KEY, () =>
+      this.prisma.plantSpecies.findMany(),
+    );
+  }
+
+  private invalidateSpeciesCache(): void {
+    this.allSpeciesCache.clear();
+    this.speciesByIdCache.clear();
   }
 
   private nameContains(text: string) {
@@ -58,7 +81,12 @@ export class PerenualService {
       species.map((item) => enrichSpeciesRecord(item));
 
     if (hasFilters) {
-      const all = await this.prisma.plantSpecies.findMany({ where });
+      // No text query → the where clause is empty, so we can serve from the cached
+      // full catalog instead of re-reading every row on each filter toggle.
+      // With a query, keep the DB name-search path (returns a smaller subset).
+      const all = q
+        ? await this.prisma.plantSpecies.findMany({ where })
+        : await this.getAllSpeciesCached();
       const filtered = all
         .filter((species) => speciesMatchesFilters(species, filters))
         .sort((a, b) => compareSpeciesForSort(a, b, sort));
@@ -138,8 +166,11 @@ export class PerenualService {
   }
 
   async getOrFetchById(speciesId: string) {
-    const existing = await this.prisma.plantSpecies.findUnique({ where: { id: speciesId } });
-    if (!existing) throw new Error('Species not found');
+    const existing = await this.speciesByIdCache.getOrSet(speciesId, async () => {
+      const row = await this.prisma.plantSpecies.findUnique({ where: { id: speciesId } });
+      if (!row) throw new Error('Species not found');
+      return row;
+    });
     return enrichSpeciesRecord(existing);
   }
 
@@ -162,7 +193,7 @@ export class PerenualService {
     const toxicity =
       item.poisonous_to_pets === 1 ? 'Toxic to pets' : 'Generally safe for pets';
 
-    return this.prisma.plantSpecies.upsert({
+    const result = await this.prisma.plantSpecies.upsert({
       where: { perenualId: item.id },
       create: {
         perenualId: item.id,
@@ -182,5 +213,9 @@ export class PerenualService {
         defaultImageUrl: item.default_image?.regular_url,
       },
     });
+
+    // Catalog mutated — drop caches so stale rows aren't served.
+    this.invalidateSpeciesCache();
+    return result;
   }
 }
