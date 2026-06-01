@@ -25,6 +25,16 @@ export class GardensController {
     return this.gardens.findMine(user.sub);
   }
 
+  @Get('summaries')
+  summaries(@CurrentUser() user: JwtPayload) {
+    return this.gardens.getSummaries(user.sub);
+  }
+
+  @Get(':id')
+  detail(@CurrentUser() user: JwtPayload, @Param('id') gardenId: string) {
+    return this.gardens.getDetail(user.sub, gardenId);
+  }
+
   @Post('invites/accept')
   acceptInvite(@CurrentUser() user: JwtPayload, @Body() dto: AcceptInviteDto) {
     return this.gardens.acceptInvite(user.sub, dto);

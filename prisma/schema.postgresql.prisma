@@ -220,6 +220,8 @@ model Plant {
   id          String       @id @default(cuid())
   userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gardenId    String
+  garden      Garden       @relation("GardenPlants", fields: [gardenId], references: [id], onDelete: Cascade)
   speciesId   String
   species     PlantSpecies @relation(fields: [speciesId], references: [id])
   nickname    String?
@@ -238,6 +240,7 @@ model Plant {
   milestones             PlantMilestone[]
 
   @@index([userId])
+  @@index([gardenId])
 }
 
 model PlantMilestone {
@@ -259,6 +262,8 @@ model Task {
   id                String     @id @default(cuid())
   plantId           String
   plant             Plant      @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  gardenId          String?
+  garden            Garden?    @relation("GardenTasks", fields: [gardenId], references: [id], onDelete: Cascade)
   taskType          TaskType
   dueDate           DateTime
   completedAt       DateTime?
@@ -271,6 +276,7 @@ model Task {
 
   @@index([dueDate, status])
   @@index([plantId])
+  @@index([gardenId, status])
   @@index([sourceDiagnosisId])
 }
 
@@ -376,11 +382,14 @@ model DeviceToken {
 model Garden {
   id        String         @id @default(cuid())
   name      String
+  location  String?
   ownerId   String
   owner     User           @relation("GardenOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   members   GardenMember[]
+  homePlants Plant[]       @relation("GardenPlants")
+  tasks     Task[]         @relation("GardenTasks")
   plants    PlantShare[]
   invites   CareInvite[]
   activity  ActivityEvent[]

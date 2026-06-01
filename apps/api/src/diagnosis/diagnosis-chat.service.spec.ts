@@ -12,6 +12,7 @@ describe('DiagnosisChatService actions', () => {
           potSize: 'MEDIUM',
           species: { commonName: 'Snake Plant', wateringFreqDays: 14 },
         }),
+        findUnique: jest.fn().mockResolvedValue({ gardenId: 'garden-1' }),
       },
       diagnosisConversation: {
         findFirst: jest.fn().mockResolvedValue({

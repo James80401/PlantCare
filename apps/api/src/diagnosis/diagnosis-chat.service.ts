@@ -409,9 +409,15 @@ export class DiagnosisChatService {
     const dueInDays = dto.dueInDays ?? 3;
     const dueDate = startOfDay(addDays(new Date(), dueInDays));
 
+    const plant = await this.prisma.plant.findUnique({
+      where: { id: plantId },
+      select: { gardenId: true },
+    });
+
     const task = await this.prisma.task.create({
       data: {
         plantId,
+        gardenId: plant?.gardenId,
         taskType: TaskType.HEALTH_CHECK,
         dueDate,
       },

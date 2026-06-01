@@ -250,6 +250,7 @@ export class DiagnosisService {
       throw new BadRequestException('No valid recovery tasks selected.');
     }
 
+    const gardenId = await this.plantGardenId(plantId);
     const created: Task[] = [];
     for (const suggestion of selected) {
       const existing = await this.prisma.task.findFirst({
@@ -266,6 +267,7 @@ export class DiagnosisService {
       const task = await this.prisma.task.create({
         data: {
           plantId,
+          gardenId,
           taskType: suggestion.taskType,
           dueDate,
           sourceDiagnosisId: diagnosisId,
@@ -317,6 +319,7 @@ export class DiagnosisService {
     const task = await this.prisma.task.create({
       data: {
         plantId,
+        gardenId: await this.plantGardenId(plantId),
         taskType: TaskType.HEALTH_CHECK,
         dueDate,
         sourceDiagnosisId: diagnosisId,
@@ -362,6 +365,15 @@ export class DiagnosisService {
     });
     if (!diagnosis) throw new NotFoundException('Diagnosis not found');
     return diagnosis;
+  }
+
+  /** Home garden of a plant, denormalized onto tasks created for it. */
+  private async plantGardenId(plantId: string): Promise<string | undefined> {
+    const plant = await this.prisma.plant.findUnique({
+      where: { id: plantId },
+      select: { gardenId: true },
+    });
+    return plant?.gardenId;
   }
 
   private async classifyImage(

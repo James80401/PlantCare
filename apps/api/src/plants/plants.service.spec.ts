@@ -35,6 +35,9 @@ describe('PlantsService', () => {
         findFirst: jest.fn().mockResolvedValue({ id: 'species-1' }),
         create: jest.fn(),
       },
+      gardenMember: {
+        findUnique: jest.fn().mockResolvedValue({ role: 'OWNER' }),
+      },
     };
     const scheduler = {
       generateTasksForPlant: jest.fn().mockResolvedValue(undefined),
@@ -106,11 +109,55 @@ describe('PlantsService', () => {
     jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'plant-1' } as never);
 
     await service.create('user-1', PlanTier.FREE, {
+      gardenId: 'garden-1',
       speciesId: 'species-1',
       potSize: PotSize.MEDIUM,
     } as never);
 
     expect(prisma.plant.create).toHaveBeenCalled();
+  });
+
+  it('sets gardenId on the created plant', async () => {
+    const { service, prisma } = createService();
+    jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'plant-1' } as never);
+
+    await service.create('user-1', PlanTier.FREE, {
+      gardenId: 'garden-1',
+      speciesId: 'species-1',
+      potSize: PotSize.MEDIUM,
+    } as never);
+
+    expect(prisma.plant.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ gardenId: 'garden-1', userId: 'user-1' }),
+      }),
+    );
+  });
+
+  it('blocks adding a plant to a garden the user is not an editor of', async () => {
+    const { service, prisma } = createService();
+    prisma.gardenMember.findUnique.mockResolvedValue(null); // not a member
+
+    await expect(
+      service.create('user-1', PlanTier.FREE, {
+        gardenId: 'garden-x',
+        speciesId: 'species-1',
+        potSize: PotSize.MEDIUM,
+      } as never),
+    ).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('blocks a VIEWER from adding a plant to a shared garden', async () => {
+    const { service, prisma } = createService();
+    prisma.gardenMember.findUnique.mockResolvedValue({ role: 'VIEWER' });
+
+    await expect(
+      service.create('user-1', PlanTier.FREE, {
+        gardenId: 'garden-shared',
+        speciesId: 'species-1',
+        potSize: PotSize.MEDIUM,
+      } as never),
+    ).rejects.toMatchObject({ status: 403 });
   });
 
   it('blocks a free user from creating a sixth plant', async () => {

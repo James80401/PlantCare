@@ -9,6 +9,11 @@ export function canManageGarden(role: GardenRole) {
   return role === 'OWNER';
 }
 
+/** Can add/edit plants and complete tasks in the garden (owner or shared caretaker). */
+export function canEditGarden(role: GardenRole) {
+  return role === 'OWNER' || role === 'CAREGIVER';
+}
+
 export function canViewGarden(role: GardenRole) {
   return role === 'OWNER' || role === 'CAREGIVER' || role === 'VIEWER';
 }

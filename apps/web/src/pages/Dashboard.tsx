@@ -4,7 +4,8 @@ import { format, parseISO } from 'date-fns';
 import TaskRow from '../components/tasks/TaskRow';
 import { useDashboard, type DashboardAttention } from '../hooks/useDashboard';
 import { useDashboardTaskActions } from '../hooks/useDashboardTaskActions';
-import { tasksApi } from '../services/api';
+import { tasksApi, gardensApi, type GardenSummaryCard } from '../services/api';
+import { GardenCard } from '../components/gardens/GardenCard';
 import type { SharedPlantView } from '../utils/household';
 import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
 import BuddyDashboardPanel from '../components/buddy/BuddyDashboardPanel';
@@ -60,6 +61,14 @@ export default function Dashboard() {
 
   const { data: dash, loading: dashLoading, error: dashError, reload: reloadDash } =
     useDashboard();
+
+  const [gardenSummaries, setGardenSummaries] = useState<GardenSummaryCard[]>([]);
+  useEffect(() => {
+    gardensApi
+      .summaries()
+      .then(({ data }) => setGardenSummaries(data))
+      .catch(() => setGardenSummaries([]));
+  }, []);
 
   const refreshAfterTask = async () => {
     await reloadDash();
@@ -250,7 +259,15 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          <div className="relative mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="relative mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <DashboardMetric
+              label="My Gardens"
+              value={gardenSummaries.length}
+              helper={gardenSummaries.length ? 'View all gardens' : 'Create your first garden'}
+              accent="emerald"
+              to="/garden/gardens"
+              highlight
+            />
             <DashboardMetric
               label="Garden score"
               value={plants.length === 0 ? 'New' : gardenScore}
@@ -359,37 +376,42 @@ export default function Dashboard() {
         <div className="space-y-4">
           <SectionHeader
             eyebrow="Start here"
-            title="Today's care"
-            actionLabel="View all"
-            actionTo="/garden/tasks"
+            title="Your gardens"
+            actionLabel="My Gardens"
+            actionTo="/garden/gardens"
           />
 
-          {dashboardLoading ? (
-            <>
-              <StatusMessage className="sr-only">Loading dashboard…</StatusMessage>
-              <DashboardSkeleton />
-            </>
-          ) : plants.length === 0 ? (
-            <EmptyState
-              title="Build your first care plan"
-              body="Add a plant to generate watering, fertilizing, pruning, pest checks, and care instructions."
-              actionLabel="Add your first plant"
-              actionTo="/garden/plants/new"
-            />
-          ) : todayCareTasks.length === 0 ? (
-            <EmptyState
-              title="You're all caught up for today"
-              body="No tasks due right now. Log a journal note, browse species, or ask Dr. Plant if something looks off."
-              actionLabel={
-                plants.length === 1 ? 'Ask Dr. Plant' : 'View your plants'
-              }
-              actionTo={
-                plants.length === 1
-                  ? plantDrPlantPath(plants[0].id)
-                  : '#plants'
-              }
-            />
+          {gardenSummaries.length === 0 ? (
+            dashboardLoading ? (
+              <>
+                <StatusMessage className="sr-only">Loading gardens…</StatusMessage>
+                <DashboardSkeleton />
+              </>
+            ) : (
+              <EmptyState
+                title="Create your first garden"
+                body="Gardens group your plants and the people who help care for them. Create one, then add plants into it."
+                actionLabel="Create a garden"
+                actionTo="/garden/gardens"
+              />
+            )
           ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {gardenSummaries.map((garden) => (
+                <GardenCard key={garden.id} garden={garden} />
+              ))}
+            </div>
+          )}
+
+          {/* Today's care kept as a secondary quick-action list under the gardens. */}
+          {todayCareTasks.length > 0 ? (
+            <>
+              <SectionHeader
+                eyebrow="Due now"
+                title="Today's care"
+                actionLabel="View all"
+                actionTo="/garden/tasks"
+              />
             <ul className="space-y-2">
               {todayCareTasks.map((task) => (
                 <TaskRow
@@ -411,7 +433,8 @@ export default function Dashboard() {
                 />
               ))}
             </ul>
-          )}
+            </>
+          ) : null}
         </div>
 
         <aside className="space-y-4">

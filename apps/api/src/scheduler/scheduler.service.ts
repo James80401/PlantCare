@@ -205,7 +205,11 @@ export class SchedulerService {
       );
     }
 
-    await this.prisma.task.createMany({ data: tasks });
+    // Denormalize the plant's home garden onto each task for efficient garden-level
+    // task views. plant.gardenId is always set (required on Plant).
+    await this.prisma.task.createMany({
+      data: tasks.map((t) => ({ ...t, gardenId: plant.gardenId })),
+    });
   }
 
   async getScheduleExplanationForTask(
@@ -318,6 +322,7 @@ export class SchedulerService {
     await this.prisma.task.create({
       data: {
         plantId: task.plantId,
+        gardenId: task.gardenId,
         taskType: task.taskType,
         dueDate: nextDue,
         status: TaskStatus.PENDING,

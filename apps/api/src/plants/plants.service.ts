@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PlanTier } from '@prisma/client';
 import { CareGuidesService } from '../care-guides/care-guides.service';
@@ -7,6 +13,7 @@ import { SchedulerService } from '../scheduler/scheduler.service';
 import { UploadService } from '../upload/upload.service';
 import { ImageModerationService } from '../common/image-moderation.service';
 import { sharedPlantInclude, userCanViewPlantTasks } from '../gardens/task-access';
+import { canEditGarden, parseGardenRole } from '../gardens/garden-authz';
 import { PlantNetService } from './plantnet.service';
 import { PerenualService } from '../species/perenual.service';
 import { WeatherService } from '../weather/weather.service';
@@ -131,11 +138,13 @@ export class PlantsService {
   async create(userId: string, planTier: PlanTier, dto: CreatePlantDto) {
     const currentPlanTier = await this.planTierForUser(userId, planTier);
     await this.assertCanCreatePlant(userId, currentPlanTier);
+    await this.assertCanEditGarden(userId, dto.gardenId);
     await this.perenual.getOrFetchById(dto.speciesId);
 
     const plant = await this.prisma.plant.create({
       data: {
         userId,
+        gardenId: dto.gardenId,
         speciesId: dto.speciesId,
         nickname: dto.nickname,
         location: dto.location,
@@ -149,6 +158,19 @@ export class PlantsService {
 
     await this.scheduler.generateTasksForPlant(plant.id, currentPlanTier);
     return this.findOne(userId, plant.id);
+  }
+
+  /** A plant may only be added to a garden the user owns or co-cares for. */
+  private async assertCanEditGarden(userId: string, gardenId: string) {
+    const member = await this.prisma.gardenMember.findUnique({
+      where: { gardenId_userId: { gardenId, userId } },
+    });
+    const role = member ? parseGardenRole(member.role) : null;
+    if (!role || !canEditGarden(role)) {
+      throw new ForbiddenException(
+        'You do not have access to add plants to this garden.',
+      );
+    }
   }
 
   async update(userId: string, id: string, planTier: PlanTier, dto: UpdatePlantDto) {

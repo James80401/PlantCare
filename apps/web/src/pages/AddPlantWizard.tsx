@@ -11,7 +11,8 @@ import {
   SPECIES_DISCOVERY_FILTERS,
   type SpeciesDiscoveryFilterKey,
 } from '../constants/speciesDiscovery';
-import { plantsApi, speciesApi } from '../services/api';
+import { plantsApi, speciesApi, gardensApi, type GardenSummaryCard } from '../services/api';
+import { CreateGardenForm } from '../components/gardens/CreateGardenForm';
 import { useAuth } from '../context/AuthContext';
 import { trackEvent } from '../utils/analytics';
 
@@ -33,6 +34,29 @@ export default function AddPlantWizard() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<Step>('photo');
+
+  // Garden-first: a plant must be added into a garden. Resolve the target garden from
+  // the ?gardenId= param (when arriving from a Garden Dashboard) or default to the
+  // user's first garden. If the user has none, gate the wizard behind garden creation.
+  const [gardens, setGardens] = useState<GardenSummaryCard[]>([]);
+  const [gardensLoaded, setGardensLoaded] = useState(false);
+  const [selectedGardenId, setSelectedGardenId] = useState('');
+
+  useEffect(() => {
+    gardensApi
+      .summaries()
+      .then(({ data }) => {
+        setGardens(data);
+        const fromParam = searchParams.get('gardenId');
+        const initial =
+          (fromParam && data.some((g) => g.id === fromParam) ? fromParam : '') ||
+          data[0]?.id ||
+          '';
+        setSelectedGardenId(initial);
+      })
+      .catch(() => setGardens([]))
+      .finally(() => setGardensLoaded(true));
+  }, [searchParams]);
 
   const [query, setQuery] = useState('');
   const [speciesList, setSpeciesList] = useState<Species[]>([]);
@@ -153,11 +177,16 @@ export default function AddPlantWizard() {
       setError('Select a species to continue.');
       return;
     }
+    if (!selectedGardenId) {
+      setError('Choose a garden for this plant.');
+      return;
+    }
     setLoading(true);
     setError('');
     setLimitError(null);
     try {
-      const { data } = await plantsApi.create({
+      await plantsApi.create({
+        gardenId: selectedGardenId,
         speciesId,
         nickname: nickname || undefined,
         location,
@@ -167,7 +196,7 @@ export default function AddPlantWizard() {
         imageUrl: imageUrl || undefined,
       });
       trackEvent('PlantAdded', { speciesId });
-      navigate(`/garden/plants/${data.id}`);
+      navigate(`/garden/gardens/${selectedGardenId}`);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: { message?: string; code?: string } } })?.response?.data;
       if (data?.code === 'PLANT_LIMIT_REACHED') {
@@ -220,6 +249,45 @@ export default function AddPlantWizard() {
       : 'Check this plant’s light notes against your space.';
   }, [defaultLightLevel, selectedSpecies?.sunlight]);
 
+  // Garden-first gate: a plant must live in a garden. If the user has none, prompt them
+  // to create one before any plant steps.
+  if (gardensLoaded && gardens.length === 0) {
+    return (
+      <div className="mx-auto max-w-lg space-y-5">
+        <PageHeader
+          eyebrow="Grow your garden"
+          title="Create a garden first"
+          description="Plants live inside gardens — shared spaces you and others can tend together. Create your first garden to start adding plants."
+        />
+        <Card className="space-y-3">
+          <CreateGardenForm
+            submitLabel="Create garden & continue"
+            onCreated={(g) => {
+              setGardens((prev) => [
+                {
+                  id: g.id,
+                  name: g.name,
+                  location: g.location ?? null,
+                  isOwner: true,
+                  plantCount: 0,
+                  memberCount: 1,
+                  tasksDueToday: 0,
+                  overdue: 0,
+                  urgentAlerts: 0,
+                  status: 'No plants yet',
+                },
+                ...prev,
+              ]);
+              setSelectedGardenId(g.id);
+            }}
+          />
+        </Card>
+      </div>
+    );
+  }
+
+  const selectedGarden = gardens.find((g) => g.id === selectedGardenId);
+
   return (
     <div className="mx-auto max-w-lg space-y-5">
       <PageHeader
@@ -227,6 +295,29 @@ export default function AddPlantWizard() {
         title="Add a plant"
         description={stepTitle}
       />
+      {gardens.length > 0 ? (
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-emerald-900">Add to garden</span>
+          <select
+            value={selectedGardenId}
+            onChange={(e) => setSelectedGardenId(e.target.value)}
+            className="rounded-2xl border border-emerald-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-400 focus:outline-none"
+          >
+            {gardens.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+                {g.location ? ` · ${g.location}` : ''}
+                {g.isOwner ? '' : ' (shared)'}
+              </option>
+            ))}
+          </select>
+          {selectedGarden && !selectedGarden.isOwner ? (
+            <span className="text-xs text-violet-700">
+              You're a caretaker of this shared garden.
+            </span>
+          ) : null}
+        </label>
+      ) : null}
       <p className="text-xs text-gray-600">
         Typical light from Settings: <span className="font-semibold text-emerald-900">{lightPreferenceLabel}</span>{' '}
         · used to guide discovery and care fit.

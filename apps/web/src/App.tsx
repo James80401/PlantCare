@@ -52,6 +52,8 @@ const BuddyQuestsPage = lazy(() => import('./pages/buddy/quests'));
 const GardenTownPage = lazy(() => import('./pages/buddy/town/index'));
 const FriendTerrariumPage = lazy(() => import('./pages/buddy/town/terrarium'));
 const AdminRegistrations = lazy(() => import('./pages/admin/AdminRegistrations'));
+const MyGardens = lazy(() => import('./pages/gardens/MyGardens'));
+const GardenDashboard = lazy(() => import('./pages/gardens/GardenDashboard'));
 
 function RouteFallback() {
   return (
@@ -81,6 +83,9 @@ export default function App() {
           <Route element={<OnboardingGate />}>
             <Route element={<Layout />}>
             <Route index element={<Dashboard />} />
+            <Route path="gardens" element={<MyGardens />} />
+            {/* Phase 1: sub-paths (tasks/care/plants) resolve to the dashboard; Phase 2 splits them. */}
+            <Route path="gardens/:gardenId/*" element={<GardenDashboard />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="plants/browse/:speciesId" element={<SpeciesBrowseDetail />} />
             <Route path="plants/browse" element={<BrowsePlants />} />

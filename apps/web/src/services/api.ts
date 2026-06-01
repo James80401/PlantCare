@@ -382,10 +382,43 @@ export interface PlantShareSummary {
 export interface GardenSummary {
   id: string;
   name: string;
+  location?: string | null;
   ownerId: string;
   members: GardenMemberSummary[];
   plants: PlantShareSummary[];
   _count?: { invites: number; activity: number };
+}
+
+/** Garden Dashboard detail (GET /gardens/:id). */
+export interface GardenDetailPlant {
+  id: string;
+  nickname?: string | null;
+  imageUrl?: string | null;
+  location?: string | null;
+  species: { commonName: string; scientificName?: string | null };
+  needsAttention: boolean;
+}
+export interface GardenDetail {
+  id: string;
+  name: string;
+  location: string | null;
+  isOwner: boolean;
+  members: GardenMemberSummary[];
+  plants: GardenDetailPlant[];
+}
+
+/** Landing/My-Gardens summary card (GET /gardens/summaries). */
+export interface GardenSummaryCard {
+  id: string;
+  name: string;
+  location: string | null;
+  isOwner: boolean;
+  plantCount: number;
+  memberCount: number;
+  tasksDueToday: number;
+  overdue: number;
+  urgentAlerts: number;
+  status: string;
 }
 
 export interface ActivityEventSummary {
@@ -416,8 +449,11 @@ export interface CommunityCommentSummary {
 }
 
 export const gardensApi = {
-  create: (name: string) => api.post<GardenSummary>('/gardens', { name }),
+  create: (name: string, location?: string) =>
+    api.post<GardenSummary>('/gardens', { name, location }),
   mine: () => api.get<GardenSummary[]>('/gardens/mine'),
+  summaries: () => api.get<GardenSummaryCard[]>('/gardens/summaries'),
+  detail: (gardenId: string) => api.get<GardenDetail>(`/gardens/${gardenId}`),
   createInvite: (gardenId: string, data: { email?: string; role: 'CAREGIVER' | 'VIEWER' }) =>
     api.post<{ token: string; emailSent?: boolean }>(`/gardens/${gardenId}/invites`, data),
   acceptInvite: (token: string) => api.post('/gardens/invites/accept', { token }),

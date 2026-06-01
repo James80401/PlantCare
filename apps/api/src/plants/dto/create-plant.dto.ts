@@ -3,6 +3,9 @@ import { PotSize } from '@prisma/client';
 
 export class CreatePlantDto {
   @IsString()
+  gardenId!: string;
+
+  @IsString()
   speciesId!: string;
 
   @IsOptional()

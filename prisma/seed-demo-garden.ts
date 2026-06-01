@@ -42,11 +42,30 @@ export async function seedDemoGarden(prisma: PrismaClient) {
       })
     )?.id ?? speciesSeedId('Pothos', 'Epipremnum aureum');
 
+  // Every plant now lives in a Garden. Seed a demo "home" garden with the demo user
+  // as its OWNER member.
+  const garden = await prisma.garden.upsert({
+    where: { id: 'seed-demo-garden' },
+    create: {
+      id: 'seed-demo-garden',
+      name: 'Living Room Plants',
+      location: 'Living room — south window',
+      ownerId: user.id,
+      members: { create: { userId: user.id, role: 'OWNER' } },
+    },
+    update: {
+      name: 'Living Room Plants',
+      location: 'Living room — south window',
+      ownerId: user.id,
+    },
+  });
+
   const snake = await prisma.plant.upsert({
     where: { id: 'seed-demo-snake-plant' },
     create: {
       id: 'seed-demo-snake-plant',
       userId: user.id,
+      gardenId: garden.id,
       speciesId: snakeSpeciesId,
       nickname: 'Window Snake',
       location: 'Indoor — bright indirect',
@@ -55,6 +74,7 @@ export async function seedDemoGarden(prisma: PrismaClient) {
     },
     update: {
       userId: user.id,
+      gardenId: garden.id,
       nickname: 'Window Snake',
       notes: 'Demo plant with an open health check for Dr. Plant testing.',
     },
@@ -65,6 +85,7 @@ export async function seedDemoGarden(prisma: PrismaClient) {
     create: {
       id: 'seed-demo-pothos',
       userId: user.id,
+      gardenId: garden.id,
       speciesId: pothosSpeciesId,
       nickname: 'Shelf Pothos',
       location: 'Indoor — medium light',
@@ -72,6 +93,7 @@ export async function seedDemoGarden(prisma: PrismaClient) {
     },
     update: {
       userId: user.id,
+      gardenId: garden.id,
       nickname: 'Shelf Pothos',
     },
   });
@@ -124,18 +146,21 @@ export async function seedDemoGarden(prisma: PrismaClient) {
     data: [
       {
         plantId: snake.id,
+        gardenId: garden.id,
         taskType: 'WATER',
         dueDate: today,
         status: 'PENDING',
       },
       {
         plantId: snake.id,
+        gardenId: garden.id,
         taskType: 'MIST',
         dueDate: addDays(today, 2),
         status: 'PENDING',
       },
       {
         plantId: 'seed-demo-pothos',
+        gardenId: garden.id,
         taskType: 'WATER',
         dueDate: addDays(today, 1),
         status: 'PENDING',

@@ -23,6 +23,7 @@ describe('buildPlantTimeline', () => {
         {
           id: 't1',
           plantId: 'p1',
+          gardenId: 'g1',
           taskType: TaskType.WATER,
           status: TaskStatus.DONE,
           dueDate: new Date('2026-02-28'),
@@ -63,6 +64,7 @@ describe('buildPlantTimeline', () => {
         {
           id: 't2',
           plantId: 'p1',
+          gardenId: 'g1',
           taskType: TaskType.FERTILIZE,
           status: TaskStatus.SKIPPED,
           dueDate: new Date('2026-03-01'),

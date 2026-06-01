@@ -21,6 +21,9 @@ describe('DiagnosisService', () => {
       journalEntry: {
         create: jest.fn().mockResolvedValue({ id: 'journal-1' }),
       },
+      plant: {
+        findUnique: jest.fn().mockResolvedValue({ gardenId: 'garden-1' }),
+      },
     };
 
     const service = new DiagnosisService(

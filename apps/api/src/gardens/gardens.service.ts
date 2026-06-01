@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { addDays } from 'date-fns';
+import { addDays, startOfDay } from 'date-fns';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -20,6 +20,32 @@ import { CreateInviteDto } from './dto/create-invite.dto';
 import { SharePlantDto } from './dto/share-plant.dto';
 import { EmailService } from '../email/email.service';
 
+export interface GardenSummaryCard {
+  id: string;
+  name: string;
+  location: string | null;
+  isOwner: boolean;
+  plantCount: number;
+  memberCount: number;
+  tasksDueToday: number;
+  overdue: number;
+  urgentAlerts: number;
+  status: string;
+}
+
+function deriveGardenStatus(input: {
+  plantCount: number;
+  overdueCount: number;
+  tasksDueToday: number;
+  urgentAlerts: number;
+}): string {
+  if (input.plantCount === 0) return 'No plants yet';
+  if (input.urgentAlerts > 0) return 'Needs attention';
+  if (input.overdueCount > 0) return 'Care overdue';
+  if (input.tasksDueToday > 0) return 'Care due today';
+  return 'All caught up';
+}
+
 @Injectable()
 export class GardensService {
   constructor(
@@ -32,6 +58,7 @@ export class GardensService {
       const garden = await tx.garden.create({
         data: {
           name: dto.name.trim(),
+          location: dto.location?.trim() || null,
           ownerId: userId,
           members: {
             create: { userId, role: 'OWNER' },
@@ -64,6 +91,135 @@ export class GardensService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /**
+   * Summary cards for the landing page / My Gardens: per garden, the counts a user
+   * needs to triage at a glance (plants, tasks due today, overdue, urgent alerts),
+   * plus ownership and member count. One garden query + three grouped aggregates.
+   */
+  async getSummaries(userId: string): Promise<GardenSummaryCard[]> {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const tomorrowStart = startOfDay(addDays(now, 1));
+
+    const gardens = await this.prisma.garden.findMany({
+      where: { OR: [{ ownerId: userId }, { members: { some: { userId } } }] },
+      select: {
+        id: true,
+        name: true,
+        location: true,
+        ownerId: true,
+        _count: { select: { homePlants: true, members: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    const gardenIds = gardens.map((g) => g.id);
+    if (gardenIds.length === 0) return [];
+
+    const [dueToday, overdue, alerts] = await Promise.all([
+      this.prisma.task.groupBy({
+        by: ['gardenId'],
+        where: {
+          gardenId: { in: gardenIds },
+          status: 'PENDING',
+          dueDate: { gte: todayStart, lt: tomorrowStart },
+        },
+        _count: { _all: true },
+      }),
+      this.prisma.task.groupBy({
+        by: ['gardenId'],
+        where: {
+          gardenId: { in: gardenIds },
+          status: 'PENDING',
+          dueDate: { lt: todayStart },
+        },
+        _count: { _all: true },
+      }),
+      this.prisma.plant.groupBy({
+        by: ['gardenId'],
+        where: { gardenId: { in: gardenIds }, diagnoses: { some: { resolved: false } } },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const toMap = (rows: Array<{ gardenId: string | null; _count: { _all: number } }>) => {
+      const m = new Map<string, number>();
+      for (const r of rows) if (r.gardenId) m.set(r.gardenId, r._count._all);
+      return m;
+    };
+    const dueTodayMap = toMap(dueToday);
+    const overdueMap = toMap(overdue);
+    const alertsMap = toMap(alerts as Array<{ gardenId: string; _count: { _all: number } }>);
+
+    return gardens.map((g) => {
+      const plantCount = g._count.homePlants;
+      const tasksDueToday = dueTodayMap.get(g.id) ?? 0;
+      const overdueCount = overdueMap.get(g.id) ?? 0;
+      const urgentAlerts = alertsMap.get(g.id) ?? 0;
+      return {
+        id: g.id,
+        name: g.name,
+        location: g.location,
+        isOwner: g.ownerId === userId,
+        plantCount,
+        memberCount: g._count.members,
+        tasksDueToday,
+        overdue: overdueCount,
+        urgentAlerts,
+        status: deriveGardenStatus({ plantCount, overdueCount, tasksDueToday, urgentAlerts }),
+      };
+    });
+  }
+
+  /**
+   * Garden detail for the Garden Dashboard: header + members + home plants (each with a
+   * pending-task count and unresolved-diagnosis flag). Phase 2 enriches with task buckets.
+   */
+  async getDetail(userId: string, gardenId: string) {
+    await this.requireRole(userId, gardenId, canViewGarden);
+    const garden = await this.prisma.garden.findUnique({
+      where: { id: gardenId },
+      select: {
+        id: true,
+        name: true,
+        location: true,
+        ownerId: true,
+        members: { include: { user: { select: { id: true, name: true, email: true } } } },
+        homePlants: {
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            nickname: true,
+            imageUrl: true,
+            location: true,
+            species: { select: { commonName: true, scientificName: true } },
+            _count: { select: { tasks: true } },
+            diagnoses: {
+              where: { resolved: false },
+              select: { id: true },
+            },
+          },
+        },
+      },
+    });
+    if (!garden) throw new NotFoundException('Garden not found');
+
+    return {
+      id: garden.id,
+      name: garden.name,
+      location: garden.location,
+      isOwner: garden.ownerId === userId,
+      members: garden.members,
+      plants: garden.homePlants.map((p) => ({
+        id: p.id,
+        nickname: p.nickname,
+        imageUrl: p.imageUrl,
+        location: p.location,
+        species: p.species,
+        needsAttention: p.diagnoses.length > 0,
+      })),
+    };
   }
 
   async createInvite(userId: string, gardenId: string, dto: CreateInviteDto) {
