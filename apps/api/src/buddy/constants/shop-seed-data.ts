@@ -541,8 +541,8 @@ export const BUDDY_SPECIES_SEED = [
     displayName: 'Sunny',
     description: '+20% sunlight from care tasks.',
     emoji: '🌻',
-    unlockType: 'STREAK' as const,
-    unlockValue: 7,
+    unlockType: 'LEVEL' as const,
+    unlockValue: 5,
     sortOrder: 6,
   },
   {
@@ -550,8 +550,8 @@ export const BUDDY_SPECIES_SEED = [
     displayName: 'Bam',
     description: 'Streak bonus companion.',
     emoji: '🎋',
-    unlockType: 'STREAK' as const,
-    unlockValue: 30,
+    unlockType: 'LEVEL' as const,
+    unlockValue: 10,
     sortOrder: 7,
   },
   {

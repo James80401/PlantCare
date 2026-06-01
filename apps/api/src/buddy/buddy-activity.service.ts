@@ -13,6 +13,7 @@ import {
   ACTIVITY_REWARDS,
   ACTIVITY_TYPES,
 } from './constants/activity-rewards';
+import { BUDDY_XP_REWARDS } from './constants/leveling';
 import { SUNLIGHT_CAP } from './constants/sunlight-awards';
 import { CompleteActivityDto } from './dto/complete-activity.dto';
 import { ActivityCompletedEvent } from './events/activity-completed.event';
@@ -127,6 +128,7 @@ export class BuddyActivityService {
       data: {
         ...(sunlightEarned > 0 ? { sunlightToday: { increment: sunlightEarned } } : {}),
         dewdrops: { increment: rewards.dewdrops },
+        experiencePoints: { increment: BUDDY_XP_REWARDS.ACTIVITY_COMPLETED },
         lastActiveDate: new Date(),
         lastTaskDate: new Date(),
       },

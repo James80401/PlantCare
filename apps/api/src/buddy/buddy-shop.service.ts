@@ -11,8 +11,8 @@ import { createHash } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   EQUIP_SLOT_CATEGORY,
-  stageMeetsTier,
 } from './constants/shop-seed-data';
+import { buddyLevelFromXp, levelRequiredForShopTier } from './constants/leveling';
 import {
   canPurchaseShopItem,
   getPurchaseLockReason,
@@ -41,6 +41,10 @@ export class BuddyShopService {
     await this.ensureInventory(buddy.id, buddy.speciesId);
     const isPremium = await this.userIsPremium(userId);
     const ownedIds = await this.ownedItemIds(buddy.id);
+    const purchaseContext = {
+      ...buddy,
+      level: buddyLevelFromXp(buddy.experiencePoints),
+    };
     const items = await this.prisma.shopItem.findMany({
       where: { isActive: true },
       orderBy: [{ category: 'asc' }, { sortOrder: 'asc' }],
@@ -51,13 +55,14 @@ export class BuddyShopService {
       bloomTokens: buddy.bloomTokens,
       bloomTokensEnabled: buddy.speciesId === 'rose',
       growthStage: buddy.growthStage,
+      level: purchaseContext.level,
       speciesId: buddy.speciesId,
       items: items.map((item) => ({
         ...this.formatShopItem(item),
         owned: ownedIds.has(item.id),
-        canPurchase: canPurchaseShopItem(item, buddy, ownedIds, isPremium),
+        canPurchase: canPurchaseShopItem(item, purchaseContext, ownedIds, isPremium),
         requiresPremium: item.requiresPremium,
-        lockedReason: getPurchaseLockReason(item, buddy, ownedIds, isPremium),
+        lockedReason: getPurchaseLockReason(item, purchaseContext, ownedIds, isPremium),
       })),
     };
   }
@@ -66,6 +71,10 @@ export class BuddyShopService {
     const buddy = await this.requireBuddy(userId);
     const isPremium = await this.userIsPremium(userId);
     const ownedIds = await this.ownedItemIds(buddy.id);
+    const purchaseContext = {
+      ...buddy,
+      level: buddyLevelFromXp(buddy.experiencePoints),
+    };
     const purchasable = await this.prisma.shopItem.findMany({
       where: {
         isActive: true,
@@ -82,12 +91,13 @@ export class BuddyShopService {
     return {
       date: dayKey,
       dewdrops: buddy.dewdrops,
+      level: purchaseContext.level,
       items: items.map((item) => ({
         ...this.formatShopItem(item),
         owned: ownedIds.has(item.id),
-        canPurchase: canPurchaseShopItem(item, buddy, ownedIds, isPremium),
+        canPurchase: canPurchaseShopItem(item, purchaseContext, ownedIds, isPremium),
         requiresPremium: item.requiresPremium,
-        lockedReason: getPurchaseLockReason(item, buddy, ownedIds, isPremium),
+        lockedReason: getPurchaseLockReason(item, purchaseContext, ownedIds, isPremium),
       })),
     };
   }
@@ -144,7 +154,12 @@ export class BuddyShopService {
       throw new ForbiddenException('Premium subscription required for this item');
     }
     const isPremium = await this.userIsPremium(userId);
-    const lock = getPurchaseLockReason(item, buddy, ownedIds, isPremium);
+    const lock = getPurchaseLockReason(
+      item,
+      { ...buddy, level: buddyLevelFromXp(buddy.experiencePoints) },
+      ownedIds,
+      isPremium,
+    );
     if (lock) {
       throw new BadRequestException(purchaseDenialMessage(lock, item));
     }
@@ -230,7 +245,7 @@ export class BuddyShopService {
   async validateEquipped(
     buddyId: string,
     speciesId: string,
-    growthStage: string,
+    experiencePoints: number,
     equipped: Record<string, unknown>,
   ) {
     const ownedIds = await this.ownedItemIds(buddyId);
@@ -251,8 +266,8 @@ export class BuddyShopService {
       if (item.speciesLocked && item.speciesLocked !== speciesId) {
         throw new BadRequestException('Item is locked to another species');
       }
-      if (!stageMeetsTier(growthStage, item.tier)) {
-        throw new BadRequestException('Buddy growth stage is too low for this item');
+      if (buddyLevelFromXp(experiencePoints) < levelRequiredForShopTier(item.tier)) {
+        throw new BadRequestException('Buddy level is too low for this item');
       }
     }
   }
@@ -282,7 +297,13 @@ export class BuddyShopService {
   }
 
   async validateSpeciesChange(
-    buddy: { speciesId: string; streakDays: number; journeyCount: number; dewdrops: number },
+    buddy: {
+      speciesId: string;
+      streakDays: number;
+      journeyCount: number;
+      dewdrops: number;
+      experiencePoints?: number;
+    },
     speciesId: string,
     unlockedSpeciesRaw: unknown,
   ) {
@@ -297,7 +318,7 @@ export class BuddyShopService {
 
   speciesUnlockMet(
     species: { unlockType: string; unlockValue: number | null },
-    buddy: { streakDays: number; journeyCount: number; dewdrops: number },
+    buddy: { streakDays: number; journeyCount: number; dewdrops: number; experiencePoints?: number },
   ): boolean {
     switch (species.unlockType) {
       case 'DEFAULT':
@@ -306,6 +327,8 @@ export class BuddyShopService {
         return buddy.streakDays >= (species.unlockValue ?? 0);
       case 'JOURNEY_COUNT':
         return buddy.journeyCount >= (species.unlockValue ?? 0);
+      case 'LEVEL':
+        return buddyLevelFromXp(buddy.experiencePoints ?? 0) >= (species.unlockValue ?? 0);
       case 'DEWDROPS':
         return buddy.dewdrops >= (species.unlockValue ?? 0);
       default:
@@ -356,6 +379,7 @@ export class BuddyShopService {
       unlockType: item.unlockType,
       imageKey: item.imageKey,
       sortOrder: item.sortOrder,
+      levelRequired: levelRequiredForShopTier(item.tier),
     };
   }
 

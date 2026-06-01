@@ -73,6 +73,10 @@ export default function BuddyShopPage() {
         }
       />
 
+      <p className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
+        Buddy level {catalog.level} unlocks higher-tier shop items as you earn XP.
+      </p>
+
       {daily && daily.items.length > 0 && (
         <Card className="space-y-3 border-amber-200 bg-amber-50/80">
           <p className="text-sm font-semibold text-amber-950">Today&apos;s picks</p>

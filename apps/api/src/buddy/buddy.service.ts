@@ -24,6 +24,7 @@ import {
   SUNLIGHT_CAP,
   sunlightForTask,
 } from './constants/sunlight-awards';
+import { BUDDY_XP_REWARDS } from './constants/leveling';
 import {
   growthStageFromJourneyCount,
   unlockedBiomesForStage,
@@ -114,7 +115,7 @@ export class BuddyService {
       await this.shopService.validateEquipped(
         buddy.id,
         speciesId,
-        buddy.growthStage,
+        buddy.experiencePoints,
         dto.equippedItems,
       );
     }
@@ -257,6 +258,7 @@ export class BuddyService {
         where: { id: buddy.id },
         data: {
           dewdrops: { increment: DEWDROPS_PER_TASK },
+          experiencePoints: { increment: BUDDY_XP_REWARDS.TASK_COMPLETED },
           tasksToday: { increment: 1 },
           lastTaskDate: new Date(),
           mood: BuddyMood.HAPPY,
@@ -273,6 +275,7 @@ export class BuddyService {
       data: {
         sunlightToday: newSunlight,
         dewdrops: { increment: DEWDROPS_PER_TASK },
+        experiencePoints: { increment: BUDDY_XP_REWARDS.TASK_COMPLETED },
         tasksToday: { increment: 1 },
         lastTaskDate: new Date(),
         lastActiveDate: new Date(),
@@ -368,6 +371,7 @@ export class BuddyService {
         journeyCount,
         growthStage: newStage,
         dewdrops: { increment: dewdropsEarned },
+        experiencePoints: { increment: BUDDY_XP_REWARDS.JOURNEY_COMPLETED },
         sunlightToday: 0,
         unlockedBiomes: JSON.stringify(biomes),
         currentBiome: biomes[biomes.length - 1] ?? 'seed_garden',
@@ -410,6 +414,9 @@ export class BuddyService {
         streakDays: streak,
         longestStreak: longest,
         lastActiveDate: today,
+        ...(bonusDewdrops > 0
+          ? { experiencePoints: { increment: BUDDY_XP_REWARDS.STREAK_BONUS } }
+          : {}),
         ...(bonusDewdrops > 0 ? { dewdrops: { increment: bonusDewdrops } } : {}),
       },
     });

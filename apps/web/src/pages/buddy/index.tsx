@@ -64,6 +64,9 @@ export default function BuddyHome() {
             {GROWTH_STAGE_LABEL[buddy.growthStage] ?? buddy.growthStage}
           </span>
           <span className="text-xs text-gray-500">{buddy.dewdrops} dewdrops 💧</span>
+          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-900">
+            Level {buddy.level}
+          </span>
           {buddy.bloomTokensEnabled && (
             <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-900">
               {buddy.bloomTokens ?? 0} bloom 🌸
@@ -77,6 +80,25 @@ export default function BuddyHome() {
         ) : (
           <SunlightBar value={buddy.sunlightToday} />
         )}
+        <div className="w-full max-w-xs space-y-1">
+          <div className="flex items-center justify-between text-xs font-medium text-emerald-900">
+            <span>Buddy XP</span>
+            <span>
+              {buddy.levelProgress.nextLevelXp === null
+                ? `${buddy.experiencePoints} XP`
+                : `${buddy.levelProgress.xpIntoLevel} / ${buddy.levelProgress.xpForNextLevel} XP`}
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-emerald-100">
+            <div
+              className="h-full rounded-full bg-emerald-600 transition-all"
+              style={{ width: `${buddy.levelProgress.progressPercent}%` }}
+            />
+          </div>
+          <p className="text-center text-xs text-gray-500">
+            Earn XP from care tasks, Buddy activities, quests, and grow journeys.
+          </p>
+        </div>
       </Card>
 
       <Card className="grid grid-cols-2 gap-3 text-center text-sm">

@@ -522,6 +522,7 @@ model Buddy {
   growthStage        GrowthStage @default(SEED)
   journeyCount       Int         @default(0)
   dewdrops           Int         @default(0)
+  experiencePoints   Int         @default(0)
   bloomTokens        Int         @default(0)
   lastPerfectDayKey  String?
   sunlightToday      Int         @default(0)
@@ -604,6 +605,7 @@ enum BuddySpeciesUnlockType {
   STREAK
   QUEST
   JOURNEY_COUNT
+  LEVEL
   SEASONAL
 }
 

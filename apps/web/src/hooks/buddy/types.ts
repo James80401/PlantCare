@@ -29,6 +29,17 @@ export interface BuddyState {
   growthStage: string;
   journeyCount: number;
   dewdrops: number;
+  experiencePoints: number;
+  level: number;
+  levelProgress: {
+    level: number;
+    experiencePoints: number;
+    currentLevelXp: number;
+    nextLevelXp: number | null;
+    xpIntoLevel: number;
+    xpForNextLevel: number;
+    progressPercent: number;
+  };
   bloomTokens: number;
   bloomTokensEnabled: boolean;
   sunlightToday: number;

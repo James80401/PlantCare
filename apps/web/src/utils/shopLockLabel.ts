@@ -12,6 +12,8 @@ export function shopLockLabel(item: ShopItem, dewdrops: number): string {
     case 'species':
       if (item.bloomTokenCost && item.bloomTokenCost > 0) return 'Rose buddies only';
       return 'Unlock the right species first';
+    case 'level':
+      return item.levelRequired ? `Level ${item.levelRequired} required` : 'Level up to unlock';
     case 'stage':
       return 'Grow your buddy to unlock';
     case 'funds':

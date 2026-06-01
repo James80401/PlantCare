@@ -18,6 +18,7 @@ import { ActivityCompletedEvent } from './events/activity-completed.event';
 import { JourneyCompletedEvent } from './events/journey-completed.event';
 import { SunshineSentEvent } from './events/sunshine-sent.event';
 import { SUNLIGHT_CAP } from './constants/sunlight-awards';
+import { BUDDY_XP_REWARDS, buddyLevelProgress } from './constants/leveling';
 
 interface QuestRequirement {
   kind: string;
@@ -81,7 +82,12 @@ export class BuddyQuestService {
       }),
       this.prisma.buddy.update({
         where: { id: buddy.id },
-        data: { dewdrops: { increment: progress.quest.rewardDewdrops } },
+        data: {
+          dewdrops: { increment: progress.quest.rewardDewdrops },
+          experiencePoints: {
+            increment: BUDDY_XP_REWARDS.QUEST_CLAIM_BASE + progress.quest.rewardDewdrops,
+          },
+        },
       }),
     ]);
 
@@ -89,7 +95,9 @@ export class BuddyQuestService {
     return {
       questId,
       dewdropsAwarded: progress.quest.rewardDewdrops,
+      experienceAwarded: BUDDY_XP_REWARDS.QUEST_CLAIM_BASE + progress.quest.rewardDewdrops,
       dewdrops: fresh?.dewdrops ?? buddy.dewdrops,
+      levelProgress: fresh ? buddyLevelProgress(fresh.experiencePoints) : undefined,
     };
   }
 

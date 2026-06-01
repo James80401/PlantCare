@@ -47,6 +47,16 @@ export default function BuddySpeciesPage() {
                   Unlock at {sp.unlockValue}-day streak (yours: {buddy.streakDays})
                 </p>
               )}
+              {!sp.unlocked && sp.unlockType === 'LEVEL' && (
+                <p className="text-xs text-amber-800">
+                  Unlock at Buddy level {sp.unlockValue} (yours: {buddy.level})
+                </p>
+              )}
+              {!sp.unlocked && sp.unlockType === 'DEWDROPS' && (
+                <p className="text-xs text-amber-800">
+                  Unlock at {sp.unlockValue} dewdrops (yours: {buddy.dewdrops})
+                </p>
+              )}
             </div>
             {sp.unlocked ? (
               <Button
