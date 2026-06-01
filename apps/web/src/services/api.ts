@@ -1,5 +1,10 @@
 import axios from 'axios';
-import type { BuddyState, BuddyTrait, JourneyResponse } from '../hooks/buddy/types';
+import type {
+  BuddyCompanionMode,
+  BuddyState,
+  BuddyTrait,
+  JourneyResponse,
+} from '../hooks/buddy/types';
 import { trackEvent } from '../utils/analytics';
 import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
 
@@ -437,6 +442,7 @@ export const buddyApi = {
     equippedItems?: Record<string, unknown>;
     terrariumLayout?: Record<string, unknown>;
     terrariumBackground?: string;
+    floatingCompanionMode?: BuddyCompanionMode;
   }) => api.patch<BuddyState>('/buddy', data),
   shopCatalog: () => api.get('/buddy/shop/catalog'),
   shopDaily: () => api.get('/buddy/shop/daily'),

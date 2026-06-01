@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { buddyApi, dashboardApi } from '../services/api';
 import { trackEvent } from '../utils/analytics';
-import type { BuddyState, JourneyState } from '../hooks/buddy/types';
+import type { BuddyCompanionMode, BuddyState, BuddyTrait, JourneyState } from '../hooks/buddy/types';
 import { isJourneyTraveling } from '../hooks/buddy/useJourney';
 import {
   buildBuddyPhraseContext,
@@ -32,6 +32,17 @@ interface BuddyCompanionContextValue {
   refreshJourney: () => Promise<void>;
   refreshGardenMetrics: () => Promise<void>;
   loadGreeting: () => Promise<void>;
+  updateBuddy: (data: BuddyUpdateInput) => Promise<BuddyState | null>;
+}
+
+interface BuddyUpdateInput {
+  name?: string;
+  trait?: BuddyTrait;
+  speciesId?: string;
+  equippedItems?: Record<string, unknown>;
+  terrariumLayout?: Record<string, unknown>;
+  terrariumBackground?: string;
+  floatingCompanionMode?: BuddyCompanionMode;
 }
 
 const BuddyCompanionContext = createContext<BuddyCompanionContextValue | null>(null);
@@ -99,6 +110,13 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
     }
   }, [buddy]);
 
+  const updateBuddy = useCallback(async (data: BuddyUpdateInput) => {
+    const res = await buddyApi.update(data);
+    setBuddy(res.data);
+    setMissing(false);
+    return res.data;
+  }, []);
+
   const loadGreeting = useCallback(async () => {
     if (!buddy) return;
     try {
@@ -162,6 +180,7 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
       refreshJourney,
       refreshGardenMetrics,
       loadGreeting,
+      updateBuddy,
     }),
     [
       buddy,
@@ -176,6 +195,7 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
       refreshJourney,
       refreshGardenMetrics,
       loadGreeting,
+      updateBuddy,
     ],
   );
 

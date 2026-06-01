@@ -13,6 +13,14 @@ export type BuddyMood =
   | 'THIRSTY'
   | 'DORMANT';
 
+export const BUDDY_COMPANION_MODES = ['visible', 'minimized', 'hidden'] as const;
+
+export type BuddyCompanionMode = (typeof BUDDY_COMPANION_MODES)[number];
+
+export function isBuddyCompanionMode(value: unknown): value is BuddyCompanionMode {
+  return typeof value === 'string' && BUDDY_COMPANION_MODES.includes(value as BuddyCompanionMode);
+}
+
 export interface BuddyState {
   id: string;
   name: string;
@@ -35,6 +43,7 @@ export interface BuddyState {
   currentBiome: string;
   terrariumLayout: Record<string, unknown>;
   terrariumBackground: string;
+  floatingCompanionMode: BuddyCompanionMode;
   journeyReady: boolean;
   hasActiveJourney: boolean;
   createdAt: string;

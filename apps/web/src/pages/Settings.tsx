@@ -3,9 +3,17 @@ import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useBuddyCompanion } from '../context/BuddyCompanionContext';
 import { registerPushNative } from '../lib/registerPushNative';
 import { unregisterPushNative } from '../lib/unregisterPushNative';
 import type { TemperatureUnit } from '../utils/temperature';
+import {
+  BUDDY_COMPANION_MODE_LABELS,
+  buddyCompanionModes,
+  readBuddyCompanionMode,
+  writeBuddyCompanionMode,
+} from '../hooks/buddy/displayMode';
+import type { BuddyCompanionMode } from '../hooks/buddy/types';
 
 interface LocationOption {
   latitude: number;
@@ -29,6 +37,12 @@ const LIGHT_LEVELS = [
 
 export default function Settings() {
   const { logout, refreshUser } = useAuth();
+  const {
+    buddy,
+    missing: buddyMissing,
+    loading: buddyLoading,
+    updateBuddy,
+  } = useBuddyCompanion();
   const navigate = useNavigate();
   const [notifyPush, setNotifyPush] = useState(true);
   const [notifyEmail, setNotifyEmail] = useState(true);
@@ -45,6 +59,11 @@ export default function Settings() {
   const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('C');
   const [experienceLevel, setExperienceLevel] = useState('beginner');
   const [defaultLightLevel, setDefaultLightLevel] = useState('medium');
+  const [buddyDisplayMode, setBuddyDisplayMode] = useState<BuddyCompanionMode>(() =>
+    readBuddyCompanionMode(),
+  );
+  const [buddyDisplaySaved, setBuddyDisplaySaved] = useState(false);
+  const [buddyDisplayError, setBuddyDisplayError] = useState('');
   const [saved, setSaved] = useState(false);
   const [carePrefsSaved, setCarePrefsSaved] = useState(false);
   const [error, setError] = useState('');
@@ -67,6 +86,32 @@ export default function Settings() {
       if (data.defaultLightLevel) setDefaultLightLevel(data.defaultLightLevel);
     });
   }, []);
+
+  useEffect(() => {
+    if (!buddy?.floatingCompanionMode) return;
+    setBuddyDisplayMode(buddy.floatingCompanionMode);
+    writeBuddyCompanionMode(buddy.floatingCompanionMode);
+  }, [buddy?.floatingCompanionMode]);
+
+  const handleBuddyDisplayModeChange = async (mode: BuddyCompanionMode) => {
+    setBuddyDisplayMode(mode);
+    setBuddyDisplayError('');
+    writeBuddyCompanionMode(mode);
+
+    if (buddyMissing || !buddy) {
+      setBuddyDisplaySaved(true);
+      setTimeout(() => setBuddyDisplaySaved(false), 2000);
+      return;
+    }
+
+    try {
+      await updateBuddy({ floatingCompanionMode: mode });
+      setBuddyDisplaySaved(true);
+      setTimeout(() => setBuddyDisplaySaved(false), 2000);
+    } catch {
+      setBuddyDisplayError('Could not save Plant Buddy display preference.');
+    }
+  };
 
   const handleCarePrefsSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -173,6 +218,42 @@ export default function Settings() {
         <p className="text-sm text-gray-600 leading-relaxed">
           Your Finch-style companion — journeys, quests, shop, and Garden Town sunshine.
         </p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-gray-700">Floating Buddy</p>
+            {buddyDisplaySaved ? (
+              <span className="text-xs font-medium text-emerald-700">Saved</span>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-1">
+            {buddyCompanionModes().map((mode) => {
+              const active = buddyDisplayMode === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => void handleBuddyDisplayModeChange(mode)}
+                  disabled={buddyLoading}
+                  className={`min-h-10 rounded-lg px-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60 ${
+                    active
+                      ? 'bg-white text-emerald-900 shadow-sm'
+                      : 'text-emerald-800 hover:bg-white/70'
+                  }`}
+                  aria-pressed={active}
+                >
+                  {BUDDY_COMPANION_MODE_LABELS[mode]}
+                </button>
+              );
+            })}
+          </div>
+          {buddyDisplayError ? (
+            <p className="text-sm text-red-600">{buddyDisplayError}</p>
+          ) : (
+            <p className="text-xs leading-relaxed text-gray-500">
+              This controls only the floating companion and follows your account across devices.
+            </p>
+          )}
+        </div>
         <Link
           to="/garden/buddy"
           className="inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"

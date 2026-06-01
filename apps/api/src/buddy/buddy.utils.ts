@@ -72,6 +72,7 @@ export function formatBuddy(buddy: Buddy & { journeys?: BuddyJourney[] }) {
     currentBiome: buddy.currentBiome,
     terrariumLayout: parseJsonObject(buddy.terrariumLayout),
     terrariumBackground: buddy.terrariumBackground,
+    floatingCompanionMode: buddy.floatingCompanionMode,
     journeyReady: buddy.sunlightToday >= 100 && !activeJourney,
     hasActiveJourney: Boolean(activeJourney),
     createdAt: buddy.createdAt,

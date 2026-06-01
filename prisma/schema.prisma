@@ -539,6 +539,7 @@ model Buddy {
   personalityChoices String      @default("[]")
   terrariumLayout    String      @default("{}")
   terrariumBackground String     @default("sunny_windowsill")
+  floatingCompanionMode String   @default("visible")
   gardenCode         String      @unique
   showLastActive     Boolean     @default(true)
   journeys            BuddyJourney[]

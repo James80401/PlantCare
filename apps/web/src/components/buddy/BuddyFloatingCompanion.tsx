@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBuddyCompanion } from '../../context/BuddyCompanionContext';
 import { pickBuddyPhrase, pushRecentPhraseId } from './pickBuddyPhrase';
@@ -7,6 +7,11 @@ import BuddyCuteFace from './BuddyCuteFace';
 import MoodIndicator from './MoodIndicator';
 import SunlightBar from './SunlightBar';
 import { GROWTH_STAGE_LABEL } from './species';
+import {
+  readBuddyCompanionMode,
+  writeBuddyCompanionMode,
+} from '../../hooks/buddy/displayMode';
+import { isBuddyCompanionMode, type BuddyCompanionMode } from '../../hooks/buddy/types';
 
 const ACTIONS = [
   { to: '/garden/buddy', label: 'Home', emoji: '🏠' },
@@ -18,14 +23,43 @@ const ACTIONS = [
 ] as const;
 
 const PHRASE_ROTATE_MS = 9_000;
-const DISPLAY_PREF_KEY = 'drplant.buddy.floatingDisplay';
 
-type BuddyDisplayMode = 'visible' | 'minimized' | 'hidden';
+const iconBase = {
+  width: 18,
+  height: 18,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+};
 
-function readDisplayMode(): BuddyDisplayMode {
-  if (typeof window === 'undefined') return 'visible';
-  const raw = window.localStorage.getItem(DISPLAY_PREF_KEY);
-  return raw === 'minimized' || raw === 'hidden' ? raw : 'visible';
+function IconMinimize() {
+  return (
+    <svg {...iconBase} aria-hidden>
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
+
+function IconHide() {
+  return (
+    <svg {...iconBase} aria-hidden>
+      <path d="M3 3l18 18" />
+      <path d="M10.6 10.6A2 2 0 0 0 13.4 13.4" />
+      <path d="M9.9 4.2A10.8 10.8 0 0 1 12 4c5 0 9 4.5 10 8a12.6 12.6 0 0 1-2.3 4" />
+      <path d="M6.6 6.6A12.1 12.1 0 0 0 2 12c1 3.5 5 8 10 8a10.8 10.8 0 0 0 4.2-.9" />
+    </svg>
+  );
+}
+
+function IconClose() {
+  return (
+    <svg {...iconBase} aria-hidden>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
 }
 
 function formatCountdown(seconds: number): string {
@@ -41,18 +75,74 @@ function formatCountdown(seconds: number): string {
 
 export default function BuddyFloatingCompanion() {
   const location = useLocation();
-  const { buddy, missing, loading, journey, traveling, greeting, phraseContext, loadGreeting, refresh } =
-    useBuddyCompanion();
+  const {
+    buddy,
+    missing,
+    loading,
+    journey,
+    traveling,
+    greeting,
+    phraseContext,
+    loadGreeting,
+    refresh,
+    updateBuddy,
+  } = useBuddyCompanion();
   const [expanded, setExpanded] = useState(false);
-  const [displayMode, setDisplayMode] = useState<BuddyDisplayMode>(() => readDisplayMode());
+  const [displayMode, setDisplayMode] = useState<BuddyCompanionMode>(() => readBuddyCompanionMode());
   const [phraseTick, setPhraseTick] = useState(0);
   const [recentPhraseIds, setRecentPhraseIds] = useState<string[]>([]);
   const [displayPhrase, setDisplayPhrase] = useState('…');
   const [speechKey, setSpeechKey] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
+  const pendingModeRef = useRef<BuddyCompanionMode | null>(null);
+  const modeSaveInFlightRef = useRef(false);
 
   const hideOnRoute =
     location.pathname.includes('/buddy/onboarding') || location.pathname === '/garden/onboarding';
+
+  const persistDisplayMode = useCallback(
+    (mode: BuddyCompanionMode) => {
+      if (!buddy?.id || modeSaveInFlightRef.current) return;
+      modeSaveInFlightRef.current = true;
+      void updateBuddy({ floatingCompanionMode: mode })
+        .then((updated) => {
+          if (updated?.floatingCompanionMode === mode && pendingModeRef.current === mode) {
+            pendingModeRef.current = null;
+          }
+        })
+        .catch(() => {
+          pendingModeRef.current = mode;
+        })
+        .finally(() => {
+          modeSaveInFlightRef.current = false;
+          const nextMode = pendingModeRef.current;
+          if (nextMode && nextMode !== mode) {
+            persistDisplayMode(nextMode);
+          }
+        });
+    },
+    [buddy?.id, updateBuddy],
+  );
+
+  useEffect(() => {
+    if (!buddy?.id) return;
+    const serverMode = isBuddyCompanionMode(buddy.floatingCompanionMode)
+      ? buddy.floatingCompanionMode
+      : 'visible';
+    const pendingMode = pendingModeRef.current;
+
+    if (pendingMode) {
+      if (pendingMode === serverMode) {
+        pendingModeRef.current = null;
+      } else {
+        persistDisplayMode(pendingMode);
+      }
+      return;
+    }
+
+    setDisplayMode(serverMode);
+    writeBuddyCompanionMode(serverMode);
+  }, [buddy?.id, buddy?.floatingCompanionMode, persistDisplayMode]);
 
   useEffect(() => {
     if (!phraseContext) return;
@@ -100,10 +190,12 @@ export default function BuddyFloatingCompanion() {
     'max-sm:bottom-[calc(5.25rem+env(safe-area-inset-bottom))] max-sm:top-auto max-sm:translate-y-0 ' +
     'sm:top-1/2 sm:-translate-y-1/2';
 
-  const setBuddyDisplayMode = (mode: BuddyDisplayMode) => {
+  const setBuddyDisplayMode = (mode: BuddyCompanionMode) => {
     setDisplayMode(mode);
     setExpanded(false);
-    window.localStorage.setItem(DISPLAY_PREF_KEY, mode);
+    writeBuddyCompanionMode(mode);
+    pendingModeRef.current = mode;
+    persistDisplayMode(mode);
   };
 
   if (displayMode === 'hidden') {
@@ -177,10 +269,11 @@ export default function BuddyFloatingCompanion() {
           <button
             type="button"
             onClick={() => setBuddyDisplayMode('hidden')}
-            className="self-start rounded-full border border-emerald-100 bg-white/95 px-2 py-1 text-xs font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+            title="Hide plant buddy prompt"
+            className="self-start inline-flex min-h-9 min-w-9 items-center justify-center rounded-full border border-emerald-100 bg-white/95 p-2 text-emerald-800 shadow-sm hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
             aria-label="Hide plant buddy prompt"
           >
-            Hide
+            <IconHide />
           </button>
         </div>
       </div>
@@ -220,10 +313,11 @@ export default function BuddyFloatingCompanion() {
           <button
             type="button"
             onClick={() => setBuddyDisplayMode('hidden')}
-            className="translate-x-1 rounded-l-full border border-emerald-100 bg-white/95 px-2 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+            title={`Hide ${buddy.name}`}
+            className="translate-x-1 inline-flex min-h-9 min-w-9 items-center justify-center rounded-l-full border border-emerald-100 bg-white/95 p-2 text-emerald-800 shadow-sm hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
             aria-label={`Hide ${buddy.name}`}
           >
-            Hide
+            <IconHide />
           </button>
         </div>
       </div>
@@ -255,8 +349,9 @@ export default function BuddyFloatingCompanion() {
                 <button
                   type="button"
                   onClick={() => setExpanded(false)}
-                  className="rounded-full p-1.5 text-gray-500 hover:bg-white/80 hover:text-emerald-900"
-                  aria-label="Minimize buddy"
+                  title="Close buddy menu"
+                  className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full p-2 text-gray-500 hover:bg-white/80 hover:text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                  aria-label="Close buddy menu"
                 >
                   ✕
                 </button>
@@ -337,16 +432,20 @@ export default function BuddyFloatingCompanion() {
               <button
                 type="button"
                 onClick={() => setBuddyDisplayMode('minimized')}
-                className="rounded-xl border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
+                title={`Minimize ${buddy.name}`}
+                className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl border border-emerald-200 p-2 text-emerald-800 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                aria-label={`Minimize ${buddy.name}`}
               >
-                Minimize
+                <IconMinimize />
               </button>
               <button
                 type="button"
                 onClick={() => setBuddyDisplayMode('hidden')}
-                className="rounded-xl border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
+                title={`Hide ${buddy.name}`}
+                className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-xl border border-emerald-200 p-2 text-emerald-800 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                aria-label={`Hide ${buddy.name}`}
               >
-                Hide
+                <IconHide />
               </button>
             </div>
           </div>
@@ -357,7 +456,7 @@ export default function BuddyFloatingCompanion() {
             <div className="flex items-start gap-1">
               <p
                 key={speechKey}
-                className="buddy-speech-in max-w-[11rem] rounded-2xl rounded-br-sm border border-emerald-100 bg-white/95 px-3 py-2 text-sm font-medium leading-snug text-emerald-900 shadow-lg shadow-emerald-950/10"
+                className="buddy-speech-in max-w-[10rem] rounded-2xl rounded-br-sm border border-emerald-100 bg-white/95 px-3 py-2 text-sm font-medium leading-snug text-emerald-900 shadow-lg shadow-emerald-950/10 max-sm:max-w-[8.5rem] max-sm:text-xs"
                 role="status"
                 aria-live="polite"
               >
@@ -367,18 +466,20 @@ export default function BuddyFloatingCompanion() {
                 <button
                   type="button"
                   onClick={() => setBuddyDisplayMode('minimized')}
-                  className="rounded-full border border-emerald-100 bg-white/95 px-2 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+                  title={`Minimize ${buddy.name}`}
+                  className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full border border-emerald-100 bg-white/95 p-2 text-emerald-800 shadow-sm hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                   aria-label={`Minimize ${buddy.name}`}
                 >
-                  Min
+                  <IconMinimize />
                 </button>
                 <button
                   type="button"
                   onClick={() => setBuddyDisplayMode('hidden')}
-                  className="rounded-full border border-emerald-100 bg-white/95 px-2 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50"
+                  title={`Hide ${buddy.name}`}
+                  className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full border border-emerald-100 bg-white/95 p-2 text-emerald-800 shadow-sm hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                   aria-label={`Hide ${buddy.name}`}
                 >
-                  Hide
+                  <IconHide />
                 </button>
               </div>
             </div>
@@ -394,7 +495,7 @@ export default function BuddyFloatingCompanion() {
             className={`buddy-hang-peek relative flex translate-x-4 items-center justify-center overflow-visible rounded-full border-[3px] shadow-xl transition hover:scale-105 active:scale-95 ${
               expanded
                 ? 'buddy-chip-expanded h-36 w-36 ring-2 ring-emerald-400 ring-offset-2'
-                : 'h-28 w-28'
+                : 'h-24 w-24 max-sm:h-20 max-sm:w-20'
             } ${
               traveling
                 ? 'border-sky-200 bg-gradient-to-br from-sky-100 to-amber-50 shadow-sky-900/20'

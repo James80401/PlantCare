@@ -151,6 +151,9 @@ export class BuddyService {
         ...(dto.terrariumBackground !== undefined
           ? { terrariumBackground: dto.terrariumBackground }
           : {}),
+        ...(dto.floatingCompanionMode !== undefined
+          ? { floatingCompanionMode: dto.floatingCompanionMode }
+          : {}),
       },
       include: {
         journeys: {
