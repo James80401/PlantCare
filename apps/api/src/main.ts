@@ -9,10 +9,18 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 import { getCorsOrigins } from './cors-origins';
 import { UploadService } from './upload/upload.service';
+import { initSentry } from './observability/sentry';
+import { requestIdMiddleware } from './observability/request-id.middleware';
+import { accessLogMiddleware } from './observability/access-log.middleware';
+import { AllExceptionsFilter } from './observability/all-exceptions.filter';
 
 async function bootstrap() {
+  await initSentry();
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
   app.set('trust proxy', 1);
+  // Correlation id first, so every downstream log line and error carries it.
+  app.use(requestIdMiddleware);
+  app.use(accessLogMiddleware);
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
   const authLimiter = rateLimit({
@@ -62,6 +70,9 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+  // Structured error logs + Sentry reporting on failures (access logs are emitted by
+  // accessLogMiddleware above).
+  app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({
     origin: getCorsOrigins(),
     credentials: true,

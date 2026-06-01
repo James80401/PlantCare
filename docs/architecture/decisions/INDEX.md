@@ -13,6 +13,7 @@ decision, consequences.
 | [0003](0003-refresh-rotation-grace-window.md) | 10s grace window on refresh-token rotation | Accepted |
 | [0004](0004-in-memory-dedup-and-cache.md) | In-memory dedup + TTL cache (single-instance) | Accepted |
 | [0005](0005-readiness-vs-liveness.md) | Separate readiness and liveness health checks | Accepted |
+| [0006](0006-observability-baseline.md) | On-box observability baseline, optional Sentry | Accepted |
 
 ## Format
 

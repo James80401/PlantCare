@@ -42,6 +42,16 @@
 | `AI_RATE_LIMIT_PAUSE_HOURS` | Pause duration once the limit trips | `12` |
 | `OPENWEATHER_API_KEY` | Weather | — |
 
+## Observability
+
+See [operations/observability.md](../operations/observability.md). All optional.
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `SENTRY_DSN` | Enables Sentry error reporting (unset ⇒ no-op) | — |
+| `SENTRY_ENVIRONMENT` | Environment tag in Sentry | `NODE_ENV` |
+| `SENTRY_TRACES_SAMPLE_RATE` | Performance-trace sampling (0 = errors only) | `0` |
+
 ## Billing, SMS, storage & misc
 
 | Variable | Purpose |
