@@ -51,7 +51,11 @@ export function userCanCompletePlantTask(userId: string, plant: SharedPlant) {
 
 export const sharedPlantInclude = {
   garden: {
-    select: { members: { select: { userId: true, role: true } } },
+    select: {
+      id: true,
+      name: true,
+      members: { select: { userId: true, role: true } },
+    },
   },
   shares: {
     include: {

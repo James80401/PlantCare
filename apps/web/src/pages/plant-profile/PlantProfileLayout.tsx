@@ -33,14 +33,40 @@ function PlantProfileShell() {
   const { plant, species, plantLabel, sectionCounts, nextTask, careOverview, currentLocation } =
     ctx;
 
+  const gardenId = plant?.gardenId as string | undefined;
+  const gardenName = (plant?.garden as { name?: string } | undefined)?.name;
+  const carePath = `/garden/plants/${ctx.id}/care`;
+  const journalPath = `/garden/plants/${ctx.id}/journal`;
+
+  // Plant Dashboard summary cards (Watering / Light / Fertilizer / Health / History).
+  const wateringTask = ctx.pending.find((t) => t.taskType === 'WATER');
+  const fertilizeTask = ctx.pending.find((t) => t.taskType === 'FERTILIZE');
+
   return (
     <div className="space-y-5 min-w-0">
-      <Link
-        to="/garden"
-        className="inline-flex rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
-      >
-        ← Back to garden
-      </Link>
+      {/* Breadcrumb: Landing → Garden → Plant */}
+      <nav className="flex flex-wrap items-center gap-1.5 text-sm" aria-label="Breadcrumb">
+        <Link to="/garden/gardens" className="font-medium text-emerald-700 hover:underline">
+          My Gardens
+        </Link>
+        {gardenId ? (
+          <>
+            <span className="text-gray-400" aria-hidden>
+              ›
+            </span>
+            <Link
+              to={`/garden/gardens/${gardenId}`}
+              className="font-medium text-emerald-700 hover:underline"
+            >
+              {gardenName || 'Garden'}
+            </Link>
+          </>
+        ) : null}
+        <span className="text-gray-400" aria-hidden>
+          ›
+        </span>
+        <span className="font-semibold text-emerald-950">{plantLabel}</span>
+      </nav>
 
       <section className="overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5">
         <div className="grid gap-5 p-5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:p-6">
@@ -70,47 +96,58 @@ function PlantProfileShell() {
               ) : null}
             </p>
 
+            {/* Plant Dashboard: summary cards that drill into detail pages. */}
             <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-              <Link to={plantHealthPath(ctx.id)} className="block rounded-2xl transition hover:ring-2 hover:ring-emerald-200">
-                <SummaryTile
-                  label="Health"
-                  value={
-                    ctx.activeDiagnosisCount > 0
-                      ? `${ctx.activeDiagnosisCount} active`
-                      : 'Clear'
-                  }
-                  tone={ctx.activeDiagnosisCount > 0 ? 'rose' : 'emerald'}
-                />
-              </Link>
-              <SummaryTile
-                label="Next task"
-                value={
-                  ctx.nextTask
-                    ? `${taskTypeLabel(ctx.nextTask.taskType as string)} · ${format(new Date(ctx.nextTask.dueDate as string), 'MMM d')}`
-                    : 'Nothing scheduled'
-                }
-                tone={ctx.nextTask ? 'amber' : 'emerald'}
-              />
-              <SummaryTile
-                label="Location"
-                value={
-                  careOverview?.environmentLabel
-                    ? `${currentLocation} · ${careOverview.environmentLabel}`
-                    : currentLocation
-                }
-                tone="emerald"
-              />
-              <SummaryTile
+              <DrillCard
+                to={carePath}
                 label="Watering"
-                value={`Every ${species.wateringFreqDays as number} days base`}
+                value={
+                  wateringTask
+                    ? formatDueRelative(wateringTask.dueDate as string)
+                    : `Every ${species.wateringFreqDays as number} days`
+                }
                 tone="sky"
               />
-              <SummaryTile
+              <DrillCard
+                to={carePath}
                 label="Light"
                 value={(species.sunlight as string) || 'Not specified'}
                 tone="emerald"
               />
+              <DrillCard
+                to={carePath}
+                label="Fertilizer"
+                value={
+                  fertilizeTask
+                    ? `Next ${formatDueRelative(fertilizeTask.dueDate as string).toLowerCase()}`
+                    : 'Not scheduled'
+                }
+                tone="amber"
+              />
+              <DrillCard
+                to={plantHealthPath(ctx.id)}
+                label="Health"
+                value={
+                  ctx.activeDiagnosisCount > 0
+                    ? `${ctx.activeDiagnosisCount} active`
+                    : 'Looks healthy'
+                }
+                tone={ctx.activeDiagnosisCount > 0 ? 'rose' : 'emerald'}
+              />
+              <DrillCard
+                to={journalPath}
+                label="History"
+                value={
+                  ctx.latestCompleted
+                    ? `${taskTypeLabel(ctx.latestCompleted.taskType as string)} ${formatPastRelative(ctx.latestCompleted.completedAt as string)}`
+                    : 'No history yet'
+                }
+                tone="emerald"
+              />
             </div>
+            <p className="mt-2 text-xs text-gray-500">
+              📍 {careOverview?.environmentLabel ? `${currentLocation} · ${careOverview.environmentLabel}` : currentLocation}
+            </p>
 
             {species.toxicity ? (
               <p
@@ -196,6 +233,50 @@ function PlantProfileShell() {
       <Outlet />
     </div>
   );
+}
+
+/** A summary tile that links to its detail page, with a drill-down affordance. */
+function DrillCard({
+  to,
+  label,
+  value,
+  tone,
+}: {
+  to: string;
+  label: string;
+  value: string;
+  tone: 'emerald' | 'amber' | 'sky' | 'rose';
+}) {
+  return (
+    <Link
+      to={to}
+      className="group block rounded-2xl transition hover:ring-2 hover:ring-emerald-200"
+      aria-label={`${label}: ${value}. View details`}
+    >
+      <SummaryTile label={label} value={value} tone={tone} />
+    </Link>
+  );
+}
+
+function formatDueRelative(iso: string): string {
+  const due = new Date(iso);
+  const today = new Date(new Date().toDateString());
+  const days = Math.round((new Date(due.toDateString()).getTime() - today.getTime()) / 86_400_000);
+  if (days < 0) return 'Overdue';
+  if (days === 0) return 'Due today';
+  if (days === 1) return 'Due tomorrow';
+  if (days <= 14) return `In ${days} days`;
+  return `Due ${format(due, 'MMM d')}`;
+}
+
+function formatPastRelative(iso: string): string {
+  const date = new Date(iso);
+  const today = new Date(new Date().toDateString());
+  const days = Math.round((today.getTime() - new Date(date.toDateString()).getTime()) / 86_400_000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days <= 30) return `${days} days ago`;
+  return format(date, 'MMM d');
 }
 
 export default function PlantProfileLayout() {
