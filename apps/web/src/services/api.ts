@@ -320,6 +320,23 @@ export const diagnosisChatApi = {
       dueInDays,
       note,
     }),
+  getRecoverySuggestions: (plantId: string, conversationId: string, messageId: string, note?: string) =>
+    api.post(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/recovery-suggestions`, {
+      messageId,
+      note,
+    }),
+  applyRecoveryTasks: (
+    plantId: string,
+    conversationId: string,
+    messageId: string,
+    keys: string[],
+    note?: string,
+  ) =>
+    api.post(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/recovery-tasks`, {
+      messageId,
+      keys,
+      note,
+    }),
 };
 
 export const usersApi = {

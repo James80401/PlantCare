@@ -8,6 +8,7 @@ import { usePlantProfile } from './PlantProfileContext';
 import { DR_PLANT_SECTION_ID } from './constants';
 import { HealthStickyDrPlant } from './HealthStickyDrPlant';
 import { ProfileSection, RecoveryPanel, SectionEmptyState } from './shared';
+import { taskTypeLabel } from '../../utils/tasks';
 
 export default function PlantHealthTab() {
   const ctx = usePlantProfile();
@@ -47,6 +48,11 @@ export default function PlantHealthTab() {
               ctx.appendJournalPrompt('Recovery check:');
               ctx.goToJournalTab();
             }}
+          />
+
+          <RecoveryTimeline
+            tasks={ctx.pending.filter((task) => Boolean(task.sourceDiagnosisId))}
+            onComplete={ctx.handleCompleteTask}
           />
 
           {ctx.latestUnresolved ? (
@@ -125,5 +131,61 @@ export default function PlantHealthTab() {
       </ProfileSection>
       <HealthStickyDrPlant />
     </>
+  );
+}
+
+function RecoveryTimeline({
+  tasks,
+  onComplete,
+}: {
+  tasks: Array<Record<string, unknown>>;
+  onComplete: (taskId: string) => void;
+}) {
+  if (tasks.length === 0) return null;
+
+  return (
+    <section className="rounded-2xl border border-lime-100 bg-lime-50/70 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">
+            Recovery timeline
+          </p>
+          <h3 className="mt-1 font-semibold text-emerald-950">
+            Active follow-up tasks
+          </h3>
+        </div>
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-lime-900 ring-1 ring-lime-100">
+          {tasks.length} open
+        </span>
+      </div>
+      <ol className="mt-3 space-y-2">
+        {tasks.slice(0, 5).map((task) => {
+          const id = String(task.id);
+          const dueDate = task.dueDate ? new Date(String(task.dueDate)) : null;
+          return (
+            <li
+              key={id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white px-3 py-2.5 text-sm ring-1 ring-lime-100"
+            >
+              <div>
+                <p className="font-semibold text-emerald-950">
+                  {taskTypeLabel(String(task.taskType))}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {dueDate ? `Due ${dueDate.toLocaleDateString()}` : 'Recovery follow-up'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onComplete(id)}
+                className="min-h-9 rounded-full bg-lime-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-lime-800"
+              >
+                Mark done
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }

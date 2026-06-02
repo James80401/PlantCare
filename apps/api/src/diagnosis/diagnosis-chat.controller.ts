@@ -14,7 +14,11 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { imageUploadOptions } from '../common/upload-options';
 import { DiagnosisChatService } from './diagnosis-chat.service';
-import { ChatHealthCheckActionDto, ChatJournalActionDto } from './dto/chat-action.dto';
+import {
+  ChatHealthCheckActionDto,
+  ChatJournalActionDto,
+  ChatRecoveryTasksDto,
+} from './dto/chat-action.dto';
 
 @ApiTags('diagnoses')
 @ApiBearerAuth()
@@ -89,6 +93,36 @@ export class DiagnosisChatController {
     @Body() dto: ChatHealthCheckActionDto,
   ) {
     return this.chat.scheduleHealthCheckFromChat(
+      user.sub,
+      plantId,
+      conversationId,
+      dto,
+    );
+  }
+
+  @Post(':conversationId/actions/recovery-suggestions')
+  getRecoverySuggestions(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('conversationId') conversationId: string,
+    @Body() dto: ChatJournalActionDto,
+  ) {
+    return this.chat.getRecoverySuggestionsFromChat(
+      user.sub,
+      plantId,
+      conversationId,
+      dto,
+    );
+  }
+
+  @Post(':conversationId/actions/recovery-tasks')
+  applyRecoveryTasks(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('conversationId') conversationId: string,
+    @Body() dto: ChatRecoveryTasksDto,
+  ) {
+    return this.chat.applyRecoveryTasksFromChat(
       user.sub,
       plantId,
       conversationId,

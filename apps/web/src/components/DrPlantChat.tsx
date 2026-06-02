@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { diagnosisChatApi } from '../services/api';
 import { formatApiErrorMessage } from '../utils/apiError';
 import { DR_PLANT_HASH } from '../utils/gardenPaths';
+import { taskTypeLabel } from '../utils/tasks';
 
 export interface ChatMessage {
   id: string;
@@ -24,6 +25,14 @@ interface ConversationListItem {
 interface DrPlantChatProps {
   plantId: string;
   plantName?: string;
+}
+
+interface ChatRecoverySuggestion {
+  key: string;
+  label: string;
+  taskType: string;
+  dueInDays: number;
+  alreadyScheduled: boolean;
 }
 
 const GUIDED_FOLLOW_UPS = [
@@ -379,6 +388,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
                   {format(new Date(m.createdAt), 'h:mm a')}
                 </p>
                 {!isUser && activeId ? (
+                  <>
                   <div className="mt-2 flex flex-wrap gap-2 border-t border-emerald-50 pt-2">
                     <button
                       type="button"
@@ -405,6 +415,12 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
                       {actionLoading === `health:${m.id}:7` ? 'Scheduling...' : 'Check again in 7 days'}
                     </button>
                   </div>
+                  <ChatRecoveryTasks
+                    plantId={plantId}
+                    conversationId={activeId}
+                    messageId={m.id}
+                  />
+                  </>
                 ) : null}
               </div>
             </div>
@@ -461,6 +477,177 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function dueLabel(dueInDays: number): string {
+  if (dueInDays <= 0) return 'Due today';
+  if (dueInDays === 1) return 'Due tomorrow';
+  return `Due in ${dueInDays} days`;
+}
+
+function ChatRecoveryTasks({
+  plantId,
+  conversationId,
+  messageId,
+}: {
+  plantId: string;
+  conversationId: string;
+  messageId: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [suggestions, setSuggestions] = useState<ChatRecoverySuggestion[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const load = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const { data } = await diagnosisChatApi.getRecoverySuggestions(
+        plantId,
+        conversationId,
+        messageId,
+      );
+      const nextSuggestions = data.suggestions ?? [];
+      setSuggestions(nextSuggestions);
+      setSelected(new Set(nextSuggestions.filter((s: ChatRecoverySuggestion) => !s.alreadyScheduled).map((s: ChatRecoverySuggestion) => s.key)));
+      setLoaded(true);
+    } catch (err: unknown) {
+      setError(formatApiErrorMessage(err, 'Could not load recovery task ideas.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleExpanded = () => {
+    const next = !expanded;
+    setExpanded(next);
+    if (next && !loaded && !loading) {
+      void load();
+    }
+  };
+
+  const toggle = (key: string, disabled: boolean) => {
+    if (disabled) return;
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+    setSuccess('');
+  };
+
+  const apply = async () => {
+    const keys = [...selected];
+    if (!keys.length) return;
+    setApplying(true);
+    setError('');
+    setSuccess('');
+    try {
+      const { data } = await diagnosisChatApi.applyRecoveryTasks(
+        plantId,
+        conversationId,
+        messageId,
+        keys,
+      );
+      setSuccess(
+        data.length === 1
+          ? '1 recovery task added.'
+          : `${data.length} recovery tasks added.`,
+      );
+      await load();
+    } catch (err: unknown) {
+      setError(formatApiErrorMessage(err, 'Could not add recovery tasks.'));
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const selectable = suggestions.filter((suggestion) => !suggestion.alreadyScheduled);
+
+  return (
+    <div className="mt-2 border-t border-emerald-50 pt-2">
+      <button
+        type="button"
+        onClick={toggleExpanded}
+        className="min-h-8 rounded-full bg-lime-50 px-3 py-1 text-xs font-semibold text-lime-900 hover:bg-lime-100"
+      >
+        {expanded ? 'Hide recovery tasks' : 'Add recovery tasks'}
+      </button>
+
+      {expanded ? (
+        <div className="mt-2 rounded-2xl border border-lime-100 bg-lime-50/60 p-3">
+          {loading ? (
+            <p className="text-xs text-gray-600">Loading task ideas...</p>
+          ) : suggestions.length === 0 ? (
+            <p className="text-xs text-gray-600">No clear task ideas found in this reply.</p>
+          ) : (
+            <div className="space-y-2">
+              {suggestions.map((suggestion) => {
+                const disabled = suggestion.alreadyScheduled;
+                const checked = disabled || selected.has(suggestion.key);
+                return (
+                  <label
+                    key={suggestion.key}
+                    className={`flex gap-2 rounded-xl border bg-white px-2.5 py-2 text-xs ${
+                      disabled
+                        ? 'border-lime-50 opacity-70'
+                        : 'border-lime-100 hover:bg-lime-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 h-4 w-4 rounded border-lime-200 text-lime-700"
+                      checked={checked}
+                      disabled={disabled}
+                      onChange={() => toggle(suggestion.key, disabled)}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-semibold text-emerald-950">
+                        {suggestion.label}
+                      </span>
+                      <span className="mt-0.5 block text-lime-800">
+                        {taskTypeLabel(suggestion.taskType)} - {dueLabel(suggestion.dueInDays)}
+                        {disabled ? ' - Already scheduled' : ''}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
+          {error ? (
+            <p className="mt-2 text-xs text-rose-700" role="alert">
+              {error}
+            </p>
+          ) : null}
+          {success ? (
+            <p className="mt-2 text-xs font-semibold text-emerald-800" role="status">
+              {success}
+            </p>
+          ) : null}
+
+          {selectable.length > 0 ? (
+            <button
+              type="button"
+              disabled={applying || selected.size === 0}
+              onClick={apply}
+              className="mt-3 min-h-9 rounded-full bg-lime-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-lime-800 disabled:opacity-50"
+            >
+              {applying ? 'Adding...' : `Add ${selected.size} task${selected.size === 1 ? '' : 's'}`}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

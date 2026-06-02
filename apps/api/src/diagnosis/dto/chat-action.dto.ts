@@ -1,5 +1,14 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class ChatJournalActionDto {
   @IsOptional()
@@ -19,4 +28,11 @@ export class ChatHealthCheckActionDto extends ChatJournalActionDto {
   @Min(1)
   @Max(30)
   dueInDays?: number = 3;
+}
+
+export class ChatRecoveryTasksDto extends ChatJournalActionDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  keys!: string[];
 }

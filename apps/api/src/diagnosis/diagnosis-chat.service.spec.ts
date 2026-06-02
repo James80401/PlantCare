@@ -14,11 +14,17 @@ describe('DiagnosisChatService actions', () => {
         }),
         findUnique: jest.fn().mockResolvedValue({ gardenId: 'garden-1' }),
       },
+      diagnosis: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'diagnosis-1' }),
+        create: jest.fn().mockResolvedValue({ id: 'diagnosis-1' }),
+      },
       diagnosisConversation: {
         findFirst: jest.fn().mockResolvedValue({
           id: 'conv-1',
           plantId: 'plant-1',
           userId: 'user-1',
+          title: 'Yellow leaves',
+          createdAt: new Date('2026-06-01T12:00:00.000Z'),
           messages,
         }),
       },
@@ -26,6 +32,8 @@ describe('DiagnosisChatService actions', () => {
         create: jest.fn().mockResolvedValue({ id: 'journal-1' }),
       },
       task: {
+        findMany: jest.fn().mockResolvedValue([]),
+        findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue({
           id: 'task-1',
           plantId: 'plant-1',
@@ -111,5 +119,60 @@ describe('DiagnosisChatService actions', () => {
         messageId: 'msg-1',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('returns recovery task suggestions from a chat reply', async () => {
+    const { service, prisma } = createService([
+      {
+        id: 'msg-1',
+        role: 'assistant',
+        content: 'Check soil moisture today.\nClean each leaf tomorrow.',
+      },
+    ]);
+
+    const result = await service.getRecoverySuggestionsFromChat('user-1', 'plant-1', 'conv-1', {
+      messageId: 'msg-1',
+    });
+
+    expect(result.diagnosisId).toBe('diagnosis-1');
+    expect(result.suggestions.map((suggestion) => suggestion.taskType)).toEqual(
+      expect.arrayContaining(['CHECK_MOISTURE', 'CLEAN_LEAVES']),
+    );
+    expect(prisma.diagnosis.findFirst).toHaveBeenCalled();
+  });
+
+  it('applies selected recovery tasks from a chat reply', async () => {
+    const { service, prisma } = createService([
+      {
+        id: 'msg-1',
+        role: 'assistant',
+        content: 'Check soil moisture today.',
+      },
+    ]);
+    const suggestions = await service.getRecoverySuggestionsFromChat('user-1', 'plant-1', 'conv-1', {
+      messageId: 'msg-1',
+    });
+
+    const result = await service.applyRecoveryTasksFromChat('user-1', 'plant-1', 'conv-1', {
+      messageId: 'msg-1',
+      keys: [suggestions.suggestions[0].key],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(prisma.task.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          sourceDiagnosisId: 'diagnosis-1',
+          taskType: 'CHECK_MOISTURE',
+        }),
+      }),
+    );
+    expect(prisma.journalEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          notes: expect.stringContaining('Dr. Plant recovery plan'),
+        }),
+      }),
+    );
   });
 });

@@ -15,7 +15,19 @@ import { LlmDiagnosisService, type ChatTurn, type PlantContext } from './llm-dia
 import { OpenAiRequestError } from './openai-errors';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { ChatHealthCheckActionDto, ChatJournalActionDto } from './dto/chat-action.dto';
+import {
+  ChatHealthCheckActionDto,
+  ChatJournalActionDto,
+  ChatRecoveryTasksDto,
+} from './dto/chat-action.dto';
+import {
+  buildRecoverySuggestions,
+  type RecoveryTaskSuggestion,
+} from './diagnosis-recovery.mapper';
+
+type ChatRecoverySuggestionView = RecoveryTaskSuggestion & {
+  alreadyScheduled: boolean;
+};
 
 const CHAT_HISTORY_TURN_LIMIT = 20;
 
@@ -439,12 +451,137 @@ export class DiagnosisChatService {
     return task;
   }
 
+  async getRecoverySuggestionsFromChat(
+    userId: string,
+    plantId: string,
+    conversationId: string,
+    dto: ChatJournalActionDto,
+  ): Promise<{ diagnosisId: string; suggestions: ChatRecoverySuggestionView[] }> {
+    const { note, conversation } = await this.resolveActionContext(
+      userId,
+      plantId,
+      conversationId,
+      dto,
+    );
+    const diagnosis = await this.ensureChatDiagnosis(plantId, conversation, note);
+    const suggestions = buildRecoverySuggestions(diagnosis.id, null, note);
+    const pending = await this.prisma.task.findMany({
+      where: {
+        plantId,
+        sourceDiagnosisId: diagnosis.id,
+        status: 'PENDING',
+      },
+      select: { taskType: true },
+    });
+    const scheduledTypes = new Set(pending.map((t) => t.taskType));
+
+    return {
+      diagnosisId: diagnosis.id,
+      suggestions: suggestions.map((suggestion) => ({
+        ...suggestion,
+        alreadyScheduled: scheduledTypes.has(suggestion.taskType),
+      })),
+    };
+  }
+
+  async applyRecoveryTasksFromChat(
+    userId: string,
+    plantId: string,
+    conversationId: string,
+    dto: ChatRecoveryTasksDto,
+  ) {
+    const { note, conversation } = await this.resolveActionContext(
+      userId,
+      plantId,
+      conversationId,
+      dto,
+    );
+    const diagnosis = await this.ensureChatDiagnosis(plantId, conversation, note);
+    const suggestions = buildRecoverySuggestions(diagnosis.id, null, note);
+    const selected = suggestions.filter((suggestion) => dto.keys.includes(suggestion.key));
+    if (selected.length === 0) {
+      throw new BadRequestException('No valid recovery tasks selected.');
+    }
+
+    const plant = await this.prisma.plant.findUnique({
+      where: { id: plantId },
+      select: { gardenId: true },
+    });
+    const created = [];
+    for (const suggestion of selected) {
+      const existing = await this.prisma.task.findFirst({
+        where: {
+          plantId,
+          sourceDiagnosisId: diagnosis.id,
+          taskType: suggestion.taskType,
+          status: 'PENDING',
+        },
+      });
+      if (existing) continue;
+
+      created.push(
+        await this.prisma.task.create({
+          data: {
+            plantId,
+            gardenId: plant?.gardenId,
+            taskType: suggestion.taskType,
+            dueDate: startOfDay(addDays(new Date(), suggestion.dueInDays)),
+            sourceDiagnosisId: diagnosis.id,
+          },
+          include: {
+            plant: { include: { species: true } },
+            sourceDiagnosis: {
+              select: { id: true, resultLabel: true, resolved: true },
+            },
+          },
+        }),
+      );
+    }
+
+    if (created.length === 0) {
+      throw new BadRequestException(
+        'Selected recovery tasks are already on your schedule.',
+      );
+    }
+
+    await this.prisma.journalEntry.create({
+      data: {
+        plantId,
+        notes:
+          `Dr. Plant recovery plan: added ${created.length} task${created.length === 1 ? '' : 's'}.\n\n` +
+          note,
+      },
+    });
+
+    return created;
+  }
+
   private async resolveActionNote(
     userId: string,
     plantId: string,
     conversationId: string,
     dto: ChatJournalActionDto,
   ): Promise<string> {
+    const { note } = await this.resolveActionContext(userId, plantId, conversationId, dto);
+    return note;
+  }
+
+  private async resolveActionContext(
+    userId: string,
+    plantId: string,
+    conversationId: string,
+    dto: ChatJournalActionDto,
+  ): Promise<{
+    note: string;
+    conversation: {
+      id: string;
+      plantId: string;
+      userId: string;
+      title: string | null;
+      createdAt: Date;
+      messages: Array<{ id: string; role: string; content: string }>;
+    };
+  }> {
     const conv = await this.prisma.diagnosisConversation.findFirst({
       where: { id: conversationId, plantId, userId },
       include: {
@@ -458,13 +595,47 @@ export class DiagnosisChatService {
     if (!conv) throw new NotFoundException('Conversation not found');
 
     const explicit = dto.note?.trim();
-    if (explicit) return explicit;
+    if (explicit) return { note: explicit, conversation: conv };
 
     const message = conv.messages[0];
     if (!message || message.role !== 'assistant' || !message.content.trim()) {
       throw new BadRequestException('Choose a Dr. Plant reply or add a note.');
     }
 
-    return message.content.trim().slice(0, 2000);
+    return { note: message.content.trim().slice(0, 2000), conversation: conv };
+  }
+
+  private async ensureChatDiagnosis(
+    plantId: string,
+    conversation: {
+      title: string | null;
+      createdAt: Date;
+    },
+    note: string,
+  ): Promise<{ id: string }> {
+    const existing = await this.prisma.diagnosis.findFirst({
+      where: {
+        plantId,
+        source: 'openai',
+        resultLabel: 'Dr. Plant consultation',
+        resolved: false,
+        createdAt: { gte: conversation.createdAt },
+      },
+      select: { id: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (existing) return existing;
+
+    return this.prisma.diagnosis.create({
+      data: {
+        plantId,
+        symptomsText: conversation.title || 'Dr. Plant chat follow-up',
+        resultLabel: 'Dr. Plant consultation',
+        confidence: null,
+        adviceText: note.slice(0, 2000),
+        source: 'openai',
+      },
+      select: { id: true },
+    });
   }
 }
