@@ -6,6 +6,7 @@ import {
   type SpeciesMetadata,
 } from '../components/species/SpeciesMetadataPanel';
 import { speciesApi } from '../services/api';
+import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 interface SpeciesDetail {
   id: string;
@@ -81,7 +82,7 @@ export default function SpeciesBrowseDetail() {
         <div className="aspect-[16/10] bg-emerald-50">
           {species.defaultImageUrl ? (
             <img
-              src={species.defaultImageUrl}
+              src={resolveApiAssetUrl(species.defaultImageUrl) ?? undefined}
               alt=""
               className="h-full w-full object-cover"
             />

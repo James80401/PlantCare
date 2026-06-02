@@ -15,6 +15,7 @@ import { plantsApi, speciesApi, gardensApi, type GardenSummaryCard } from '../se
 import { CreateGardenForm } from '../components/gardens/CreateGardenForm';
 import { useAuth } from '../context/AuthContext';
 import { trackEvent } from '../utils/analytics';
+import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 interface Species {
   id: string;
@@ -360,7 +361,7 @@ export default function AddPlantWizard() {
             <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-emerald-50">
               {selectedSpecies.defaultImageUrl ? (
                 <img
-                  src={selectedSpecies.defaultImageUrl}
+                  src={resolveApiAssetUrl(selectedSpecies.defaultImageUrl) ?? undefined}
                   alt=""
                   className="h-full w-full object-cover"
                 />
