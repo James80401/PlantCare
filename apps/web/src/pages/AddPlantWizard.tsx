@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { PhotoCaptureZone } from '../components/plants/PhotoCaptureZone';
 import { Button } from '../components/ui/Button';
@@ -106,6 +106,9 @@ export default function AddPlantWizard() {
   const [notes, setNotes] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [identifyPreview, setIdentifyPreview] = useState<string | null>(null);
+  const [plantPhotoPreview, setPlantPhotoPreview] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const uploadRequestIdRef = useRef(0);
 
   const [error, setError] = useState('');
   const [limitError, setLimitError] = useState<{ message: string; code: string } | null>(null);
@@ -161,6 +164,12 @@ export default function AddPlantWizard() {
     };
   }, [identifyPreview]);
 
+  useEffect(() => {
+    return () => {
+      if (plantPhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(plantPhotoPreview);
+    };
+  }, [plantPhotoPreview]);
+
   const selectSpecies = (species: Species) => {
     setSpeciesId(species.id);
     setSelectedSpecies(species);
@@ -169,9 +178,35 @@ export default function AddPlantWizard() {
     setStep('details');
   };
 
+  const setPlantPhotoFromFile = async (file: File) => {
+    const uploadRequestId = uploadRequestIdRef.current + 1;
+    uploadRequestIdRef.current = uploadRequestId;
+    setImageUploading(true);
+    setError('');
+    setPlantPhotoPreview((current) => {
+      if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+      return URL.createObjectURL(file);
+    });
+    try {
+      const { data } = await plantsApi.upload(file);
+      if (uploadRequestIdRef.current === uploadRequestId) {
+        setImageUrl(data.url);
+      }
+    } catch {
+      if (uploadRequestIdRef.current === uploadRequestId) {
+        setError('Could not upload photo.');
+      }
+    } finally {
+      if (uploadRequestIdRef.current === uploadRequestId) {
+        setImageUploading(false);
+      }
+    }
+  };
+
   const handleIdentify = async (file: File) => {
     if (identifyPreview?.startsWith('blob:')) URL.revokeObjectURL(identifyPreview);
     setIdentifyPreview(URL.createObjectURL(file));
+    void setPlantPhotoFromFile(file);
     setIdentifying(true);
     setError('');
     setLimitError(null);
@@ -198,12 +233,7 @@ export default function AddPlantWizard() {
   };
 
   const handlePlantPhoto = async (file: File) => {
-    try {
-      const { data } = await plantsApi.upload(file);
-      setImageUrl(data.url);
-    } catch {
-      setError('Could not upload photo.');
-    }
+    await setPlantPhotoFromFile(file);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -642,17 +672,27 @@ export default function AddPlantWizard() {
           </Card>
 
           <Card>
-            <p className="mb-2 text-sm font-medium text-gray-700">Your plant photo (optional)</p>
+            <div className="mb-2">
+              <p className="text-sm font-medium text-gray-700">Your plant photo (optional)</p>
+              {plantPhotoPreview && identifyPreview ? (
+                <p className="mt-1 text-xs text-emerald-700">
+                  Using the identification photo. You can replace it here.
+                </p>
+              ) : null}
+            </div>
             <PhotoCaptureZone
               label="Add a photo for your garden"
-              previewUrl={imageUrl || null}
+              hint={imageUploading ? 'Uploading photo...' : undefined}
+              busy={imageUploading}
+              busyLabel="Uploading photo..."
+              previewUrl={plantPhotoPreview || imageUrl || null}
               onFile={handlePlantPhoto}
               sourceMode="both"
             />
           </Card>
 
-          <Button type="submit" fullWidth disabled={loading}>
-            {loading ? 'Saving…' : 'Save plant'}
+          <Button type="submit" fullWidth disabled={loading || imageUploading}>
+            {loading ? 'Saving…' : imageUploading ? 'Uploading photo...' : 'Save plant'}
           </Button>
           {step !== 'photo' && (
             <Button type="button" variant="ghost" fullWidth onClick={() => setStep('photo')}>

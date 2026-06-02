@@ -5,6 +5,7 @@ export function PhotoCaptureZone({
   label,
   hint,
   busy,
+  busyLabel = 'Identifying...',
   previewUrl,
   onFile,
   className,
@@ -13,6 +14,7 @@ export function PhotoCaptureZone({
   label: string;
   hint?: string;
   busy?: boolean;
+  busyLabel?: string;
   previewUrl?: string | null;
   onFile: (file: File) => void;
   className?: string;
@@ -62,7 +64,7 @@ export function PhotoCaptureZone({
         )}
         {busy ? (
           <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-            <span className="text-sm font-semibold text-emerald-800">Identifying…</span>
+            <span className="text-sm font-semibold text-emerald-800">{busyLabel}</span>
           </div>
         ) : null}
       </button>
