@@ -3,6 +3,9 @@ import {
   extractMeasurementPoints,
   formatDelta,
   heightSeries,
+  measurementDeltaSummary,
+  pickCompareIdsAroundEntry,
+  pickLatestPhotoCompareIds,
   pickPhotoCompareIds,
 } from './journalMeasurements';
 
@@ -51,5 +54,33 @@ describe('journalMeasurements', () => {
     const pick = pickPhotoCompareIds(photos as never);
     expect(pick?.beforeId).toBe('old');
     expect(pick?.afterId).toBe('new');
+  });
+
+  it('picks latest adjacent photo ids', () => {
+    const photos = [
+      { id: 'old', createdAt: '2026-01-01', photoUrl: '/a.jpg' },
+      { id: 'middle', createdAt: '2026-02-01', photoUrl: '/m.jpg' },
+      { id: 'new', createdAt: '2026-03-01', photoUrl: '/b.jpg' },
+    ];
+    const pick = pickLatestPhotoCompareIds(photos as never);
+    expect(pick).toEqual({ beforeId: 'middle', afterId: 'new' });
+  });
+
+  it('picks comparison ids around a selected entry', () => {
+    const photos = [
+      { id: 'old', createdAt: '2026-01-01', photoUrl: '/a.jpg' },
+      { id: 'middle', createdAt: '2026-02-01', photoUrl: '/m.jpg' },
+      { id: 'new', createdAt: '2026-03-01', photoUrl: '/b.jpg' },
+    ];
+    const pick = pickCompareIdsAroundEntry(photos as never, 'middle');
+    expect(pick).toEqual({ beforeId: 'old', afterId: 'middle' });
+  });
+
+  it('summarizes measurement deltas between entries', () => {
+    const summary = measurementDeltaSummary(
+      { heightCm: 10, widthCm: 15, leafCount: 4 } as never,
+      { heightCm: 12, widthCm: 14, leafCount: 7 } as never,
+    );
+    expect(summary).toBe('Height +2 cm - Width -1 cm - Leaves +3');
   });
 });

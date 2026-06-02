@@ -109,11 +109,13 @@ export function PlantTimeline({
   events,
   onEditJournal,
   onDeleteJournal,
+  onCompareJournal,
   busyJournalId,
 }: {
   events: TimelineEvent[];
   onEditJournal?: (journalId: string) => void;
   onDeleteJournal?: (journalId: string) => void;
+  onCompareJournal?: (journalId: string) => void;
   busyJournalId?: string | null;
 }) {
   return (
@@ -157,8 +159,18 @@ export function PlantTimeline({
                   loading="lazy"
                 />
               ) : null}
-              {event.journalId && (onEditJournal || onDeleteJournal) ? (
+              {event.journalId && (onEditJournal || onDeleteJournal || onCompareJournal) ? (
                 <div className="mt-3 flex flex-wrap gap-2">
+                  {onCompareJournal && event.imageUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => onCompareJournal(event.journalId!)}
+                      disabled={busyJournalId === event.journalId}
+                      className="rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 hover:bg-sky-100 disabled:opacity-50"
+                    >
+                      Compare
+                    </button>
+                  ) : null}
                   {onEditJournal ? (
                     <button
                       type="button"

@@ -38,6 +38,12 @@ export function formatDelta(current: number, previous: number): string {
   return `${sign}${diff.toFixed(diff % 1 === 0 ? 0 : 1)} cm`;
 }
 
+export function formatNumberDelta(current: number, previous: number): string {
+  const diff = current - previous;
+  const sign = diff > 0 ? '+' : '';
+  return `${sign}${diff.toFixed(diff % 1 === 0 ? 0 : 1)}`;
+}
+
 export function pickPhotoCompareIds(
   photoEntries: PlantRecord[],
 ): { beforeId: string; afterId: string } | null {
@@ -50,6 +56,57 @@ export function pickPhotoCompareIds(
     beforeId: sorted[0].id as string,
     afterId: sorted[sorted.length - 1].id as string,
   };
+}
+
+export function pickLatestPhotoCompareIds(
+  photoEntries: PlantRecord[],
+): { beforeId: string; afterId: string } | null {
+  if (photoEntries.length < 2) return null;
+  const sorted = [...photoEntries].sort(
+    (a, b) =>
+      new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime(),
+  );
+  return {
+    beforeId: sorted[sorted.length - 2].id as string,
+    afterId: sorted[sorted.length - 1].id as string,
+  };
+}
+
+export function pickCompareIdsAroundEntry(
+  photoEntries: PlantRecord[],
+  entryId: string,
+): { beforeId: string; afterId: string } | null {
+  if (photoEntries.length < 2) return null;
+  const sorted = [...photoEntries].sort(
+    (a, b) =>
+      new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime(),
+  );
+  const index = sorted.findIndex((entry) => entry.id === entryId);
+  if (index === -1) return null;
+  if (index === 0) {
+    return { beforeId: sorted[0].id as string, afterId: sorted[1].id as string };
+  }
+  return {
+    beforeId: sorted[index - 1].id as string,
+    afterId: sorted[index].id as string,
+  };
+}
+
+export function measurementDeltaSummary(
+  before: PlantRecord,
+  after: PlantRecord,
+): string | null {
+  const parts: string[] = [];
+  if (before.heightCm != null && after.heightCm != null) {
+    parts.push(`Height ${formatDelta(Number(after.heightCm), Number(before.heightCm))}`);
+  }
+  if (before.widthCm != null && after.widthCm != null) {
+    parts.push(`Width ${formatDelta(Number(after.widthCm), Number(before.widthCm))}`);
+  }
+  if (before.leafCount != null && after.leafCount != null) {
+    parts.push(`Leaves ${formatNumberDelta(Number(after.leafCount), Number(before.leafCount))}`);
+  }
+  return parts.length ? parts.join(' - ') : null;
 }
 
 export function measurementSummaryForEntry(entry: PlantRecord): string | null {

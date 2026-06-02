@@ -4,7 +4,10 @@ import { GrowthMeasurementsPanel } from '../../components/journal/GrowthMeasurem
 import JournalPhotoCompare from '../../components/JournalPhotoCompare';
 import {
   extractMeasurementPoints,
+  measurementDeltaSummary,
   measurementSummaryForEntry,
+  pickCompareIdsAroundEntry,
+  pickLatestPhotoCompareIds,
   pickPhotoCompareIds,
 } from '../../utils/journalMeasurements';
 import { journalPrompts } from './constants';
@@ -56,6 +59,13 @@ export default function PlantJournalTab() {
           compareAfterId={compareAfterId}
           onBeforeChange={setCompareBeforeId}
           onAfterChange={setCompareAfterId}
+          onCompareEntry={(entryId) => {
+            const pick = pickCompareIdsAroundEntry(photoEntries, entryId);
+            if (pick) {
+              setCompareBeforeId(pick.beforeId);
+              setCompareAfterId(pick.afterId);
+            }
+          }}
           ctx={ctx}
         />
       </div>
@@ -217,6 +227,7 @@ function JournalSidebar({
   compareAfterId,
   onBeforeChange,
   onAfterChange,
+  onCompareEntry,
   ctx,
 }: {
   photoEntries: PlantRecord[];
@@ -226,10 +237,15 @@ function JournalSidebar({
   compareAfterId: string;
   onBeforeChange: (id: string) => void;
   onAfterChange: (id: string) => void;
+  onCompareEntry: (id: string) => void;
   ctx: ReturnType<typeof usePlantProfile>;
 }) {
   const beforeEntry = photoEntries.find((e) => e.id === compareBeforeId);
   const afterEntry = photoEntries.find((e) => e.id === compareAfterId);
+  const compareDeltaNote =
+    beforeEntry && afterEntry ? measurementDeltaSummary(beforeEntry, afterEntry) : null;
+  const beforeSummary = beforeEntry ? measurementSummaryForEntry(beforeEntry) : null;
+  const afterSummary = afterEntry ? measurementSummaryForEntry(afterEntry) : null;
   const compareMeasurementNote =
     beforeEntry && afterEntry
       ? [measurementSummaryForEntry(beforeEntry), measurementSummaryForEntry(afterEntry)]
@@ -245,6 +261,19 @@ function JournalSidebar({
         <div className="rounded-2xl border border-emerald-100 bg-white p-4 space-y-3">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <p className="text-sm font-semibold text-emerald-950">Compare growth photos</p>
+            <button
+              type="button"
+              onClick={() => {
+                const latest = pickLatestPhotoCompareIds(photoEntries);
+                if (latest) {
+                  onBeforeChange(latest.beforeId);
+                  onAfterChange(latest.afterId);
+                }
+              }}
+              className="text-xs font-semibold text-emerald-700 hover:underline"
+            >
+              Latest pair
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -293,9 +322,26 @@ function JournalSidebar({
           </div>
           {compareUrls ? (
             <>
-              {compareMeasurementNote ? (
+              {compareDeltaNote ? (
+                <p className="rounded-2xl bg-lime-50 px-3 py-2 text-xs text-lime-950 ring-1 ring-lime-100">
+                  <span className="font-semibold">Measurement change: </span>
+                  {compareDeltaNote}
+                </p>
+              ) : compareMeasurementNote ? (
                 <p className="text-xs text-gray-600">{compareMeasurementNote}</p>
               ) : null}
+              {(beforeSummary || afterSummary) && (
+                <div className="grid gap-2 text-xs text-gray-600 sm:grid-cols-2">
+                  <p className="rounded-xl bg-gray-50 px-3 py-2">
+                    <span className="font-semibold text-gray-700">Earlier: </span>
+                    {beforeSummary || 'No measurements'}
+                  </p>
+                  <p className="rounded-xl bg-gray-50 px-3 py-2">
+                    <span className="font-semibold text-gray-700">Later: </span>
+                    {afterSummary || 'No measurements'}
+                  </p>
+                </div>
+              )}
               <JournalPhotoCompare
                 beforeUrl={compareUrls.before}
                 afterUrl={compareUrls.after}
@@ -321,6 +367,7 @@ function JournalSidebar({
           busyJournalId={ctx.busyJournalId}
           onEditJournal={(journalId) => ctx.setEditingJournalId(journalId)}
           onDeleteJournal={(journalId) => ctx.deleteJournalEntry(journalId)}
+          onCompareJournal={(journalId) => onCompareEntry(journalId)}
         />
       ) : (
         <SectionEmptyState
