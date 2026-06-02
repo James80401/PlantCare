@@ -27,6 +27,13 @@ Creates next task at `completedAt + interval`. Mist may not reschedule if rules 
 - `postponeWateringForRain(plantId, days)` shifts pending outdoor/semi-outdoor **WATER** tasks due in the near window.
 - `autoPostponeOutdoorWateringFromWeather(userId)` runs when tasks or plants are loaded for a user: if `weatherAdviceCache` shows ≥60% rain probability on either of the next two forecast days, pending outdoor watering tasks due tomorrow–day after are postponed (same helper as manual rain handling).
 
+## Heat and frost
+
+- Forecast cache is checked for the next three days.
+- Outdoor/semi-outdoor plants get a one-time **CHECK_MOISTURE** suggestion when highs reach 35C or higher.
+- Outdoor/semi-outdoor plants get a one-time **HEALTH_CHECK** suggestion when lows reach 0C or lower.
+- These suggestions create pending tasks only after the user approves them, and skip plants that already have the same task type pending on the forecast day.
+
 ## Adaptive suggestions
 
 `SchedulerService.getScheduleSuggestionsForUser` creates explainable suggestions
@@ -38,6 +45,8 @@ without changing schedules automatically. Current rules:
 - `RAIN_HANDLED_WATERING` skip feedback for outdoor plants suggests delaying the next
   water task 2 days.
 - Dashboard may surface forecast rain delay when weather cache qualifies (companion to auto-postpone).
+- Forecast heat stress suggests a one-time moisture check for outdoor/semi-outdoor plants.
+- Forecast frost risk suggests a one-time protection/health check for outdoor/semi-outdoor plants.
 - Fertilizer reminders outside the main growing season suggest delaying the next
   fertilizer task 30 days.
 

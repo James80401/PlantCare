@@ -71,6 +71,8 @@ Current suggestion types:
 - Water sooner after repeated dry-soil or stressed-plant **complete** feedback on watering (`water-accelerate`).
 - Delay the next outdoor watering after rain handled watering (skip feedback).
 - Forecast-based rain delay for outdoor/semi-outdoor plants when weather cache shows high rain probability (dashboard copy; auto-postpone may shift due dates on load).
+- Forecast-based heat stress moisture check for outdoor/semi-outdoor plants when highs reach 35C or higher.
+- Forecast-based frost protection health check for outdoor/semi-outdoor plants when lows reach 0C or lower.
 - Delay fertilizer outside the growing season.
 
 Applying a suggestion only updates pending tasks returned by the suggestion.

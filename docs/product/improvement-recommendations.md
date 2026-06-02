@@ -248,14 +248,14 @@ Focus: diagnosis recovery, journal photos, mobile trust, doc/E2E hygiene.
 
 1. **G3** — Production deploy sign-off on your public URL (manual §F checklist)
 
-**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, C5, D1, D2, D3, D4, E3, F1, F3, G1, G2, G3, G4, F2, E4, H1, H2.
+**Recently shipped:** A1, A2, B1, B2, B3, C2, C3, C4, C5, D1, D2, D3, D4, E3, F1, F3, G1, G2, G3, G4, F2, E4, H1, H2, Phase 4 heat/frost scheduling.
 
 ### Next (1–2 months)
 
-Focus: scale, social, API shape.
+Focus: dashboard storytelling, guided Dr. Plant follow-ups, and API shape.
 
-1. **Phase 4** — Heatwave/frost scheduling rules
-2. **H1** — Dashboard cross-plant journal/diagnosis snippets
+1. **H1** — Dashboard cross-plant journal/diagnosis snippets
+2. **Phase 5** — Guided Dr. Plant follow-up questions and recovery workflow
 
 ### Later (backlog)
 

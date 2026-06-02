@@ -782,8 +782,9 @@ function ScheduleSuggestionCard({
           {suggestion.affectedTaskCount} task{suggestion.affectedTaskCount === 1 ? '' : 's'}
         </span>
         <span className="rounded-full bg-gray-50 px-2.5 py-1">
-          {suggestion.adjustmentDays > 0 ? '+' : ''}
-          {suggestion.adjustmentDays} days
+          {suggestion.adjustmentDays === 0
+            ? 'One-time task'
+            : `${suggestion.adjustmentDays > 0 ? '+' : ''}${suggestion.adjustmentDays} days`}
         </span>
         {suggestion.reversible && (
           <span className="rounded-full bg-gray-50 px-2.5 py-1">Pending tasks only</span>

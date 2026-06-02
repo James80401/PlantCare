@@ -332,7 +332,7 @@ Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, 
 - [x] Adjust watering when users repeatedly skip because soil is wet (schedule suggestions).
 - [x] Increase watering suggestions when users report dry soil (repeated `SOIL_VERY_DRY` / `PLANT_LOOKS_STRESSED` on WATER complete → `water-accelerate` suggestion).
 - [x] Delay outdoor watering after rain (manual skip + `autoPostponeOutdoorWateringFromWeather` when forecast cache ≥60% rain).
-- [ ] Add heatwave and frost adjustments.
+- [x] Add heatwave and frost adjustments.
 - [x] Reduce fertilizer during dormancy (suggestions).
 - [x] Add explicit user approval before applying major schedule changes.
 

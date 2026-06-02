@@ -15,6 +15,22 @@ import { TASK_COMPLETE_REASONS } from '../tasks/dto/complete-task-feedback.dto';
 
 const DAYS_AHEAD = 90;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const RAIN_DELAY_THRESHOLD = 0.6;
+const HEAT_STRESS_C = 35;
+const FROST_RISK_C = 0;
+
+type ForecastDay = {
+  date?: string;
+  tempMinC?: number;
+  tempMaxC?: number;
+  rainProbability?: number;
+};
+
+type WeatherAdvicePayload = {
+  summary?: {
+    days?: ForecastDay[];
+  };
+};
 
 export interface ScheduleSuggestion {
   id: string;
@@ -85,6 +101,60 @@ export class SchedulerService {
 
   private isPestProneSpecies(category: ReturnType<typeof classifySpeciesForCare>): boolean {
     return category !== 'cactus' && category !== 'succulent';
+  }
+
+  private parseWeatherPayload(payload?: string | null): WeatherAdvicePayload | null {
+    if (!payload) return null;
+    try {
+      return JSON.parse(payload) as WeatherAdvicePayload;
+    } catch {
+      return null;
+    }
+  }
+
+  private isOutdoorLike(location: string | null): boolean {
+    const env = inferGrowingEnvironment(location);
+    return env === 'outdoor' || env === 'semi_outdoor';
+  }
+
+  private getForecastDays(weatherPayload: WeatherAdvicePayload | null): ForecastDay[] {
+    return Array.isArray(weatherPayload?.summary?.days)
+      ? weatherPayload.summary.days.slice(0, 3)
+      : [];
+  }
+
+  private forecastDate(day: ForecastDay | undefined, fallbackOffsetDays: number): Date {
+    if (day?.date) {
+      const parsed = new Date(`${day.date}T12:00:00.000Z`);
+      if (!Number.isNaN(parsed.getTime())) return startOfDay(parsed);
+    }
+    return startOfDay(addDays(new Date(), fallbackOffsetDays));
+  }
+
+  private formatCelsius(value: number): string {
+    return `${Math.round(value)}C`;
+  }
+
+  private getMaxRainProbability(weatherPayload: WeatherAdvicePayload | null): number | undefined {
+    const days = this.getForecastDays(weatherPayload);
+    const rainTomorrow = days[1]?.rainProbability;
+    const rainNext = days[2]?.rainProbability;
+    if (typeof rainTomorrow === 'number' && typeof rainNext === 'number') {
+      return Math.max(rainTomorrow, rainNext);
+    }
+    return typeof rainTomorrow === 'number' ? rainTomorrow : rainNext;
+  }
+
+  private getHeatStressDay(weatherPayload: WeatherAdvicePayload | null) {
+    return this.getForecastDays(weatherPayload)
+      .map((day, index) => ({ day, index }))
+      .find(({ day }) => typeof day.tempMaxC === 'number' && day.tempMaxC >= HEAT_STRESS_C);
+  }
+
+  private getFrostRiskDay(weatherPayload: WeatherAdvicePayload | null) {
+    return this.getForecastDays(weatherPayload)
+      .map((day, index) => ({ day, index }))
+      .find(({ day }) => typeof day.tempMinC === 'number' && day.tempMinC <= FROST_RISK_C);
   }
 
   private canScheduleRepot(plant: { datePlanted: Date | null }): boolean {
@@ -380,11 +450,8 @@ export class SchedulerService {
     this.trimWeatherPostponeMapIfStale(today);
 
     const weatherCache = await this.prisma.weatherAdviceCache.findUnique({ where: { userId } });
-    const weatherPayload = weatherCache?.payload ? (JSON.parse(weatherCache.payload) as any) : null;
-    const rainTomorrow = weatherPayload?.summary?.days?.[1]?.rainProbability as number | undefined;
-    const rainNext = weatherPayload?.summary?.days?.[2]?.rainProbability as number | undefined;
-    const maxRainProbability =
-      rainTomorrow != null && rainNext != null ? Math.max(rainTomorrow, rainNext) : rainTomorrow ?? rainNext;
+    const weatherPayload = this.parseWeatherPayload(weatherCache?.payload);
+    const maxRainProbability = this.getMaxRainProbability(weatherPayload);
     if (typeof maxRainProbability !== 'number' || maxRainProbability < rainThreshold) return;
 
     const plants = await this.prisma.plant.findMany({
@@ -392,12 +459,7 @@ export class SchedulerService {
       select: { id: true, location: true },
     });
 
-    const outdoorPlantIds = plants
-      .filter((p) => {
-        const env = inferGrowingEnvironment(p.location);
-        return env === 'outdoor' || env === 'semi_outdoor';
-      })
-      .map((p) => p.id);
+    const outdoorPlantIds = plants.filter((p) => this.isOutdoorLike(p.location)).map((p) => p.id);
 
     await this.postponeWateringForRainAcrossPlants(outdoorPlantIds, days);
   }
@@ -433,12 +495,12 @@ export class SchedulerService {
     const suggestionIds = new Set<string>();
 
     const weatherCache = await this.prisma.weatherAdviceCache.findUnique({ where: { userId } });
-    const weatherPayload = weatherCache?.payload ? (JSON.parse(weatherCache.payload) as any) : null;
-    const rainTomorrow = weatherPayload?.summary?.days?.[1]?.rainProbability as number | undefined;
-    const rainNext = weatherPayload?.summary?.days?.[2]?.rainProbability as number | undefined;
-    const maxRainProbability =
-      rainTomorrow != null && rainNext != null ? Math.max(rainTomorrow, rainNext) : rainTomorrow ?? rainNext;
-    const shouldRainDelay = typeof maxRainProbability === 'number' && maxRainProbability >= 0.6;
+    const weatherPayload = this.parseWeatherPayload(weatherCache?.payload);
+    const maxRainProbability = this.getMaxRainProbability(weatherPayload);
+    const shouldRainDelay =
+      typeof maxRainProbability === 'number' && maxRainProbability >= RAIN_DELAY_THRESHOLD;
+    const heatStress = this.getHeatStressDay(weatherPayload);
+    const frostRisk = this.getFrostRiskDay(weatherPayload);
 
     for (const plantId of plantIds) {
       const plantFeedback = feedback.filter((item) => item.task.plantId === plantId);
@@ -580,8 +642,7 @@ export class SchedulerService {
       });
       const rainPct = Math.round(maxRainProbability * 100);
       for (const p of eligiblePlants) {
-        const env = inferGrowingEnvironment(p.location);
-        if (env !== 'outdoor') continue;
+        if (!this.isOutdoorLike(p.location)) continue;
         const affectedTasks = await this.prisma.task.findMany({
           where: {
             plantId: p.id,
@@ -609,6 +670,76 @@ export class SchedulerService {
           confidence: 'medium',
           reversible: true,
         });
+      }
+    }
+
+    if (heatStress || frostRisk) {
+      const eligiblePlants = await this.prisma.plant.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          nickname: true,
+          location: true,
+          species: { select: { commonName: true } },
+        },
+      });
+
+      for (const p of eligiblePlants) {
+        if (!this.isOutdoorLike(p.location)) continue;
+
+        if (heatStress) {
+          const dueDate = this.forecastDate(heatStress.day, heatStress.index);
+          const affectedTaskCount = await this.countPendingTasksOnDate(
+            p.id,
+            TaskType.CHECK_MOISTURE,
+            dueDate,
+          );
+          const suggestionId = `${p.id}:heat-moisture-check`;
+          if (affectedTaskCount === 0 && !suggestionIds.has(suggestionId)) {
+            suggestionIds.add(suggestionId);
+            suggestions.push({
+              id: suggestionId,
+              plantId: p.id,
+              plantName: p.nickname || p.species.commonName,
+              taskType: TaskType.CHECK_MOISTURE,
+              title: 'Add heat stress moisture check',
+              explanation: `Highs near ${this.formatCelsius(
+                heatStress.day.tempMaxC!,
+              )} are forecast soon. Add a moisture check before the heat peak so you can water or shade only if needed.`,
+              adjustmentDays: 0,
+              affectedTaskCount: 1,
+              confidence: 'medium',
+              reversible: true,
+            });
+          }
+        }
+
+        if (frostRisk) {
+          const dueDate = this.forecastDate(frostRisk.day, frostRisk.index);
+          const affectedTaskCount = await this.countPendingTasksOnDate(
+            p.id,
+            TaskType.HEALTH_CHECK,
+            dueDate,
+          );
+          const suggestionId = `${p.id}:frost-protection-check`;
+          if (affectedTaskCount === 0 && !suggestionIds.has(suggestionId)) {
+            suggestionIds.add(suggestionId);
+            suggestions.push({
+              id: suggestionId,
+              plantId: p.id,
+              plantName: p.nickname || p.species.commonName,
+              taskType: TaskType.HEALTH_CHECK,
+              title: 'Add frost protection check',
+              explanation: `Lows near ${this.formatCelsius(
+                frostRisk.day.tempMinC!,
+              )} are forecast soon. Add a protection check so outdoor pots can be moved, covered, or sheltered before the coldest night.`,
+              adjustmentDays: 0,
+              affectedTaskCount: 1,
+              confidence: 'high',
+              reversible: true,
+            });
+          }
+        }
       }
     }
 
@@ -704,7 +835,84 @@ export class SchedulerService {
       };
     }
 
+    if (kind === 'heat-moisture-check') {
+      const weatherCache = await this.prisma.weatherAdviceCache.findUnique({ where: { userId } });
+      const heatStress = this.getHeatStressDay(this.parseWeatherPayload(weatherCache?.payload));
+      const dueDate = heatStress
+        ? this.forecastDate(heatStress.day, heatStress.index)
+        : startOfDay(new Date());
+      const created = await this.createOneTimeTaskIfMissing(
+        plantId,
+        plant.gardenId,
+        TaskType.CHECK_MOISTURE,
+        dueDate,
+      );
+      return {
+        applied: Boolean(created),
+        updatedTasks: created ? [created] : [],
+        message: created
+          ? 'Added a heat stress moisture check.'
+          : 'A heat stress moisture check is already pending.',
+      };
+    }
+
+    if (kind === 'frost-protection-check') {
+      const weatherCache = await this.prisma.weatherAdviceCache.findUnique({ where: { userId } });
+      const frostRisk = this.getFrostRiskDay(this.parseWeatherPayload(weatherCache?.payload));
+      const dueDate = frostRisk
+        ? this.forecastDate(frostRisk.day, frostRisk.index)
+        : startOfDay(new Date());
+      const created = await this.createOneTimeTaskIfMissing(
+        plantId,
+        plant.gardenId,
+        TaskType.HEALTH_CHECK,
+        dueDate,
+      );
+      return {
+        applied: Boolean(created),
+        updatedTasks: created ? [created] : [],
+        message: created
+          ? 'Added a frost protection check.'
+          : 'A frost protection check is already pending.',
+      };
+    }
+
     return { applied: false, updatedTasks: [], message: 'Suggestion is no longer available.' };
+  }
+
+  private async countPendingTasksOnDate(plantId: string, taskType: TaskType, date: Date) {
+    const start = startOfDay(date);
+    const end = addDays(start, 1);
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        plantId,
+        taskType,
+        status: TaskStatus.PENDING,
+        dueDate: { gte: start, lt: end },
+      },
+      select: { id: true },
+      take: 1,
+    });
+    return tasks.length;
+  }
+
+  private async createOneTimeTaskIfMissing(
+    plantId: string,
+    gardenId: string | null,
+    taskType: TaskType,
+    dueDate: Date,
+  ) {
+    const existing = await this.countPendingTasksOnDate(plantId, taskType, dueDate);
+    if (existing > 0) return null;
+    return this.prisma.task.create({
+      data: {
+        plantId,
+        gardenId,
+        taskType,
+        dueDate,
+        status: TaskStatus.PENDING,
+      },
+    });
   }
 
   private async countUpcomingTasks(plantId: string, taskType: TaskType, take = 3) {

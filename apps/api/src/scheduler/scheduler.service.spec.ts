@@ -226,6 +226,139 @@ describe('SchedulerService', () => {
     ]);
   });
 
+  it('suggests a heat stress moisture check for outdoor plants', async () => {
+    const payload = {
+      summary: {
+        days: [
+          { date: '2026-06-01', tempMinC: 22, tempMaxC: 30, rainProbability: 0.1 },
+          { date: '2026-06-02', tempMinC: 24, tempMaxC: 37, rainProbability: 0.1 },
+          { date: '2026-06-03', tempMinC: 23, tempMaxC: 34, rainProbability: 0.1 },
+        ],
+      },
+    };
+
+    const prisma = {
+      taskFeedback: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue({ payload: JSON.stringify(payload) }),
+      },
+      plant: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'plant-1',
+            nickname: 'Patio Basil',
+            location: 'Outdoor patio',
+            species: { commonName: 'Basil' },
+          },
+          {
+            id: 'plant-2',
+            nickname: 'Desk Fern',
+            location: 'Office desk',
+            species: { commonName: 'Fern' },
+          },
+        ]),
+      },
+      task: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    const suggestions = await service.getScheduleSuggestionsForUser('user-1');
+
+    expect(suggestions).toEqual([
+      expect.objectContaining({
+        id: 'plant-1:heat-moisture-check',
+        taskType: TaskType.CHECK_MOISTURE,
+        title: 'Add heat stress moisture check',
+        affectedTaskCount: 1,
+        adjustmentDays: 0,
+      }),
+    ]);
+  });
+
+  it('suggests a frost protection check for outdoor plants', async () => {
+    const payload = {
+      summary: {
+        days: [
+          { date: '2026-01-10', tempMinC: 5, tempMaxC: 12, rainProbability: 0.1 },
+          { date: '2026-01-11', tempMinC: -1, tempMaxC: 8, rainProbability: 0.1 },
+          { date: '2026-01-12', tempMinC: 2, tempMaxC: 10, rainProbability: 0.1 },
+        ],
+      },
+    };
+
+    const prisma = {
+      taskFeedback: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue({ payload: JSON.stringify(payload) }),
+      },
+      plant: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'plant-1',
+            nickname: 'Porch Rosemary',
+            location: 'Front porch outside',
+            species: { commonName: 'Rosemary' },
+          },
+        ]),
+      },
+      task: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    const suggestions = await service.getScheduleSuggestionsForUser('user-1');
+
+    expect(suggestions).toEqual([
+      expect.objectContaining({
+        id: 'plant-1:frost-protection-check',
+        taskType: TaskType.HEALTH_CHECK,
+        title: 'Add frost protection check',
+        affectedTaskCount: 1,
+        adjustmentDays: 0,
+      }),
+    ]);
+  });
+
+  it('does not suggest duplicate heat checks already pending on the forecast day', async () => {
+    const payload = {
+      summary: {
+        days: [{ date: '2026-06-01', tempMinC: 22, tempMaxC: 37, rainProbability: 0.1 }],
+      },
+    };
+
+    const prisma = {
+      taskFeedback: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue({ payload: JSON.stringify(payload) }),
+      },
+      plant: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'plant-1',
+            nickname: 'Patio Basil',
+            location: 'Outdoor patio',
+            species: { commonName: 'Basil' },
+          },
+        ]),
+      },
+      task: {
+        findMany: jest.fn().mockResolvedValue([{ id: 'existing-heat-check' }]),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    await expect(service.getScheduleSuggestionsForUser('user-1')).resolves.toEqual([]);
+  });
+
   it('applies a water-acceleration suggestion by shifting pending tasks earlier', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-05-15T12:00:00.000Z'));
@@ -253,6 +386,72 @@ describe('SchedulerService', () => {
     expect(updateArg.data.dueDate.toISOString().slice(0, 10)).toBe('2026-05-15');
 
     jest.useRealTimers();
+  });
+
+  it('applies a heat moisture suggestion by creating one pending task', async () => {
+    const payload = {
+      summary: {
+        days: [{ date: '2026-06-01', tempMinC: 22, tempMaxC: 37, rainProbability: 0.1 }],
+      },
+    };
+    const prisma = {
+      plant: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'plant-1', gardenId: 'garden-1' }),
+      },
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue({ payload: JSON.stringify(payload) }),
+      },
+      task: {
+        findMany: jest.fn().mockResolvedValue([]),
+        create: jest.fn((args) => Promise.resolve({ id: 'task-heat', ...args.data })),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    const result = await service.applyScheduleSuggestion('user-1', 'plant-1:heat-moisture-check');
+
+    expect(result.applied).toBe(true);
+    expect(prisma.task.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        plantId: 'plant-1',
+        gardenId: 'garden-1',
+        taskType: TaskType.CHECK_MOISTURE,
+        status: TaskStatus.PENDING,
+      }),
+    });
+  });
+
+  it('applies a frost protection suggestion by creating one pending health check', async () => {
+    const payload = {
+      summary: {
+        days: [{ date: '2026-01-11', tempMinC: -1, tempMaxC: 8, rainProbability: 0.1 }],
+      },
+    };
+    const prisma = {
+      plant: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'plant-1', gardenId: 'garden-1' }),
+      },
+      weatherAdviceCache: {
+        findUnique: jest.fn().mockResolvedValue({ payload: JSON.stringify(payload) }),
+      },
+      task: {
+        findMany: jest.fn().mockResolvedValue([]),
+        create: jest.fn((args) => Promise.resolve({ id: 'task-frost', ...args.data })),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    const result = await service.applyScheduleSuggestion('user-1', 'plant-1:frost-protection-check');
+
+    expect(result.applied).toBe(true);
+    expect(prisma.task.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        plantId: 'plant-1',
+        gardenId: 'garden-1',
+        taskType: TaskType.HEALTH_CHECK,
+        status: TaskStatus.PENDING,
+      }),
+    });
   });
 
   it('trims stale entries from the weather-postpone dedup map across a day boundary', async () => {
