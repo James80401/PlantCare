@@ -42,6 +42,7 @@ export default function AddPlantWizard() {
   const [gardens, setGardens] = useState<GardenSummaryCard[]>([]);
   const [gardensLoaded, setGardensLoaded] = useState(false);
   const [selectedGardenId, setSelectedGardenId] = useState('');
+  const [showCreateGarden, setShowCreateGarden] = useState(false);
 
   useEffect(() => {
     gardensApi
@@ -250,6 +251,26 @@ export default function AddPlantWizard() {
       : 'Check this plant’s light notes against your space.';
   }, [defaultLightLevel, selectedSpecies?.sunlight]);
 
+  const addCreatedGarden = (g: { id: string; name: string; location?: string | null }) => {
+    setGardens((prev) => [
+      {
+        id: g.id,
+        name: g.name,
+        location: g.location ?? null,
+        isOwner: true,
+        plantCount: 0,
+        memberCount: 1,
+        tasksDueToday: 0,
+        overdue: 0,
+        urgentAlerts: 0,
+        status: 'No plants yet',
+      },
+      ...prev,
+    ]);
+    setSelectedGardenId(g.id);
+    setShowCreateGarden(false);
+  };
+
   // Garden-first gate: a plant must live in a garden. If the user has none, prompt them
   // to create one before any plant steps.
   if (gardensLoaded && gardens.length === 0) {
@@ -263,24 +284,7 @@ export default function AddPlantWizard() {
         <Card className="space-y-3">
           <CreateGardenForm
             submitLabel="Create garden & continue"
-            onCreated={(g) => {
-              setGardens((prev) => [
-                {
-                  id: g.id,
-                  name: g.name,
-                  location: g.location ?? null,
-                  isOwner: true,
-                  plantCount: 0,
-                  memberCount: 1,
-                  tasksDueToday: 0,
-                  overdue: 0,
-                  urgentAlerts: 0,
-                  status: 'No plants yet',
-                },
-                ...prev,
-              ]);
-              setSelectedGardenId(g.id);
-            }}
+            onCreated={addCreatedGarden}
           />
         </Card>
       </div>
@@ -297,13 +301,15 @@ export default function AddPlantWizard() {
         description={stepTitle}
       />
       {gardens.length > 0 ? (
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-emerald-900">Add to garden</span>
-          <select
-            value={selectedGardenId}
-            onChange={(e) => setSelectedGardenId(e.target.value)}
-            className="rounded-2xl border border-emerald-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-400 focus:outline-none"
-          >
+        <Card className="space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+              <span className="font-medium text-emerald-900">Add to garden</span>
+              <select
+                value={selectedGardenId}
+                onChange={(e) => setSelectedGardenId(e.target.value)}
+                className="rounded-2xl border border-emerald-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-400 focus:outline-none"
+              >
             {gardens.map((g) => (
               <option key={g.id} value={g.id}>
                 {g.name}
@@ -311,13 +317,27 @@ export default function AddPlantWizard() {
                 {g.isOwner ? '' : ' (shared)'}
               </option>
             ))}
-          </select>
+              </select>
+            </label>
+            <Button
+              type="button"
+              variant={showCreateGarden ? 'ghost' : 'secondary'}
+              onClick={() => setShowCreateGarden((value) => !value)}
+            >
+              {showCreateGarden ? 'Cancel' : 'New garden'}
+            </Button>
+          </div>
           {selectedGarden && !selectedGarden.isOwner ? (
             <span className="text-xs text-violet-700">
               You're a caretaker of this shared garden.
             </span>
           ) : null}
-        </label>
+          {showCreateGarden ? (
+            <div className="border-t border-emerald-100 pt-3">
+              <CreateGardenForm submitLabel="Create and select garden" onCreated={addCreatedGarden} />
+            </div>
+          ) : null}
+        </Card>
       ) : null}
       <p className="text-xs text-gray-600">
         Typical light from Settings: <span className="font-semibold text-emerald-900">{lightPreferenceLabel}</span>{' '}
@@ -342,6 +362,7 @@ export default function AddPlantWizard() {
             busy={identifying}
             previewUrl={identifyPreview}
             onFile={handleIdentify}
+            sourceMode="both"
           />
           <Button variant="secondary" fullWidth onClick={() => setStep('search')}>
             Search by name instead
@@ -562,6 +583,7 @@ export default function AddPlantWizard() {
               label="Add a photo for your garden"
               previewUrl={imageUrl || null}
               onFile={handlePlantPhoto}
+              sourceMode="both"
             />
           </Card>
 
