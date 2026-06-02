@@ -30,9 +30,40 @@ type ManagedUser = {
   };
 };
 
+type AdminAuditSummary = {
+  retentionDays: number;
+  total: number;
+  failures: number;
+  latest?: {
+    createdAt: string;
+    actorEmail?: string | null;
+    action: string;
+    outcome: 'SUCCESS' | 'ERROR';
+  } | null;
+  byAction: { action: string; count: number }[];
+};
+
+type AdminAuditLog = {
+  id: string;
+  actorEmail?: string | null;
+  action: string;
+  method: string;
+  path: string;
+  targetUserId?: string | null;
+  requestId?: string | null;
+  statusCode: number;
+  outcome: 'SUCCESS' | 'ERROR';
+  durationMs: number;
+  ip?: string | null;
+  userAgent?: string | null;
+  createdAt: string;
+};
+
 export default function AdminRegistrations() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [auditSummary, setAuditSummary] = useState<AdminAuditSummary | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -40,8 +71,14 @@ export default function AdminRegistrations() {
     const { data: me } = await usersApi.me();
     setIsAdmin(Boolean(me.isAdmin));
     if (!me.isAdmin) return;
-    const { data } = await adminApi.listUsers();
-    setUsers(data);
+    const [usersRes, summaryRes, logsRes] = await Promise.all([
+      adminApi.listUsers(),
+      adminApi.auditSummary(),
+      adminApi.auditLogs(75),
+    ]);
+    setUsers(usersRes.data);
+    setAuditSummary(summaryRes.data);
+    setAuditLogs(logsRes.data);
   }, []);
 
   useEffect(() => {
@@ -117,12 +154,12 @@ export default function AdminRegistrations() {
 
   return (
     <div className="min-h-screen bg-emerald-50 px-4 py-8">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-emerald-900">Account access</h1>
+            <h1 className="text-2xl font-bold text-emerald-900">Admin control center</h1>
             <p className="mt-1 text-sm text-emerald-900/70">
-              Approve verified registrations or disable access for existing accounts.
+              Approve accounts, control access, and review 30 days of admin actions.
             </p>
           </div>
           <Link to="/garden" className="text-sm font-medium text-emerald-800 hover:underline">
@@ -130,6 +167,48 @@ export default function AdminRegistrations() {
           </Link>
         </div>
         {error ? <p className="text-sm text-rose-600" role="alert">{error}</p> : null}
+        {auditSummary ? (
+          <section className="rounded-lg bg-white p-4 shadow-sm" aria-labelledby="audit-summary-heading">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 id="audit-summary-heading" className="text-lg font-semibold text-gray-900">
+                  Admin audit log
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Durable admin action history retained for {auditSummary.retentionDays} days.
+                </p>
+              </div>
+              <Button type="button" variant="secondary" onClick={() => load()}>
+                Refresh
+              </Button>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-4">
+              <AdminMetric label="30-day actions" value={auditSummary.total} />
+              <AdminMetric label="Failures" value={auditSummary.failures} />
+              <AdminMetric
+                label="Action types"
+                value={auditSummary.byAction.length}
+              />
+              <div>
+                <p className="font-semibold text-gray-900">
+                  {auditSummary.latest
+                    ? new Date(auditSummary.latest.createdAt).toLocaleString()
+                    : 'None'}
+                </p>
+                <p className="text-xs text-gray-600">Latest action</p>
+              </div>
+            </div>
+            {auditSummary.byAction.length ? (
+              <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                {auditSummary.byAction.map((item) => (
+                  <span key={item.action} className="rounded-full bg-emerald-50 px-2 py-1 font-semibold text-emerald-900">
+                    {item.action}: {item.count}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
         {users.length === 0 ? (
           <p className="rounded-2xl bg-white p-6 text-gray-600 shadow-sm">No accounts found.</p>
         ) : (
@@ -236,6 +315,59 @@ export default function AdminRegistrations() {
             ))}
           </ul>
         )}
+        <section className="rounded-lg bg-white p-4 shadow-sm" aria-labelledby="audit-log-heading">
+          <h2 id="audit-log-heading" className="text-lg font-semibold text-gray-900">
+            Recent admin actions
+          </h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Showing the latest {auditLogs.length} entries from the retained 30-day audit trail.
+          </p>
+          {auditLogs.length === 0 ? (
+            <p className="mt-4 text-sm text-gray-600">No admin actions logged yet.</p>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="min-w-full text-left text-xs">
+                <thead className="border-b border-gray-200 text-gray-500">
+                  <tr>
+                    <th className="px-2 py-2 font-semibold">Time</th>
+                    <th className="px-2 py-2 font-semibold">Admin</th>
+                    <th className="px-2 py-2 font-semibold">Action</th>
+                    <th className="px-2 py-2 font-semibold">Result</th>
+                    <th className="px-2 py-2 font-semibold">Target</th>
+                    <th className="px-2 py-2 font-semibold">Request</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {auditLogs.map((log) => (
+                    <tr key={log.id}>
+                      <td className="whitespace-nowrap px-2 py-2 text-gray-600">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </td>
+                      <td className="px-2 py-2 text-gray-900">{log.actorEmail ?? 'Unknown'}</td>
+                      <td className="px-2 py-2">
+                        <p className="font-semibold text-gray-900">{log.action}</p>
+                        <p className="max-w-[18rem] truncate text-gray-500" title={log.path}>
+                          {log.method} {log.path}
+                        </p>
+                      </td>
+                      <td className="px-2 py-2">
+                        <span className={`rounded-full px-2 py-1 font-semibold ${log.outcome === 'SUCCESS' ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`}>
+                          {log.statusCode} {log.outcome.toLowerCase()}
+                        </span>
+                        <p className="mt-1 text-gray-500">{log.durationMs} ms</p>
+                      </td>
+                      <td className="px-2 py-2 text-gray-600">{shortId(log.targetUserId)}</td>
+                      <td className="px-2 py-2 text-gray-600">
+                        <p>{shortId(log.requestId)}</p>
+                        {log.ip ? <p>{log.ip}</p> : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
@@ -264,4 +396,9 @@ function statusClass(status: ManagedUser['accountApprovalStatus']) {
   if (status === 'APPROVED') return 'bg-emerald-100 text-emerald-900';
   if (status === 'REJECTED') return 'bg-rose-100 text-rose-900';
   return 'bg-amber-100 text-amber-900';
+}
+
+function shortId(value?: string | null) {
+  if (!value) return '-';
+  return value.length > 12 ? `${value.slice(0, 8)}...` : value;
 }

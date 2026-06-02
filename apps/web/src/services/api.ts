@@ -86,6 +86,8 @@ export const authApi = {
 export const adminApi = {
   listPending: () => api.get('/admin/registrations/pending'),
   listUsers: () => api.get('/admin/registrations/users'),
+  auditSummary: () => api.get('/admin/audit/summary'),
+  auditLogs: (limit = 100) => api.get('/admin/audit', { params: { limit } }),
   approve: (userId: string) => api.post(`/admin/registrations/${userId}/approve`),
   reject: (userId: string) => api.post(`/admin/registrations/${userId}/reject`),
   disable: (userId: string) => api.post(`/admin/registrations/${userId}/disable`),

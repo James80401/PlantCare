@@ -105,6 +105,32 @@ model User {
   plantMilestones       PlantMilestone[]
   refreshTokens         RefreshToken[]
   aiUsageEvents         AiUsageEvent[]
+  adminAuditLogs        AdminAuditLog[] @relation("AdminAuditActor")
+}
+
+model AdminAuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?
+  actor        User?    @relation("AdminAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  actorEmail   String?
+  action       String
+  method       String
+  path         String
+  targetUserId String?
+  requestId    String?
+  statusCode   Int
+  outcome      String
+  durationMs   Int
+  ip           String?
+  userAgent    String?
+  metadataJson String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([outcome, createdAt])
 }
 
 model AiUsageEvent {

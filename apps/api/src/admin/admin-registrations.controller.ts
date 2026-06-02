@@ -1,12 +1,14 @@
-import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminAuditInterceptor } from './admin-audit.interceptor';
 import { AdminGuard } from './admin.guard';
 import { AdminRegistrationsService } from './admin-registrations.service';
 
 @ApiTags('admin')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, AdminGuard)
+@UseInterceptors(AdminAuditInterceptor)
 @Controller('admin/registrations')
 export class AdminRegistrationsController {
   constructor(private registrations: AdminRegistrationsService) {}
