@@ -377,6 +377,7 @@ export interface PlantShareSummary {
 export interface GardenSummary {
   id: string;
   name: string;
+  /** Temporary backing field for garden environment; expected values are Indoor/Outdoor. */
   location?: string | null;
   ownerId: string;
   members: GardenMemberSummary[];
@@ -397,6 +398,7 @@ export interface GardenDetailPlant {
 export interface GardenDetail {
   id: string;
   name: string;
+  /** Temporary backing field for garden environment; expected values are Indoor/Outdoor. */
   location: string | null;
   isOwner: boolean;
   members: GardenMemberSummary[];
@@ -426,6 +428,7 @@ export interface TaskItemSummary {
 export interface GardenSummaryCard {
   id: string;
   name: string;
+  /** Temporary backing field for garden environment; expected values are Indoor/Outdoor. */
   location: string | null;
   isOwner: boolean;
   plantCount: number;
@@ -473,8 +476,8 @@ export interface GardenInviteSummary {
 }
 
 export const gardensApi = {
-  create: (name: string, location?: string) =>
-    api.post<GardenSummary>('/gardens', { name, location }),
+  create: (name: string, environment: 'Indoor' | 'Outdoor' = 'Indoor') =>
+    api.post<GardenSummary>('/gardens', { name, location: environment }),
   mine: () => api.get<GardenSummary[]>('/gardens/mine'),
   summaries: () => api.get<GardenSummaryCard[]>('/gardens/summaries'),
   detail: (gardenId: string) => api.get<GardenDetail>(`/gardens/${gardenId}`),

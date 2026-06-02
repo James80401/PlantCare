@@ -13,6 +13,11 @@ function gardenPath(id: string) {
   return `/garden/gardens/${id}`;
 }
 
+function environmentLabel(value?: string | null) {
+  if (value === 'Outdoor') return 'Outdoor garden';
+  return 'Indoor garden';
+}
+
 /**
  * Summary card for a single garden — used on the landing "Your gardens" area and the
  * My Gardens page. Whole card links to the Garden Dashboard; small quick-links deep-link
@@ -29,9 +34,9 @@ export function GardenCard({ garden }: { garden: GardenSummaryCard }) {
             <h3 className="truncate text-lg font-semibold text-emerald-950 font-display">
               {garden.name}
             </h3>
-            {garden.location ? (
-              <p className="mt-0.5 truncate text-sm text-gray-500">{garden.location}</p>
-            ) : null}
+            <p className="mt-0.5 truncate text-sm text-gray-500">
+              {environmentLabel(garden.location)}
+            </p>
           </div>
           <span
             className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium ${statusStyle}`}

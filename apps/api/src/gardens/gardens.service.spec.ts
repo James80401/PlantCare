@@ -46,8 +46,8 @@ describe('GardensService.getSummaries', () => {
   it('maps per-garden counts, ownership, and derives status', async () => {
     const { service } = makeService({
       gardens: [
-        { id: 'g1', name: 'Living Room', location: 'South window', ownerId: 'u1', homePlants: 3, members: 2 },
-        { id: 'g2', name: 'Balcony', location: null, ownerId: 'other', homePlants: 0, members: 1 },
+        { id: 'g1', name: 'Living Room', location: 'Indoor', ownerId: 'u1', homePlants: 3, members: 2 },
+        { id: 'g2', name: 'Balcony', location: 'Outdoor', ownerId: 'other', homePlants: 0, members: 1 },
       ],
       dueToday: [{ gardenId: 'g1', n: 2 }],
       overdue: [{ gardenId: 'g1', n: 1 }],
@@ -59,7 +59,7 @@ describe('GardensService.getSummaries', () => {
     expect(g1).toMatchObject({
       id: 'g1',
       name: 'Living Room',
-      location: 'South window',
+      location: 'Indoor',
       isOwner: true,
       plantCount: 3,
       memberCount: 2,
@@ -105,7 +105,7 @@ describe('GardensService.getDetail', () => {
         findUnique: jest.fn().mockResolvedValue({
           id: 'g1',
           name: 'Living Room',
-          location: 'South window',
+          location: 'Indoor',
           ownerId: 'u1',
           members: [{ user: { id: 'u1', name: 'Me', email: 'me@x.com' } }],
           homePlants: [

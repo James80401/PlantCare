@@ -48,13 +48,13 @@ export async function seedDemoGarden(prisma: PrismaClient) {
     create: {
       id: 'seed-demo-garden',
       name: 'Living Room Plants',
-      location: 'Living room — south window',
+      location: 'Indoor',
       ownerId: user.id,
       members: { create: { userId: user.id, role: 'OWNER' } },
     },
     update: {
       name: 'Living Room Plants',
-      location: 'Living room — south window',
+      location: 'Indoor',
       ownerId: user.id,
     },
   });

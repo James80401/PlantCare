@@ -433,7 +433,7 @@ test.describe('UAT checklist — mobile layout', () => {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name: 'Empty Mobile Garden', location: 'Mobile test' }),
+      body: JSON.stringify({ name: 'Empty Mobile Garden', location: 'Indoor' }),
     });
 
     await page.addInitScript((t) => localStorage.setItem('accessToken', t), token);

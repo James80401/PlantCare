@@ -20,6 +20,12 @@ import { CreateInviteDto } from './dto/create-invite.dto';
 import { SharePlantDto } from './dto/share-plant.dto';
 import { EmailService } from '../email/email.service';
 
+type GardenEnvironment = 'Indoor' | 'Outdoor';
+
+function normalizeGardenEnvironment(value?: string): GardenEnvironment {
+  return value === 'Outdoor' ? 'Outdoor' : 'Indoor';
+}
+
 export interface GardenSummaryCard {
   id: string;
   name: string;
@@ -58,7 +64,7 @@ export class GardensService {
       const garden = await tx.garden.create({
         data: {
           name: dto.name.trim(),
-          location: dto.location?.trim() || null,
+          location: normalizeGardenEnvironment(dto.location),
           ownerId: userId,
           members: {
             create: { userId, role: 'OWNER' },

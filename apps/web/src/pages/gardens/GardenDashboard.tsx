@@ -38,12 +38,13 @@ export default function GardenDashboard() {
   const base = `/garden/gardens/${garden.id}`;
   const { taskSummary } = garden;
   const memberCount = garden.members.length;
+  const environment = garden.location === 'Outdoor' ? 'Outdoor garden' : 'Indoor garden';
 
   return (
     <div className="space-y-6">
       <BackLink />
       <PageHeader
-        eyebrow={garden.location ?? 'Garden'}
+        eyebrow={environment}
         title={garden.name}
         description={`${garden.plants.length} plant${garden.plants.length === 1 ? '' : 's'} · ${memberCount} member${memberCount === 1 ? '' : 's'}${garden.isOwner ? ' · You own this garden' : ' · Shared with you'}`}
         action={

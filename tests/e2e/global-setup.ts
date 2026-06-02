@@ -64,7 +64,7 @@ async function main() {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ name: 'UAT Garden', location: 'Living Room' }),
+    body: JSON.stringify({ name: 'UAT Garden', location: 'Indoor' }),
   });
   if (!gardenRes.ok) {
     const errBody = await gardenRes.text();

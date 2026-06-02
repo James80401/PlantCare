@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateGardenDto {
   @IsString()
@@ -8,6 +8,6 @@ export class CreateGardenDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(120)
+  @IsIn(['Indoor', 'Outdoor'])
   location?: string;
 }

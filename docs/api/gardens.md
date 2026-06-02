@@ -11,6 +11,7 @@
 | Concept | Model | Description |
 |---------|-------|-------------|
 | Garden | `Garden` | Named household (e.g. “Home”, “Office”) |
+| Growing environment | `Garden.location` | Temporary backing field constrained to `Indoor` or `Outdoor` while the garden environment model is being renamed |
 | Member | `GardenMember` | User with role in garden |
 | Share | `PlantShare` | Owner shares a plant into garden |
 | Invite | `CareInvite` | Email invite with accept token |
@@ -30,6 +31,9 @@ Shared plants appear on collaborators’ dashboards; task access is enforced in 
 | GET | `/gardens/:id/activity` | — | Activity feed for garden |
 
 ## Web UI
+
+`POST /gardens` accepts `name` plus an optional `location` value of `Indoor` or
+`Outdoor`. The web UI labels this as growing environment, not free-text location.
 
 - Page: `apps/web/src/pages/Household.tsx`
 - Route: `/garden/household`

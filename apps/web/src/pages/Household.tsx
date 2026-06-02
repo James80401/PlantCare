@@ -6,6 +6,7 @@ import { Card } from '../components/ui/Card';
 import { gardensApi, plantsApi, type ActivityEventSummary, type GardenSummary } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatActivityLabel } from '../utils/household';
+import { CreateGardenForm } from '../components/gardens/CreateGardenForm';
 
 export default function Household() {
   const { user } = useAuth();
@@ -14,7 +15,6 @@ export default function Household() {
   const [myPlants, setMyPlants] = useState<Array<{ id: string; nickname?: string | null; species: { commonName: string } }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [gardenName, setGardenName] = useState('');
   const [inviteGardenId, setInviteGardenId] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'CAREGIVER' | 'VIEWER'>('CAREGIVER');
@@ -47,20 +47,6 @@ export default function Household() {
   const loadActivity = async (gardenId: string) => {
     const { data } = await gardensApi.activity(gardenId);
     setActivity(data);
-  };
-
-  const handleCreateGarden = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!gardenName.trim()) return;
-    setMessage('');
-    try {
-      await gardensApi.create(gardenName.trim());
-      setGardenName('');
-      setMessage('Household created.');
-      await load();
-    } catch {
-      setMessage('Could not create household.');
-    }
   };
 
   const handleInvite = async (e: FormEvent, gardenId: string) => {
@@ -148,15 +134,13 @@ export default function Household() {
 
       <Card className="space-y-3">
         <h2 className="font-semibold text-emerald-950">Create household</h2>
-        <form onSubmit={handleCreateGarden} className="flex flex-col gap-2 sm:flex-row">
-          <input
-            value={gardenName}
-            onChange={(e) => setGardenName(e.target.value)}
-            placeholder="e.g. Apartment plants"
-            className="min-w-0 flex-1 rounded-2xl border border-emerald-100 px-3 py-2 text-sm"
-          />
-          <Button type="submit">Create</Button>
-        </form>
+        <CreateGardenForm
+          submitLabel="Create household"
+          onCreated={async () => {
+            setMessage('Household created.');
+            await load();
+          }}
+        />
       </Card>
 
       {loading ? (
