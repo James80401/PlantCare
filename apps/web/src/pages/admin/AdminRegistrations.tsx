@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { adminApi, usersApi } from '../../services/api';
@@ -133,6 +133,19 @@ export default function AdminRegistrations() {
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  const pendingUsers = useMemo(
+    () => users.filter((u) => u.accountApprovalStatus === 'PENDING'),
+    [users],
+  );
+  const disabledUsers = useMemo(
+    () => users.filter((u) => u.accountApprovalStatus === 'REJECTED'),
+    [users],
+  );
+  const pausedAiUsers = useMemo(
+    () => users.filter((u) => isAiPaused(u.aiPausedUntil)),
+    [users],
+  );
+
   const load = useCallback(async () => {
     const { data: me } = await usersApi.me();
     setIsAdmin(Boolean(me.isAdmin));
@@ -225,9 +238,9 @@ export default function AdminRegistrations() {
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-emerald-900">Admin control center</h1>
+            <h1 className="text-2xl font-bold text-emerald-900">Admin dashboard</h1>
             <p className="mt-1 text-sm text-emerald-900/70">
-              Approve accounts, control access, and review 30 days of admin actions.
+              Jump into approvals, access controls, AI usage, delivery health, and the 30-day audit trail.
             </p>
           </div>
           <Link to="/garden" className="text-sm font-medium text-emerald-800 hover:underline">
@@ -235,8 +248,47 @@ export default function AdminRegistrations() {
           </Link>
         </div>
         {error ? <p className="text-sm text-rose-600" role="alert">{error}</p> : null}
+        <AdminSectionLinks
+          items={[
+            {
+              href: '#overview',
+              title: 'Overview',
+              description: 'User, AI, notification, and audit health.',
+              metric: observability ? String(observability.users.total) : '-',
+              metricLabel: 'users',
+            },
+            {
+              href: '#accounts',
+              title: 'Accounts',
+              description: 'Approve, disable, and unpause user access.',
+              metric: String(pendingUsers.length),
+              metricLabel: 'pending',
+            },
+            {
+              href: '#ai-usage',
+              title: 'AI usage',
+              description: 'Call volume, blocked requests, and paused users.',
+              metric: observability ? String(observability.ai.last24h.total) : '-',
+              metricLabel: '24h calls',
+            },
+            {
+              href: '#notifications',
+              title: 'Notifications',
+              description: 'Push tokens and recent delivery results.',
+              metric: observability ? String(observability.notifications.activeDeviceTokens) : '-',
+              metricLabel: 'tokens',
+            },
+            {
+              href: '#audit',
+              title: 'Audit',
+              description: 'Admin actions and failures over the retention window.',
+              metric: auditSummary ? String(auditSummary.failures) : '-',
+              metricLabel: 'failures',
+            },
+          ]}
+        />
         {observability ? (
-          <section className="rounded-lg bg-white p-4 shadow-sm" aria-labelledby="observability-heading">
+          <section id="overview" className="scroll-mt-24 rounded-lg bg-white p-4 shadow-sm" aria-labelledby="observability-heading">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 id="observability-heading" className="text-lg font-semibold text-gray-900">
@@ -266,7 +318,7 @@ export default function AdminRegistrations() {
               <AdminMetric label="Audit failures 30d" value={observability.audit.failures30d} />
             </div>
 
-            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <div id="ai-usage" className="scroll-mt-24 mt-5 grid gap-4 lg:grid-cols-2">
               <AdminPanel title="AI status mix">
                 {observability.ai.last30d.byStatus.length === 0 ? (
                   <p className="text-sm text-gray-600">No AI usage in the last 30 days.</p>
@@ -281,7 +333,7 @@ export default function AdminRegistrations() {
                 )}
               </AdminPanel>
 
-              <AdminPanel title="Notification delivery">
+              <AdminPanel id="notifications" title="Notification delivery">
                 {observability.notifications.last30d.length === 0 ? (
                   <p className="text-sm text-gray-600">No notification rows in the last 30 days.</p>
                 ) : (
@@ -350,7 +402,7 @@ export default function AdminRegistrations() {
           </section>
         ) : null}
         {auditSummary ? (
-          <section className="rounded-lg bg-white p-4 shadow-sm" aria-labelledby="audit-summary-heading">
+          <section id="audit" className="scroll-mt-24 rounded-lg bg-white p-4 shadow-sm" aria-labelledby="audit-summary-heading">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 id="audit-summary-heading" className="text-lg font-semibold text-gray-900">
@@ -391,14 +443,28 @@ export default function AdminRegistrations() {
             ) : null}
           </section>
         ) : null}
-        {users.length === 0 ? (
-          <p className="rounded-2xl bg-white p-6 text-gray-600 shadow-sm">No accounts found.</p>
-        ) : (
-          <ul className="space-y-3">
+        <section id="accounts" className="scroll-mt-24 rounded-lg bg-white p-4 shadow-sm" aria-labelledby="accounts-heading">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 id="accounts-heading" className="text-lg font-semibold text-gray-900">
+                Accounts and access
+              </h2>
+              <p className="text-sm text-gray-600">
+                {pendingUsers.length} pending approval, {disabledUsers.length} disabled, {pausedAiUsers.length} AI-paused.
+              </p>
+            </div>
+            <Button type="button" variant="secondary" onClick={() => load()}>
+              Refresh
+            </Button>
+          </div>
+          {users.length === 0 ? (
+            <p className="mt-4 rounded-2xl bg-emerald-50 p-6 text-gray-600">No accounts found.</p>
+          ) : (
+          <ul className="mt-4 space-y-3">
             {users.map((u) => (
               <li
                 key={u.id}
-                className="rounded-2xl bg-white p-4 shadow-sm"
+                className="rounded-2xl border border-gray-100 bg-white p-4"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -496,8 +562,9 @@ export default function AdminRegistrations() {
               </li>
             ))}
           </ul>
-        )}
-        <section className="rounded-lg bg-white p-4 shadow-sm" aria-labelledby="audit-log-heading">
+          )}
+        </section>
+        <section id="audit-log" className="scroll-mt-24 rounded-lg bg-white p-4 shadow-sm" aria-labelledby="audit-log-heading">
           <h2 id="audit-log-heading" className="text-lg font-semibold text-gray-900">
             Recent admin actions
           </h2>
@@ -564,9 +631,46 @@ function AdminMetric({ label, value }: { label: string; value: number }) {
   );
 }
 
-function AdminPanel({ title, children }: { title: string; children: ReactNode }) {
+function AdminSectionLinks({
+  items,
+}: {
+  items: {
+    href: string;
+    title: string;
+    description: string;
+    metric: string;
+    metricLabel: string;
+  }[];
+}) {
   return (
-    <div className="rounded-lg border border-gray-100 p-3">
+    <nav aria-label="Admin sections" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      {items.map((item) => (
+        <a
+          key={item.href}
+          href={item.href}
+          className="rounded-lg border border-emerald-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-semibold text-emerald-950">{item.title}</p>
+              <p className="mt-1 text-xs leading-5 text-gray-600">{item.description}</p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-lg font-bold text-emerald-900">{item.metric}</p>
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-gray-500">
+                {item.metricLabel}
+              </p>
+            </div>
+          </div>
+        </a>
+      ))}
+    </nav>
+  );
+}
+
+function AdminPanel({ id, title, children }: { id?: string; title: string; children: ReactNode }) {
+  return (
+    <div id={id} className="scroll-mt-24 rounded-lg border border-gray-100 p-3">
       <h3 className="mb-2 text-sm font-semibold text-gray-900">{title}</h3>
       {children}
     </div>

@@ -52,7 +52,7 @@ const moreNav: NavItem[] = [
 ];
 
 const adminNav: NavItem = {
-  to: '/admin/registrations',
+  to: '/admin',
   label: 'Admin',
   mobileLabel: 'Admin',
   icon: 'admin',
