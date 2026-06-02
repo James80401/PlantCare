@@ -25,6 +25,7 @@ export function PlantDetailsEditor() {
   const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState('');
 
   const startEdit = () => {
