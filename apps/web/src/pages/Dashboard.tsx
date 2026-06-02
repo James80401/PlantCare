@@ -40,6 +40,7 @@ import {
   isProfilePhotoAttentionReason,
   plantProfileDetailsPath,
 } from '../utils/gardenPaths';
+import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 interface ScheduleSuggestion {
   id: string;
@@ -1127,12 +1128,13 @@ function PlantCard({
 
 function PlantThumb({ plant, size }: { plant: DashboardPlant; size: 'sm' | 'lg' }) {
   const dimensions = size === 'sm' ? 'h-12 w-12 rounded-xl text-xl' : 'h-20 w-20 rounded-2xl text-3xl';
+  const imageUrl = resolveApiAssetUrl(plant.imageUrl ?? plant.species.defaultImageUrl ?? null);
 
   return (
     <div className={`${dimensions} flex shrink-0 items-center justify-center overflow-hidden bg-emerald-100`}>
-      {plant.imageUrl ? (
+      {imageUrl ? (
         <img
-          src={plant.imageUrl}
+          src={imageUrl}
           alt=""
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />

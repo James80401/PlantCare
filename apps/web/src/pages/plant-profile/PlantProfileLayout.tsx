@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { SharePlantCard } from '../../components/engagement/SharePlantCard';
+import { resolveApiAssetUrl } from '../../utils/apiAssets';
 import { plantProfileDetailsPath } from '../../utils/gardenPaths';
 import { DR_PLANT_SECTION_ID, plantDrPlantPath, plantHealthPath, PROFILE_TABS } from './constants';
 import { PlantProfileProvider, usePlantProfile } from './PlantProfileContext';
@@ -37,6 +38,9 @@ function PlantProfileShell() {
   const gardenName = (plant?.garden as { name?: string } | undefined)?.name;
   const carePath = `/garden/plants/${ctx.id}/care`;
   const journalPath = `/garden/plants/${ctx.id}/journal`;
+  const plantImageUrl = resolveApiAssetUrl(
+    ((plant.imageUrl as string | null) ?? (species.defaultImageUrl as string | null)) ?? null,
+  );
 
   // Plant Dashboard summary cards (Watering / Light / Fertilizer / Health / History).
   const wateringTask = ctx.pending.find((t) => t.taskType === 'WATER');
@@ -71,9 +75,9 @@ function PlantProfileShell() {
       <section className="overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5">
         <div className="grid gap-5 p-5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:p-6">
           <div className="h-36 w-full overflow-hidden rounded-3xl bg-emerald-100 sm:h-36 sm:w-36">
-            {(plant.imageUrl as string) ? (
+            {plantImageUrl ? (
               <img
-                src={plant.imageUrl as string}
+                src={plantImageUrl}
                 alt={`Photo of ${plantLabel}`}
                 className="h-full w-full object-cover"
               />

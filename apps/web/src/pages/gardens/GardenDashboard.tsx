@@ -3,6 +3,7 @@ import { format, parseISO } from 'date-fns';
 import { PageHeader, Card, SkeletonGrid } from '../../components/ui';
 import { FormError } from '../../components/a11y/FormError';
 import { useGardenDetail } from '../../hooks/useGardenDetail';
+import { resolveApiAssetUrl } from '../../utils/apiAssets';
 import { taskTypeLabel } from '../../utils/tasks';
 import type { GardenDetail } from '../../services/api';
 
@@ -121,8 +122,12 @@ export default function GardenDashboard() {
                 className="group rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5 transition hover:border-emerald-200 hover:shadow-md"
               >
                 <div className="flex items-center gap-3">
-                  {p.imageUrl ? (
-                    <img src={p.imageUrl} alt="" className="h-14 w-14 rounded-2xl object-cover" />
+                  {plantImageUrl(p) ? (
+                    <img
+                      src={plantImageUrl(p) ?? undefined}
+                      alt=""
+                      className="h-14 w-14 rounded-2xl bg-emerald-50 object-cover"
+                    />
                   ) : (
                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-2xl">
                       🪴
@@ -197,6 +202,10 @@ function summarizePlants(garden: GardenDetail): string {
   const attention = garden.plants.filter((p) => p.needsAttention).length;
   if (total === 0) return 'No plants yet';
   return `${total} plant${total === 1 ? '' : 's'}${attention ? `, ${attention} need attention` : ''}`;
+}
+
+function plantImageUrl(plant: GardenDetail['plants'][number]): string | null {
+  return resolveApiAssetUrl(plant.imageUrl ?? plant.species.defaultImageUrl ?? null);
 }
 
 function formatDue(iso: string): string {
