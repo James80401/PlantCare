@@ -8,6 +8,7 @@ import MoodIndicator from './MoodIndicator';
 import SunlightBar from './SunlightBar';
 import { GROWTH_STAGE_LABEL } from './species';
 import {
+  DEFAULT_BUDDY_COMPANION_MODE,
   readBuddyCompanionMode,
   writeBuddyCompanionMode,
 } from '../../hooks/buddy/displayMode';
@@ -127,7 +128,7 @@ export default function BuddyFloatingCompanion() {
     if (!buddy?.id) return;
     const serverMode = isBuddyCompanionMode(buddy.floatingCompanionMode)
       ? buddy.floatingCompanionMode
-      : 'visible';
+      : DEFAULT_BUDDY_COMPANION_MODE;
     const pendingMode = pendingModeRef.current;
 
     if (pendingMode) {

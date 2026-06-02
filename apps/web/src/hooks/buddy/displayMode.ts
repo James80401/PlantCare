@@ -5,6 +5,7 @@ import {
 } from './types';
 
 export const BUDDY_COMPANION_DISPLAY_KEY = 'drplant.buddy.floatingDisplay';
+export const DEFAULT_BUDDY_COMPANION_MODE: BuddyCompanionMode = 'hidden';
 
 export const BUDDY_COMPANION_MODE_LABELS: Record<BuddyCompanionMode, string> = {
   visible: 'Visible',
@@ -13,9 +14,9 @@ export const BUDDY_COMPANION_MODE_LABELS: Record<BuddyCompanionMode, string> = {
 };
 
 export function readBuddyCompanionMode(): BuddyCompanionMode {
-  if (typeof window === 'undefined') return 'visible';
+  if (typeof window === 'undefined') return DEFAULT_BUDDY_COMPANION_MODE;
   const raw = window.localStorage.getItem(BUDDY_COMPANION_DISPLAY_KEY);
-  return isBuddyCompanionMode(raw) ? raw : 'visible';
+  return isBuddyCompanionMode(raw) ? raw : DEFAULT_BUDDY_COMPANION_MODE;
 }
 
 export function writeBuddyCompanionMode(mode: BuddyCompanionMode) {

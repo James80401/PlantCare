@@ -572,7 +572,7 @@ model Buddy {
   personalityChoices  Json        @default("[]")
   terrariumLayout     Json        @default("{}")
   terrariumBackground String      @default("sunny_windowsill")
-  floatingCompanionMode String    @default("visible")
+  floatingCompanionMode String    @default("hidden")
   gardenCode          String      @unique
   showLastActive      Boolean     @default(true)
   journeys            BuddyJourney[]
