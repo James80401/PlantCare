@@ -59,7 +59,6 @@ Use this hub when you need **understanding**, not just a single endpoint or scre
 | Feature | Primary guide | Also see |
 |---------|---------------|----------|
 | Auth & accounts | 05, 10 | [api/authentication.md](../api/authentication.md) |
-| Onboarding | 07, 10 | [web/pages/onboarding.md](../web/pages/onboarding.md) |
 | Dashboard & garden score | 05, 07, 10 | [api/dashboard.md](../api/dashboard.md) |
 | Plants & species browse | 04, 05, 07 | [api/species.md](../api/species.md) |
 | Tasks & calendar | 03, 05, 10 | [architecture/scheduling.md](../architecture/scheduling.md) |

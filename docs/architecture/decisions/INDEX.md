@@ -14,6 +14,7 @@ decision, consequences.
 | [0004](0004-in-memory-dedup-and-cache.md) | In-memory dedup + TTL cache (single-instance) | Accepted |
 | [0005](0005-readiness-vs-liveness.md) | Separate readiness and liveness health checks | Accepted |
 | [0006](0006-observability-baseline.md) | On-box observability baseline, optional Sentry | Accepted |
+| [0007](0007-garden-centric-model.md) | Garden-centric model (plants belong to gardens) | Accepted |
 
 ## Format
 
