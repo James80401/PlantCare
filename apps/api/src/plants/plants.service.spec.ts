@@ -38,6 +38,9 @@ describe('PlantsService', () => {
       gardenMember: {
         findUnique: jest.fn().mockResolvedValue({ role: 'OWNER' }),
       },
+      garden: {
+        findUnique: jest.fn().mockResolvedValue({ location: 'Indoor' }),
+      },
     };
     const scheduler = {
       generateTasksForPlant: jest.fn().mockResolvedValue(undefined),
@@ -117,19 +120,24 @@ describe('PlantsService', () => {
     expect(prisma.plant.create).toHaveBeenCalled();
   });
 
-  it('sets gardenId on the created plant', async () => {
+  it('sets gardenId and inherits garden area on the created plant', async () => {
     const { service, prisma } = createService();
     jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'plant-1' } as never);
 
     await service.create('user-1', PlanTier.FREE, {
       gardenId: 'garden-1',
       speciesId: 'species-1',
+      location: 'Outdoor',
       potSize: PotSize.MEDIUM,
     } as never);
 
     expect(prisma.plant.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ gardenId: 'garden-1', userId: 'user-1' }),
+        data: expect.objectContaining({
+          gardenId: 'garden-1',
+          userId: 'user-1',
+          location: 'Indoor',
+        }),
       }),
     );
   });

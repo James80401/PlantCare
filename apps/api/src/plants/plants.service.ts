@@ -138,7 +138,7 @@ export class PlantsService {
   async create(userId: string, planTier: PlanTier, dto: CreatePlantDto) {
     const currentPlanTier = await this.planTierForUser(userId, planTier);
     await this.assertCanCreatePlant(userId, currentPlanTier);
-    await this.assertCanEditGarden(userId, dto.gardenId);
+    const gardenArea = await this.assertCanEditGarden(userId, dto.gardenId);
     await this.perenual.getOrFetchById(dto.speciesId);
 
     const plant = await this.prisma.plant.create({
@@ -147,7 +147,7 @@ export class PlantsService {
         gardenId: dto.gardenId,
         speciesId: dto.speciesId,
         nickname: dto.nickname,
-        location: dto.location,
+        location: gardenArea,
         potSize: dto.potSize,
         datePlanted: dto.datePlanted ? new Date(dto.datePlanted) : undefined,
         imageUrl: dto.imageUrl,
@@ -161,7 +161,7 @@ export class PlantsService {
   }
 
   /** A plant may only be added to a garden the user owns or co-cares for. */
-  private async assertCanEditGarden(userId: string, gardenId: string) {
+  private async assertCanEditGarden(userId: string, gardenId: string): Promise<string | null> {
     const member = await this.prisma.gardenMember.findUnique({
       where: { gardenId_userId: { gardenId, userId } },
     });
@@ -171,6 +171,11 @@ export class PlantsService {
         'You do not have access to add plants to this garden.',
       );
     }
+    const garden = await this.prisma.garden.findUnique({
+      where: { id: gardenId },
+      select: { location: true },
+    });
+    return garden?.location ?? null;
   }
 
   async update(userId: string, id: string, planTier: PlanTier, dto: UpdatePlantDto) {

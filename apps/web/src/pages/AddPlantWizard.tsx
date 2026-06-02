@@ -5,7 +5,6 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { PageHeader } from '../components/ui/PageHeader';
-import { PLANT_LOCATIONS } from '../constants/plantLocations';
 import {
   defaultSpeciesDiscoveryFilters,
   SPECIES_DISCOVERY_FILTERS,
@@ -67,7 +66,6 @@ export default function AddPlantWizard() {
   const [identifyConfidence, setIdentifyConfidence] = useState<number | null>(null);
 
   const [nickname, setNickname] = useState('');
-  const [location, setLocation] = useState(PLANT_LOCATIONS[0]);
   const [potSize, setPotSize] = useState('MEDIUM');
   const [datePlanted, setDatePlanted] = useState('');
   const [notes, setNotes] = useState('');
@@ -191,7 +189,6 @@ export default function AddPlantWizard() {
         gardenId: selectedGardenId,
         speciesId,
         nickname: nickname || undefined,
-        location,
         potSize,
         datePlanted: datePlanted || undefined,
         notes: notes.trim() || undefined,
@@ -530,21 +527,17 @@ export default function AddPlantWizard() {
               onChange={(e) => setNickname(e.target.value)}
               placeholder="e.g. Kitchen monstera"
             />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Where it grows</label>
-              <select
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full rounded-2xl border border-emerald-100 px-4 py-3 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-              >
-                {PLANT_LOCATIONS.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm">
+              <p className="font-medium text-emerald-950">Growing area</p>
+              <p className="mt-1 text-gray-700">
+                This plant will inherit{' '}
+                <span className="font-semibold text-emerald-900">
+                  {selectedGarden?.location || 'the selected garden area'}
+                </span>{' '}
+                from {selectedGarden?.name || 'its garden'}.
+              </p>
               <p className="mt-1 text-xs text-gray-500">
-                Outdoor locations skip indoor misting reminders.
+                Change the garden to change whether new plants are indoor or outdoor.
               </p>
             </div>
             <div>
