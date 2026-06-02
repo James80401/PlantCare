@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './components/Home';
-import { OnboardingGate } from './components/OnboardingGate';
 import ProtectedRoute from './components/ProtectedRoute';
 import { BuddyGate } from './components/BuddyGate';
 import { Skeleton } from './components/ui/Skeleton';
@@ -35,7 +34,6 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Household = lazy(() => import('./pages/Household'));
 const Community = lazy(() => import('./pages/Community'));
 const Subscription = lazy(() => import('./pages/Subscription'));
-const OnboardingWizard = lazy(() => import('./pages/OnboardingWizard'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const BuddyOnboarding = lazy(() => import('./pages/buddy/onboarding'));
 const BuddyHome = lazy(() => import('./pages/buddy/index'));
@@ -82,9 +80,8 @@ export default function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/admin/registrations" element={<AdminRegistrations />} />
         <Route path="/garden" element={<ProtectedRoute />}>
-          <Route path="onboarding" element={<OnboardingWizard />} />
-          <Route element={<OnboardingGate />}>
-            <Route element={<Layout />}>
+          <Route path="onboarding" element={<Navigate to="/garden" replace />} />
+          <Route element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="gardens" element={<MyGardens />} />
             <Route path="gardens/:gardenId" element={<GardenDashboard />} />
@@ -128,7 +125,6 @@ export default function App() {
             </Route>
             <Route path="settings" element={<Settings />} />
             <Route path="subscription" element={<Subscription />} />
-            </Route>
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

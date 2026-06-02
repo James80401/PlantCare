@@ -11,21 +11,10 @@ This guide explains **how to use Plant Care** as a gardener. For click-by-click 
 1. Open the app URL (e.g. http://localhost:5173 or your deployed site).
 2. **Register** with email and password.
 3. If email verification is enabled, check your inbox and click the link (or ask your admin to verify for test environments).
-4. **Sign in** on return visits; use **Forgot password** if needed.
+4. After admin approval, sign in and go directly to the garden dashboard.
+5. Use **Forgot password** if needed.
 
 Doc: [user-guide/landing-and-auth.md](../user-guide/landing-and-auth.md).
-
----
-
-## Onboarding
-
-After first login you may see a short wizard:
-
-- Experience level (beginner / intermediate / expert)
-- Default light conditions
-- Option to **skip** and set later in settings
-
-Completing onboarding unlocks the main garden layout.
 
 ---
 

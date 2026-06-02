@@ -19,7 +19,6 @@ export async function seedDemoGarden(prisma: PrismaClient) {
       passwordHash,
       emailVerified: true,
       name: 'Demo Gardener',
-      onboardingCompletedAt: new Date(),
     },
     update: {
       emailVerified: true,

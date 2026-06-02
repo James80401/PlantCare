@@ -33,7 +33,6 @@ export class UsersService {
         notifySms: true,
         quietHoursStart: true,
         quietHoursEnd: true,
-        onboardingCompletedAt: true,
         experienceLevel: true,
         defaultLightLevel: true,
         createdAt: true,
@@ -46,33 +45,6 @@ export class UsersService {
       planTier: effectivePlanTier(this.config, user.planTier),
       isAdmin: isAdminEmail(this.config, user.email),
     };
-  }
-
-  async completeOnboarding(
-    userId: string,
-    data: {
-      experienceLevel: string;
-      defaultLightLevel: string;
-      skip?: boolean;
-    },
-  ) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        experienceLevel: data.experienceLevel || 'beginner',
-        defaultLightLevel: data.defaultLightLevel || 'medium',
-        onboardingCompletedAt: new Date(),
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        planTier: true,
-        onboardingCompletedAt: true,
-        experienceLevel: true,
-        defaultLightLevel: true,
-      },
-    });
   }
 
   async updateCarePreferences(

@@ -32,7 +32,7 @@ export default function Register() {
         return;
       }
       trackEvent('UserSignedUp');
-      navigate('/garden/onboarding');
+      navigate('/garden');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(msg || 'Could not create account. Email may already be in use.');

@@ -16,23 +16,6 @@ export class UsersController {
     return this.usersService.getMe(user.sub);
   }
 
-  @Put('me/onboarding')
-  completeOnboarding(
-    @CurrentUser() user: JwtPayload,
-    @Body()
-    body: {
-      experienceLevel?: string;
-      defaultLightLevel?: string;
-      skip?: boolean;
-    },
-  ) {
-    return this.usersService.completeOnboarding(user.sub, {
-      experienceLevel: body.experienceLevel || 'beginner',
-      defaultLightLevel: body.defaultLightLevel || 'medium',
-      skip: body.skip,
-    });
-  }
-
   @Put('me/care-preferences')
   updateCarePreferences(
     @CurrentUser() user: JwtPayload,

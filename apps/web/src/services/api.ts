@@ -321,11 +321,6 @@ export const diagnosisChatApi = {
 
 export const usersApi = {
   me: () => api.get('/users/me'),
-  completeOnboarding: (data: {
-    experienceLevel: string;
-    defaultLightLevel: string;
-    skip?: boolean;
-  }) => api.put('/users/me/onboarding', data),
   updateCarePreferences: (data: {
     experienceLevel?: string;
     defaultLightLevel?: string;

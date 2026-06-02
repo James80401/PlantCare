@@ -97,8 +97,7 @@ export default function BuddyFloatingCompanion() {
   const pendingModeRef = useRef<BuddyCompanionMode | null>(null);
   const modeSaveInFlightRef = useRef(false);
 
-  const hideOnRoute =
-    location.pathname.includes('/buddy/onboarding') || location.pathname === '/garden/onboarding';
+  const hideOnRoute = location.pathname.includes('/buddy/onboarding');
 
   const persistDisplayMode = useCallback(
     (mode: BuddyCompanionMode) => {

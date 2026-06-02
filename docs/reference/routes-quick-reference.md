@@ -21,7 +21,7 @@
 | Method | Path |
 |--------|------|
 | GET | `/users/me` |
-| PUT | `/users/me/onboarding` |
+| PUT | `/users/me/care-preferences` |
 | PUT | `/users/me/notification-settings` |
 | DELETE | `/users/me` |
 

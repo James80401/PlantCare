@@ -9,6 +9,7 @@ function loadAuth() {
     accessToken: string;
     refreshToken?: string;
     email?: string;
+    gardenId?: string;
     plantId?: string;
   };
 }
@@ -378,17 +379,7 @@ test.describe('UAT checklist — public auth', () => {
     await page.getByRole('button', { name: /^Sign in$/i }).click();
     await page.waitForURL(/\/garden/, { timeout: 15_000 });
     const token = await page.evaluate(() => localStorage.getItem('accessToken'));
-    if (token) {
-      await fetch('http://localhost:3001/api/v1/users/me/onboarding', {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ skip: true }),
-      });
-      await page.goto('/garden');
-    }
+    if (token) await page.goto('/garden');
     await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible({ timeout: 15_000 });
   });
 
@@ -406,9 +397,8 @@ test.describe('UAT checklist — public auth', () => {
     await page.getByLabel(/Name/i).fill('UAT Browser');
     await page.getByRole('button', { name: /Create account/i }).click();
     const verified = page.getByText(/check your email|verify/i);
-    const onboarding = page.getByRole('button', { name: /Get started/i });
     const garden = page.getByRole('heading', { name: /Hi,/i });
-    await expect(verified.or(onboarding).or(garden)).toBeVisible({ timeout: 30_000 });
+    await expect(verified.or(garden)).toBeVisible({ timeout: 30_000 });
   });
 });
 
@@ -437,13 +427,13 @@ test.describe('UAT checklist — mobile layout', () => {
       token = login.accessToken;
     }
 
-    await fetch('http://localhost:3001/api/v1/users/me/onboarding', {
-      method: 'PUT',
+    await fetch('http://localhost:3001/api/v1/gardens', {
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ skip: true }),
+      body: JSON.stringify({ name: 'Empty Mobile Garden', location: 'Mobile test' }),
     });
 
     await page.addInitScript((t) => localStorage.setItem('accessToken', t), token);

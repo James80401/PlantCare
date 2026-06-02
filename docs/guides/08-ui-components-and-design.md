@@ -8,7 +8,6 @@
 |-----------|------|
 | `Layout` | Header, desktop nav, mobile bottom nav, `<Outlet>` |
 | `ProtectedRoute` | Auth guard |
-| `OnboardingGate` | Blocks garden until onboarding done |
 | `Home` | Marketing landing |
 
 **Navigation items (typical):** Garden (dashboard), Tasks, Calendar, Browse, Community, Settings. Household linked from settings or nav depending on build.

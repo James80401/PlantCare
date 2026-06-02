@@ -85,7 +85,6 @@ model User {
   passwordResetToken    String?        @unique
   passwordResetExpires  DateTime?
   aiPausedUntil         DateTime?
-  onboardingCompletedAt DateTime?
   experienceLevel       String?
   defaultLightLevel     String?
   createdAt             DateTime       @default(now())

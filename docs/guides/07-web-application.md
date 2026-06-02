@@ -32,11 +32,11 @@ From `App.tsx`:
 
 ### Protected `/garden/*`
 
-Wrapped by `ProtectedRoute` → optional `OnboardingWizard` at `onboarding` → `OnboardingGate` → `Layout`.
+Wrapped by `ProtectedRoute` → `Layout`. Approved signed-in users enter the garden directly.
 
 | Path | Page |
 |------|------|
-| `/garden/onboarding` | `OnboardingWizard` |
+| `/garden/onboarding` | Redirect → `/garden` |
 | `/garden` | `Dashboard` |
 | `/garden/calendar` | `Calendar` |
 | `/garden/plants/browse` | `BrowsePlants` |
@@ -68,16 +68,6 @@ Canonical routing doc: [web/routing.md](../web/routing.md).
 4. `ProtectedRoute` redirects anonymous users to `/login`.
 
 Details: [web/state-and-api-client.md](../web/state-and-api-client.md).
-
----
-
-## Onboarding gate
-
-- New users land on `/garden/onboarding` until completed or skipped.
-- `PUT /users/me/onboarding` persists preferences (`experienceLevel`, `defaultLightLevel`, …).
-- `OnboardingGate` blocks main layout until done.
-
-Doc: [web/pages/onboarding.md](../web/pages/onboarding.md).
 
 ---
 

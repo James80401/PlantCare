@@ -57,7 +57,7 @@
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/me` | Current user profile |
-| PUT | `/me/onboarding` | Save or skip onboarding wizard |
+| PUT | `/me/care-preferences` | Experience level and default light preferences |
 | PUT | `/me/notification-settings` | Channels, quiet hours |
 | DELETE | `/me` | Delete account |
 
