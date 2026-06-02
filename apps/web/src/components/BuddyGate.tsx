@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import BuddySubNav from './buddy/BuddySubNav';
 import { useBuddy } from '../hooks/buddy/useBuddy';
 
-/** Routes under /garden/buddy require an adopted buddy (except onboarding). */
+/** Routes under /garden/buddy require an adopted buddy, but setup remains skippable. */
 export function BuddyGate() {
   const { loading, missing } = useBuddy();
   const location = useLocation();
@@ -11,7 +11,7 @@ export function BuddyGate() {
   if (loading) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center text-emerald-700">
-        Loading buddy…
+        Loading buddy...
       </div>
     );
   }

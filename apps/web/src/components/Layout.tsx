@@ -36,6 +36,7 @@ const settingsNav: NavItem = {
 };
 
 const moreNav: NavItem[] = [
+  { to: '/garden/onboarding', label: 'Quick tour', mobileLabel: 'Tour', icon: 'tasks' },
   { to: '/garden/plants/new', label: 'Add plant', mobileLabel: 'Add', icon: 'add', exact: true },
   { to: '/garden/tasks', label: 'Tasks', mobileLabel: 'Tasks', icon: 'tasks' },
   { to: '/garden/calendar', label: 'Calendar', mobileLabel: 'Calendar', icon: 'calendar' },

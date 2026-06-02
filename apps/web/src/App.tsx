@@ -17,6 +17,7 @@ const ResendVerification = lazy(() => import('./pages/ResendVerification'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const AppOnboarding = lazy(() => import('./pages/AppOnboarding'));
 const Calendar = lazy(() => import('./pages/Calendar'));
 const GardenScoreInsights = lazy(() => import('./pages/GardenScoreInsights'));
 const FilteredTasks = lazy(() => import('./pages/FilteredTasks'));
@@ -81,9 +82,9 @@ export default function App() {
         <Route path="/admin" element={<AdminRegistrations />} />
         <Route path="/admin/registrations" element={<AdminRegistrations />} />
         <Route path="/garden" element={<ProtectedRoute />}>
-          <Route path="onboarding" element={<Navigate to="/garden" replace />} />
           <Route element={<Layout />}>
             <Route index element={<Dashboard />} />
+            <Route path="onboarding" element={<AppOnboarding />} />
             <Route path="gardens" element={<MyGardens />} />
             <Route path="gardens/:gardenId" element={<GardenDashboard />} />
             <Route path="gardens/:gardenId/tasks" element={<GardenTasks />} />
