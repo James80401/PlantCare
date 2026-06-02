@@ -68,6 +68,7 @@ function adminActionName(req: AdminRequest) {
   if (method === 'GET' && path.includes('/admin/registrations/pending')) return 'registration.pending.list';
   if (method === 'GET' && path.includes('/admin/audit/summary')) return 'audit.summary';
   if (method === 'GET' && path.includes('/admin/audit')) return 'audit.list';
+  if (method === 'GET' && path.includes('/admin/observability')) return 'observability.overview';
   return `${method.toLowerCase()}.${path.replace(/^\/api\/v1\/admin\/?/, '').replace(/[/?#].*$/, '') || 'admin'}`;
 }
 

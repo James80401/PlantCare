@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { adminApi, usersApi } from '../../services/api';
@@ -59,9 +59,75 @@ type AdminAuditLog = {
   createdAt: string;
 };
 
+type AdminObservability = {
+  generatedAt: string;
+  users: {
+    total: number;
+    approved: number;
+    pending: number;
+    disabled: number;
+    verified: number;
+    admins: number;
+    new24h: number;
+    new30d: number;
+    withPlants: number;
+  };
+  ai: {
+    last24h: AdminAiWindow;
+    last30d: AdminAiWindow;
+    pausedUsers: { id: string; email: string; name?: string | null; aiPausedUntil: string }[];
+    topUsers: {
+      userId: string;
+      email: string;
+      name?: string | null;
+      calls: number;
+      promptChars: number;
+      imageCount: number;
+      plants: number;
+    }[];
+    latestEvents: {
+      id: string;
+      feature: string;
+      status: string;
+      reason?: string | null;
+      promptChars: number;
+      imageCount: number;
+      createdAt: string;
+      user?: { email: string; name?: string | null } | null;
+    }[];
+  };
+  notifications: {
+    activeDeviceTokens: number;
+    last30d: { channel: string; status: string; count: number }[];
+  };
+  audit: {
+    last30d: number;
+    failures30d: number;
+    latestActions: {
+      id: string;
+      actorEmail?: string | null;
+      action: string;
+      outcome: 'SUCCESS' | 'ERROR';
+      statusCode: number;
+      durationMs: number;
+      createdAt: string;
+    }[];
+  };
+};
+
+type AdminAiWindow = {
+  total: number;
+  allowed: number;
+  blocked: number;
+  promptChars: number;
+  imageCount: number;
+  byStatus: { status: string; count: number; promptChars: number; imageCount: number }[];
+};
+
 export default function AdminRegistrations() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [observability, setObservability] = useState<AdminObservability | null>(null);
   const [auditSummary, setAuditSummary] = useState<AdminAuditSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
   const [error, setError] = useState('');
@@ -71,14 +137,16 @@ export default function AdminRegistrations() {
     const { data: me } = await usersApi.me();
     setIsAdmin(Boolean(me.isAdmin));
     if (!me.isAdmin) return;
-    const [usersRes, summaryRes, logsRes] = await Promise.all([
+    const [usersRes, summaryRes, logsRes, observabilityRes] = await Promise.all([
       adminApi.listUsers(),
       adminApi.auditSummary(),
       adminApi.auditLogs(75),
+      adminApi.observability(),
     ]);
     setUsers(usersRes.data);
     setAuditSummary(summaryRes.data);
     setAuditLogs(logsRes.data);
+    setObservability(observabilityRes.data);
   }, []);
 
   useEffect(() => {
@@ -167,6 +235,120 @@ export default function AdminRegistrations() {
           </Link>
         </div>
         {error ? <p className="text-sm text-rose-600" role="alert">{error}</p> : null}
+        {observability ? (
+          <section className="rounded-lg bg-white p-4 shadow-sm" aria-labelledby="observability-heading">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 id="observability-heading" className="text-lg font-semibold text-gray-900">
+                  Observability
+                </h2>
+                <p className="text-sm text-gray-600">
+                  User, AI, notification, and admin activity health as of {new Date(observability.generatedAt).toLocaleString()}.
+                </p>
+              </div>
+              <Button type="button" variant="secondary" onClick={() => load()}>
+                Refresh
+              </Button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-4">
+              <AdminMetric label="Users total" value={observability.users.total} />
+              <AdminMetric label="Pending approval" value={observability.users.pending} />
+              <AdminMetric label="New users 24h" value={observability.users.new24h} />
+              <AdminMetric label="Users with plants" value={observability.users.withPlants} />
+              <AdminMetric label="AI calls 24h" value={observability.ai.last24h.total} />
+              <AdminMetric label="AI blocked 24h" value={observability.ai.last24h.blocked} />
+              <AdminMetric label="AI images 30d" value={observability.ai.last30d.imageCount} />
+              <AdminMetric label="AI paused users" value={observability.ai.pausedUsers.length} />
+              <AdminMetric label="Push tokens" value={observability.notifications.activeDeviceTokens} />
+              <AdminMetric label="Notifications 30d" value={sumCounts(observability.notifications.last30d)} />
+              <AdminMetric label="Audit actions 30d" value={observability.audit.last30d} />
+              <AdminMetric label="Audit failures 30d" value={observability.audit.failures30d} />
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <AdminPanel title="AI status mix">
+                {observability.ai.last30d.byStatus.length === 0 ? (
+                  <p className="text-sm text-gray-600">No AI usage in the last 30 days.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {observability.ai.last30d.byStatus.map((item) => (
+                      <span key={item.status} className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                        {item.status.toLowerCase()}: {item.count}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </AdminPanel>
+
+              <AdminPanel title="Notification delivery">
+                {observability.notifications.last30d.length === 0 ? (
+                  <p className="text-sm text-gray-600">No notification rows in the last 30 days.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {observability.notifications.last30d.map((item) => (
+                      <span key={`${item.channel}-${item.status}`} className="rounded-full bg-blue-50 px-2 py-1 font-semibold text-blue-800">
+                        {item.channel.toLowerCase()} {item.status}: {item.count}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </AdminPanel>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <AdminPanel title="Top AI users">
+                {observability.ai.topUsers.length === 0 ? (
+                  <p className="text-sm text-gray-600">No AI users yet.</p>
+                ) : (
+                  <ul className="space-y-2 text-sm">
+                    {observability.ai.topUsers.slice(0, 5).map((user) => (
+                      <li key={user.userId} className="flex items-center justify-between gap-3">
+                        <span className="min-w-0 truncate text-gray-900">{user.email}</span>
+                        <span className="shrink-0 text-xs font-semibold text-gray-600">
+                          {user.calls} calls · {user.imageCount} images
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </AdminPanel>
+
+              <AdminPanel title="Latest AI events">
+                {observability.ai.latestEvents.length === 0 ? (
+                  <p className="text-sm text-gray-600">No AI events logged yet.</p>
+                ) : (
+                  <ul className="space-y-2 text-sm">
+                    {observability.ai.latestEvents.slice(0, 5).map((event) => (
+                      <li key={event.id}>
+                        <p className="text-gray-900">
+                          {event.user?.email ?? 'Unknown user'} · {event.status.toLowerCase()} · {event.feature.replace('_', ' ')}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(event.createdAt).toLocaleString()}
+                          {event.reason ? ` · ${event.reason}` : ''}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </AdminPanel>
+            </div>
+
+            {observability.ai.pausedUsers.length ? (
+              <div className="mt-5 rounded-lg border border-rose-100 bg-rose-50 p-3">
+                <h3 className="text-sm font-semibold text-rose-950">Paused AI users</h3>
+                <ul className="mt-2 space-y-1 text-sm text-rose-900">
+                  {observability.ai.pausedUsers.map((user) => (
+                    <li key={user.id}>
+                      {user.email} until {new Date(user.aiPausedUntil).toLocaleString()}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
         {auditSummary ? (
           <section className="rounded-lg bg-white p-4 shadow-sm" aria-labelledby="audit-summary-heading">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -380,6 +562,19 @@ function AdminMetric({ label, value }: { label: string; value: number }) {
       <p>{label}</p>
     </div>
   );
+}
+
+function AdminPanel({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-gray-100 p-3">
+      <h3 className="mb-2 text-sm font-semibold text-gray-900">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function sumCounts(items: { count: number }[]) {
+  return items.reduce((sum, item) => sum + item.count, 0);
 }
 
 function isAiPaused(value?: string | null) {

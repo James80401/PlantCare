@@ -88,6 +88,7 @@ export const adminApi = {
   listUsers: () => api.get('/admin/registrations/users'),
   auditSummary: () => api.get('/admin/audit/summary'),
   auditLogs: (limit = 100) => api.get('/admin/audit', { params: { limit } }),
+  observability: () => api.get('/admin/observability'),
   approve: (userId: string) => api.post(`/admin/registrations/${userId}/approve`),
   reject: (userId: string) => api.post(`/admin/registrations/${userId}/reject`),
   disable: (userId: string) => api.post(`/admin/registrations/${userId}/disable`),
