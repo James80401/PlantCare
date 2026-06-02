@@ -29,6 +29,39 @@ interface Species {
 
 type Step = 'photo' | 'confirm' | 'search' | 'details';
 
+const PLANT_LIFE_STAGE_OPTIONS = [
+  {
+    value: 'SEED',
+    label: 'Seed',
+    description: 'Not sprouted yet',
+  },
+  {
+    value: 'SPROUT',
+    label: 'Sprout',
+    description: 'First growth just appeared',
+  },
+  {
+    value: 'SEEDLING',
+    label: 'Seedling',
+    description: 'Small, delicate new plant',
+  },
+  {
+    value: 'YOUNG_PLANT',
+    label: 'Young plant',
+    description: 'Actively growing but not fully established',
+  },
+  {
+    value: 'ESTABLISHED',
+    label: 'Established',
+    description: 'Typical store-bought or settled plant',
+  },
+  {
+    value: 'MATURE',
+    label: 'Mature',
+    description: 'Large, older, or long-settled plant',
+  },
+] as const;
+
 export default function AddPlantWizard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -67,6 +100,8 @@ export default function AddPlantWizard() {
 
   const [nickname, setNickname] = useState('');
   const [potSize, setPotSize] = useState('MEDIUM');
+  const [lifeStage, setLifeStage] = useState<(typeof PLANT_LIFE_STAGE_OPTIONS)[number]['value']>('ESTABLISHED');
+  const [approximateAgeMonths, setApproximateAgeMonths] = useState('');
   const [datePlanted, setDatePlanted] = useState('');
   const [notes, setNotes] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -190,6 +225,9 @@ export default function AddPlantWizard() {
         speciesId,
         nickname: nickname || undefined,
         potSize,
+        lifeStage,
+        approximateAgeMonths:
+          approximateAgeMonths.trim() === '' ? undefined : Number(approximateAgeMonths),
         datePlanted: datePlanted || undefined,
         notes: notes.trim() || undefined,
         imageUrl: imageUrl || undefined,
@@ -538,6 +576,39 @@ export default function AddPlantWizard() {
               </p>
               <p className="mt-1 text-xs text-gray-500">
                 Change the garden to change whether new plants are indoor or outdoor.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Plant age / stage
+                </label>
+                <select
+                  value={lifeStage}
+                  onChange={(e) =>
+                    setLifeStage(e.target.value as (typeof PLANT_LIFE_STAGE_OPTIONS)[number]['value'])
+                  }
+                  className="w-full rounded-2xl border border-emerald-100 px-4 py-3 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                >
+                  {PLANT_LIFE_STAGE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label} - {option.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Input
+                label="Approximate age in months (optional)"
+                type="number"
+                min="0"
+                max="1200"
+                inputMode="numeric"
+                value={approximateAgeMonths}
+                onChange={(e) => setApproximateAgeMonths(e.target.value)}
+                placeholder="e.g. 3"
+              />
+              <p className="text-xs text-gray-500">
+                Age helps DrPlant tune reminders. Sprouts and seedlings skip harsh care tasks and get closer moisture checks.
               </p>
             </div>
             <div>

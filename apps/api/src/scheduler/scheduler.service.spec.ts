@@ -1,4 +1,4 @@
-import { PotSize, TaskStatus, TaskType } from '@prisma/client';
+import { PlantLifeStage, PotSize, TaskStatus, TaskType } from '@prisma/client';
 import { SchedulerService } from './scheduler.service';
 
 describe('SchedulerService', () => {
@@ -67,6 +67,50 @@ describe('SchedulerService', () => {
     const daysUntilRepot =
       (repot!.dueDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000);
     expect(daysUntilRepot).toBeLessThanOrEqual(90);
+  });
+
+  it('uses plant life stage to protect seedlings from harsh care tasks', async () => {
+    const created: { taskType: TaskType; dueDate: Date }[] = [];
+    const prisma = {
+      plant: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'plant-1',
+          gardenId: 'garden-1',
+          location: 'Indoor',
+          potSize: PotSize.MEDIUM,
+          lifeStage: PlantLifeStage.SEEDLING,
+          approximateAgeMonths: 1,
+          datePlanted: null,
+          species: {
+            commonName: 'Basil',
+            scientificName: 'Ocimum basilicum',
+            wateringFreqDays: 7,
+            careNotes: 'Tender herb',
+          },
+          user: { defaultLightLevel: 'medium' },
+        }),
+      },
+      task: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        createMany: jest.fn().mockImplementation(({ data }) => {
+          created.push(...data);
+          return { count: data.length };
+        }),
+      },
+    };
+    service = new SchedulerService(prisma as never);
+
+    await service.generateTasksForPlant('plant-1');
+
+    const types = new Set(created.map((t) => t.taskType));
+    expect(types.has(TaskType.FERTILIZE)).toBe(false);
+    expect(types.has(TaskType.REPOT)).toBe(false);
+    expect(types.has(TaskType.CHECK_MOISTURE)).toBe(true);
+
+    const moistureDates = created
+      .filter((t) => t.taskType === TaskType.CHECK_MOISTURE)
+      .map((t) => t.dueDate.getTime());
+    expect(moistureDates[1] - moistureDates[0]).toBe(3 * 24 * 60 * 60 * 1000);
   });
 
   it('suggests watering less often after repeated wet-soil skips', async () => {

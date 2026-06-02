@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { PlanTier, PotSize } from '@prisma/client';
+import { PlantLifeStage, PlanTier, PotSize } from '@prisma/client';
 import { PlantsService } from './plants.service';
 
 describe('PlantsService', () => {
@@ -10,6 +10,8 @@ describe('PlantsService', () => {
     nickname: 'Kitchen fern',
     location: 'Indoor — medium light',
     potSize: PotSize.MEDIUM,
+    lifeStage: PlantLifeStage.ESTABLISHED,
+    approximateAgeMonths: 12,
     imageUrl: 'https://example.com/old.jpg',
     notes: 'Old notes',
   };
@@ -129,6 +131,8 @@ describe('PlantsService', () => {
       speciesId: 'species-1',
       location: 'Outdoor',
       potSize: PotSize.MEDIUM,
+      lifeStage: PlantLifeStage.SEEDLING,
+      approximateAgeMonths: 2,
     } as never);
 
     expect(prisma.plant.create).toHaveBeenCalledWith(
@@ -137,6 +141,8 @@ describe('PlantsService', () => {
           gardenId: 'garden-1',
           userId: 'user-1',
           location: 'Indoor',
+          lifeStage: PlantLifeStage.SEEDLING,
+          approximateAgeMonths: 2,
         }),
       }),
     );

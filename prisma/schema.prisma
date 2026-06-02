@@ -40,6 +40,15 @@ enum PotSize {
   LARGE
 }
 
+enum PlantLifeStage {
+  SEED
+  SPROUT
+  SEEDLING
+  YOUNG_PLANT
+  ESTABLISHED
+  MATURE
+}
+
 enum NotificationChannel {
   PUSH
   EMAIL
@@ -252,6 +261,8 @@ model Plant {
   nickname    String?
   location    String?
   potSize     PotSize      @default(MEDIUM)
+  lifeStage   PlantLifeStage @default(ESTABLISHED)
+  approximateAgeMonths Int?
   datePlanted DateTime?
   imageUrl    String?
   notes       String?

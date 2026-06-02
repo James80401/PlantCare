@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PlanTier, PotSize, TaskStatus, TaskType } from '@prisma/client';
+import { PlantLifeStage, PlanTier, PotSize, TaskStatus, TaskType } from '@prisma/client';
 import { addDays, startOfDay, subDays } from 'date-fns';
 import {
   buildScheduleExplanation,
@@ -157,7 +157,20 @@ export class SchedulerService {
       .find(({ day }) => typeof day.tempMinC === 'number' && day.tempMinC <= FROST_RISK_C);
   }
 
-  private canScheduleRepot(plant: { datePlanted: Date | null }): boolean {
+  private isVeryYoungPlant(lifeStage?: PlantLifeStage | null): boolean {
+    return (
+      lifeStage === PlantLifeStage.SEED ||
+      lifeStage === PlantLifeStage.SPROUT ||
+      lifeStage === PlantLifeStage.SEEDLING
+    );
+  }
+
+  private canScheduleFertilizer(plant: { lifeStage?: PlantLifeStage | null }): boolean {
+    return !this.isVeryYoungPlant(plant.lifeStage);
+  }
+
+  private canScheduleRepot(plant: { datePlanted: Date | null; lifeStage?: PlantLifeStage | null }): boolean {
+    if (this.isVeryYoungPlant(plant.lifeStage)) return false;
     if (!plant.datePlanted) return true;
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -199,7 +212,7 @@ export class SchedulerService {
       ...pruneDates.map((dueDate) => ({ plantId, taskType: TaskType.PRUNE, dueDate })),
     );
 
-    if (this.isGrowingSeason(now)) {
+    if (this.isGrowingSeason(now) && this.canScheduleFertilizer(plant)) {
       const fertDates = this.generateDates(now, 30, Math.floor(DAYS_AHEAD / 30));
       tasks.push(
         ...fertDates.map((dueDate) => ({
@@ -264,8 +277,13 @@ export class SchedulerService {
       );
     }
 
-    if (plant.species.wateringFreqDays <= 5) {
-      const moistureDates = this.generateDates(now, 7, Math.floor(DAYS_AHEAD / 7));
+    const moistureInterval = this.isVeryYoungPlant(plant.lifeStage)
+      ? 3
+      : plant.lifeStage === PlantLifeStage.YOUNG_PLANT
+        ? 5
+        : 7;
+    if (this.isVeryYoungPlant(plant.lifeStage) || plant.lifeStage === PlantLifeStage.YOUNG_PLANT || plant.species.wateringFreqDays <= 5) {
+      const moistureDates = this.generateDates(now, moistureInterval, Math.floor(DAYS_AHEAD / moistureInterval));
       tasks.push(
         ...moistureDates.map((dueDate) => ({
           plantId,
@@ -312,6 +330,8 @@ export class SchedulerService {
         location: task.plant.location ?? 'Living Room',
         potSize: task.plant.potSize,
         datePlanted: task.plant.datePlanted,
+        lifeStage: task.plant.lifeStage,
+        approximateAgeMonths: task.plant.approximateAgeMonths,
       },
       species: task.plant.species,
       waterIntervalDays: this.getWaterIntervalDays(

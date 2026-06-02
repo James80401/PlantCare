@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlanTier } from '@prisma/client';
+import { PlantLifeStage, PlanTier } from '@prisma/client';
 import { CareGuidesService } from '../care-guides/care-guides.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
@@ -149,6 +149,8 @@ export class PlantsService {
         nickname: dto.nickname,
         location: gardenArea,
         potSize: dto.potSize,
+        lifeStage: dto.lifeStage ?? PlantLifeStage.ESTABLISHED,
+        approximateAgeMonths: dto.approximateAgeMonths,
         datePlanted: dto.datePlanted ? new Date(dto.datePlanted) : undefined,
         imageUrl: dto.imageUrl,
         notes: dto.notes,

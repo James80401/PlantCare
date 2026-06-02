@@ -1,4 +1,4 @@
-import { PotSize, TaskType } from '@prisma/client';
+import { PlantLifeStage, PotSize, TaskType } from '@prisma/client';
 import {
   classifySpeciesForCare,
   growingEnvironmentLabel,
@@ -24,6 +24,8 @@ export interface ScheduleExplanationInput {
     location: string | null;
     potSize: PotSize;
     datePlanted: Date | null;
+    lifeStage?: PlantLifeStage | null;
+    approximateAgeMonths?: number | null;
   };
   species: {
     commonName: string;
@@ -62,6 +64,32 @@ function canScheduleRepot(plant: { datePlanted: Date | null }): boolean {
   return plant.datePlanted <= sixMonthsAgo;
 }
 
+function lifeStageLabel(stage?: PlantLifeStage | null): string {
+  switch (stage) {
+    case PlantLifeStage.SEED:
+      return 'Seed';
+    case PlantLifeStage.SPROUT:
+      return 'Sprout';
+    case PlantLifeStage.SEEDLING:
+      return 'Seedling';
+    case PlantLifeStage.YOUNG_PLANT:
+      return 'Young plant';
+    case PlantLifeStage.MATURE:
+      return 'Mature plant';
+    default:
+      return 'Established plant';
+  }
+}
+
+function ageImpact(plant: ScheduleExplanationInput['plant']): string {
+  const months = plant.approximateAgeMonths;
+  const label =
+    typeof months === 'number'
+      ? `${lifeStageLabel(plant.lifeStage)}, about ${months} month${months === 1 ? '' : 's'} old.`
+      : lifeStageLabel(plant.lifeStage);
+  return `${label} Younger plants are handled more gently in care suggestions.`;
+}
+
 function formatDueDate(dueDate: Date): string {
   return dueDate.toLocaleDateString('en-US', {
     weekday: 'short',
@@ -92,6 +120,10 @@ export function buildScheduleExplanation(input: ScheduleExplanationInput): Sched
         label: 'Growing environment',
         impact: `${envLabel} at “${plant.location ?? 'your space'}”.`,
       });
+      factors.push({
+        label: 'Plant age',
+        impact: ageImpact(plant),
+      });
       if (input.recentWetSoilSkips && input.recentWetSoilSkips > 0) {
         factors.push({
           label: 'Recent skip feedback',
@@ -118,6 +150,10 @@ export function buildScheduleExplanation(input: ScheduleExplanationInput): Sched
       factors.push({
         label: 'Species',
         impact: `${species.commonName} (${category}) — pause if the plant is dormant or in low light.`,
+      });
+      factors.push({
+        label: 'Plant age',
+        impact: ageImpact(plant),
       });
       return {
         summary: `Fertilizer is due ${dueLabel} during active growth (about every 30 days).`,
@@ -210,6 +246,10 @@ export function buildScheduleExplanation(input: ScheduleExplanationInput): Sched
         impact: 'First repot reminder is placed within the next care window (~60 days).',
       });
       factors.push({
+        label: 'Plant age',
+        impact: ageImpact(plant),
+      });
+      factors.push({
         label: 'Pot size',
         impact: `${potLabel(plant.potSize)} — size up only 1–2 inches when roots are crowded.`,
       });
@@ -278,6 +318,10 @@ export function buildScheduleExplanation(input: ScheduleExplanationInput): Sched
       factors.push({
         label: 'Cadence',
         impact: 'Finger-test soil about every 7 days before watering.',
+      });
+      factors.push({
+        label: 'Plant age',
+        impact: ageImpact(plant),
       });
       return {
         summary: `Moisture check is due ${dueLabel} before the next watering.`,
