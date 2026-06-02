@@ -84,6 +84,14 @@ export function IconAdmin(props: IconProps) {
   );
 }
 
+export function IconMenu(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  );
+}
+
 export const navIcons = {
   home: IconHome,
   browse: IconLeaf,
@@ -93,4 +101,5 @@ export const navIcons = {
   community: IconCommunity,
   settings: IconSettings,
   admin: IconAdmin,
+  menu: IconMenu,
 } as const;
