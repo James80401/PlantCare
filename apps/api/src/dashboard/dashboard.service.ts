@@ -18,7 +18,10 @@ import {
   type TaskLike,
 } from './dashboard-helpers';
 import {
+  mapDashboardDiagnosisSummary,
+  mapDashboardJournalEntry,
   mapDashboardPlant,
+  mapDashboardRecoveryPlant,
   mapDashboardTask,
   mapSharedPlantsForUser,
 } from './dashboard.mapper';
@@ -39,7 +42,16 @@ export class DashboardService {
     const fromDate = from ? new Date(from) : addDays(startOfDay(now), -45);
     const toDate = to ? new Date(to) : addDays(startOfDay(now), 14);
 
-    const [user, plants, gardens, tasks, unresolvedDiagnoses] = await Promise.all([
+    const [
+      user,
+      plants,
+      gardens,
+      tasks,
+      unresolvedDiagnoses,
+      recentJournalEntries,
+      recentDiagnoses,
+      openDiagnosisCount,
+    ] = await Promise.all([
       this.prisma.user.findUnique({
         where: { id: userId },
         select: { name: true },
@@ -119,6 +131,49 @@ export class DashboardService {
         },
         orderBy: { createdAt: 'desc' },
       }),
+      this.prisma.journalEntry.findMany({
+        where: { plant: { userId } },
+        select: {
+          id: true,
+          plantId: true,
+          photoUrl: true,
+          notes: true,
+          heightCm: true,
+          widthCm: true,
+          leafCount: true,
+          createdAt: true,
+          plant: {
+            select: {
+              nickname: true,
+              species: { select: { commonName: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      this.prisma.diagnosis.findMany({
+        where: { plant: { userId } },
+        select: {
+          id: true,
+          plantId: true,
+          resultLabel: true,
+          confidence: true,
+          resolved: true,
+          createdAt: true,
+          plant: {
+            select: {
+              nickname: true,
+              species: { select: { commonName: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      this.prisma.diagnosis.count({
+        where: { plant: { userId }, resolved: false },
+      }),
     ]);
 
     const taskRows = tasks as TaskLike[];
@@ -181,6 +236,19 @@ export class DashboardService {
       ),
       weekPreview: buildWeekPreview(taskRows, currentDate),
       scheduleSuggestions,
+      healthStory: {
+        openDiagnosisCount,
+        recentJournal: recentJournalEntries.map((entry) =>
+          mapDashboardJournalEntry(entry),
+        ),
+        recentDiagnoses: recentDiagnoses.map((diagnosis) =>
+          mapDashboardDiagnosisSummary(diagnosis),
+        ),
+        recoveryPlants: recentDiagnoses
+          .filter((diagnosis) => !diagnosis.resolved)
+          .slice(0, 3)
+          .map((diagnosis) => mapDashboardRecoveryPlant(diagnosis)),
+      },
       weather: weatherStatus.hasLocation
         ? {
             hasLocation: true,

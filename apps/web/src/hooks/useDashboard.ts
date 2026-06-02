@@ -31,6 +31,40 @@ export interface DashboardScheduleSuggestion {
   reversible: boolean;
 }
 
+export interface DashboardHealthStory {
+  openDiagnosisCount: number;
+  recentJournal: Array<{
+    id: string;
+    plantId: string;
+    plantName: string;
+    createdAt: string;
+    notePreview: string | null;
+    photoUrl: string | null;
+    measurements: {
+      heightCm: number | null;
+      widthCm: number | null;
+      leafCount: number | null;
+    };
+  }>;
+  recentDiagnoses: Array<{
+    id: string;
+    plantId: string;
+    plantName: string;
+    resultLabel: string;
+    confidence: number | null;
+    resolved: boolean;
+    createdAt: string;
+  }>;
+  recoveryPlants: Array<{
+    diagnosisId: string;
+    plantId: string;
+    plantName: string;
+    resultLabel: string;
+    createdAt: string;
+    actionTo: string;
+  }>;
+}
+
 export interface DashboardPayload {
   greeting: { name: string; dateLabel: string; statusLine: string };
   metrics: {
@@ -47,6 +81,7 @@ export interface DashboardPayload {
   attention: DashboardAttention[];
   weekPreview: DashboardWeekDay[];
   scheduleSuggestions: DashboardScheduleSuggestion[];
+  healthStory?: DashboardHealthStory;
   weather: {
     hasLocation: boolean;
     locationLabel?: string | null;

@@ -26,10 +26,27 @@ interface DrPlantChatProps {
   plantName?: string;
 }
 
-const FOLLOW_UP_PROMPTS = [
-  'What should I check first today?',
-  'Has this issue improved based on my latest photo?',
-  'What recovery signs should I look for?',
+const GUIDED_FOLLOW_UPS = [
+  {
+    label: 'Missing context',
+    prompt:
+      'Ask me the most important missing context questions before you give more advice for this plant.',
+  },
+  {
+    label: '7-day recovery plan',
+    prompt:
+      'Create a simple 7-day recovery plan for this plant with what to watch, what to avoid, and when to check back.',
+  },
+  {
+    label: 'Compare progress',
+    prompt:
+      'Based on the latest symptoms and photos in this thread, tell me what would count as improving, unchanged, or worse.',
+  },
+  {
+    label: 'Care task ideas',
+    prompt:
+      'Suggest any care tasks I should add for this plant and explain which ones are urgent versus optional.',
+  },
 ];
 
 function isOpenAiSetupError(message: string) {
@@ -165,7 +182,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
 
   const scheduleHealthCheck = async (message: ChatMessage, dueInDays = 3) => {
     if (!activeId) return;
-    setActionLoading(`health:${message.id}`);
+    setActionLoading(`health:${message.id}:${dueInDays}`);
     setActionNotice('');
     setActionError('');
     try {
@@ -289,19 +306,40 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
       )}
 
       <div className="border-b border-emerald-50 bg-white px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-          Useful follow-up prompts
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {FOLLOW_UP_PROMPTS.map((prompt) => (
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              Guided follow-ups
+            </p>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Ask for missing context, a recovery plan, or next task ideas.
+            </p>
+          </div>
+          {activeId ? (
             <button
-              key={prompt}
               type="button"
               disabled={loading}
-              onClick={() => sendPrompt(prompt)}
-              className="min-h-9 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+              onClick={() =>
+                sendPrompt(
+                  'Summarize this thread into a journal-ready update with symptoms, likely cause, care changes, and next check-in.',
+                )
+              }
+              className="min-h-9 rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-50"
             >
-              {prompt}
+              Summarize thread
+            </button>
+          ) : null}
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {GUIDED_FOLLOW_UPS.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              disabled={loading}
+              onClick={() => sendPrompt(item.prompt)}
+              className="min-h-10 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-left text-xs font-semibold text-emerald-900 hover:border-emerald-200 hover:bg-emerald-100 disabled:opacity-50"
+            >
+              {item.label}
             </button>
           ))}
         </div>
@@ -356,7 +394,15 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
                       disabled={Boolean(actionLoading)}
                       className="min-h-8 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
                     >
-                      {actionLoading === `health:${m.id}` ? 'Scheduling…' : 'Health check in 3 days'}
+                      {actionLoading === `health:${m.id}:3` ? 'Scheduling...' : 'Health check in 3 days'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scheduleHealthCheck(m, 7)}
+                      disabled={Boolean(actionLoading)}
+                      className="min-h-8 rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100 disabled:opacity-50"
+                    >
+                      {actionLoading === `health:${m.id}:7` ? 'Scheduling...' : 'Check again in 7 days'}
                     </button>
                   </div>
                 ) : null}

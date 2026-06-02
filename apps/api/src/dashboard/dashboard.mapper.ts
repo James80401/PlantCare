@@ -38,9 +38,56 @@ export type DashboardSharedPlantDto = DashboardPlantDto & {
   canComplete: boolean;
 };
 
+export type DashboardJournalEntryDto = {
+  id: string;
+  plantId: string;
+  plantName: string;
+  createdAt: string;
+  notePreview: string | null;
+  photoUrl: string | null;
+  measurements: {
+    heightCm: number | null;
+    widthCm: number | null;
+    leafCount: number | null;
+  };
+};
+
+export type DashboardDiagnosisSummaryDto = {
+  id: string;
+  plantId: string;
+  plantName: string;
+  resultLabel: string;
+  confidence: number | null;
+  resolved: boolean;
+  createdAt: string;
+};
+
+export type DashboardRecoveryPlantDto = {
+  diagnosisId: string;
+  plantId: string;
+  plantName: string;
+  resultLabel: string;
+  createdAt: string;
+  actionTo: string;
+};
+
 function toIso(value: Date | string | null | undefined): string | null {
   if (value == null) return null;
   return typeof value === 'string' ? value : value.toISOString();
+}
+
+function plantDisplayName(plant: {
+  nickname?: string | null;
+  species: { commonName: string };
+}) {
+  return plant.nickname || plant.species.commonName;
+}
+
+function truncatePreview(value: string | null | undefined, maxLength = 140) {
+  const normalized = value?.trim();
+  if (!normalized) return null;
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 1).trimEnd()}...`;
 }
 
 export function mapDashboardTask(task: TaskLike): DashboardTaskDto {
@@ -151,4 +198,76 @@ export function mapSharedPlantsForUser(
   }
 
   return items;
+}
+
+export function mapDashboardJournalEntry(entry: {
+  id: string;
+  plantId: string;
+  photoUrl: string | null;
+  notes: string | null;
+  heightCm: number | null;
+  widthCm: number | null;
+  leafCount: number | null;
+  createdAt: Date;
+  plant: {
+    nickname: string | null;
+    species: { commonName: string };
+  };
+}): DashboardJournalEntryDto {
+  return {
+    id: entry.id,
+    plantId: entry.plantId,
+    plantName: plantDisplayName(entry.plant),
+    createdAt: entry.createdAt.toISOString(),
+    notePreview: truncatePreview(entry.notes),
+    photoUrl: entry.photoUrl,
+    measurements: {
+      heightCm: entry.heightCm,
+      widthCm: entry.widthCm,
+      leafCount: entry.leafCount,
+    },
+  };
+}
+
+export function mapDashboardDiagnosisSummary(diagnosis: {
+  id: string;
+  plantId: string;
+  resultLabel: string;
+  confidence: number | null;
+  resolved: boolean;
+  createdAt: Date;
+  plant: {
+    nickname: string | null;
+    species: { commonName: string };
+  };
+}): DashboardDiagnosisSummaryDto {
+  return {
+    id: diagnosis.id,
+    plantId: diagnosis.plantId,
+    plantName: plantDisplayName(diagnosis.plant),
+    resultLabel: diagnosis.resultLabel,
+    confidence: diagnosis.confidence,
+    resolved: diagnosis.resolved,
+    createdAt: diagnosis.createdAt.toISOString(),
+  };
+}
+
+export function mapDashboardRecoveryPlant(diagnosis: {
+  id: string;
+  plantId: string;
+  resultLabel: string;
+  createdAt: Date;
+  plant: {
+    nickname: string | null;
+    species: { commonName: string };
+  };
+}): DashboardRecoveryPlantDto {
+  return {
+    diagnosisId: diagnosis.id,
+    plantId: diagnosis.plantId,
+    plantName: plantDisplayName(diagnosis.plant),
+    resultLabel: diagnosis.resultLabel,
+    createdAt: diagnosis.createdAt.toISOString(),
+    actionTo: `/garden/plants/${diagnosis.plantId}/health#dr-plant`,
+  };
 }

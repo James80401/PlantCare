@@ -1,4 +1,11 @@
-import { mapDashboardPlant, mapDashboardTask, mapSharedPlantsForUser } from './dashboard.mapper';
+import {
+  mapDashboardDiagnosisSummary,
+  mapDashboardJournalEntry,
+  mapDashboardPlant,
+  mapDashboardRecoveryPlant,
+  mapDashboardTask,
+  mapSharedPlantsForUser,
+} from './dashboard.mapper';
 
 describe('dashboard.mapper', () => {
   it('maps tasks to ISO strings', () => {
@@ -75,5 +82,48 @@ describe('dashboard.mapper', () => {
     expect(shared[0].shared).toBe(true);
     expect(shared[0].imageUrl).toBe('/default.png');
     expect(shared[0].gardenName).toBe('Home');
+  });
+
+  it('maps recent journal entries with plant display names and previews', () => {
+    const row = mapDashboardJournalEntry({
+      id: 'j1',
+      plantId: 'p1',
+      photoUrl: '/journal.jpg',
+      notes: 'New leaf is opening after the last watering.',
+      heightCm: 24,
+      widthCm: null,
+      leafCount: 8,
+      createdAt: new Date('2026-06-01T12:00:00.000Z'),
+      plant: {
+        nickname: 'Marley',
+        species: { commonName: 'Monstera' },
+      },
+    });
+
+    expect(row.plantName).toBe('Marley');
+    expect(row.notePreview).toContain('New leaf');
+    expect(row.measurements.heightCm).toBe(24);
+  });
+
+  it('maps diagnosis summaries and recovery links', () => {
+    const diagnosis = {
+      id: 'd1',
+      plantId: 'p1',
+      resultLabel: 'Leaf scorch',
+      confidence: 0.7,
+      resolved: false,
+      createdAt: new Date('2026-06-01T12:00:00.000Z'),
+      plant: {
+        nickname: null,
+        species: { commonName: 'Basil' },
+      },
+    };
+
+    const summary = mapDashboardDiagnosisSummary(diagnosis);
+    const recovery = mapDashboardRecoveryPlant(diagnosis);
+
+    expect(summary.plantName).toBe('Basil');
+    expect(summary.confidence).toBe(0.7);
+    expect(recovery.actionTo).toBe('/garden/plants/p1/health#dr-plant');
   });
 });

@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation, type To } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import TaskRow from '../components/tasks/TaskRow';
-import { useDashboard, type DashboardAttention } from '../hooks/useDashboard';
+import {
+  useDashboard,
+  type DashboardAttention,
+  type DashboardHealthStory,
+} from '../hooks/useDashboard';
 import { useDashboardTaskActions } from '../hooks/useDashboardTaskActions';
 import { tasksApi, gardensApi, type GardenSummaryCard } from '../services/api';
 import { GardenCard } from '../components/gardens/GardenCard';
@@ -157,6 +161,7 @@ export default function Dashboard() {
   const weekPreview = dash?.weekPreview ?? [];
   const attentionItems = dash?.attention ?? [];
   const metrics = dash?.metrics;
+  const healthStory = dash?.healthStory;
 
   const drPlantAction = useMemo((): To => {
     if (allGardenPlants.length === 1) {
@@ -371,6 +376,13 @@ export default function Dashboard() {
           )}
         </section>
       )}
+
+      {healthStory &&
+      (healthStory.recentJournal.length > 0 ||
+        healthStory.recentDiagnoses.length > 0 ||
+        healthStory.openDiagnosisCount > 0) ? (
+        <GardenStorySection story={healthStory} />
+      ) : null}
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.75fr)]">
         <div className="space-y-4">
@@ -618,6 +630,165 @@ export default function Dashboard() {
       </section>
     </div>
   );
+}
+
+function GardenStorySection({ story }: { story: DashboardHealthStory }) {
+  const latestJournal = story.recentJournal.slice(0, 3);
+  const latestDiagnoses = story.recentDiagnoses.slice(0, 3);
+  const recoveryPlants = story.recoveryPlants.slice(0, 3);
+
+  return (
+    <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            Garden story
+          </p>
+          <h2 className="mt-1 text-xl font-semibold text-emerald-950 font-display">
+            Recent health and progress
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+            A quick read across journal notes, diagnoses, and plants that may need a recovery
+            follow-up.
+          </p>
+        </div>
+        {story.openDiagnosisCount > 0 ? (
+          <span className="rounded-full bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-800 ring-1 ring-rose-100">
+            {story.openDiagnosisCount} open health check
+            {story.openDiagnosisCount === 1 ? '' : 's'}
+          </span>
+        ) : (
+          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100">
+            No open diagnoses
+          </span>
+        )}
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <StoryColumn title="Journal notes">
+          {latestJournal.length === 0 ? (
+            <StoryEmpty text="No recent journal notes yet." />
+          ) : (
+            latestJournal.map((entry) => (
+              <Link
+                key={entry.id}
+                to={`/garden/plants/${entry.plantId}?tab=journal`}
+                className="block rounded-2xl border border-emerald-50 bg-emerald-50/60 p-3 transition hover:border-emerald-200 hover:bg-emerald-50"
+              >
+                <div className="flex gap-3">
+                  {entry.photoUrl ? (
+                    <img
+                      src={entry.photoUrl}
+                      alt=""
+                      className="h-12 w-12 rounded-xl object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-xl">
+                      <span aria-hidden>ðŸŒ¿</span>
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-emerald-950">
+                      {entry.plantName}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      {format(parseISO(entry.createdAt), 'MMM d')}
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-2 line-clamp-2 text-sm leading-5 text-gray-700">
+                  {entry.notePreview || measurementSummary(entry.measurements) || 'Progress logged'}
+                </p>
+              </Link>
+            ))
+          )}
+        </StoryColumn>
+
+        <StoryColumn title="Recent diagnoses">
+          {latestDiagnoses.length === 0 ? (
+            <StoryEmpty text="No recent diagnoses yet." />
+          ) : (
+            latestDiagnoses.map((diagnosis) => (
+              <Link
+                key={diagnosis.id}
+                to={plantDrPlantPath(diagnosis.plantId)}
+                className="block rounded-2xl border border-sky-50 bg-sky-50/60 p-3 transition hover:border-sky-200 hover:bg-sky-50"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-sky-950">
+                      {diagnosis.plantName}
+                    </p>
+                    <p className="mt-1 text-sm text-gray-700">{diagnosis.resultLabel}</p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${
+                      diagnosis.resolved
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-900'
+                    }`}
+                  >
+                    {diagnosis.resolved ? 'Resolved' : 'Open'}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  {format(parseISO(diagnosis.createdAt), 'MMM d')}
+                  {diagnosis.confidence != null
+                    ? ` - ${Math.round(diagnosis.confidence * 100)}% confidence`
+                    : ''}
+                </p>
+              </Link>
+            ))
+          )}
+        </StoryColumn>
+
+        <StoryColumn title="Recovery follow-ups">
+          {recoveryPlants.length === 0 ? (
+            <StoryEmpty text="No active recovery follow-ups." />
+          ) : (
+            recoveryPlants.map((item) => (
+              <Link
+                key={item.diagnosisId}
+                to={item.actionTo}
+                className="block rounded-2xl border border-rose-50 bg-rose-50/60 p-3 transition hover:border-rose-200 hover:bg-rose-50"
+              >
+                <p className="truncate text-sm font-semibold text-rose-950">{item.plantName}</p>
+                <p className="mt-1 text-sm leading-5 text-gray-700">{item.resultLabel}</p>
+                <p className="mt-2 text-xs font-semibold text-rose-800">Ask Dr. Plant what changed</p>
+              </Link>
+            ))
+          )}
+        </StoryColumn>
+      </div>
+    </section>
+  );
+}
+
+function StoryColumn({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-emerald-950">{title}</h3>
+      <div className="mt-2 space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function StoryEmpty({ text }: { text: string }) {
+  return (
+    <p className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-3 py-4 text-sm text-gray-500">
+      {text}
+    </p>
+  );
+}
+
+function measurementSummary(measurements: DashboardHealthStory['recentJournal'][number]['measurements']) {
+  const parts = [
+    measurements.heightCm != null ? `${measurements.heightCm} cm tall` : null,
+    measurements.widthCm != null ? `${measurements.widthCm} cm wide` : null,
+    measurements.leafCount != null ? `${measurements.leafCount} leaves` : null,
+  ].filter(Boolean);
+
+  return parts.join(' - ');
 }
 
 function DashboardMetric({
