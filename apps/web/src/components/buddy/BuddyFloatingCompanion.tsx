@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBuddyCompanion } from '../../context/BuddyCompanionContext';
 import { pickBuddyPhrase, pushRecentPhraseId } from './pickBuddyPhrase';
+import BuddyCharacterModel from './BuddyCharacterModel';
 import BuddyCompanionAnimated from './BuddyCompanionAnimated';
-import BuddyCuteFace from './BuddyCuteFace';
 import MoodIndicator from './MoodIndicator';
 import SunlightBar from './SunlightBar';
 import { GROWTH_STAGE_LABEL } from './species';
@@ -15,12 +15,12 @@ import {
 import { isBuddyCompanionMode, type BuddyCompanionMode } from '../../hooks/buddy/types';
 
 const ACTIONS = [
-  { to: '/garden/buddy', label: 'Home', emoji: '🏠' },
-  { to: '/garden/buddy/activities', label: 'Activities', emoji: '✨' },
-  { to: '/garden/buddy/quests', label: 'Quests', emoji: '🎯' },
-  { to: '/garden/buddy/journey', label: 'Journey', emoji: '🗺️' },
-  { to: '/garden/buddy/town', label: 'Town', emoji: '🌻' },
-  { to: '/garden/buddy/style', label: 'Style', emoji: '👒' },
+  { to: '/garden/buddy', label: 'Home', emoji: 'Home' },
+  { to: '/garden/buddy/activities', label: 'Activities', emoji: 'Act' },
+  { to: '/garden/buddy/quests', label: 'Quests', emoji: 'Goal' },
+  { to: '/garden/buddy/journey', label: 'Journey', emoji: 'Map' },
+  { to: '/garden/buddy/town', label: 'Town', emoji: 'Town' },
+  { to: '/garden/buddy/style', label: 'Style', emoji: 'Style' },
 ] as const;
 
 const PHRASE_ROTATE_MS = 9_000;
@@ -92,7 +92,7 @@ export default function BuddyFloatingCompanion() {
   const [displayMode, setDisplayMode] = useState<BuddyCompanionMode>(() => readBuddyCompanionMode());
   const [phraseTick, setPhraseTick] = useState(0);
   const [recentPhraseIds, setRecentPhraseIds] = useState<string[]>([]);
-  const [displayPhrase, setDisplayPhrase] = useState('…');
+  const [displayPhrase, setDisplayPhrase] = useState('...');
   const [speechKey, setSpeechKey] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const pendingModeRef = useRef<BuddyCompanionMode | null>(null);
@@ -225,7 +225,7 @@ export default function BuddyFloatingCompanion() {
       <div className={dockClass} aria-hidden>
         <div className="pointer-events-none mr-1 flex items-center gap-2">
           <div className="buddy-speech-in max-w-[11rem] rounded-2xl rounded-br-sm border border-emerald-100 bg-white/95 px-3 py-2 text-sm text-emerald-800 shadow-md">
-            …
+            ...
           </div>
           <div className="buddy-act-bob h-28 w-28 rounded-full border-2 border-emerald-100 bg-emerald-50/90 shadow-lg" />
         </div>
@@ -252,19 +252,14 @@ export default function BuddyFloatingCompanion() {
       <div ref={panelRef} className={dockClass}>
         <div className="pointer-events-auto mr-2 flex items-center gap-2">
           <div className="buddy-speech-in max-w-[11rem] rounded-2xl rounded-br-sm border border-emerald-200 bg-white/95 px-3 py-2 text-sm font-medium leading-snug text-emerald-900 shadow-lg shadow-emerald-900/10">
-            Adopt a buddy — they’ll cheer you on every day!
+            Adopt a buddy - they will cheer you on every day!
           </div>
           <Link
             to="/garden/buddy/onboarding"
-            className="buddy-act-bob relative flex h-28 w-28 translate-x-2 items-center justify-center rounded-full border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-lime-50 text-5xl shadow-lg shadow-emerald-900/15 transition hover:scale-105"
+            className="buddy-act-bob relative flex h-28 w-28 translate-x-2 items-center justify-center rounded-full border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-lime-50 shadow-lg shadow-emerald-900/15 transition hover:scale-105"
             aria-label="Get a plant buddy"
           >
-            <span className="relative" role="img" aria-hidden>
-              🌱
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2">
-                <BuddyCuteFace expression="happy" size="md" />
-              </span>
-            </span>
+            <BuddyCharacterModel speciesId="fern" expression="happy" size="md" variant="companion" />
           </Link>
           <button
             type="button"
@@ -283,7 +278,7 @@ export default function BuddyFloatingCompanion() {
   if (!buddy) return null;
 
   const journeyLabel = journey
-    ? `${journey.biomeEmoji} ${journey.biomeName} · ${formatCountdown(journey.remainingSeconds)}`
+    ? `${journey.biomeEmoji} ${journey.biomeName} Â· ${formatCountdown(journey.remainingSeconds)}`
     : 'On a grow journey';
 
   const travelPhrase = displayPhrase;
@@ -353,7 +348,7 @@ export default function BuddyFloatingCompanion() {
                   className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full p-2 text-gray-500 hover:bg-white/80 hover:text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                   aria-label="Close buddy menu"
                 >
-                  ✕
+                  x
                 </button>
               </div>
 
@@ -490,7 +485,7 @@ export default function BuddyFloatingCompanion() {
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
             aria-label={
-              expanded ? `Minimize ${buddy.name}` : `Talk to ${buddy.name} — ${travelPhrase}`
+              expanded ? `Minimize ${buddy.name}` : `Talk to ${buddy.name} - ${travelPhrase}`
             }
             className={`buddy-hang-peek relative flex translate-x-4 items-center justify-center overflow-visible rounded-full border-[3px] shadow-xl transition hover:scale-105 active:scale-95 ${
               expanded
@@ -524,7 +519,7 @@ export default function BuddyFloatingCompanion() {
             />
             {traveling && (
               <span className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-sky-500 text-xs text-white shadow">
-                ✈
+                Travel
               </span>
             )}
           </button>
@@ -533,3 +528,5 @@ export default function BuddyFloatingCompanion() {
     </div>
   );
 }
+
+

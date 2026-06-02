@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { BuddyFaceExpression } from './buddyFaces';
 
 type BuddyCharacterModelProps = {
@@ -8,21 +9,21 @@ type BuddyCharacterModelProps = {
 };
 
 type SpeciesModel = {
-  skin: string;
-  skinDark: string;
-  leaf: string;
-  leafDark: string;
+  body: string;
+  bodyDark: string;
+  belly: string;
+  wing: string;
   accent: string;
   cheek: string;
   eye: string;
-  crown: 'monstera' | 'cactus' | 'succulent' | 'snake' | 'fern' | 'rose' | 'sprout';
-  pose: 'open' | 'stoic' | 'gentle' | 'curious' | 'proud';
+  crest: 'monstera' | 'cactus' | 'succulent' | 'snake' | 'fern' | 'rose' | 'sprout';
+  posture: 'open' | 'calm' | 'perky' | 'shy';
 };
 
 const SIZE_CLASS = {
   sm: 'h-16 w-16',
   md: 'h-28 w-28',
-  lg: 'h-36 w-36',
+  lg: 'h-40 w-40',
 };
 
 const COMPANION_SIZE_CLASS = {
@@ -33,152 +34,152 @@ const COMPANION_SIZE_CLASS = {
 
 const SPECIES_MODELS: Record<string, SpeciesModel> = {
   monstera: {
-    skin: '#8ed081',
-    skinDark: '#2f8f52',
-    leaf: '#166534',
-    leafDark: '#0f4f32',
-    accent: '#f5d46b',
-    cheek: '#f5a9a0',
-    eye: '#14342b',
-    crown: 'monstera',
-    pose: 'open',
+    body: '#7bcf85',
+    bodyDark: '#2f8f52',
+    belly: '#e8f8d8',
+    wing: '#4aa564',
+    accent: '#19683e',
+    cheek: '#f6aaa2',
+    eye: '#17352c',
+    crest: 'monstera',
+    posture: 'open',
   },
   cactus: {
-    skin: '#8fca75',
-    skinDark: '#4f8b4d',
-    leaf: '#3b7f4a',
-    leafDark: '#27613a',
-    accent: '#ffd166',
-    cheek: '#f6b48f',
+    body: '#86c66c',
+    bodyDark: '#4f8b4d',
+    belly: '#eef6c9',
+    wing: '#4d9649',
+    accent: '#f7d56b',
+    cheek: '#f4ad8d',
     eye: '#17321f',
-    crown: 'cactus',
-    pose: 'stoic',
+    crest: 'cactus',
+    posture: 'calm',
   },
   succulent: {
-    skin: '#a8d8b0',
-    skinDark: '#5a9a72',
-    leaf: '#86b7c9',
-    leafDark: '#447b91',
-    accent: '#f7a65a',
-    cheek: '#f0a6b7',
-    eye: '#18363c',
-    crown: 'succulent',
-    pose: 'gentle',
+    body: '#88c7ba',
+    bodyDark: '#4f8890',
+    belly: '#ecf7e8',
+    wing: '#6aa3b7',
+    accent: '#f19d61',
+    cheek: '#eea6ba',
+    eye: '#17333a',
+    crest: 'succulent',
+    posture: 'shy',
   },
   snake_plant: {
-    skin: '#9fd37e',
-    skinDark: '#5a9b48',
-    leaf: '#2f7d3e',
-    leafDark: '#1f5d32',
-    accent: '#e5d766',
-    cheek: '#f3a391',
-    eye: '#18331e',
-    crown: 'snake',
-    pose: 'proud',
+    body: '#8acb67',
+    bodyDark: '#4f9444',
+    belly: '#f4f5ca',
+    wing: '#417e44',
+    accent: '#e9dc61',
+    cheek: '#f2a28f',
+    eye: '#17331e',
+    crest: 'snake',
+    posture: 'perky',
   },
   fern: {
-    skin: '#9bd68a',
-    skinDark: '#4f9d4f',
-    leaf: '#228b55',
-    leafDark: '#16623c',
+    body: '#78cf87',
+    bodyDark: '#439d58',
+    belly: '#eaf8d6',
+    wing: '#2f9361',
     accent: '#b8e986',
-    cheek: '#f3a6a1',
+    cheek: '#f1a7a1',
     eye: '#123323',
-    crown: 'fern',
-    pose: 'curious',
+    crest: 'fern',
+    posture: 'open',
   },
   rose: {
-    skin: '#94d483',
-    skinDark: '#4e9b50',
-    leaf: '#2e7d4f',
-    leafDark: '#195c36',
-    accent: '#f06f8f',
+    body: '#88c978',
+    bodyDark: '#4e9b50',
+    belly: '#fff0f5',
+    wing: '#3f8e5b',
+    accent: '#ee668c',
     cheek: '#f4a2b4',
     eye: '#331622',
-    crown: 'rose',
-    pose: 'open',
+    crest: 'rose',
+    posture: 'perky',
   },
 };
 
 function modelFor(speciesId: string): SpeciesModel {
   return SPECIES_MODELS[speciesId] ?? {
-    skin: '#9bd68a',
-    skinDark: '#4f9d4f',
-    leaf: '#228b55',
-    leafDark: '#16623c',
-    accent: '#f5d46b',
-    cheek: '#f3a6a1',
+    body: '#78cf87',
+    bodyDark: '#439d58',
+    belly: '#eaf8d6',
+    wing: '#2f9361',
+    accent: '#b8e986',
+    cheek: '#f1a7a1',
     eye: '#123323',
-    crown: 'sprout',
-    pose: 'open',
+    crest: 'sprout',
+    posture: 'open',
   };
 }
 
-function Crown({ model }: { model: SpeciesModel }) {
-  switch (model.crown) {
+function Crest({ model }: { model: SpeciesModel }) {
+  switch (model.crest) {
     case 'monstera':
       return (
-        <g className="buddy-model-crown">
-          <path d="M57 25 C40 13 36 31 45 42 C32 35 25 48 36 58 C46 66 56 54 61 43" fill={model.leaf} />
-          <path d="M75 25 C94 13 97 33 87 43 C101 38 108 51 96 60 C85 68 75 55 70 43" fill={model.leafDark} />
-          <path d="M62 19 C56 30 58 40 66 51 C76 41 78 29 70 18 Z" fill={model.leaf} />
-          <path d="M49 31 C51 38 54 43 60 47 M82 31 C79 38 75 43 69 48" fill="none" stroke="#e7f7d9" strokeWidth="2.2" strokeLinecap="round" opacity="0.75" />
+        <g className="buddy-model-crest">
+          <path d="M76 36 C56 14 42 32 54 50 C39 42 30 58 43 70 C58 83 73 67 80 51 Z" fill={model.accent} />
+          <path d="M87 36 C108 13 122 34 108 51 C124 43 132 60 118 72 C103 84 89 67 82 51 Z" fill="#0f5c35" />
+          <path d="M81 28 C72 43 75 58 83 68 C96 55 96 40 87 28 Z" fill="#197144" />
+          <path d="M60 42 C65 50 70 56 78 60 M105 42 C99 51 94 56 86 61" stroke="#dff4c8" strokeWidth="2.6" strokeLinecap="round" fill="none" opacity="0.85" />
         </g>
       );
     case 'cactus':
       return (
-        <g className="buddy-model-crown">
-          <path d="M45 48 C36 38 38 24 48 19 C58 25 58 39 51 50 Z" fill={model.leaf} />
-          <path d="M83 49 C93 39 91 25 81 20 C70 26 71 40 78 51 Z" fill={model.leafDark} />
-          <path d="M50 28 L46 31 M54 36 L49 38 M80 30 L85 33 M76 39 L82 41" stroke="#f6f1bf" strokeWidth="2" strokeLinecap="round" />
+        <g className="buddy-model-crest">
+          <path d="M59 60 C47 47 50 28 63 22 C77 32 75 48 66 62 Z" fill={model.wing} />
+          <path d="M103 61 C116 48 112 29 99 23 C85 33 87 49 96 63 Z" fill={model.bodyDark} />
+          <path d="M60 34 L55 37 M66 44 L60 47 M99 34 L105 38 M94 46 L101 48" stroke="#fff3b0" strokeWidth="2.5" strokeLinecap="round" />
         </g>
       );
     case 'succulent':
       return (
-        <g className="buddy-model-crown">
-          <path d="M66 20 C54 31 56 45 66 52 C78 44 78 31 66 20 Z" fill={model.leaf} />
-          <path d="M50 30 C48 43 55 52 66 53 C66 40 60 32 50 30 Z" fill={model.leafDark} />
-          <path d="M82 30 C72 32 66 40 66 53 C77 52 84 43 82 30 Z" fill={model.leafDark} />
-          <path d="M42 45 C50 56 60 58 66 53 C58 45 49 42 42 45 Z" fill={model.leaf} />
-          <path d="M90 45 C82 56 72 58 66 53 C74 45 83 42 90 45 Z" fill={model.leaf} />
+        <g className="buddy-model-crest">
+          <path d="M82 24 C67 36 69 55 82 65 C96 54 97 36 82 24 Z" fill="#75aeca" />
+          <path d="M63 38 C60 54 69 66 82 66 C80 51 74 42 63 38 Z" fill="#5f98b0" />
+          <path d="M101 38 C91 42 84 51 82 66 C96 66 105 54 101 38 Z" fill="#5f98b0" />
+          <path d="M52 54 C62 69 75 72 82 66 C71 56 61 52 52 54 Z" fill="#8fc7c0" />
+          <path d="M112 54 C102 69 89 72 82 66 C93 56 103 52 112 54 Z" fill="#8fc7c0" />
         </g>
       );
     case 'snake':
       return (
-        <g className="buddy-model-crown">
-          <path d="M47 56 C41 36 42 18 52 10 C62 26 60 43 55 58 Z" fill={model.leaf} />
-          <path d="M66 55 C60 32 63 15 70 7 C80 28 75 45 70 59 Z" fill={model.leafDark} />
-          <path d="M83 56 C76 36 78 20 88 13 C98 31 94 47 88 60 Z" fill={model.leaf} />
-          <path d="M52 17 C54 31 54 44 52 54 M70 15 C70 31 69 44 67 55 M88 21 C88 35 87 48 85 57" stroke={model.accent} strokeWidth="2.5" strokeLinecap="round" opacity="0.85" />
+        <g className="buddy-model-crest">
+          <path d="M61 66 C53 42 55 20 67 12 C79 31 76 51 69 68 Z" fill={model.wing} />
+          <path d="M82 64 C76 37 80 17 88 9 C100 34 94 53 88 70 Z" fill={model.bodyDark} />
+          <path d="M103 66 C94 42 98 23 110 15 C121 37 116 55 109 70 Z" fill={model.wing} />
+          <path d="M67 22 C68 39 67 52 64 63 M88 19 C88 38 86 52 83 65 M110 26 C109 43 107 57 104 67" stroke={model.accent} strokeWidth="2.6" strokeLinecap="round" opacity="0.9" />
         </g>
       );
     case 'fern':
       return (
-        <g className="buddy-model-crown">
-          <path d="M64 53 C49 43 43 30 44 17" stroke={model.leafDark} strokeWidth="4" strokeLinecap="round" fill="none" />
-          <path d="M68 53 C85 43 91 30 90 17" stroke={model.leafDark} strokeWidth="4" strokeLinecap="round" fill="none" />
-          {[50, 54, 58].map((x, index) => (
-            <ellipse key={`left-${x}`} cx={x} cy={27 + index * 7} rx="11" ry="4.5" fill={model.leaf} transform={`rotate(${-32 + index * 8} ${x} ${27 + index * 7})`} />
+        <g className="buddy-model-crest">
+          <path d="M80 65 C61 54 54 37 56 17" stroke={model.bodyDark} strokeWidth="4.5" strokeLinecap="round" fill="none" />
+          <path d="M85 65 C105 54 113 37 111 17" stroke={model.bodyDark} strokeWidth="4.5" strokeLinecap="round" fill="none" />
+          {[62, 67, 72].map((x, index) => (
+            <ellipse key={`left-${x}`} cx={x} cy={29 + index * 8} rx="12" ry="5" fill={model.wing} transform={`rotate(${-34 + index * 8} ${x} ${29 + index * 8})`} />
           ))}
-          {[83, 79, 74].map((x, index) => (
-            <ellipse key={`right-${x}`} cx={x} cy={27 + index * 7} rx="11" ry="4.5" fill={model.leaf} transform={`rotate(${32 - index * 8} ${x} ${27 + index * 7})`} />
+          {[105, 100, 94].map((x, index) => (
+            <ellipse key={`right-${x}`} cx={x} cy={29 + index * 8} rx="12" ry="5" fill={model.wing} transform={`rotate(${34 - index * 8} ${x} ${29 + index * 8})`} />
           ))}
         </g>
       );
     case 'rose':
       return (
-        <g className="buddy-model-crown">
-          <path d="M52 51 C38 40 41 24 55 26 C57 13 75 13 77 26 C91 24 94 40 80 51 Z" fill={model.accent} />
-          <path d="M57 43 C57 34 64 29 67 39 C70 29 78 35 74 44 C68 51 62 50 57 43 Z" fill="#c72f62" opacity="0.78" />
-          <path d="M46 52 C37 49 34 40 38 33 M85 52 C95 48 97 39 92 33" stroke={model.leafDark} strokeWidth="3" strokeLinecap="round" fill="none" />
+        <g className="buddy-model-crest">
+          <path d="M66 62 C48 48 52 29 69 31 C72 15 93 15 96 31 C113 29 117 48 99 62 Z" fill={model.accent} />
+          <path d="M73 53 C73 41 82 36 85 49 C89 36 99 43 94 54 C86 63 78 62 73 53 Z" fill="#c72f62" opacity="0.85" />
+          <path d="M60 64 C47 60 42 49 47 38 M105 64 C118 60 122 49 116 38" stroke={model.bodyDark} strokeWidth="3" strokeLinecap="round" fill="none" />
         </g>
       );
     case 'sprout':
     default:
       return (
-        <g className="buddy-model-crown">
-          <path d="M64 54 C53 40 54 27 65 18 C75 29 75 42 64 54 Z" fill={model.leaf} />
-          <path d="M67 54 C77 42 88 39 96 47 C87 59 77 61 67 54 Z" fill={model.leafDark} />
+        <g className="buddy-model-crest">
+          <path d="M78 64 C65 47 67 32 82 22 C95 36 94 52 78 64 Z" fill={model.wing} />
+          <path d="M86 65 C100 50 115 48 124 59 C113 73 99 75 86 65 Z" fill={model.bodyDark} />
         </g>
       );
   }
@@ -188,7 +189,7 @@ function Face({ expression, model }: { expression: BuddyFaceExpression; model: S
   const eye = model.eye;
   const strokeProps = {
     stroke: eye,
-    strokeWidth: 3,
+    strokeWidth: 4,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
     fill: 'none',
@@ -198,9 +199,9 @@ function Face({ expression, model }: { expression: BuddyFaceExpression; model: S
     case 'wink':
       return (
         <g>
-          <circle cx="55" cy="73" r="4" fill={eye} />
-          <path d="M76 72 Q82 75 87 72" {...strokeProps} />
-          <path d="M58 88 Q68 96 80 88" {...strokeProps} />
+          <circle cx="66" cy="83" r="5.2" fill={eye} />
+          <path d="M96 82 Q102 86 108 82" {...strokeProps} />
+          <path d="M72 106 Q84 114 99 106" {...strokeProps} />
         </g>
       );
     case 'blink':
@@ -208,43 +209,43 @@ function Face({ expression, model }: { expression: BuddyFaceExpression; model: S
     case 'cozy':
       return (
         <g>
-          <path d="M51 73 Q56 76 61 73" {...strokeProps} />
-          <path d="M75 73 Q80 76 85 73" {...strokeProps} />
-          <path d="M59 88 Q68 93 78 88" {...strokeProps} />
+          <path d="M60 83 Q67 87 74 83" {...strokeProps} />
+          <path d="M94 83 Q101 87 108 83" {...strokeProps} />
+          <path d="M73 105 Q84 111 98 105" {...strokeProps} />
         </g>
       );
     case 'love':
       return (
         <g>
-          <path d="M54 70 C51 66 45 68 46 73 C47 77 54 80 55 82 C57 79 63 76 63 72 C63 67 57 66 54 70 Z" fill="#db2777" />
-          <path d="M80 70 C77 66 71 68 72 73 C73 77 80 80 81 82 C83 79 89 76 89 72 C89 67 83 66 80 70 Z" fill="#db2777" />
-          <path d="M57 88 Q68 98 81 88" {...strokeProps} />
+          <path d="M64 79 C60 74 53 77 54 83 C56 88 64 92 66 95 C68 91 76 87 76 82 C76 76 68 74 64 79 Z" fill="#db2777" />
+          <path d="M100 79 C96 74 89 77 90 83 C92 88 100 92 102 95 C104 91 112 87 112 82 C112 76 104 74 100 79 Z" fill="#db2777" />
+          <path d="M71 105 Q84 116 101 105" {...strokeProps} />
         </g>
       );
     case 'surprised':
       return (
         <g>
-          <circle cx="55" cy="73" r="4.5" fill={eye} />
-          <circle cx="81" cy="73" r="4.5" fill={eye} />
-          <ellipse cx="68" cy="90" rx="5" ry="6.5" fill={eye} opacity="0.88" />
+          <circle cx="66" cy="83" r="5.7" fill={eye} />
+          <circle cx="102" cy="83" r="5.7" fill={eye} />
+          <ellipse cx="84" cy="107" rx="6.5" ry="8" fill={eye} opacity="0.9" />
         </g>
       );
     case 'thinking':
     case 'focused':
       return (
         <g>
-          <circle cx="55" cy="73" r="4" fill={eye} />
-          <circle cx="82" cy="72" r="4" fill={eye} />
-          <path d="M59 89 Q68 85 78 89" {...strokeProps} />
-          <path d="M48 66 Q55 63 62 66 M75 65 Q83 62 89 66" {...strokeProps} strokeWidth={2.4} opacity="0.75" />
+          <circle cx="66" cy="83" r="5.2" fill={eye} />
+          <circle cx="102" cy="82" r="5.2" fill={eye} />
+          <path d="M73 107 Q84 102 98 107" {...strokeProps} />
+          <path d="M58 74 Q67 70 76 74 M93 73 Q103 69 112 74" {...strokeProps} strokeWidth={3} opacity="0.75" />
         </g>
       );
     case 'shy':
       return (
         <g>
-          <circle cx="55" cy="74" r="3.4" fill={eye} />
-          <circle cx="81" cy="74" r="3.4" fill={eye} />
-          <path d="M61 89 Q68 92 76 89" {...strokeProps} />
+          <circle cx="66" cy="84" r="4.4" fill={eye} />
+          <circle cx="102" cy="84" r="4.4" fill={eye} />
+          <path d="M75 106 Q84 110 96 106" {...strokeProps} />
         </g>
       );
     case 'cheer':
@@ -252,87 +253,68 @@ function Face({ expression, model }: { expression: BuddyFaceExpression; model: S
     case 'giggle':
       return (
         <g>
-          <path d="M50 72 Q55 68 61 72" {...strokeProps} />
-          <path d="M75 72 Q81 68 87 72" {...strokeProps} />
-          <path d="M55 86 Q68 101 83 86" fill="#7f1d1d" opacity="0.9" />
-          <path d="M60 89 Q68 95 78 89" stroke="#fff7ed" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.8" />
+          <path d="M58 82 Q66 76 75 82" {...strokeProps} />
+          <path d="M93 82 Q102 76 111 82" {...strokeProps} />
+          <path d="M68 102 Q84 121 104 102" fill="#7f1d1d" opacity="0.9" />
+          <path d="M75 106 Q84 113 98 106" stroke="#fff7ed" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.85" />
         </g>
       );
     case 'proud':
       return (
         <g>
-          <circle cx="55" cy="73" r="3.7" fill={eye} />
-          <circle cx="81" cy="73" r="3.7" fill={eye} />
-          <path d="M56 88 Q68 96 82 88" {...strokeProps} />
-          <path d="M49 67 L61 65 M75 65 L88 67" {...strokeProps} strokeWidth={2.4} opacity="0.8" />
+          <circle cx="66" cy="83" r="4.8" fill={eye} />
+          <circle cx="102" cy="83" r="4.8" fill={eye} />
+          <path d="M70 105 Q84 115 101 105" {...strokeProps} />
+          <path d="M58 75 L76 72 M93 72 L112 75" {...strokeProps} strokeWidth={3} opacity="0.8" />
         </g>
       );
     case 'curious':
       return (
         <g>
-          <circle cx="54" cy="74" r="4" fill={eye} />
-          <circle cx="82" cy="72" r="5" fill={eye} />
-          <path d="M59 89 Q68 92 77 89" {...strokeProps} />
+          <circle cx="65" cy="84" r="5" fill={eye} />
+          <circle cx="103" cy="81" r="6.2" fill={eye} />
+          <path d="M74 106 Q84 110 97 106" {...strokeProps} />
         </g>
       );
     case 'dizzy':
       return (
         <g>
-          <path d="M50 70 L61 79 M61 70 L50 79 M76 70 L87 79 M87 70 L76 79" {...strokeProps} strokeWidth={2.6} />
-          <path d="M60 89 Q68 92 76 89" {...strokeProps} />
+          <path d="M58 78 L75 90 M75 78 L58 90 M94 78 L111 90 M111 78 L94 90" {...strokeProps} strokeWidth={3.2} />
+          <path d="M75 107 Q84 111 95 107" {...strokeProps} />
         </g>
       );
     case 'happy':
     default:
       return (
         <g>
-          <circle cx="55" cy="73" r="4" fill={eye} />
-          <circle cx="81" cy="73" r="4" fill={eye} />
-          <path d="M57 88 Q68 97 81 88" {...strokeProps} />
+          <circle cx="66" cy="83" r="5.2" fill={eye} />
+          <circle cx="102" cy="83" r="5.2" fill={eye} />
+          <path d="M70 105 Q84 116 101 105" {...strokeProps} />
         </g>
       );
   }
 }
 
-function Arms({ model }: { model: SpeciesModel }) {
-  const common = {
-    fill: 'none',
-    stroke: model.skinDark,
-    strokeWidth: 8,
-    strokeLinecap: 'round' as const,
-  };
-
-  if (model.pose === 'stoic') {
-    return (
-      <g className="buddy-model-arms">
-        <path d="M43 91 C31 91 27 82 31 74" {...common} />
-        <path d="M91 91 C103 91 107 82 103 74" {...common} />
-      </g>
-    );
-  }
-
-  if (model.pose === 'proud') {
-    return (
-      <g className="buddy-model-arms">
-        <path d="M43 90 C31 82 30 70 38 65" {...common} />
-        <path d="M91 90 C103 82 104 70 96 65" {...common} />
-      </g>
-    );
-  }
-
-  if (model.pose === 'curious') {
-    return (
-      <g className="buddy-model-arms">
-        <path d="M43 91 C32 94 28 105 35 111" {...common} />
-        <path d="M91 88 C104 82 107 68 99 61" {...common} />
-      </g>
-    );
-  }
+function Wings({ model }: { model: SpeciesModel }) {
+  const left =
+    model.posture === 'shy'
+      ? 'M47 99 C24 100 17 119 33 131 C46 141 57 126 57 111'
+      : model.posture === 'calm'
+        ? 'M47 96 C25 99 18 114 29 126 C42 139 55 124 57 110'
+        : 'M48 94 C23 84 12 98 20 115 C29 134 52 124 58 109';
+  const right =
+    model.posture === 'shy'
+      ? 'M113 99 C136 100 143 119 127 131 C114 141 103 126 103 111'
+      : model.posture === 'calm'
+        ? 'M113 96 C135 99 142 114 131 126 C118 139 105 124 103 110'
+        : 'M112 94 C137 84 148 98 140 115 C131 134 108 124 102 109';
 
   return (
-    <g className="buddy-model-arms">
-      <path d="M44 89 C31 84 25 73 30 62" {...common} />
-      <path d="M90 89 C103 84 109 73 104 62" {...common} />
+    <g className="buddy-model-wings">
+      <path d={left} fill={model.wing} stroke={model.bodyDark} strokeWidth="3" />
+      <path d={right} fill={model.wing} stroke={model.bodyDark} strokeWidth="3" />
+      <path d="M35 105 C42 110 48 115 53 122" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" opacity="0.35" fill="none" />
+      <path d="M125 105 C118 110 112 115 107 122" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" opacity="0.35" fill="none" />
     </g>
   );
 }
@@ -345,41 +327,45 @@ export default function BuddyCharacterModel({
 }: BuddyCharacterModelProps) {
   const model = modelFor(speciesId);
   const dimensions = variant === 'companion' ? COMPANION_SIZE_CLASS[size] : SIZE_CLASS[size];
-  const gradientId = `buddyBody-${speciesId}`;
-  const highlightId = `buddyHighlight-${speciesId}`;
+  const svgId = useId().replace(/:/g, '');
+  const bodyGradientId = `buddyBody-${speciesId}-${svgId}`;
+  const bellyGradientId = `buddyBelly-${speciesId}-${svgId}`;
 
   return (
     <svg
-      viewBox="0 0 132 150"
+      viewBox="0 0 160 180"
       className={`buddy-character-model ${dimensions}`}
       role="img"
       aria-label="Plant Buddy character"
     >
       <defs>
-        <linearGradient id={gradientId} x1="38" y1="52" x2="92" y2="127" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor={model.skin} />
-          <stop offset="1" stopColor={model.skinDark} />
+        <linearGradient id={bodyGradientId} x1="34" y1="40" x2="118" y2="158" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor={model.body} />
+          <stop offset="1" stopColor={model.bodyDark} />
         </linearGradient>
-        <radialGradient id={highlightId} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(55 63) rotate(55) scale(70 44)">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
-          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
+        <radialGradient id={bellyGradientId} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(78 115) rotate(70) scale(44 35)">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.95" />
+          <stop offset="1" stopColor={model.belly} />
         </radialGradient>
       </defs>
 
-      <ellipse cx="66" cy="139" rx="34" ry="7" fill="#064e3b" opacity="0.14" />
-      <Crown model={model} />
-      <Arms model={model} />
-      <path d="M56 116 C50 126 47 134 41 140" stroke={model.skinDark} strokeWidth="8" strokeLinecap="round" fill="none" className="buddy-model-leg buddy-model-leg-left" />
-      <path d="M77 116 C84 126 88 134 95 140" stroke={model.skinDark} strokeWidth="8" strokeLinecap="round" fill="none" className="buddy-model-leg buddy-model-leg-right" />
-      <path d="M40 79 C40 51 55 43 66 43 C82 43 96 54 96 82 C96 112 84 128 67 128 C50 128 40 110 40 79 Z" fill={`url(#${gradientId})`} />
-      <path d="M44 78 C45 56 57 49 67 49 C80 49 91 59 91 82 C91 106 81 121 68 121 C54 121 44 106 44 78 Z" fill={`url(#${highlightId})`} />
-      <path d="M48 61 C58 52 76 51 87 64" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" opacity="0.35" fill="none" />
-      <circle cx="48" cy="85" r="5" fill={model.cheek} opacity="0.52" />
-      <circle cx="90" cy="85" r="5" fill={model.cheek} opacity="0.52" />
+      <ellipse cx="80" cy="168" rx="43" ry="8" fill="#064e3b" opacity="0.16" />
+      <Crest model={model} />
+      <Wings model={model} />
+
+      <path d="M62 144 C54 152 51 160 48 168" stroke={model.bodyDark} strokeWidth="9" strokeLinecap="round" fill="none" className="buddy-model-leg buddy-model-leg-left" />
+      <path d="M98 144 C106 152 109 160 112 168" stroke={model.bodyDark} strokeWidth="9" strokeLinecap="round" fill="none" className="buddy-model-leg buddy-model-leg-right" />
+      <ellipse cx="45" cy="168" rx="14" ry="6" fill={model.accent} stroke={model.bodyDark} strokeWidth="2" />
+      <ellipse cx="115" cy="168" rx="14" ry="6" fill={model.accent} stroke={model.bodyDark} strokeWidth="2" />
+
+      <path d="M37 104 C37 58 60 42 82 42 C111 42 134 65 134 105 C134 148 112 166 82 166 C52 166 37 142 37 104 Z" fill={`url(#${bodyGradientId})`} stroke={model.bodyDark} strokeWidth="3" />
+      <ellipse cx="82" cy="124" rx="34" ry="39" fill={`url(#${bellyGradientId})`} opacity="0.95" />
+      <path d="M50 72 C61 56 99 55 116 74" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" opacity="0.38" fill="none" />
+      <circle cx="54" cy="99" r="7" fill={model.cheek} opacity="0.72" />
+      <circle cx="116" cy="99" r="7" fill={model.cheek} opacity="0.72" />
       <Face expression={expression} model={model} />
-      <path d="M43 111 C56 123 81 123 94 111" stroke="#064e3b" strokeWidth="2.2" strokeLinecap="round" fill="none" opacity="0.18" />
-      <path d="M31 62 C28 57 29 52 34 49" stroke={model.leafDark} strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.45" />
-      <path d="M102 62 C106 57 105 52 100 49" stroke={model.leafDark} strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.45" />
+      <path d="M80 91 L73 100 Q80 106 87 100 Z" fill={model.accent} stroke="#7c4a12" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M60 137 C73 148 99 148 114 137" stroke="#064e3b" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.16" />
     </svg>
   );
 }

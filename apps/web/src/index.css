@@ -79,14 +79,14 @@ body {
   filter: drop-shadow(0 12px 14px rgb(6 78 59 / 0.16));
 }
 
-.buddy-model-crown {
+.buddy-model-crest {
   transform-origin: 66px 54px;
-  animation: buddy-crown-breathe 3.6s ease-in-out infinite;
+  animation: buddy-crest-breathe 3.6s ease-in-out infinite;
 }
 
-.buddy-model-arms {
-  transform-origin: 66px 92px;
-  animation: buddy-arm-sway 3.2s ease-in-out infinite;
+.buddy-model-wings {
+  transform-origin: 80px 105px;
+  animation: buddy-wing-sway 3.2s ease-in-out infinite;
 }
 
 .buddy-model-leg {
@@ -101,7 +101,7 @@ body {
   animation: buddy-step-right 0.6s ease-in-out infinite;
 }
 
-@keyframes buddy-crown-breathe {
+@keyframes buddy-crest-breathe {
   0%,
   100% {
     transform: rotate(-1.5deg) translateY(0);
@@ -111,7 +111,7 @@ body {
   }
 }
 
-@keyframes buddy-arm-sway {
+@keyframes buddy-wing-sway {
   0%,
   100% {
     transform: rotate(-1.5deg);
