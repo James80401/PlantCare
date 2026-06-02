@@ -73,6 +73,74 @@ body {
   animation-duration: 1.4s;
 }
 
+.buddy-character-model {
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 12px 14px rgb(6 78 59 / 0.16));
+}
+
+.buddy-model-crown {
+  transform-origin: 66px 54px;
+  animation: buddy-crown-breathe 3.6s ease-in-out infinite;
+}
+
+.buddy-model-arms {
+  transform-origin: 66px 92px;
+  animation: buddy-arm-sway 3.2s ease-in-out infinite;
+}
+
+.buddy-model-leg {
+  transform-origin: 66px 116px;
+}
+
+.buddy-travel-walk .buddy-model-leg-left {
+  animation: buddy-step-left 0.6s ease-in-out infinite;
+}
+
+.buddy-travel-walk .buddy-model-leg-right {
+  animation: buddy-step-right 0.6s ease-in-out infinite;
+}
+
+@keyframes buddy-crown-breathe {
+  0%,
+  100% {
+    transform: rotate(-1.5deg) translateY(0);
+  }
+  50% {
+    transform: rotate(1.5deg) translateY(-2px);
+  }
+}
+
+@keyframes buddy-arm-sway {
+  0%,
+  100% {
+    transform: rotate(-1.5deg);
+  }
+  50% {
+    transform: rotate(1.5deg);
+  }
+}
+
+@keyframes buddy-step-left {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+
+@keyframes buddy-step-right {
+  0%,
+  100% {
+    transform: rotate(8deg);
+  }
+  50% {
+    transform: rotate(-5deg);
+  }
+}
+
 @keyframes buddy-trail-puff {
   0% {
     opacity: 0.7;

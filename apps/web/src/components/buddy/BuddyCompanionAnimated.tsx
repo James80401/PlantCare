@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { speciesEmoji } from './species';
 import { cssClassForAnimation, durationForAnimation } from './buddyCompanionAnimations';
 import type { BuddyAnimationDef } from './buddyAnimationCatalog';
 import { buildCompanionAnimationRotation } from './buddyCompanionRotation';
-import BuddyCuteFace from './BuddyCuteFace';
+import BuddyCharacterModel from './BuddyCharacterModel';
 import { faceExpressionForMood, type BuddyFaceExpression } from './buddyFaces';
 import type { BuddyPhraseContext } from './buddyPhraseContext';
 
@@ -14,13 +13,6 @@ interface BuddyCompanionAnimatedProps {
   mood?: string;
   phraseContext?: BuddyPhraseContext | null;
 }
-
-const sizeClass = {
-  sm: 'text-5xl',
-  md: 'text-7xl',
-};
-
-const faceSize = { sm: 'md' as const, md: 'lg' as const };
 
 const moodClass: Record<string, string> = {
   WILTING: 'opacity-80 saturate-50',
@@ -91,16 +83,12 @@ export default function BuddyCompanionAnimated({
   return (
     <div className="relative flex h-full w-full items-center justify-center" aria-hidden>
       <div className={`${motionClass} ${moodEffect} relative flex items-center justify-center`}>
-        <span className={`${sizeClass[size]} relative select-none`} role="img">
-          {speciesEmoji(speciesId)}
-          <span className="absolute bottom-[8%] left-1/2 -translate-x-1/2">
-            <BuddyCuteFace
-              expression={faceExpression}
-              speciesId={speciesId}
-              size={faceSize[size]}
-            />
-          </span>
-        </span>
+        <BuddyCharacterModel
+          speciesId={speciesId}
+          expression={faceExpression}
+          size={size === 'sm' ? 'md' : 'lg'}
+          variant="companion"
+        />
       </div>
 
       {!traveling && currentDef?.prop && (
