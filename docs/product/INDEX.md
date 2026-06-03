@@ -5,6 +5,7 @@
 | Document | Audience | Purpose |
 |----------|----------|---------|
 | [roadmap.md](roadmap.md) | PM / dev / release | Canonical consolidated roadmap and source-of-truth status |
+| [current-feature-implementation-plan.md](current-feature-implementation-plan.md) | PM / dev | Active implementation plan for improving shipped features |
 | [improvement-recommendations.md](improvement-recommendations.md) | PM / dev | Researched, prioritized improvement backlog |
 | [improvement-checklist.md](improvement-checklist.md) | PM / dev | Archived roadmap acceptance criteria and implementation ideas |
 | [uat-checklist.md](uat-checklist.md) | QA | Full UAT matrix |

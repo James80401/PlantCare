@@ -1,7 +1,7 @@
 # Plant Care roadmap
 
 > **Status:** canonical consolidated roadmap, last consolidated 2026-06-03  
-> **Navigation:** [Product INDEX](INDEX.md) · [Improvement recommendations](improvement-recommendations.md) · [UAT checklist](uat-checklist.md) · [Production sign-off](../operations/production-signoff.md)
+> **Navigation:** [Product INDEX](INDEX.md) · [Current feature implementation plan](current-feature-implementation-plan.md) · [Improvement recommendations](improvement-recommendations.md) · [UAT checklist](uat-checklist.md) · [Production sign-off](../operations/production-signoff.md)
 
 This is the single roadmap source of truth for Plant Care. Older roadmap,
 checklist, release, and Buddy phase documents remain useful as acceptance
@@ -43,6 +43,10 @@ next time that area is touched.
 | PRIVATE-DEPLOY | Complete private HTTPS deployment path if this app is not public yet | Now, if applicable | Domain, VPS, DNS, Docker stack, Caddy, admin approval gate, and sign-off. See [private-online-setup.md](../operations/private-online-setup.md). |
 
 ## Next: core product and quality
+
+Use [current-feature-implementation-plan.md](current-feature-implementation-plan.md)
+for concrete slices, paths, and acceptance checks for improving existing shipped
+features.
 
 | ID | Item | Status | Scope |
 |----|------|--------|-------|

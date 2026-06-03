@@ -235,6 +235,7 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 |------|
 | **INDEX.md** |
 | roadmap.md |
+| current-feature-implementation-plan.md |
 | improvement-recommendations.md |
 | improvement-checklist.md |
 | uat-checklist.md |
