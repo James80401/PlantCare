@@ -15,12 +15,12 @@ import {
 import { isBuddyCompanionMode, type BuddyCompanionMode } from '../../hooks/buddy/types';
 
 const ACTIONS = [
-  { to: '/garden/buddy', label: 'Home', emoji: 'Home' },
-  { to: '/garden/buddy/activities', label: 'Activities', emoji: 'Act' },
-  { to: '/garden/buddy/quests', label: 'Quests', emoji: 'Goal' },
-  { to: '/garden/buddy/journey', label: 'Journey', emoji: 'Map' },
-  { to: '/garden/buddy/town', label: 'Town', emoji: 'Town' },
-  { to: '/garden/buddy/style', label: 'Style', emoji: 'Style' },
+  { to: '/garden/buddy', label: 'Home', Icon: IconHome },
+  { to: '/garden/buddy/activities', label: 'Activities', Icon: IconActivities },
+  { to: '/garden/buddy/quests', label: 'Quests', Icon: IconQuests },
+  { to: '/garden/buddy/journey', label: 'Journey', Icon: IconJourney },
+  { to: '/garden/buddy/town', label: 'Town', Icon: IconTown },
+  { to: '/garden/buddy/style', label: 'Style', Icon: IconStyle },
 ] as const;
 
 const PHRASE_ROTATE_MS = 9_000;
@@ -59,6 +59,60 @@ function IconClose() {
   return (
     <svg {...iconBase} aria-hidden>
       <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+// Quick-nav icons for the companion menu. 20px stroke icons, consistent with the
+// Icon* controls above. Replaces the earlier text placeholders ("Act", "Goal", …).
+const navIconBase = { ...iconBase, width: 20, height: 20 };
+
+function IconHome() {
+  return (
+    <svg {...navIconBase} aria-hidden>
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V21h14V9.5" />
+    </svg>
+  );
+}
+function IconActivities() {
+  return (
+    <svg {...navIconBase} aria-hidden>
+      <path d="M13 3 5 13h6l-2 8 8-11h-6z" />
+    </svg>
+  );
+}
+function IconQuests() {
+  return (
+    <svg {...navIconBase} aria-hidden>
+      <path d="M5 21V4M5 4h11l-2 4 2 4H5" />
+    </svg>
+  );
+}
+function IconJourney() {
+  return (
+    <svg {...navIconBase} aria-hidden>
+      <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z" />
+      <path d="M9 4v14M15 6v14" />
+    </svg>
+  );
+}
+function IconTown() {
+  return (
+    <svg {...navIconBase} aria-hidden>
+      <path d="M2 21h20" />
+      <path d="M4 21V9h6v12M14 21V5h6v16" />
+      <path d="M10 21v-3h4v3" />
+    </svg>
+  );
+}
+function IconStyle() {
+  return (
+    <svg {...navIconBase} aria-hidden>
+      <path d="M12 3a9 9 0 1 0 0 18 1.7 1.7 0 0 0 1.7-1.7c0-.95.77-1.7 1.7-1.7H17a4 4 0 0 0 4-4 9 9 0 0 0-9-8.6z" />
+      <circle cx="7.5" cy="11.5" r="0.6" />
+      <circle cx="10" cy="7.8" r="0.6" />
+      <circle cx="14.5" cy="8" r="0.6" />
     </svg>
   );
 }
@@ -348,7 +402,7 @@ export default function BuddyFloatingCompanion() {
                   className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full p-2 text-gray-500 hover:bg-white/80 hover:text-emerald-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                   aria-label="Close buddy menu"
                 >
-                  x
+                  <IconClose />
                 </button>
               </div>
 
@@ -394,15 +448,15 @@ export default function BuddyFloatingCompanion() {
             )}
 
             <nav className="grid grid-cols-3 gap-1 border-t border-emerald-50 p-2">
-              {ACTIONS.map(({ to, label, emoji }) => (
+              {ACTIONS.map(({ to, label, Icon }) => (
                 <Link
                   key={to}
                   to={to}
                   onClick={() => setExpanded(false)}
-                  className="flex flex-col items-center rounded-2xl px-1 py-2.5 text-center text-xs font-semibold text-emerald-900 transition hover:bg-emerald-50"
+                  className="flex flex-col items-center gap-1 rounded-2xl px-1 py-2.5 text-center text-xs font-semibold text-emerald-900 transition hover:bg-emerald-50"
                 >
-                  <span className="text-lg" aria-hidden>
-                    {emoji}
+                  <span className="text-emerald-700" aria-hidden>
+                    <Icon />
                   </span>
                   {label}
                 </Link>

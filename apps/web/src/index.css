@@ -281,6 +281,17 @@ body {
   .task-row--skipping {
     animation: none;
   }
+
+  /* Floating Buddy companion is always on screen — silence its looping and
+     entrance animations (the buddy-act-* set is handled in buddy-animations.css). */
+  .buddy-trail-dot,
+  .buddy-speech-in,
+  .buddy-panel-in,
+  .buddy-chip-expanded,
+  .buddy-travel-stage,
+  .buddy-travel-stage .buddy-travel-walk {
+    animation: none !important;
+  }
 }
 
 .task-row--completing {
