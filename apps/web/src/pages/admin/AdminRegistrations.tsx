@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { adminApi, usersApi } from '../../services/api';
+import type { BuddyState } from '../../hooks/buddy/types';
+import type { ShopItem, ShopItemCategory } from '../../hooks/buddy/shopTypes';
 
 type ManagedUser = {
   id: string;
@@ -124,12 +126,53 @@ type AdminAiWindow = {
   byStatus: { status: string; count: number; promptChars: number; imageCount: number }[];
 };
 
+type AdminBuddyOverview = {
+  maxLevel: number;
+  catalog: AdminBuddyItem[];
+  buddies: AdminBuddyRow[];
+};
+
+type AdminBuddyItem = ShopItem & { levelRequired: number };
+
+type AdminBuddyRow = {
+  user: {
+    id: string;
+    email: string;
+    name?: string | null;
+    accountApprovalStatus: string;
+  };
+  buddy: BuddyState;
+  inventory: {
+    itemId: string;
+    acquiredAt: string;
+    acquireMethod: string;
+    item: AdminBuddyItem;
+  }[];
+};
+
+const SHOP_CATEGORY_ORDER: ShopItemCategory[] = [
+  'POT_SKIN',
+  'BACKGROUND',
+  'FURNITURE',
+  'HAT',
+  'TOP',
+  'GLASSES',
+  'HELD_ITEM',
+  'BODY_COLOR',
+  'BODY_PATTERN',
+  'SHOES',
+  'COMPANION',
+  'WINGS',
+];
+
 export default function AdminRegistrations() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [observability, setObservability] = useState<AdminObservability | null>(null);
+  const [buddyOverview, setBuddyOverview] = useState<AdminBuddyOverview | null>(null);
   const [auditSummary, setAuditSummary] = useState<AdminAuditSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
+  const [buddyLevelDrafts, setBuddyLevelDrafts] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -150,16 +193,25 @@ export default function AdminRegistrations() {
     const { data: me } = await usersApi.me();
     setIsAdmin(Boolean(me.isAdmin));
     if (!me.isAdmin) return;
-    const [usersRes, summaryRes, logsRes, observabilityRes] = await Promise.all([
+    const [usersRes, summaryRes, logsRes, observabilityRes, buddyRes] = await Promise.all([
       adminApi.listUsers(),
       adminApi.auditSummary(),
       adminApi.auditLogs(75),
       adminApi.observability(),
+      adminApi.buddyOverview(),
     ]);
     setUsers(usersRes.data);
     setAuditSummary(summaryRes.data);
     setAuditLogs(logsRes.data);
     setObservability(observabilityRes.data);
+    setBuddyOverview(buddyRes.data);
+    setBuddyLevelDrafts((current) => {
+      const next = { ...current };
+      for (const row of buddyRes.data.buddies) {
+        if (next[row.buddy.id] === undefined) next[row.buddy.id] = String(row.buddy.level);
+      }
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -221,6 +273,37 @@ export default function AdminRegistrations() {
     }
   };
 
+  const setBuddyLevel = async (buddyId: string, rawLevel?: string) => {
+    const maxLevel = buddyOverview?.maxLevel ?? 15;
+    const parsed = Number(rawLevel ?? buddyLevelDrafts[buddyId]);
+    const level = Math.max(1, Math.min(maxLevel, Number.isFinite(parsed) ? Math.round(parsed) : 1));
+    setBusyId(`buddy-level-${buddyId}`);
+    setError('');
+    try {
+      await adminApi.setBuddyLevel(buddyId, level);
+      setBuddyLevelDrafts((drafts) => ({ ...drafts, [buddyId]: String(level) }));
+      await load();
+    } catch {
+      setError('Buddy level update failed.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const toggleBuddyItem = async (buddyId: string, itemId: string, owned: boolean) => {
+    setBusyId(`buddy-item-${buddyId}-${itemId}`);
+    setError('');
+    try {
+      if (owned) await adminApi.lockBuddyItem(buddyId, itemId);
+      else await adminApi.unlockBuddyItem(buddyId, itemId);
+      await load();
+    } catch {
+      setError(owned ? 'Buddy item lock failed.' : 'Buddy item unlock failed.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (isAdmin === null) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
@@ -277,6 +360,13 @@ export default function AdminRegistrations() {
               description: 'Push tokens and recent delivery results.',
               metric: observability ? String(observability.notifications.activeDeviceTokens) : '-',
               metricLabel: 'tokens',
+            },
+            {
+              href: '#buddy-lab',
+              title: 'Buddy lab',
+              description: 'Level and unlock controls for Buddy testing.',
+              metric: buddyOverview ? String(buddyOverview.buddies.length) : '-',
+              metricLabel: 'buddies',
             },
             {
               href: '#audit',
@@ -441,6 +531,117 @@ export default function AdminRegistrations() {
                 ))}
               </div>
             ) : null}
+          </section>
+        ) : null}
+        {buddyOverview ? (
+          <section id="buddy-lab" className="scroll-mt-24 rounded-lg bg-white p-4 shadow-sm" aria-labelledby="buddy-lab-heading">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 id="buddy-lab-heading" className="text-lg font-semibold text-gray-900">
+                  Buddy lab
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Admin-only controls for testing levels, shop items, homes, backgrounds, and furniture.
+                </p>
+              </div>
+              <Button type="button" variant="secondary" onClick={() => load()}>
+                Refresh
+              </Button>
+            </div>
+            {buddyOverview.buddies.length === 0 ? (
+              <p className="mt-4 rounded-2xl bg-emerald-50 p-6 text-gray-600">
+                No buddies have been created yet.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-4">
+                {buddyOverview.buddies.map((row) => {
+                  const ownedIds = new Set(row.inventory.map((item) => item.itemId));
+                  const draft = buddyLevelDrafts[row.buddy.id] ?? String(row.buddy.level);
+                  return (
+                    <div key={row.buddy.id} className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                            {row.user.email}
+                          </p>
+                          <h3 className="mt-1 text-xl font-bold text-emerald-950">
+                            {row.buddy.name}
+                          </h3>
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                            <span className="rounded-full bg-white px-2 py-1 font-semibold text-emerald-900">
+                              Level {row.buddy.level}
+                            </span>
+                            <span className="rounded-full bg-white px-2 py-1 font-semibold text-emerald-900">
+                              {row.buddy.experiencePoints} XP
+                            </span>
+                            <span className="rounded-full bg-white px-2 py-1 font-semibold text-emerald-900">
+                              {row.inventory.length} items
+                            </span>
+                            <span className="rounded-full bg-white px-2 py-1 font-semibold text-emerald-900">
+                              {row.buddy.speciesId}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="rounded-xl border border-emerald-100 bg-white p-3">
+                          <label className="block text-xs font-semibold text-gray-700" htmlFor={`level-${row.buddy.id}`}>
+                            Set level
+                          </label>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              disabled={busyId === `buddy-level-${row.buddy.id}` || row.buddy.level <= 1}
+                              onClick={() => setBuddyLevel(row.buddy.id, String(row.buddy.level - 1))}
+                            >
+                              Level down
+                            </Button>
+                            <input
+                              id={`level-${row.buddy.id}`}
+                              type="number"
+                              min={1}
+                              max={buddyOverview.maxLevel}
+                              value={draft}
+                              onChange={(event) =>
+                                setBuddyLevelDrafts((drafts) => ({
+                                  ...drafts,
+                                  [row.buddy.id]: event.target.value,
+                                }))
+                              }
+                              className="h-10 w-20 rounded-lg border border-gray-200 px-2 text-sm font-semibold text-gray-900"
+                            />
+                            <Button
+                              type="button"
+                              disabled={busyId === `buddy-level-${row.buddy.id}`}
+                              onClick={() => setBuddyLevel(row.buddy.id)}
+                            >
+                              Apply
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              disabled={busyId === `buddy-level-${row.buddy.id}` || row.buddy.level >= buddyOverview.maxLevel}
+                              onClick={() => setBuddyLevel(row.buddy.id, String(row.buddy.level + 1))}
+                            >
+                              Level up
+                            </Button>
+                          </div>
+                          <p className="mt-2 text-xs text-gray-500">
+                            Max level {buddyOverview.maxLevel}. This sets XP to the selected level threshold.
+                          </p>
+                        </div>
+                      </div>
+                      <BuddyCatalogControls
+                        catalog={buddyOverview.catalog}
+                        ownedIds={ownedIds}
+                        buddyId={row.buddy.id}
+                        busyId={busyId}
+                        onToggle={toggleBuddyItem}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         ) : null}
         <section id="accounts" className="scroll-mt-24 rounded-lg bg-white p-4 shadow-sm" aria-labelledby="accounts-heading">
@@ -631,6 +832,83 @@ function AdminMetric({ label, value }: { label: string; value: number }) {
   );
 }
 
+function BuddyCatalogControls({
+  catalog,
+  ownedIds,
+  buddyId,
+  busyId,
+  onToggle,
+}: {
+  catalog: AdminBuddyItem[];
+  ownedIds: Set<string>;
+  buddyId: string;
+  busyId: string | null;
+  onToggle: (buddyId: string, itemId: string, owned: boolean) => void;
+}) {
+  const byCategory = new Map<ShopItemCategory, AdminBuddyItem[]>();
+  for (const item of catalog) {
+    const list = byCategory.get(item.category) ?? [];
+    list.push(item);
+    byCategory.set(item.category, list);
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      <div>
+        <p className="text-sm font-semibold text-emerald-950">Catalog ownership</p>
+        <p className="text-xs text-gray-600">
+          Unlocking bypasses shop cost, premium, season, species, and level gates for testing. Locking also unequips that item where needed.
+        </p>
+      </div>
+      {SHOP_CATEGORY_ORDER.filter((category) => byCategory.has(category)).map((category) => (
+        <details key={category} className="rounded-xl border border-emerald-100 bg-white p-3">
+          <summary className="cursor-pointer text-sm font-semibold text-gray-900">
+            {categoryLabel(category)} ({byCategory.get(category)?.length ?? 0})
+          </summary>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {(byCategory.get(category) ?? []).map((item) => {
+              const owned = ownedIds.has(item.id);
+              const busy = busyId === `buddy-item-${buddyId}-${item.id}`;
+              return (
+                <div key={item.id} className="rounded-lg border border-gray-100 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-900" title={item.name}>
+                        {item.name}
+                      </p>
+                      <p className="mt-0.5 truncate font-mono text-[0.68rem] text-gray-500" title={item.id}>
+                        {item.id}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-600">
+                        Tier {item.tier} · level {item.levelRequired}
+                        {item.requiresPremium ? ' · premium' : ''}
+                        {item.seasonalEventId ? ' · seasonal' : ''}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2 py-1 text-[0.65rem] font-bold ${owned ? 'bg-emerald-100 text-emerald-900' : 'bg-gray-100 text-gray-700'}`}>
+                      {owned ? 'Owned' : 'Locked'}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={owned ? 'secondary' : 'primary'}
+                    fullWidth
+                    disabled={busy}
+                    className="mt-3"
+                    onClick={() => onToggle(buddyId, item.id, owned)}
+                  >
+                    {owned ? 'Lock' : 'Unlock'}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
 function AdminSectionLinks({
   items,
 }: {
@@ -666,6 +944,14 @@ function AdminSectionLinks({
       ))}
     </nav>
   );
+}
+
+function categoryLabel(category: ShopItemCategory) {
+  return category
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function AdminPanel({ id, title, children }: { id?: string; title: string; children: ReactNode }) {

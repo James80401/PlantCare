@@ -5,6 +5,7 @@ import type {
   BuddyTrait,
   JourneyResponse,
 } from '../hooks/buddy/types';
+import type { ShopItem } from '../hooks/buddy/shopTypes';
 import { trackEvent } from '../utils/analytics';
 import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
 
@@ -89,6 +90,32 @@ export const adminApi = {
   auditSummary: () => api.get('/admin/audit/summary'),
   auditLogs: (limit = 100) => api.get('/admin/audit', { params: { limit } }),
   observability: () => api.get('/admin/observability'),
+  buddyOverview: () =>
+    api.get<{
+      maxLevel: number;
+      catalog: (ShopItem & { levelRequired: number })[];
+      buddies: {
+        user: {
+          id: string;
+          email: string;
+          name?: string | null;
+          accountApprovalStatus: string;
+        };
+        buddy: BuddyState;
+        inventory: {
+          itemId: string;
+          acquiredAt: string;
+          acquireMethod: string;
+          item: ShopItem & { levelRequired: number };
+        }[];
+      }[];
+    }>('/admin/buddy'),
+  setBuddyLevel: (buddyId: string, level: number) =>
+    api.patch(`/admin/buddy/${buddyId}/level`, { level }),
+  unlockBuddyItem: (buddyId: string, itemId: string) =>
+    api.post(`/admin/buddy/${buddyId}/items/${itemId}`),
+  lockBuddyItem: (buddyId: string, itemId: string) =>
+    api.delete(`/admin/buddy/${buddyId}/items/${itemId}`),
   approve: (userId: string) => api.post(`/admin/registrations/${userId}/approve`),
   reject: (userId: string) => api.post(`/admin/registrations/${userId}/reject`),
   disable: (userId: string) => api.post(`/admin/registrations/${userId}/disable`),
