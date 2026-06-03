@@ -1,6 +1,7 @@
 import { getAnimationById, type BuddyAnimationDef } from './buddyCompanionAnimations';
 import type { BuddyItemEffectKind } from './BuddyItemEffects';
 import type { BuddyTrait } from '../../hooks/buddy/types';
+import { personalityForTrait } from './BuddyPersonality';
 
 export type SceneActionId =
   | 'idle'
@@ -205,14 +206,23 @@ export function reactionForTrait(trait: BuddyTrait): PokeReaction {
 export function actionRotationForEffect(
   mode: 'home' | 'traveling',
   primaryEffect?: BuddyItemEffectKind,
+  trait?: BuddyTrait,
 ): SceneAction[] {
   const base = mode === 'traveling' ? TRAVEL_ACTIONS : HOME_ACTIONS;
-  if (!primaryEffect) return base;
-
-  const preferredIds =
+  const personality = personalityForTrait(trait);
+  const traitPreferredIds =
     mode === 'traveling'
+      ? personality.preferredTravelActions
+      : personality.preferredHomeActions;
+
+  const effectPreferredIds = primaryEffect
+    ? mode === 'traveling'
       ? TRAVEL_EFFECT_ACTIONS[primaryEffect]
-      : HOME_EFFECT_ACTIONS[primaryEffect];
+      : HOME_EFFECT_ACTIONS[primaryEffect]
+    : [];
+  const preferredIds = [...new Set([...traitPreferredIds, ...effectPreferredIds])];
+  if (preferredIds.length === 0) return base;
+
   const preferred = preferredIds
     .map((id) => base.find((action) => action.id === id))
     .filter(Boolean) as SceneAction[];

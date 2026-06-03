@@ -9,6 +9,7 @@ import { Card } from '../../components/ui/Card';
 import { PageHeader } from '../../components/ui/PageHeader';
 import SeasonalBanner from '../../components/buddy/SeasonalBanner';
 import BuddyTipsCard from '../../components/buddy/BuddyTipsCard';
+import { BuddyPersonalityCard } from '../../components/buddy/BuddyPersonality';
 import {
   BuddyItemEffectCard,
   equippedItemsFromBuddy,
@@ -73,6 +74,8 @@ export default function BuddyHome() {
       />
 
       {equippedEffectSummary ? <BuddyItemEffectCard summary={equippedEffectSummary} /> : null}
+
+      <BuddyPersonalityCard trait={buddy.trait} />
 
       <Card className="flex flex-col items-center gap-4">
         <div className="flex flex-wrap items-center justify-center gap-2">

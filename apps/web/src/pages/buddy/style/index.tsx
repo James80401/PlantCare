@@ -5,6 +5,7 @@ import {
   equippedItemsFromBuddy,
   summarizeItemEffects,
 } from '../../../components/buddy/BuddyItemEffects';
+import { BuddyPersonalityCard } from '../../../components/buddy/BuddyPersonality';
 import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { useBuddy } from '../../../hooks/buddy/useBuddy';
@@ -59,6 +60,8 @@ export default function BuddyStyleHub() {
       </Card>
 
       <BuddyHomeInfoCard itemId={equipped.potSkin} />
+
+      <BuddyPersonalityCard trait={buddy.trait} mode="style" compact />
 
       <BuddyItemEffectCard summary={equippedEffectSummary} />
 

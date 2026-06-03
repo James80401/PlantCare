@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import BuddyScene from '../../components/buddy/BuddyScene';
 import DiscoveryModal from '../../components/buddy/DiscoveryModal';
 import { JourneyWorldStatus } from '../../components/buddy/BuddyJourneyWorld';
+import { BuddyPersonalityCard, personalityForTrait } from '../../components/buddy/BuddyPersonality';
 import SunlightBar from '../../components/buddy/SunlightBar';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -33,6 +34,7 @@ export default function BuddyJourneyPage() {
   const [pageError, setPageError] = useState('');
 
   const traveling = isJourneyTraveling(journey);
+  const personality = buddy ? personalityForTrait(buddy.trait) : null;
   const completedWithDiscovery =
     journey?.completed && journey.discovery && journey.needsChoice && journey.choiceMade === null;
 
@@ -84,8 +86,8 @@ export default function BuddyJourneyPage() {
         title={traveling ? `${buddy.name} is exploring` : 'Send your buddy exploring'}
         description={
           traveling
-            ? `Exploring ${journey?.biomeName ?? 'the garden'} — complete tasks to shorten the trip.`
-            : 'Fill sunlight to 100, then send your buddy on a timed adventure for dewdrops and discoveries.'
+            ? `Exploring ${journey?.biomeName ?? 'the garden'} with ${personality?.choiceTone ?? 'their own style'} - complete tasks to shorten the trip.`
+            : `Fill sunlight to 100, then send your buddy on a timed adventure. ${personality?.journeyStyle ?? ''}`
         }
       />
 
@@ -116,6 +118,8 @@ export default function BuddyJourneyPage() {
           minutesSaved={journey.minutesSaved}
         />
       ) : null}
+
+      <BuddyPersonalityCard trait={buddy.trait} mode="journey" compact={traveling} />
 
       <Card className="space-y-4 py-5">
         {traveling && journey ? (

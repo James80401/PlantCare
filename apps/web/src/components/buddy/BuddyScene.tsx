@@ -11,6 +11,7 @@ import {
 import type { BuddyItemEffectSummary } from './BuddyItemEffects';
 import type { BuddyState, BuddyTrait } from '../../hooks/buddy/types';
 import type { ShopItem } from '../../hooks/buddy/shopTypes';
+import { personalityForTrait } from './BuddyPersonality';
 
 type SceneMode = 'home' | 'traveling';
 
@@ -73,7 +74,8 @@ export default function BuddyScene({
   const sceneKey = mode === 'traveling' ? buddy.currentBiome : buddy.terrariumBackground;
   const travelVisual = biomeVisual(sceneKey);
   const background = mode === 'traveling' ? travelVisual.sky : sceneBackground(sceneKey);
-  const actions = actionRotationForEffect(mode, itemEffects?.primary);
+  const personality = personalityForTrait(buddy.trait);
+  const actions = actionRotationForEffect(mode, itemEffects?.primary, buddy.trait);
   const scheduledAction = actions[actionIndex % actions.length];
   const activeAction = pokeReaction
     ? {
@@ -200,10 +202,16 @@ export default function BuddyScene({
           {mode === 'traveling' ? 'Out in the world' : 'At home'}
         </p>
         <p className="mt-0.5 text-lg font-bold text-emerald-950">{buddy.name}</p>
+        <p className="mt-0.5 text-[0.68rem] font-semibold uppercase tracking-wide text-emerald-800">
+          {personality.label} mood
+        </p>
         <p className="mt-1 text-xs text-gray-600">{activeAction.caption}</p>
       </div>
       <div className="absolute bottom-5 right-5 max-w-[46%] rounded-2xl bg-emerald-950/70 px-3 py-2 text-right text-xs font-semibold text-white shadow-sm backdrop-blur">
         Now: {activeAction.label}
+        <span className="mt-0.5 block text-[0.68rem] font-medium text-emerald-100">
+          {mode === 'traveling' ? personality.choiceTone : `${personality.label} reaction`}
+        </span>
         {itemEffects && itemEffects.totalScore > 0 ? (
           <span className="mt-0.5 block text-[0.68rem] font-medium text-emerald-100">
             Item boost: {itemEffects.effects[0]?.label}
