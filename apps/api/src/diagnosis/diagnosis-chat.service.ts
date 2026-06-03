@@ -31,6 +31,14 @@ type ChatRecoverySuggestionView = RecoveryTaskSuggestion & {
 
 const CHAT_HISTORY_TURN_LIMIT = 20;
 
+type GuidedFollowUpQuestion = {
+  id: string;
+  label: string;
+  prompt: string;
+  type: 'single' | 'text';
+  options?: string[];
+};
+
 @Injectable()
 export class DiagnosisChatService {
   constructor(
@@ -224,6 +232,125 @@ export class DiagnosisChatService {
     });
     if (!conv) throw new NotFoundException('Conversation not found');
     return conv;
+  }
+
+  async getGuidedContextQuestions(
+    userId: string,
+    plantId: string,
+    conversationId: string,
+  ): Promise<{
+    title: string;
+    summary: string;
+    questions: GuidedFollowUpQuestion[];
+  }> {
+    const plant = await this.getPlantForUser(userId, plantId);
+    const conversation = await this.prisma.diagnosisConversation.findFirst({
+      where: { id: conversationId, plantId, userId },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 12,
+          select: { role: true, content: true, imageUrl: true },
+        },
+      },
+    });
+    if (!conversation) throw new NotFoundException('Conversation not found');
+
+    const text = conversation.messages
+      .map((message) => message.content)
+      .join('\n')
+      .toLowerCase();
+    const hasPhoto = conversation.messages.some((message) => Boolean(message.imageUrl));
+    const questions: GuidedFollowUpQuestion[] = [];
+
+    if (!/\b(today|yesterday|days?|weeks?|months?|since|started|began)\b/i.test(text)) {
+      questions.push({
+        id: 'symptom_duration',
+        label: 'How long has this been happening?',
+        prompt: 'Symptom duration',
+        type: 'single',
+        options: ['Started today', '2-3 days', '4-7 days', '2+ weeks', 'Not sure'],
+      });
+    }
+
+    if (!/\b(water|watering|soak|dry|moist|wet|soil)\b/i.test(text)) {
+      questions.push({
+        id: 'soil_moisture',
+        label: 'What does the soil feel like right now?',
+        prompt: 'Current soil moisture',
+        type: 'single',
+        options: ['Very dry', 'Slightly dry', 'Evenly moist', 'Wet/soggy', 'Not checked'],
+      });
+    }
+
+    if (!/\b(repotted|moved|fertiliz|feed|spray|treated|pesticide|temperature|cold|heat|window|light)\b/i.test(text)) {
+      questions.push({
+        id: 'recent_change',
+        label: 'Did anything change recently?',
+        prompt: 'Recent care or environment changes',
+        type: 'single',
+        options: [
+          'No recent change',
+          'Watering changed',
+          'Light/location changed',
+          'Repotted',
+          'Fertilized or treated',
+          'Temperature changed',
+        ],
+      });
+    }
+
+    if (!/\b(pest|bug|mite|gnat|aphid|scale|webbing|sticky|underside)\b/i.test(text)) {
+      questions.push({
+        id: 'pests_visible',
+        label: 'Do you see pests or residue?',
+        prompt: 'Pests or residue',
+        type: 'single',
+        options: ['No pests visible', 'Tiny bugs', 'Webbing', 'Sticky residue', 'Spots on undersides', 'Not checked'],
+      });
+    }
+
+    if (!hasPhoto) {
+      questions.push({
+        id: 'photo_needed',
+        label: 'Would a closer photo help?',
+        prompt: 'Photo context',
+        type: 'single',
+        options: [
+          'I can add a close-up photo',
+          'I can add a whole-plant photo',
+          'No photo available right now',
+        ],
+      });
+    }
+
+    questions.push({
+      id: 'main_goal',
+      label: 'What outcome do you want from Dr. Plant?',
+      prompt: 'Preferred next step',
+      type: 'single',
+      options: [
+        'Tell me what is most likely wrong',
+        'Give me a recovery plan',
+        'Tell me what to watch for',
+        'Suggest tasks to add',
+      ],
+    });
+
+    if (questions.length < 4) {
+      questions.push({
+        id: 'extra_observations',
+        label: 'Anything else you noticed?',
+        prompt: 'Extra observations',
+        type: 'text',
+      });
+    }
+
+    return {
+      title: 'Missing context check',
+      summary: `Answer a few quick questions so Dr. Plant can tailor advice for ${plant.nickname || plant.species.commonName}.`,
+      questions: questions.slice(0, 6),
+    };
   }
 
   async createConversation(

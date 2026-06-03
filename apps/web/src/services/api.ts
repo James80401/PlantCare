@@ -352,6 +352,18 @@ export const diagnosisChatApi = {
       messageId,
       note,
     }),
+  getGuidedContextQuestions: (plantId: string, conversationId: string) =>
+    api.get<{
+      title: string;
+      summary: string;
+      questions: {
+        id: string;
+        label: string;
+        prompt: string;
+        type: 'single' | 'text';
+        options?: string[];
+      }[];
+    }>(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/context-questions`),
   applyRecoveryTasks: (
     plantId: string,
     conversationId: string,

@@ -35,12 +35,21 @@ interface ChatRecoverySuggestion {
   alreadyScheduled: boolean;
 }
 
+interface GuidedContextQuestion {
+  id: string;
+  label: string;
+  prompt: string;
+  type: 'single' | 'text';
+  options?: string[];
+}
+
+interface GuidedContextResponse {
+  title: string;
+  summary: string;
+  questions: GuidedContextQuestion[];
+}
+
 const GUIDED_FOLLOW_UPS = [
-  {
-    label: 'Missing context',
-    prompt:
-      'Ask me the most important missing context questions before you give more advice for this plant.',
-  },
   {
     label: '7-day recovery plan',
     prompt:
@@ -340,6 +349,20 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
           ) : null}
         </div>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {!activeId ? (
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() =>
+                sendPrompt(
+                  'Ask me the most important missing context questions before you give more advice for this plant.',
+                )
+              }
+              className="min-h-10 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-left text-xs font-semibold text-emerald-900 hover:border-emerald-200 hover:bg-emerald-100 disabled:opacity-50"
+            >
+              Missing context
+            </button>
+          ) : null}
           {GUIDED_FOLLOW_UPS.map((item) => (
             <button
               key={item.label}
@@ -352,6 +375,14 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
             </button>
           ))}
         </div>
+        {activeId ? (
+          <GuidedContextPanel
+            plantId={plantId}
+            conversationId={activeId}
+            disabled={loading}
+            onSubmit={(prompt) => sendWithPayload(prompt)}
+          />
+        ) : null}
       </div>
 
       <div className="h-72 sm:h-80 overflow-y-auto px-4 py-3 space-y-3 bg-[#f7f6f2]/50">
@@ -477,6 +508,187 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function GuidedContextPanel({
+  plantId,
+  conversationId,
+  disabled,
+  onSubmit,
+}: {
+  plantId: string;
+  conversationId: string;
+  disabled: boolean;
+  onSubmit: (prompt: string) => Promise<void>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [guide, setGuide] = useState<GuidedContextResponse | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { data } = await diagnosisChatApi.getGuidedContextQuestions(
+        plantId,
+        conversationId,
+      );
+      setGuide(data);
+      setAnswers((prev) => {
+        const next = { ...prev };
+        for (const question of data.questions) {
+          if (!(question.id in next)) next[question.id] = '';
+        }
+        return next;
+      });
+    } catch (err: unknown) {
+      setError(formatApiErrorMessage(err, 'Could not load follow-up questions.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleExpanded = () => {
+    const next = !expanded;
+    setExpanded(next);
+    if (next && !guide && !loading) {
+      void load();
+    }
+  };
+
+  const answered = guide?.questions.filter((question) => answers[question.id]?.trim()) ?? [];
+
+  const submit = async () => {
+    if (!guide || answered.length === 0) return;
+    setSubmitting(true);
+    setError('');
+    const lines = answered.map(
+      (question) => `- ${question.prompt}: ${answers[question.id].trim()}`,
+    );
+    try {
+      await onSubmit(
+        [
+          'Here is the missing context for this Dr. Plant follow-up:',
+          ...lines,
+          '',
+          'Please update your advice using this context. Point out what changed, what still seems uncertain, and the next best action.',
+        ].join('\n'),
+      );
+      setExpanded(false);
+    } catch (err: unknown) {
+      setError(formatApiErrorMessage(err, 'Could not send follow-up context.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 rounded-2xl border border-teal-100 bg-teal-50/70 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold text-teal-950">Missing context check</p>
+          <p className="mt-0.5 text-xs text-teal-800">
+            Answer quick prompts before asking for revised advice.
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={toggleExpanded}
+          className="min-h-9 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-teal-900 ring-1 ring-teal-200 hover:bg-teal-50 disabled:opacity-50"
+        >
+          {expanded ? 'Hide questions' : 'Answer questions'}
+        </button>
+      </div>
+
+      {expanded ? (
+        <div className="mt-3 space-y-3">
+          {loading ? (
+            <p className="text-xs text-teal-800">Finding the most useful questions...</p>
+          ) : null}
+
+          {guide ? (
+            <>
+              <p className="text-xs text-gray-600">{guide.summary}</p>
+              <div className="space-y-3">
+                {guide.questions.map((question) => (
+                  <fieldset
+                    key={question.id}
+                    className="rounded-2xl border border-teal-100 bg-white p-3"
+                  >
+                    <legend className="px-1 text-xs font-semibold text-emerald-950">
+                      {question.label}
+                    </legend>
+                    {question.type === 'single' ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {(question.options ?? []).map((option) => {
+                          const selected = answers[question.id] === option;
+                          return (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() =>
+                                setAnswers((prev) => ({
+                                  ...prev,
+                                  [question.id]: selected ? '' : option,
+                                }))
+                              }
+                              className={`min-h-9 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition ${
+                                selected
+                                  ? 'bg-emerald-800 text-white ring-emerald-800'
+                                  : 'bg-teal-50 text-teal-900 ring-teal-100 hover:bg-teal-100'
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <textarea
+                        value={answers[question.id] ?? ''}
+                        onChange={(event) =>
+                          setAnswers((prev) => ({
+                            ...prev,
+                            [question.id]: event.target.value,
+                          }))
+                        }
+                        rows={2}
+                        className="mt-2 w-full rounded-xl border border-teal-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                        placeholder="Add a short observation..."
+                      />
+                    )}
+                  </fieldset>
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          {error ? (
+            <p className="text-xs text-rose-700" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          {guide ? (
+            <button
+              type="button"
+              disabled={disabled || submitting || answered.length === 0}
+              onClick={submit}
+              className="min-h-10 rounded-full bg-teal-800 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-900 disabled:opacity-50"
+            >
+              {submitting
+                ? 'Sending...'
+                : `Send ${answered.length} answer${answered.length === 1 ? '' : 's'}`}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

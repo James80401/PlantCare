@@ -121,6 +121,53 @@ describe('DiagnosisChatService actions', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('returns guided missing-context questions for a thread', async () => {
+    const { service } = createService([
+      {
+        id: 'msg-1',
+        role: 'user',
+        content: 'The leaves are yellow and drooping.',
+        imageUrl: null,
+      },
+      {
+        id: 'msg-2',
+        role: 'assistant',
+        content: 'Let us narrow this down.',
+        imageUrl: null,
+      },
+    ]);
+
+    const result = await service.getGuidedContextQuestions('user-1', 'plant-1', 'conv-1');
+
+    expect(result.title).toBe('Missing context check');
+    expect(result.summary).toContain('Snake Plant');
+    expect(result.questions.map((question) => question.id)).toEqual(
+      expect.arrayContaining([
+        'symptom_duration',
+        'soil_moisture',
+        'recent_change',
+        'pests_visible',
+        'photo_needed',
+        'main_goal',
+      ]),
+    );
+  });
+
+  it('does not ask for a photo when the thread already has one', async () => {
+    const { service } = createService([
+      {
+        id: 'msg-1',
+        role: 'user',
+        content: 'The leaves started yellowing two days ago after watering.',
+        imageUrl: '/uploads/plant.jpg',
+      },
+    ]);
+
+    const result = await service.getGuidedContextQuestions('user-1', 'plant-1', 'conv-1');
+
+    expect(result.questions.map((question) => question.id)).not.toContain('photo_needed');
+  });
+
   it('returns recovery task suggestions from a chat reply', async () => {
     const { service, prisma } = createService([
       {

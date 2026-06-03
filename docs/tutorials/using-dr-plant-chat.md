@@ -21,6 +21,10 @@
 3. Optional: tap a **previous chat** pill to continue a thread.
 4. Tap **New chat** to start fresh.
 5. Type symptoms or questions, optionally **Attach photo**, then **Send**.
+6. In an active thread, open **Missing context check** to answer quick follow-up
+   questions before asking Dr. Plant to revise advice.
+7. Use reply actions to **Save to journal**, schedule a health check, or add
+   suggested recovery tasks.
 
 Direct link: `/garden/plants/:id/health#dr-plant`
 
@@ -31,7 +35,8 @@ Empty state prompts you to describe yellow leaves, spots, drooping, etc.
 1. List conversations: `GET /plants/:plantId/diagnose/conversations`
 2. Start new or continue thread
 3. Send message (+ optional image): `POST .../messages`
-4. Assistant reply uses species context + vision on images
+4. Load guided context questions: `GET .../:conversationId/actions/context-questions`
+5. Assistant reply uses species context + vision on images
 
 Implementation: `apps/web/src/components/DrPlantChat.tsx`
 

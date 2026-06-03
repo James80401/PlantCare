@@ -52,6 +52,15 @@ export class DiagnosisChatController {
     return this.chat.getConversation(user.sub, plantId, conversationId);
   }
 
+  @Get(':conversationId/actions/context-questions')
+  getGuidedContextQuestions(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('conversationId') conversationId: string,
+  ) {
+    return this.chat.getGuidedContextQuestions(user.sub, plantId, conversationId);
+  }
+
   @Post(':conversationId/messages')
   @UseInterceptors(FileInterceptor('image', imageUploadOptions))
   sendMessage(
