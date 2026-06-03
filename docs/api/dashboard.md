@@ -28,6 +28,7 @@ The web `Dashboard.tsx` also loads plants and tasks separately for interactions;
 | `careSummary` | Server-computed primary care recommendation: status, headline, body, action, focus plant, and counts |
 | `todayTasks` | Preview rows for task list UI |
 | `attention` | Plants/issues needing care (priority) |
+| `attentionSummary` | Server-computed headline, body, and counts for the attention section |
 | `weekPreview` | 7-day task counts |
 | `scheduleSuggestions` | Adaptive schedule proposals |
 | `engagement` | Score, streak, milestones context |
@@ -36,6 +37,9 @@ The web `Dashboard.tsx` also loads plants and tasks separately for interactions;
 recommended action. The broader `plants`, `pendingTasks`, `todayTasks`, and
 `healthStory` fields remain available for existing UI sections while the
 dashboard payload is slimmed over time.
+
+`attentionSummary` is the preferred lightweight source for attention section
+copy and counts. `attention` remains the detailed card list.
 
 Implementation: `dashboard.service.ts` + `dashboard-helpers.ts`.
 

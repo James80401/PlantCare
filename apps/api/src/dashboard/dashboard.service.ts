@@ -220,6 +220,13 @@ export class DashboardService {
       unresolvedDiagnoses,
       plants,
     );
+    const attention = buildAttention(
+      plants,
+      taskRows,
+      currentDate,
+      unresolvedDiagnoses,
+    );
+    const attentionSummary = this.buildAttentionSummary(attention);
 
     return {
       greeting: {
@@ -239,12 +246,8 @@ export class DashboardService {
       sharedPlants: mapSharedPlantsForUser(gardens, userId),
       pendingTasks: pendingTaskRows.map((t) => mapDashboardTask(t)),
       todayTasks: todayTaskRows.map((t) => mapDashboardTask(t)),
-      attention: buildAttention(
-        plants,
-        taskRows,
-        currentDate,
-        unresolvedDiagnoses,
-      ),
+      attention,
+      attentionSummary,
       weekPreview: buildWeekPreview(taskRows, currentDate),
       scheduleSuggestions,
       healthStory: {
@@ -292,6 +295,55 @@ export class DashboardService {
     if (alert) return `${where}: ${alert}`;
     if (plantLine) return plantLine;
     return `Weather loaded for ${where}`;
+  }
+
+  private buildAttentionSummary(
+    attention: Array<{ priority: 'urgent' | 'warning' | 'info'; plantName: string } | null>,
+  ) {
+    const items = attention.filter(
+      (item): item is { priority: 'urgent' | 'warning' | 'info'; plantName: string } =>
+        Boolean(item),
+    );
+    const urgent = items.filter((item) => item.priority === 'urgent').length;
+    const warning = items.filter((item) => item.priority === 'warning').length;
+    const info = items.filter((item) => item.priority === 'info').length;
+    const needsAttention = urgent + warning;
+
+    if (urgent > 0) {
+      return {
+        status: 'urgent',
+        headline: 'Needs attention',
+        body: `${urgent} plant${urgent === 1 ? '' : 's'} ${
+          urgent === 1 ? 'has' : 'have'
+        } overdue care.`,
+        counts: { urgent, warning, info, needsAttention, total: items.length },
+      };
+    }
+
+    if (warning > 0) {
+      return {
+        status: 'warning',
+        headline: 'Worth a closer look',
+        body: `${warning} plant${warning === 1 ? '' : 's'} may need care or health follow-up today.`,
+        counts: { urgent, warning, info, needsAttention, total: items.length },
+      };
+    }
+
+    if (info > 0) {
+      return {
+        status: 'info',
+        headline: 'A few ways to make this smarter',
+        body: 'Add photos, notes, or care feedback over time to improve your dashboard guidance.',
+        counts: { urgent, warning, info, needsAttention, total: items.length },
+      };
+    }
+
+    return {
+      status: 'calm',
+      headline: 'No major issues detected',
+      body: 'No plants need urgent attention from your current schedule.',
+      counts: { urgent, warning, info, needsAttention, total: 0 },
+    };
   }
 
   private buildCareSummary(

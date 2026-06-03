@@ -255,6 +255,7 @@ describe('DashboardService', () => {
     expect(scheduler.autoPostponeOutdoorWateringFromWeather).toHaveBeenCalledWith(userId);
     expect(Object.keys(result).sort()).toEqual([
       'attention',
+      'attentionSummary',
       'careSummary',
       'engagement',
       'greeting',
@@ -314,6 +315,18 @@ describe('DashboardService', () => {
         }),
       ]),
     );
+    expect(result.attentionSummary).toEqual({
+      status: 'urgent',
+      headline: 'Needs attention',
+      body: '1 plant has overdue care.',
+      counts: {
+        urgent: 1,
+        warning: 1,
+        info: 0,
+        needsAttention: 2,
+        total: 2,
+      },
+    });
     expect(result.healthStory).toMatchObject({
       openDiagnosisCount: 2,
       recentJournal: [
@@ -424,6 +437,17 @@ describe('DashboardService', () => {
         completedToday: 0,
         pending: 0,
         openDiagnoses: 0,
+      },
+    });
+    expect(result.attentionSummary).toMatchObject({
+      status: 'info',
+      headline: 'A few ways to make this smarter',
+      counts: {
+        urgent: 0,
+        warning: 0,
+        info: 1,
+        needsAttention: 0,
+        total: 1,
       },
     });
     expect(result.healthStory.openDiagnosisCount).toBe(0);

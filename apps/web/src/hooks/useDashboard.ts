@@ -48,6 +48,19 @@ export interface DashboardCareSummary {
   };
 }
 
+export interface DashboardAttentionSummary {
+  status: 'urgent' | 'warning' | 'info' | 'calm';
+  headline: string;
+  body: string;
+  counts: {
+    urgent: number;
+    warning: number;
+    info: number;
+    needsAttention: number;
+    total: number;
+  };
+}
+
 export interface DashboardHealthStory {
   openDiagnosisCount: number;
   recentJournal: Array<{
@@ -97,6 +110,7 @@ export interface DashboardPayload {
   pendingTasks: TaskItem[];
   todayTasks: TaskItem[];
   attention: DashboardAttention[];
+  attentionSummary?: DashboardAttentionSummary;
   weekPreview: DashboardWeekDay[];
   scheduleSuggestions: DashboardScheduleSuggestion[];
   healthStory?: DashboardHealthStory;

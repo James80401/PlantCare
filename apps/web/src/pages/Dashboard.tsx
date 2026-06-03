@@ -164,6 +164,7 @@ export default function Dashboard() {
   const metrics = dash?.metrics;
   const healthStory = dash?.healthStory;
   const careSummary = dash?.careSummary;
+  const attentionSummary = dash?.attentionSummary;
   const plantCount = metrics?.totalPlants ?? plants.length;
   const dueTodayCount = careSummary?.counts.dueToday ?? metrics?.dueToday ?? todayTasks.length;
   const overdueCount = careSummary?.counts.overdue ?? metrics?.overdue ?? overdueTasks.length;
@@ -239,7 +240,9 @@ export default function Dashboard() {
     [milestones],
   );
   const gardenScore = dash?.engagement.score ?? gardenWellness.score;
-  const needsAttentionCount = attentionItems.filter((item) => item.priority !== 'info').length;
+  const needsAttentionCount =
+    attentionSummary?.counts.needsAttention ??
+    attentionItems.filter((item) => item.priority !== 'info').length;
   const dashboardLoading = dashLoading;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
 
@@ -464,18 +467,20 @@ export default function Dashboard() {
         <aside className="space-y-4">
           <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
             <h2 className="text-base font-semibold text-emerald-950 font-display">
-              Needs attention
+              {attentionSummary?.headline ?? 'Needs attention'}
             </h2>
             <p className="mt-1 text-sm text-gray-600">
-              {needsAttentionCount
-                ? `${needsAttentionCount} plant${needsAttentionCount === 1 ? '' : 's'} may need a closer look.`
-                : 'No major issues detected from your current schedule.'}
+              {attentionSummary?.body ??
+                (needsAttentionCount
+                  ? `${needsAttentionCount} plant${needsAttentionCount === 1 ? '' : 's'} may need a closer look.`
+                  : 'No major issues detected from your current schedule.')}
             </p>
 
             <div className="mt-4 space-y-3">
               {attentionItems.length === 0 ? (
                 <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                  Add more photos, notes, and care feedback over time to make this smarter.
+                  {attentionSummary?.body ??
+                    'Add more photos, notes, and care feedback over time to make this smarter.'}
                 </p>
               ) : (
                 attentionItems.map((item) => (
