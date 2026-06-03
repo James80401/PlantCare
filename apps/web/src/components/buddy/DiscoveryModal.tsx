@@ -1,5 +1,6 @@
 import { Button } from '../ui/Button';
 import type { JourneyDiscovery } from '../../hooks/buddy/types';
+import { DiscoveryEncounterCard } from './BuddyJourneyWorld';
 
 interface DiscoveryModalProps {
   discovery: JourneyDiscovery;
@@ -27,8 +28,11 @@ export default function DiscoveryModal({
     >
       <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
         <h2 id="discovery-title" className="text-lg font-bold text-emerald-950">
-          Discovery!
+          Discovery encounter
         </h2>
+        <div className="mt-4">
+          <DiscoveryEncounterCard discovery={discovery} dewdropsEarned={dewdropsEarned} />
+        </div>
         <p className="mt-3 text-sm leading-relaxed text-gray-700">{discovery.story}</p>
         <p className="mt-3 text-sm font-semibold text-amber-800">+{dewdropsEarned} dewdrops 💧</p>
         {stageAdvanced && newGrowthStage ? (

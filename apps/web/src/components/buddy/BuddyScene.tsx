@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BuddyActor, PotHome, furnitureEmoji } from './BuddyItemVisuals';
+import { EncounterFigure, TravelLandmarks, biomeVisual } from './BuddyJourneyWorld';
 import type { BuddyState, BuddyTrait } from '../../hooks/buddy/types';
 import type { ShopItem } from '../../hooks/buddy/shopTypes';
 
@@ -50,9 +51,6 @@ const BACKGROUND_CLASS: Record<string, string> = {
   greenhouse: 'from-emerald-200 via-lime-100 to-teal-300',
   moonlit_porch: 'from-indigo-300 via-slate-200 to-emerald-300',
   rainy_greenhouse: 'from-slate-300 via-sky-100 to-emerald-300',
-  seed_garden: 'from-sky-200 via-lime-100 to-emerald-300',
-  forest_floor: 'from-emerald-800 via-lime-300 to-amber-200',
-  desert_oasis: 'from-orange-200 via-yellow-100 to-cyan-200',
 };
 
 function sceneBackground(key: string) {
@@ -88,6 +86,8 @@ export default function BuddyScene({
   const equipped = (buddy.equippedItems ?? {}) as Record<string, unknown>;
   const layout = (buddy.terrariumLayout ?? {}) as Record<string, unknown>;
   const sceneKey = mode === 'traveling' ? buddy.currentBiome : buddy.terrariumBackground;
+  const travelVisual = biomeVisual(sceneKey);
+  const background = mode === 'traveling' ? travelVisual.sky : sceneBackground(sceneKey);
   const moments = mode === 'traveling' ? TRAVEL_MOMENTS : HOME_MOMENTS;
   const moment = moments[momentIndex % moments.length];
   const placedFurniture = useMemo(() => displayFurniture(layout, furniture), [layout, furniture]);
@@ -115,9 +115,7 @@ export default function BuddyScene({
 
   return (
     <section
-      className={`relative isolate overflow-hidden rounded-[2rem] border border-emerald-100 bg-gradient-to-b ${sceneBackground(
-        sceneKey,
-      )} ${heightClass} shadow-xl shadow-emerald-950/10`}
+      className={`relative isolate overflow-hidden rounded-[2rem] border border-emerald-100 bg-gradient-to-b ${background} ${heightClass} shadow-xl shadow-emerald-950/10`}
       aria-label={mode === 'traveling' ? 'Buddy travel scene' : 'Buddy home scene'}
     >
       <div className="absolute inset-x-0 top-0 h-24 bg-white/30" />
@@ -132,6 +130,7 @@ export default function BuddyScene({
 
       {mode === 'traveling' ? (
         <>
+          <TravelLandmarks biomeId={sceneKey} />
           <div className="absolute right-8 top-8 rounded-full bg-white/80 px-3 py-1 text-sm font-bold text-emerald-950 shadow-sm">
             <span aria-hidden>{biomeEmoji ?? '🌿'} </span>
             {biomeName ?? 'Exploring'}
@@ -147,6 +146,14 @@ export default function BuddyScene({
               {remainingLabel}
             </p>
           ) : null}
+          <EncounterFigure
+            biomeId={sceneKey}
+            size={compact ? 'sm' : 'md'}
+            className="absolute bottom-16 right-8 z-20"
+          />
+          <div className="absolute left-6 bottom-16 rounded-2xl bg-white/75 px-3 py-2 text-xs font-semibold text-emerald-950 shadow-sm">
+            {travelVisual.landmark}
+          </div>
         </>
       ) : (
         <>

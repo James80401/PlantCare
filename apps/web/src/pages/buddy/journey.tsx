@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import BuddyScene from '../../components/buddy/BuddyScene';
 import DiscoveryModal from '../../components/buddy/DiscoveryModal';
+import { JourneyWorldStatus } from '../../components/buddy/BuddyJourneyWorld';
 import SunlightBar from '../../components/buddy/SunlightBar';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -105,13 +106,18 @@ export default function BuddyJourneyPage() {
         </Card>
       )}
 
+      {traveling && journey ? (
+        <JourneyWorldStatus
+          biomeId={journey.biomeId}
+          biomeName={journey.biomeName}
+          tasksCompleted={journey.tasksCompletedDuring}
+          minutesSaved={journey.minutesSaved}
+        />
+      ) : null}
+
       <Card className="space-y-4 py-5">
         {traveling && journey ? (
           <>
-            <p className="text-center text-2xl" aria-hidden>
-              {journey.biomeEmoji}
-            </p>
-            <p className="text-center text-sm font-medium text-emerald-900">{journey.biomeName}</p>
             <div className="h-2 overflow-hidden rounded-full bg-emerald-100">
               <div
                 className="h-full rounded-full bg-emerald-600 transition-all duration-700"
