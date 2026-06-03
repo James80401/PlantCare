@@ -1,6 +1,6 @@
 # Deployment (quick reference)
 
-> **Navigation:** [operations/deployment.md](operations/deployment.md) · [operations/ci.md](operations/ci.md) · [Master INDEX](INDEX.md) · [ReadMe](../ReadMe.md)
+> **Navigation:** [operations/deployment.md](operations/deployment.md) · [operations/ci.md](operations/ci.md) · [Master INDEX](INDEX.md) · [README](../README.md)
 
 This file is a **short checklist**. Full procedures live in [operations/deployment.md](operations/deployment.md).
 

@@ -1,6 +1,6 @@
 # Plant Care — Master Index (Tutorial & Instructions)
 
-> **Navigation:** [ReadMe](../ReadMe.md) · [Application overview](application-overview.md) · [Documentation map](meta/documentation-map.md) · [For AI agents](meta/for-ai-agents.md) · [Glossary](meta/glossary.md)
+> **Navigation:** [README](../README.md) · [Application overview](application-overview.md) · [Documentation map](meta/documentation-map.md) · [For AI agents](meta/for-ai-agents.md) · [Glossary](meta/glossary.md)
 
 This document is the **primary tutorial and instructions hub** for Plant Care. Use the tables below to jump to any layer; each linked folder has its own **INDEX.md** with deeper links.
 
@@ -94,7 +94,7 @@ This document is the **primary tutorial and instructions hub** for Plant Care. U
 | **Care guides** | [care-guides/INDEX.md](care-guides/INDEX.md) | Templates, personalization, assets |
 | **Integrations** | [integrations/INDEX.md](integrations/INDEX.md) | OpenAI, SMTP, Stripe, PlantNet, … |
 | **Operations** | [operations/INDEX.md](operations/INDEX.md) | Deploy, CI, scripts, testing |
-| **Product** | [product/improvement-checklist.md](product/improvement-checklist.md) | Roadmap checklist for UX, care intelligence, data, and engagement improvements |
+| **Product** | [product/roadmap.md](product/roadmap.md) | Canonical roadmap, release priorities, and backlog lanes |
 | **Reference** | [reference/INDEX.md](reference/INDEX.md) | Scripts, env table, routes, file tree |
 | **Meta** | [meta/INDEX.md](meta/INDEX.md) | Doc map, AI guide, glossary |
 
@@ -130,7 +130,7 @@ This document is the **primary tutorial and instructions hub** for Plant Care. U
 
 ```
 PlantCare/
-├── ReadMe.md                 ← Project entry
+├── README.md                 ← Project entry
 ├── docs/INDEX.md             ← You are here
 ├── docs/guides/              ← Complete guides (every aspect)
 ├── apps/

@@ -27,8 +27,9 @@ Doc: [user-guide/subscription.md](../user-guide/subscription.md), [reference/sha
 |-----|----------|
 | [uat-checklist.md](../product/uat-checklist.md) | Full UAT matrix |
 | [tester-5-minute.md](../product/tester-5-minute.md) | Quick smoke for testers |
+| [roadmap.md](../product/roadmap.md) | Canonical consolidated roadmap |
 | [improvement-recommendations.md](../product/improvement-recommendations.md) | Prioritized improvement backlog (research-backed) |
-| [improvement-checklist.md](../product/improvement-checklist.md) | Roadmap / acceptance ideas |
+| [improvement-checklist.md](../product/improvement-checklist.md) | Archived roadmap acceptance ideas |
 
 ---
 
@@ -66,9 +67,13 @@ Species search on Postgres uses case-insensitive `contains` (`species-name-filte
 
 ---
 
-## Roadmap themes (P3+)
+## Roadmap
 
-From improvement checklist and conversation history:
+Use [product/roadmap.md](../product/roadmap.md) as the canonical roadmap. The
+themes below are historical context and should be reconciled with that file
+before planning new work.
+
+Historical themes from improvement checklist and conversation history:
 
 1. **Push notifications** — FCM, daily reminders to devices.
 2. **Capacitor store release** — iOS/Android packaging.

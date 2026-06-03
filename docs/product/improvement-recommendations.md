@@ -1,9 +1,14 @@
 # Plant Care improvement recommendations
 
 > **Status:** researched backlog (last updated 2026-05-26)  
+> **Canonical roadmap:** [roadmap.md](roadmap.md)
 > **Navigation:** [Product INDEX](INDEX.md) · [Improvement checklist](improvement-checklist.md) · [Feature availability](../reference/feature-availability.md)
 
 This document captures **research-backed recommendations** for improving Plant Care: user value, content quality, reliability, and release readiness. It complements the living [improvement-checklist.md](improvement-checklist.md), which remains the implementation queue with acceptance checks.
+
+For current priority and status, use [roadmap.md](roadmap.md). This file is a
+research archive and theme index; some older theme text may describe items that
+the roadmap now treats as shipped or superseded.
 
 ---
 

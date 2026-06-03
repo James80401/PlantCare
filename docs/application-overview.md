@@ -62,7 +62,7 @@ flowchart TB
 
 ## How to run locally
 
-From [ReadMe.md](../ReadMe.md):
+From [README.md](../README.md):
 
 ```bash
 cp .env.example .env && npm install && npm run db:generate && npm run db:push && npm run db:seed

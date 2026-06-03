@@ -10,7 +10,7 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 
 | File | Role |
 |------|------|
-| [ReadMe.md](../../ReadMe.md) | Project entry point |
+| [README.md](../../README.md) | Project entry point |
 | [docs/INDEX.md](../INDEX.md) | **Master tutorial & instructions hub** |
 | [docs/application-overview.md](../application-overview.md) | **Complete application overview** (stack, domains, API, UI, MVP) |
 | docs/DEPLOY.md | Deploy quick reference (→ operations/deployment.md) |
@@ -234,11 +234,14 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 | File |
 |------|
 | **INDEX.md** |
+| roadmap.md |
 | improvement-recommendations.md |
 | improvement-checklist.md |
 | uat-checklist.md |
 | tester-5-minute.md |
 | google-play-closed-testing.md |
+| play-store-listing.md |
+| a11y-checklist.md |
 
 ---
 

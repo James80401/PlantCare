@@ -2,7 +2,7 @@
 
 A full-stack plant care companion: personalized watering and care schedules, species catalog, health diagnosis (rules + AI), journal, weather-aware advice, household sharing, and a community feed.
 
-> **Documentation:** **[ReadMe.md](ReadMe.md)** · **[docs/INDEX.md](docs/INDEX.md)** (hub) · **[docs/application-overview.md](docs/application-overview.md)** (full-stack overview)
+> **Documentation:** **[README.md](README.md)** · **[docs/INDEX.md](docs/INDEX.md)** (hub) · **[docs/application-overview.md](docs/application-overview.md)** (full-stack overview)
 
 **Documentation:** start at **[docs/INDEX.md](docs/INDEX.md)** (hub) or **[docs/guides/INDEX.md](docs/guides/INDEX.md)** (deep guides for every aspect).
 

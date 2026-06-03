@@ -2,6 +2,10 @@
 
 > Status: living implementation plan. Check items off as code, data, tests, and
 > documentation land in the repository.
+>
+> Canonical roadmap: [roadmap.md](roadmap.md). This checklist is now an
+> acceptance-criteria archive; unchecked items can be stale and should be
+> reconciled with the roadmap before implementation.
 
 ## Product north star
 

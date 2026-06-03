@@ -21,7 +21,7 @@ Use this hub when you need **understanding**, not just a single endpoint or scre
 | Frontend dev | [07 — Web application](07-web-application.md) · [08 — UI components](08-ui-components-and-design.md) |
 | DevOps / release | [13 — Operations & deployment](13-operations-deployment-and-quality.md) |
 | Gardener / tester / PM | [10 — End-user product guide](10-end-user-product-guide.md) |
-| QA / UAT | [14 — Product, QA & roadmap](14-product-qa-and-roadmap.md) |
+| QA / UAT / roadmap | [14 — Product, QA & roadmap](14-product-qa-and-roadmap.md) · [product/roadmap.md](../product/roadmap.md) |
 
 ---
 
@@ -42,7 +42,7 @@ Use this hub when you need **understanding**, not just a single endpoint or scre
 | 11 | [Tutorials & walkthroughs](11-tutorials-and-walkthroughs.md) | Index of step-by-step procedures + gaps to add |
 | 12 | [Mobile & clients](12-mobile-and-client-packaging.md) | Capacitor, PWA, device API URLs |
 | 13 | [Operations & deployment](13-operations-deployment-and-quality.md) | Docker staging, CI, verify, Playwright, production |
-| 14 | [Product, QA & roadmap](14-product-qa-and-roadmap.md) | UAT, tiers, roadmap, known limits |
+| 14 | [Product, QA & roadmap](14-product-qa-and-roadmap.md) | UAT, tiers, roadmap pointer, known limits |
 | 15 | [Production deploy & Android](15-production-deploy-and-android.md) | VPS, HTTPS, Play closed testing, release build |
 
 ### Plant Buddy (companion layer)

@@ -1,6 +1,6 @@
 # Getting started
 
-> **Navigation:** [Master INDEX](../INDEX.md) · [ReadMe](../../ReadMe.md)
+> **Navigation:** [Master INDEX](../INDEX.md) · [README](../../README.md)
 
 | Document | Description |
 |----------|-------------|
