@@ -13,7 +13,7 @@ const SHOP_SECTIONS: { title: string; category: ShopItemCategory }[] = [
   { title: 'Tops', category: 'TOP' },
   { title: 'Glasses', category: 'GLASSES' },
   { title: 'Held items', category: 'HELD_ITEM' },
-  { title: 'Pots', category: 'POT_SKIN' },
+  { title: 'Homes', category: 'POT_SKIN' },
   { title: 'Colors', category: 'BODY_COLOR' },
   { title: 'Patterns', category: 'BODY_PATTERN' },
   { title: 'Backgrounds', category: 'BACKGROUND' },

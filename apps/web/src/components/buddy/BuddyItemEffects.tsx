@@ -58,7 +58,7 @@ const CATEGORY_EFFECTS: Record<ShopItemCategory, BuddyItemEffect> = {
     kind: 'comfort',
     label: 'Home comfort',
     value: 2,
-    description: 'A cozier home with more nap and settle moments.',
+    description: 'A cozier home with more nap, settle, and room-check moments.',
   },
   BODY_COLOR: {
     kind: 'style',

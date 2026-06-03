@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BuddyActor, PotHome } from '../../../components/buddy/BuddyItemVisuals';
+import { BuddyActor, BuddyHomeInfoCard, PotHome } from '../../../components/buddy/BuddyItemVisuals';
 import {
   BuddyItemEffectCard,
   equippedItemsFromBuddy,
@@ -12,7 +12,7 @@ import { useBuddyShop } from '../../../hooks/buddy/useBuddyShop';
 
 const STYLE_LINKS = [
   { to: 'clothing', label: 'Clothing & accessories', desc: 'Hats, tops, glasses, and more' },
-  { to: 'pots', label: 'Pots', desc: 'Pot skins for your buddy' },
+  { to: 'pots', label: 'Homes', desc: 'Choose the little house Buddy lives in' },
   { to: 'terrarium', label: 'Terrarium', desc: 'Backgrounds and furniture' },
   { to: 'species', label: 'Species', desc: 'Switch plant personality' },
   { to: 'shop', label: 'Shop', desc: 'Spend dewdrops on new items' },
@@ -54,9 +54,11 @@ export default function BuddyStyleHub() {
           />
         </div>
         <p className="text-xs text-gray-500">
-          {equipped.potSkin ? `Pot-home: ${equipped.potSkin}` : 'Default pot-home'}
+          {equipped.potSkin ? 'Buddy home equipped' : 'Default Buddy home'}
         </p>
       </Card>
+
+      <BuddyHomeInfoCard itemId={equipped.potSkin} />
 
       <BuddyItemEffectCard summary={equippedEffectSummary} />
 

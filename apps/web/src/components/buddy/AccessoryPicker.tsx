@@ -19,7 +19,7 @@ const categoryEmoji: Partial<Record<ShopItemCategory, string>> = {
   TOP: '👕',
   GLASSES: '👓',
   HELD_ITEM: '🪴',
-  POT_SKIN: '🏺',
+  POT_SKIN: 'Home',
   BODY_COLOR: '🎨',
   BODY_PATTERN: '✨',
   BACKGROUND: '🖼️',

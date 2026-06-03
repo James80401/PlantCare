@@ -31,6 +31,8 @@ type PotTheme = {
   window: string;
   trim: string;
   label: string;
+  subtitle: string;
+  bonus: string;
   shape: 'classic' | 'ceramic' | 'woven' | 'jar' | 'hanging';
 };
 
@@ -66,7 +68,9 @@ const POT_HOME_THEMES: Record<string, PotTheme> = {
     door: 'bg-emerald-950',
     window: 'bg-amber-100',
     trim: 'bg-orange-200',
-    label: 'Clay pot home',
+    label: 'Clay Cottage',
+    subtitle: 'Warm starter home',
+    bonus: 'Balanced comfort for everyday idle moments.',
     shape: 'classic',
   },
   pot_white_ceramic: {
@@ -76,7 +80,9 @@ const POT_HOME_THEMES: Record<string, PotTheme> = {
     door: 'bg-amber-700',
     window: 'bg-sky-100',
     trim: 'bg-white',
-    label: 'Ceramic pot home',
+    label: 'Ceramic Studio',
+    subtitle: 'Bright tidy home',
+    bonus: 'Encourages calm inspection and focused home checks.',
     shape: 'ceramic',
   },
   pot_seagrass: {
@@ -86,7 +92,9 @@ const POT_HOME_THEMES: Record<string, PotTheme> = {
     door: 'bg-yellow-950',
     window: 'bg-yellow-200',
     trim: 'bg-lime-200',
-    label: 'Woven pot home',
+    label: 'Seagrass Burrow',
+    subtitle: 'Soft woven nest',
+    bonus: 'Encourages cozy wandering and restorative naps.',
     shape: 'woven',
   },
   pot_mason: {
@@ -96,7 +104,9 @@ const POT_HOME_THEMES: Record<string, PotTheme> = {
     door: 'bg-emerald-800',
     window: 'bg-white',
     trim: 'bg-sky-50',
-    label: 'Jar pot home',
+    label: 'Glass Jar Loft',
+    subtitle: 'Sparkly little lookout',
+    bonus: 'Encourages curiosity, weather watching, and light play.',
     shape: 'jar',
   },
   pot_macrame: {
@@ -106,7 +116,9 @@ const POT_HOME_THEMES: Record<string, PotTheme> = {
     door: 'bg-emerald-950',
     window: 'bg-orange-50',
     trim: 'bg-amber-100',
-    label: 'Hanging pot home',
+    label: 'Hanging Haven',
+    subtitle: 'Swinging sky home',
+    bonus: 'Encourages playful movement and adventure-ready moods.',
     shape: 'hanging',
   },
 };
@@ -324,7 +336,9 @@ export function PotHome({ itemId: rawItemId, size = 'md', open, className = '' }
           <div className="absolute right-[30%] top-3 h-16 w-0.5 rotate-[16deg] bg-amber-100/80" />
         </>
       ) : null}
+      <div className="absolute left-1/2 top-1 h-6 w-10 -translate-x-1/2 rounded-t-full bg-white/35" />
       <div className={`absolute left-1/2 top-5 h-5 w-[58%] -translate-x-1/2 rounded-full ${theme.roof} shadow-md`} />
+      <div className={`absolute left-1/2 top-2 h-8 w-[48%] -translate-x-1/2 rounded-t-[2rem] ${theme.roof} shadow-md`} />
       <div className={`absolute inset-x-3 bottom-2 h-[76%] ${shellShape} bg-gradient-to-b ${theme.body} shadow-xl ring-2 ring-white/50`} />
       <div className={`absolute left-1/2 top-[24%] h-4 w-[72%] -translate-x-1/2 rounded-full ${theme.rim} shadow-sm`} />
       <div className={`absolute left-1/2 top-[47%] h-11 w-8 -translate-x-1/2 rounded-t-full ${theme.door} shadow-inner ring-2 ring-white/30`}>
@@ -349,6 +363,30 @@ export function PotHome({ itemId: rawItemId, size = 'md', open, className = '' }
       ) : null}
       <div className={`absolute left-1/2 bottom-0 h-3 w-16 -translate-x-1/2 rounded-t-full ${theme.trim}`} />
       <div className="absolute left-1/2 -bottom-1 h-3 w-28 -translate-x-1/2 rounded-full bg-emerald-950/15" />
+    </div>
+  );
+}
+
+export function potHomeInfo(itemId?: string | null) {
+  const theme = POT_HOME_THEMES[itemId ?? ''] ?? POT_HOME_THEMES.pot_terra_cotta;
+  return {
+    id: itemId ?? 'pot_terra_cotta',
+    label: theme.label,
+    subtitle: theme.subtitle,
+    bonus: theme.bonus,
+    shape: theme.shape,
+  };
+}
+
+export function BuddyHomeInfoCard({ itemId }: { itemId?: string | null }) {
+  const home = potHomeInfo(itemId);
+
+  return (
+    <div className="rounded-2xl border border-emerald-100 bg-white/85 px-4 py-3 text-left shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Current home</p>
+      <p className="mt-1 text-lg font-bold text-emerald-950">{home.label}</p>
+      <p className="text-sm text-gray-600">{home.subtitle}</p>
+      <p className="mt-2 text-xs font-medium text-emerald-800">{home.bonus}</p>
     </div>
   );
 }
