@@ -160,6 +160,7 @@ export default function Dashboard() {
   );
 
   const weekPreview = dash?.weekPreview ?? [];
+  const weekSummary = dash?.weekSummary;
   const attentionItems = dash?.attention ?? [];
   const metrics = dash?.metrics;
   const healthStory = dash?.healthStory;
@@ -496,8 +497,11 @@ export default function Dashboard() {
 
           <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
             <h2 className="text-base font-semibold text-emerald-950 font-display">
-              Next seven days
+              {weekSummary?.headline ?? 'Next seven days'}
             </h2>
+            <p className="mt-1 text-sm text-gray-600">
+              {weekSummary?.body ?? 'Upcoming care tasks for the next seven days.'}
+            </p>
             <div className="mt-4 grid grid-cols-7 gap-1.5">
               {weekPreview.map((day) => (
                 <Link

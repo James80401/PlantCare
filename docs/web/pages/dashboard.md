@@ -13,6 +13,8 @@ Garden home — plant cards, upcoming tasks, navigation. See [user guide](../../
   first-screen care counts (headline, body, action, focus plant, and counts).
 - `attentionSummary` is the preferred source for the Needs attention section
   headline, body, and counts.
+- `weekSummary` is the preferred source for the Next seven days section
+  headline, body, busiest day, and counts.
 - Broader fields such as `plants`, `pendingTasks`, `todayTasks`, `attention`,
   `weekPreview`, and `healthStory` still power the detailed sections while the
   dashboard API is slimmed over time.

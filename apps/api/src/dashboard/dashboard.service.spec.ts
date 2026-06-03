@@ -268,6 +268,7 @@ describe('DashboardService', () => {
       'todayTasks',
       'weather',
       'weekPreview',
+      'weekSummary',
     ]);
     expect(result.greeting).toMatchObject({
       name: 'Maya',
@@ -301,6 +302,24 @@ describe('DashboardService', () => {
     expect(result.pendingTasks.map((task) => task.id)).toEqual(['task-overdue', 'task-today']);
     expect(result.weekPreview).toHaveLength(7);
     expect(result.weekPreview[0]).toMatchObject({ label: 'Today', count: 1 });
+    expect(result.weekSummary).toEqual({
+      status: 'light',
+      headline: 'Light care week',
+      body: '1 task scheduled across 1 day.',
+      actionLabel: 'Open calendar',
+      actionTo: '/garden/calendar',
+      busiestDay: {
+        date: '2026-06-03',
+        label: 'Today',
+        dateLabel: 'Jun 3',
+        count: 1,
+      },
+      counts: {
+        totalTasks: 1,
+        activeDays: 1,
+        busiestDayCount: 1,
+      },
+    });
     expect(result.attention).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -452,5 +471,18 @@ describe('DashboardService', () => {
     });
     expect(result.healthStory.openDiagnosisCount).toBe(0);
     expect(result.todayTasks).toEqual([]);
+    expect(result.weekSummary).toEqual({
+      status: 'calm',
+      headline: 'Quiet week ahead',
+      body: 'No care tasks are scheduled for the next seven days.',
+      actionLabel: 'Review calendar',
+      actionTo: '/garden/calendar',
+      busiestDay: null,
+      counts: {
+        totalTasks: 0,
+        activeDays: 0,
+        busiestDayCount: 0,
+      },
+    });
   });
 });

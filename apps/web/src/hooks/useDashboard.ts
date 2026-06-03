@@ -18,6 +18,20 @@ export interface DashboardWeekDay {
   count: number;
 }
 
+export interface DashboardWeekSummary {
+  status: 'calm' | 'light' | 'busy';
+  headline: string;
+  body: string;
+  actionLabel: string;
+  actionTo: string;
+  busiestDay: DashboardWeekDay | null;
+  counts: {
+    totalTasks: number;
+    activeDays: number;
+    busiestDayCount: number;
+  };
+}
+
 export interface DashboardScheduleSuggestion {
   id: string;
   plantId: string;
@@ -112,6 +126,7 @@ export interface DashboardPayload {
   attention: DashboardAttention[];
   attentionSummary?: DashboardAttentionSummary;
   weekPreview: DashboardWeekDay[];
+  weekSummary?: DashboardWeekSummary;
   scheduleSuggestions: DashboardScheduleSuggestion[];
   healthStory?: DashboardHealthStory;
   weather: {

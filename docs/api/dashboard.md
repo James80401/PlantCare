@@ -30,6 +30,7 @@ The web `Dashboard.tsx` also loads plants and tasks separately for interactions;
 | `attention` | Plants/issues needing care (priority) |
 | `attentionSummary` | Server-computed headline, body, and counts for the attention section |
 | `weekPreview` | 7-day task counts |
+| `weekSummary` | Server-computed headline, body, busiest day, and counts for the 7-day preview |
 | `scheduleSuggestions` | Adaptive schedule proposals |
 | `engagement` | Score, streak, milestones context |
 
@@ -40,6 +41,9 @@ dashboard payload is slimmed over time.
 
 `attentionSummary` is the preferred lightweight source for attention section
 copy and counts. `attention` remains the detailed card list.
+
+`weekSummary` is the preferred lightweight source for the seven-day section
+copy. `weekPreview` remains the day-by-day grid data.
 
 Implementation: `dashboard.service.ts` + `dashboard-helpers.ts`.
 

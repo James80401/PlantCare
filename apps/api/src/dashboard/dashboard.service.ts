@@ -210,6 +210,7 @@ export class DashboardService {
 
     const todayTaskRows = pickTodayTasks(taskRows, 5, currentDate);
     const pendingTaskRows = getPendingTasks(taskRows);
+    const weekPreview = buildWeekPreview(taskRows, currentDate);
     const careSummary = this.buildCareSummary(
       plantCount,
       pendingTaskRows,
@@ -227,6 +228,7 @@ export class DashboardService {
       unresolvedDiagnoses,
     );
     const attentionSummary = this.buildAttentionSummary(attention);
+    const weekSummary = this.buildWeekSummary(weekPreview);
 
     return {
       greeting: {
@@ -248,7 +250,8 @@ export class DashboardService {
       todayTasks: todayTaskRows.map((t) => mapDashboardTask(t)),
       attention,
       attentionSummary,
-      weekPreview: buildWeekPreview(taskRows, currentDate),
+      weekPreview,
+      weekSummary,
       scheduleSuggestions,
       healthStory: {
         openDiagnosisCount,
@@ -343,6 +346,65 @@ export class DashboardService {
       headline: 'No major issues detected',
       body: 'No plants need urgent attention from your current schedule.',
       counts: { urgent, warning, info, needsAttention, total: 0 },
+    };
+  }
+
+  private buildWeekSummary(
+    weekPreview: Array<{
+      date: string;
+      label: string;
+      dateLabel: string;
+      count: number;
+    }>,
+  ) {
+    const totalTasks = weekPreview.reduce((sum, day) => sum + day.count, 0);
+    const activeDays = weekPreview.filter((day) => day.count > 0).length;
+    const busiestDay =
+      weekPreview
+        .filter((day) => day.count > 0)
+        .sort((a, b) => b.count - a.count)[0] ?? null;
+    const counts = {
+      totalTasks,
+      activeDays,
+      busiestDayCount: busiestDay?.count ?? 0,
+    };
+
+    if (totalTasks === 0) {
+      return {
+        status: 'calm',
+        headline: 'Quiet week ahead',
+        body: 'No care tasks are scheduled for the next seven days.',
+        actionLabel: 'Review calendar',
+        actionTo: '/garden/calendar',
+        busiestDay,
+        counts,
+      };
+    }
+
+    if (totalTasks >= 5 || (busiestDay?.count ?? 0) >= 3) {
+      return {
+        status: 'busy',
+        headline: 'Plan a care session',
+        body: `${totalTasks} task${totalTasks === 1 ? '' : 's'} across ${activeDays} day${
+          activeDays === 1 ? '' : 's'
+        }; ${busiestDay?.label ?? 'one day'} is the busiest.`,
+        actionLabel: 'Open calendar',
+        actionTo: '/garden/calendar',
+        busiestDay,
+        counts,
+      };
+    }
+
+    return {
+      status: 'light',
+      headline: 'Light care week',
+      body: `${totalTasks} task${totalTasks === 1 ? '' : 's'} scheduled across ${activeDays} day${
+        activeDays === 1 ? '' : 's'
+      }.`,
+      actionLabel: 'Open calendar',
+      actionTo: '/garden/calendar',
+      busiestDay,
+      counts,
     };
   }
 
