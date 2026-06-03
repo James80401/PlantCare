@@ -7,6 +7,9 @@ import {
   TASK_SKIP_REASONS,
   type TaskSkipFeedback,
   type TaskSkipReason,
+  TASK_COMPLETE_REASONS,
+  type TaskCompleteFeedback,
+  type TaskCompleteReason,
 } from '../../utils/taskFeedback';
 import { taskTypeLabel } from '../../utils/tasks';
 import { SNOOZE_OPTIONS } from '../../utils/taskSnooze';
@@ -17,7 +20,7 @@ type AnimState = 'completing' | 'skipping' | null;
 interface TaskRowProps {
   task: TaskItem;
   animState: AnimState;
-  onComplete: (id: string) => void;
+  onComplete: (id: string, feedback?: TaskCompleteFeedback) => void;
   onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
   onSnooze?: (id: string, days: 1 | 3 | 7) => void;
   /** When true, type icon/label is omitted (parent section shows category). */
@@ -39,6 +42,11 @@ export default function TaskRow({
   const [snoozeOpen, setSnoozeOpen] = useState(false);
   const [selectedReason, setSelectedReason] = useState<TaskSkipReason>('SOIL_STILL_WET');
   const [note, setNote] = useState('');
+  const [completeFeedbackOpen, setCompleteFeedbackOpen] = useState(false);
+  const [selectedCompleteReason, setSelectedCompleteReason] = useState<TaskCompleteReason>(
+    'SOIL_VERY_DRY',
+  );
+  const [completeNote, setCompleteNote] = useState('');
   const due = parseISO(task.dueDate);
   const isDone = task.status === 'DONE';
   const isSkipped = task.status === 'SKIPPED';
@@ -47,6 +55,9 @@ export default function TaskRow({
   const plantLabel = task.plant.nickname || task.plant.species.commonName;
   const icon = TASK_TYPE_ICONS[task.taskType] ?? '🌿';
   const dueLabel = isToday(due) ? 'Due today' : `Due ${format(due, 'MMM d')}`;
+  const skipPanelId = `skip-panel-${task.id}`;
+  const snoozePanelId = `snooze-panel-${task.id}`;
+  const completePanelId = `complete-panel-${task.id}`;
 
   const rowClass = [
     'task-row group relative flex gap-3 rounded-2xl border px-3 py-3.5 transition-all duration-300 sm:px-4',
@@ -70,10 +81,12 @@ export default function TaskRow({
         {isPending ? (
           <button
             type="button"
-            onClick={() => onComplete(task.id)}
+            onClick={() => setCompleteFeedbackOpen((open) => !open)}
             disabled={!!animState}
-            className="task-check flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
+            className="task-check flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
             aria-label={`Mark ${taskTypeLabel(task.taskType)} for ${plantLabel} as done`}
+            aria-expanded={completeFeedbackOpen}
+            aria-controls={completePanelId}
           />
         ) : (
           <span
@@ -145,7 +158,10 @@ export default function TaskRow({
         {isSkipped && <p className="mt-0.5 text-xs text-gray-500">Skipped</p>}
 
         {overdue && isPending && (
-          <p className="mt-0.5 text-xs font-medium text-red-600">Overdue</p>
+          <p className="mt-0.5 text-xs font-semibold text-red-700">
+            <span aria-hidden>⚠ </span>
+            Overdue
+          </p>
         )}
 
         {isPending && !overdue && (
@@ -167,25 +183,20 @@ export default function TaskRow({
               />
               <button
                 type="button"
-                onClick={() => onSkip(task.id)}
-                className="inline-flex items-center justify-center rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-200 hover:text-gray-800"
+                onClick={() => setFeedbackOpen((open) => !open)}
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
+                aria-expanded={feedbackOpen}
+                aria-controls={skipPanelId}
               >
                 Skip
-              </button>
-              <button
-                type="button"
-                onClick={() => setFeedbackOpen((open) => !open)}
-                className="inline-flex items-center justify-center rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
-                aria-expanded={feedbackOpen}
-              >
-                Skip reason
               </button>
               {onSnooze ? (
                 <button
                   type="button"
                   onClick={() => setSnoozeOpen((open) => !open)}
-                  className="inline-flex items-center justify-center rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 transition hover:bg-sky-100"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-800 transition hover:bg-sky-100"
                   aria-expanded={snoozeOpen}
+                  aria-controls={snoozePanelId}
                 >
                   Snooze
                 </button>
@@ -193,7 +204,12 @@ export default function TaskRow({
             </div>
 
             {snoozeOpen && onSnooze ? (
-              <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3">
+              <div
+                id={snoozePanelId}
+                role="region"
+                aria-label="Snooze options"
+                className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3"
+              >
                 <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
                   Remind me
                 </p>
@@ -215,8 +231,13 @@ export default function TaskRow({
               </div>
             ) : null}
 
-            {feedbackOpen && (
-              <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3">
+            {feedbackOpen ? (
+              <div
+                id={skipPanelId}
+                role="region"
+                aria-label="Skip task feedback"
+                className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3"
+              >
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
                   Why skip this task?
                 </p>
@@ -273,9 +294,102 @@ export default function TaskRow({
                   >
                     Cancel
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => onSkip(task.id)}
+                    className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
+                  >
+                    Skip without reason
+                  </button>
                 </div>
               </div>
-            )}
+            ) : null}
+
+            {completeFeedbackOpen ? (
+              <div
+                id={completePanelId}
+                role="region"
+                aria-label="Complete task feedback"
+                className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
+                  {task.taskType === 'WATER' ? 'Quick feedback (water)' : 'Complete task'}
+                </p>
+                {task.taskType === 'WATER' ? (
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {TASK_COMPLETE_REASONS.map((r) => (
+                    <label
+                      key={r.value}
+                      className={`cursor-pointer rounded-xl border px-3 py-2 text-xs transition ${
+                        selectedCompleteReason === r.value
+                          ? 'border-sky-300 bg-white text-sky-950 shadow-sm'
+                          : 'border-sky-100 bg-white/60 text-gray-700 hover:bg-white'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={`complete-reason-${task.id}`}
+                        value={r.value}
+                        checked={selectedCompleteReason === r.value}
+                        onChange={() => setSelectedCompleteReason(r.value)}
+                        className="sr-only"
+                      />
+                      <span className="font-semibold">{r.label}</span>
+                      <span className="mt-0.5 block leading-5 text-gray-500">{r.helper}</span>
+                    </label>
+                  ))}
+                </div>
+                ) : null}
+                <label className={`block ${task.taskType === 'WATER' ? 'mt-3' : 'mt-2'}`}>
+                  <span className="text-xs font-medium text-gray-600">Optional note</span>
+                  <input
+                    value={completeNote}
+                    onChange={(event) => setCompleteNote(event.target.value)}
+                    maxLength={240}
+                    placeholder={
+                      task.taskType === 'WATER'
+                        ? 'Example: soil was dry 2 inches down'
+                        : 'Example: removed dead leaves, fertilized lightly'
+                    }
+                    className="mt-1 w-full rounded-xl border border-sky-100 bg-white px-3 py-2 text-sm focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-100"
+                  />
+                </label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onComplete(
+                        task.id,
+                        task.taskType === 'WATER'
+                          ? {
+                              reason: selectedCompleteReason,
+                              note: completeNote.trim() || undefined,
+                            }
+                          : completeNote.trim()
+                            ? { note: completeNote.trim() }
+                            : undefined,
+                      );
+                      setCompleteFeedbackOpen(false);
+                      setCompleteNote('');
+                    }}
+                    className="rounded-full bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800"
+                  >
+                    {task.taskType === 'WATER' ? 'Save feedback & complete' : 'Complete with note'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onComplete(task.id);
+                      setCompleteFeedbackOpen(false);
+                      setCompleteNote('');
+                    }}
+                    className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
+                  >
+                    {task.taskType === 'WATER' ? 'Complete without feedback' : 'Complete'}
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

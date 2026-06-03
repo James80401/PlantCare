@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BUDDY_SPECIES, BUDDY_TRAITS } from '../../components/buddy/species';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -31,12 +31,30 @@ export default function BuddyOnboarding() {
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <PageHeader
         eyebrow="Plant Buddy"
-        title="Meet your companion"
-        description="A small plant friend that grows when you care for your real plants — Finch-style encouragement, grounded in your garden."
+        title="Plant Buddy is optional"
+        description="A small companion can grow alongside your garden, but you can skip this and use the rest of DrPlant right away."
       />
+
+      <Card className="border-amber-200 bg-amber-50/80">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-emerald-950">No setup required</h2>
+            <p className="mt-1 text-sm leading-6 text-gray-700">
+              Buddy adds encouragement, quests, and customization. It does not block gardens, plant care,
+              DrPlant health checks, journal notes, or reminders.
+            </p>
+          </div>
+          <Link
+            to="/garden"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2"
+          >
+            Skip for now
+          </Link>
+        </div>
+      </Card>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Card className="space-y-3">
@@ -105,9 +123,17 @@ export default function BuddyOnboarding() {
 
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-        <Button type="submit" fullWidth disabled={busy || !name.trim()}>
-          {busy ? 'Creating…' : 'Adopt my buddy'}
-        </Button>
+        <div className="space-y-2">
+          <Button type="submit" fullWidth disabled={busy || !name.trim()}>
+            {busy ? 'Creating...' : 'Adopt my buddy'}
+          </Button>
+          <Link
+            to="/garden"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2"
+          >
+            Skip and continue
+          </Link>
+        </div>
       </form>
     </div>
   );

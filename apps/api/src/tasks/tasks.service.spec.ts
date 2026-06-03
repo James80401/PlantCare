@@ -90,6 +90,27 @@ describe('TasksService', () => {
     });
   });
 
+  it('persists completion feedback when a reason is provided', async () => {
+    const { service, tx } = createService();
+
+    await service.complete('user-1', 'task-1', {
+      reason: 'SOIL_VERY_DRY',
+      note: ' Dry deeper down. ',
+    });
+
+    expect(tx.taskFeedback.create).toHaveBeenCalledWith({
+      data: {
+        taskId: 'task-1',
+        userId: 'user-1',
+        action: 'COMPLETE',
+        reason: 'SOIL_VERY_DRY',
+        note: 'Dry deeper down.',
+      },
+    });
+    expect(tx.task.update).toHaveBeenCalled();
+    expect(tx.taskFeedback.create).toHaveBeenCalledTimes(1);
+  });
+
   it('snoozes a pending task to today plus N days', async () => {
     const tx = {
       task: {

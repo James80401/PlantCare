@@ -9,7 +9,7 @@
 - [x] Copy `.env.example` → `.env` (secrets filled, file saved)
 - [x] `npm run db:generate`
 - [x] `npm run db:push`
-- [x] `npm run db:seed` (320 species, 2247 care guides)
+- [x] `npm run db:seed` (320 species, ~3852 care guides across 12 task types)
 - [x] API starts: `npm run dev:api` (port 3001)
 - [x] Web starts: `npm run dev:web` (port 5173)
 
@@ -59,6 +59,26 @@
 - [x] Plant Buddy: home + activities pages (Playwright `uat.spec.ts`)
 - [x] Device push token registration API (`verify.mjs` POST `/devices`)
 
+## G4. Play closed testing (Android)
+
+- [ ] `npm run mobile:store-check` passes locally
+- [ ] `npm run mobile:store-check -- --live` passes against production URLs
+- [ ] `apps/web/.env.local` has production `VITE_API_BASE_URL`
+- [ ] Signed AAB uploaded to Internal or Closed track
+- [ ] Privacy policy URL live in Play Console
+- [ ] Listing copy from [play-store-listing.md](play-store-listing.md)
+- [ ] At least one tester installed via opt-in link
+
+Runbook: [google-play-closed-testing.md](google-play-closed-testing.md)
+
+## E2. Accessibility (H2)
+
+- [x] Skip link targets `#main-content`
+- [x] Form errors use `role="alert"`; loading uses `role="status"`
+- [x] Task snooze/skip panels expose `aria-controls` + named regions
+- [x] Playwright: landmarks test in `uat.spec.ts`
+- [ ] Manual: VoiceOver/NVDA on one complete + skip flow per release
+
 ## E. Mobile QA (browser / device)
 
 - [x] Empty garden state readable, no horizontal scroll (Playwright mobile)
@@ -71,7 +91,12 @@
 
 - [x] Local dev: `FRONTEND_URL` / `CORS_ORIGIN` = `http://localhost:5173` (`.env.example`)
 - [x] Docker staging: `FRONTEND_URL` / `CORS_ORIGIN` = `http://localhost:8080` (`.env.staging.example` + `npm run staging:smoke`)
-- [ ] Production: set `FRONTEND_URL` and `CORS_ORIGINS` to your public URL, run `npm run production:check` (see [deployment.md](../operations/deployment.md))
+- [ ] Production: set `FRONTEND_URL` and `CORS_ORIGINS` in `.env.production`, deploy stack, then:
+  - [ ] `npm run production:check` (static secrets + HTTPS/CORS rules)
+  - [ ] `npm run production:signoff` (live health/CORS/web + `verify` + `smoke:buddy`)
+  - [ ] Optional: `npm run production:signoff -- --e2e` (Playwright on public web)
+  - [ ] Record: `npm run production:signoff -- --write docs/operations/signoffs/<date>.md`
+  - [ ] Runbook: [production-signoff.md](../operations/production-signoff.md)
 - [x] Tester instructions below
 - [x] Known limitations listed below
 
@@ -98,7 +123,7 @@ npm run uat:e2e
 
 ### Known limitations (not blocking UAT)
 
-- Task snooze not implemented
+- Task snooze: available on dashboard/calendar task rows (`PATCH /tasks/:id/snooze`, 1/3/7 days); profile Tasks tab may not expose snooze yet
 - Capacitor native build needs `VITE_API_BASE_URL` pointing at a reachable API
 - Password reset requires SMTP (token flow is tested in CI when SMTP is configured)
 

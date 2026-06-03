@@ -19,32 +19,30 @@ Status update body:
 
 Use this to mark a diagnosis as active/recovered from the plant profile.
 
-## Conversations
+## Recovery tasks from diagnosis (shipped)
 
 | Method | Path |
 |--------|------|
-| GET | `/plants/:plantId/diagnose/conversations` |
-| POST | `/plants/:plantId/diagnose/conversations` |
-| GET | `/plants/:plantId/diagnose/conversations/:id` |
-| POST | `/plants/:plantId/diagnose/conversations/:id/messages` |
+| GET | `/plants/:plantId/diagnose/:diagnosisId/recovery-suggestions` |
+| POST | `/plants/:plantId/diagnose/:diagnosisId/recovery-tasks` |
 
-**Files:** `diagnosis.controller.ts`, `diagnosis-chat.controller.ts`, `llm-diagnosis.service.ts`
+`GET` returns suggested tasks mapped from `immediateActions` in `detailJson` (or advice lines), each with `key`, `label`, `taskType`, `dueInDays`, and `alreadyScheduled`.
 
-See [diagnosis pipeline](../architecture/diagnosis-pipeline.md).
+`POST` body:
 
-## Recovery follow-up task design
-
-Section 6 implements recovery status and journal follow-up notes first. A
-dedicated follow-up task API should come next when the task model can represent
-health-check work explicitly.
-
-Proposed API:
-
-```http
-POST /plants/:plantId/diagnose/:diagnosisId/follow-up-task
+```json
+{ "keys": ["diagnosis-id:abc123", "diagnosis-id:def456"] }
 ```
 
-Proposed body:
+Creates **pending** tasks linked via `sourceDiagnosisId`. Skips types already scheduled for that diagnosis.
+
+## Follow-up task (shipped)
+
+| Method | Path |
+|--------|------|
+| POST | `/plants/:plantId/diagnose/:diagnosisId/follow-up-task` |
+
+Body:
 
 ```json
 {
@@ -53,10 +51,43 @@ Proposed body:
 }
 ```
 
-Recommended data-model addition before implementation:
+Creates a **`HEALTH_CHECK`** task linked via `sourceDiagnosisId`. Optional `note` is saved as a **journal entry** so follow-up intent appears on the plant timeline.
 
-- Add a `HEALTH_CHECK` task type, or add a task `source`/`sourceDiagnosisId`
-  field so recovery follow-ups do not masquerade as pest-control or watering
-  tasks.
-- Return the created task with plant/species included so the existing task UI can
-  render it immediately.
+## Conversations
+
+| Method | Path |
+|--------|------|
+| GET | `/plants/:plantId/diagnose/conversations` |
+| POST | `/plants/:plantId/diagnose/conversations` |
+| GET | `/plants/:plantId/diagnose/conversations/:id` |
+| POST | `/plants/:plantId/diagnose/conversations/:id/messages` |
+| POST | `/plants/:plantId/diagnose/conversations/:id/actions/journal-note` |
+| POST | `/plants/:plantId/diagnose/conversations/:id/actions/health-check` |
+
+**Files:** `diagnosis.controller.ts`, `diagnosis-chat.controller.ts`, `llm-diagnosis.service.ts`
+
+Chat actions are explicit user-confirmed actions from a Dr. Plant reply:
+
+- `journal-note` saves the selected assistant reply, or an explicit `note`, as a plant journal entry.
+- `health-check` creates a pending `HEALTH_CHECK` task and logs the selected reply or `note` to the journal.
+
+Example body:
+
+```json
+{
+  "messageId": "diagnosis-message-id",
+  "dueInDays": 3
+}
+```
+
+See [diagnosis pipeline](../architecture/diagnosis-pipeline.md).
+
+## Web UI
+
+| Surface | Status |
+|---------|--------|
+| Dr. Plant chat | Shipped on plant Health tab |
+| One-shot diagnosis | Shipped in Health tab (symptom check form); also callable via API |
+| Past diagnoses | Shipped; recovery status and manual follow-up tasks |
+
+See [feature availability](../reference/feature-availability.md).

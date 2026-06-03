@@ -13,10 +13,11 @@ import { format } from 'date-fns';
 import { PLANT_LOCATIONS } from '../../constants/plantLocations';
 import { useTasksInRange } from '../../hooks/useTasksInRange';
 import { plantsApi, journalApi, diagnosisApi } from '../../services/api';
-import type { TaskSkipFeedback } from '../../utils/taskFeedback';
+import type { TaskCompleteFeedback, TaskSkipFeedback } from '../../utils/taskFeedback';
 import { taskTypeLabel } from '../../utils/tasks';
-import { appendJournalPrompt, buildTimelineEvents } from './shared';
-import type { CareOverview, PlantRecord } from './types';
+import { mapTimelineFromApi } from '../../utils/plantTimeline';
+import { appendJournalPrompt } from './shared';
+import type { CareOverview, PlantRecord, TimelineEvent } from './types';
 
 interface PlantProfileContextValue {
   id: string;
@@ -41,7 +42,7 @@ interface PlantProfileContextValue {
   latestCompleted?: PlantRecord;
   plantPendingFromHook: ReturnType<typeof useTasksInRange>['tasks'];
   animating: ReturnType<typeof useTasksInRange>['animating'];
-  handleCompleteTask: (taskId: string) => void;
+  handleCompleteTask: (taskId: string, feedback?: TaskCompleteFeedback) => void;
   handleSkipTask: (taskId: string, feedback?: TaskSkipFeedback) => void;
   handleSnooze: ReturnType<typeof useTasksInRange>['handleSnooze'];
   journalNotes: string;
@@ -49,6 +50,12 @@ interface PlantProfileContextValue {
   journalPhoto: File | null;
   setJournalPhoto: (file: File | null) => void;
   journalPhotoInputKey: number;
+  journalExistingPhotoUrl: string | null;
+  journalPhotoPreview: string | null;
+  journalRemovePhoto: boolean;
+  clearJournalPhoto: () => void;
+  journalError: string;
+  hasJournalContent: boolean;
   journalHeightCm: string;
   setJournalHeightCm: (value: string) => void;
   journalWidthCm: string;
@@ -62,15 +69,23 @@ interface PlantProfileContextValue {
   saveJournalEdit: (e: FormEvent) => Promise<void>;
   deleteJournalEntry: (entryId: string) => Promise<void>;
   appendJournalPrompt: (prompt: string) => void;
-  timelineEvents: ReturnType<typeof buildTimelineEvents>;
+  timelineEvents: TimelineEvent[];
   sectionCounts: { tasks: number; journal: number; diagnosis: number };
   activeDiagnosisCount: number;
   latestUnresolved?: PlantRecord;
   diagnosisHasFollowUp: (diagnosisId: string) => boolean;
   updatingDiagnosisId: string | null;
   followUpCreatingId: string | null;
-  submitDiagnosis: (symptomsText: string, image?: File) => Promise<void>;
-  createFollowUpTask: (diagnosisId: string, dueInDays: number) => Promise<void>;
+  submitDiagnosis: (
+    payload: {
+      symptomsText?: string;
+      symptomDuration?: 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
+      recentCareChange?: 'NONE' | 'WATERING' | 'LIGHT' | 'REPOT' | 'FERTILIZER' | 'TEMPERATURE' | 'PEST_TREATMENT';
+      pestsVisible?: boolean;
+    },
+    image?: File,
+  ) => Promise<void>;
+  createFollowUpTask: (diagnosisId: string, dueInDays: number, note?: string) => Promise<void>;
   updateDiagnosisStatus: (diagnosisId: string, resolved: boolean) => Promise<void>;
   sharingPlant: boolean;
   setSharingPlant: (value: boolean) => void;
@@ -89,6 +104,10 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
   const [journalNotes, setJournalNotes] = useState('');
   const [journalPhoto, setJournalPhoto] = useState<File | null>(null);
   const [journalPhotoInputKey, setJournalPhotoInputKey] = useState(0);
+  const [journalExistingPhotoUrl, setJournalExistingPhotoUrl] = useState<string | null>(null);
+  const [journalPhotoPreview, setJournalPhotoPreview] = useState<string | null>(null);
+  const [journalRemovePhoto, setJournalRemovePhoto] = useState(false);
+  const [journalError, setJournalError] = useState('');
   const [journalHeightCm, setJournalHeightCm] = useState('');
   const [journalWidthCm, setJournalWidthCm] = useState('');
   const [journalLeafCount, setJournalLeafCount] = useState('');
@@ -104,6 +123,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
   const [photoCompareUrls, setPhotoCompareUrls] = useState<{ before: string; after: string } | null>(
     null,
   );
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
 
   const {
     tasks: rangeTasks,
@@ -113,8 +133,14 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     handleSnooze,
   } = useTasksInRange({ pastDays: 0, futureDays: 120 });
 
-  const load = useCallback(() => {
-    if (id) plantsApi.get(id).then((r) => setPlant(r.data));
+  const load = useCallback(async () => {
+    if (!id) return;
+    const [plantRes, timelineRes] = await Promise.all([
+      plantsApi.get(id),
+      plantsApi.timeline(id),
+    ]);
+    setPlant(plantRes.data);
+    setTimelineEvents(mapTimelineFromApi(timelineRes.data.events));
   }, [id]);
 
   useEffect(() => {
@@ -130,11 +156,39 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
   const resetJournalForm = () => {
     setJournalNotes('');
     setJournalPhoto(null);
+    if (journalPhotoPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(journalPhotoPreview);
+    }
+    setJournalPhotoPreview(null);
+    setJournalExistingPhotoUrl(null);
+    setJournalRemovePhoto(false);
     setJournalHeightCm('');
     setJournalWidthCm('');
     setJournalLeafCount('');
     setJournalPhotoInputKey((key) => key + 1);
     setEditingJournalId(null);
+    setJournalError('');
+  };
+
+  const setJournalPhotoWithPreview = (file: File | null) => {
+    setJournalPhoto(file);
+    if (file) setJournalRemovePhoto(false);
+    setJournalPhotoPreview((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      if (file) return URL.createObjectURL(file);
+      if (journalRemovePhoto) return null;
+      return journalExistingPhotoUrl;
+    });
+  };
+
+  const clearJournalPhoto = () => {
+    setJournalPhoto(null);
+    setJournalRemovePhoto(true);
+    setJournalPhotoPreview((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setJournalPhotoInputKey((key) => key + 1);
   };
 
   const journalPayload = () => ({
@@ -144,24 +198,52 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     leafCount: journalLeafCount ? Number(journalLeafCount) : undefined,
   });
 
+  const hasJournalMeasurements = Boolean(
+    journalHeightCm.trim() || journalWidthCm.trim() || journalLeafCount.trim(),
+  );
+
+  const hasJournalContent = Boolean(
+    journalNotes.trim() ||
+      journalPhoto ||
+      hasJournalMeasurements ||
+      (editingJournalId && journalExistingPhotoUrl && !journalRemovePhoto),
+  );
+
   const addJournal = async (e: FormEvent) => {
     e.preventDefault();
-    if (!id || (!journalNotes.trim() && !journalPhoto)) return;
-    await journalApi.create(id, journalPayload(), journalPhoto ?? undefined);
-    resetJournalForm();
-    load();
+    if (!id || !hasJournalContent) return;
+    setJournalError('');
+    try {
+      await journalApi.create(id, journalPayload(), journalPhoto ?? undefined);
+      resetJournalForm();
+      load();
+    } catch {
+      setJournalError('Could not save journal entry.');
+    }
   };
 
   const saveJournalEdit = async (e: FormEvent) => {
     e.preventDefault();
     if (!id || !editingJournalId) return;
-    await journalApi.update(id, editingJournalId, journalPayload(), journalPhoto ?? undefined);
-    resetJournalForm();
-    load();
+    setJournalError('');
+    try {
+      await journalApi.update(
+        id,
+        editingJournalId,
+        journalPayload(),
+        journalPhoto ?? undefined,
+        journalRemovePhoto,
+      );
+      resetJournalForm();
+      load();
+    } catch {
+      setJournalError('Could not update journal entry.');
+    }
   };
 
   const deleteJournalEntry = async (entryId: string) => {
     if (!id) return;
+    if (!window.confirm('Delete this journal entry? This cannot be undone.')) return;
     setBusyJournalId(entryId);
     try {
       await journalApi.remove(id, entryId);
@@ -183,6 +265,10 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
       setJournalLeafCount(entry.leafCount != null ? String(entry.leafCount) : '');
       setJournalPhoto(null);
       setJournalPhotoInputKey((key) => key + 1);
+      const photoUrl = (entry.photoUrl as string | null) ?? null;
+      setJournalExistingPhotoUrl(photoUrl);
+      setJournalPhotoPreview(photoUrl);
+      setJournalRemovePhoto(false);
     },
     [plant],
   );
@@ -207,9 +293,17 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const submitDiagnosis = async (symptomsText: string, image?: File) => {
+  const submitDiagnosis = async (
+    payload: {
+      symptomsText?: string;
+      symptomDuration?: 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
+      recentCareChange?: 'NONE' | 'WATERING' | 'LIGHT' | 'REPOT' | 'FERTILIZER' | 'TEMPERATURE' | 'PEST_TREATMENT';
+      pestsVisible?: boolean;
+    },
+    image?: File,
+  ) => {
     if (!id) return;
-    const { data } = await diagnosisApi.submit(id, symptomsText, image);
+    const { data } = await diagnosisApi.submit(id, payload, image);
     setPlant((current) => {
       if (!current) return current;
       const currentDiagnoses = (current.diagnoses as PlantRecord[] | undefined) || [];
@@ -220,11 +314,16 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const createFollowUpTask = async (diagnosisId: string, dueInDays: number) => {
+  const createFollowUpTask = async (diagnosisId: string, dueInDays: number, note?: string) => {
     if (!id) return;
     setFollowUpCreatingId(diagnosisId);
     try {
-      const { data: task } = await diagnosisApi.createFollowUpTask(id, diagnosisId, dueInDays);
+      const { data: task } = await diagnosisApi.createFollowUpTask(
+        id,
+        diagnosisId,
+        dueInDays,
+        note,
+      );
       setPlant((current) => {
         if (!current) return current;
         const currentTasks = (current.tasks as PlantRecord[] | undefined) || [];
@@ -236,6 +335,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
           ),
         };
       });
+      if (note?.trim()) load();
     } finally {
       setFollowUpCreatingId(null);
     }
@@ -261,8 +361,8 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleCompleteTask = (taskId: string) => {
-    completeFromHook(taskId);
+  const handleCompleteTask = (taskId: string, feedback?: TaskCompleteFeedback) => {
+    completeFromHook(taskId, feedback);
     window.setTimeout(() => load(), 700);
   };
 
@@ -313,11 +413,6 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
           task.taskType === 'HEALTH_CHECK' &&
           task.status === 'PENDING',
       );
-    const timelineEvents = buildTimelineEvents({
-      journalEntries,
-      tasks,
-      diagnoses: diagnosisEntries,
-    });
 
     return {
       id,
@@ -348,8 +443,14 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
       journalNotes,
       setJournalNotes,
       journalPhoto,
-      setJournalPhoto,
+      setJournalPhoto: setJournalPhotoWithPreview,
       journalPhotoInputKey,
+      journalExistingPhotoUrl,
+      journalPhotoPreview,
+      journalRemovePhoto,
+      clearJournalPhoto,
+      journalError,
+      hasJournalContent,
       journalHeightCm,
       setJournalHeightCm,
       journalWidthCm,
@@ -370,7 +471,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
       sectionCounts: {
         tasks: pending.length,
         journal: timelineEvents.length,
-        diagnosis: diagnosisEntries.length,
+        diagnosis: activeDiagnosisCount,
       },
       activeDiagnosisCount,
       latestUnresolved,
@@ -396,10 +497,13 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     locationMessage,
     journalNotes,
     journalPhoto,
+    journalRemovePhoto,
     journalPhotoInputKey,
+    journalExistingPhotoUrl,
     journalHeightCm,
     journalWidthCm,
     journalLeafCount,
+    timelineEvents,
     editingJournalId,
     busyJournalId,
     updatingDiagnosisId,

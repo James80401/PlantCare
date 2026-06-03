@@ -55,6 +55,9 @@ export class EmailService implements OnModuleInit {
       port,
       secure: port === 465,
       requireTLS: port === 587,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000,
       auth: {
         user: this.config.get<string>('SMTP_USER')!.trim(),
         pass: this.smtpPassword(),
@@ -84,6 +87,16 @@ export class EmailService implements OnModuleInit {
       const info = await transporter.sendMail({
         from: this.fromAddress(),
         ...mail,
+        headers: {
+          // SendGrid click tracking rewrites auth links through a branded tracking
+          // domain. Keep verification/reset links direct so TLS must match drplant.app.
+          'X-SMTPAPI': JSON.stringify({
+            filters: {
+              clicktrack: { settings: { enable: 0 } },
+            },
+          }),
+          ...mail.headers,
+        },
       });
       transporter.close();
       return { success: true, messageId: info.messageId };
@@ -141,6 +154,50 @@ export class EmailService implements OnModuleInit {
         </p>
         <p style="font-size:13px;color:#666">Or copy this link:<br><a href="${url}">${url}</a></p>
         <p style="font-size:13px;color:#666">Expires in 7 days.</p>
+      `,
+      ),
+    });
+  }
+
+  async sendAdminRegistrationPendingEmail(
+    adminTo: string,
+    registrantEmail: string,
+    registrantName: string | null,
+  ): Promise<SendResult> {
+    const reviewUrl = this.frontendUrl('/admin/registrations');
+    const who = registrantName ? `${registrantName} (${registrantEmail})` : registrantEmail;
+    return this.deliver({
+      to: adminTo,
+      subject: 'Plant Care — new registration awaiting approval',
+      text: `A user completed email verification and needs approval:\n${who}\n\nReview: ${reviewUrl}`,
+      html: this.wrapHtml(
+        'Registration pending',
+        `
+        <p>A user completed email verification and is waiting for admin approval:</p>
+        <p><strong>${who}</strong></p>
+        <p style="text-align:center;margin:24px 0">
+          <a href="${reviewUrl}" style="${EmailService.buttonStyle}">Review registrations</a>
+        </p>
+      `,
+      ),
+    });
+  }
+
+  async sendAccountApprovedEmail(to: string, name: string | null): Promise<SendResult> {
+    const loginUrl = this.frontendUrl('/login');
+    const greeting = name ? `Hi ${name},` : 'Hi,';
+    return this.deliver({
+      to,
+      subject: 'Your Plant Care account is approved',
+      text: `${greeting}\n\nYour account was approved. You can sign in now: ${loginUrl}`,
+      html: this.wrapHtml(
+        'Account approved',
+        `
+        <p>${greeting}</p>
+        <p>Your Plant Care account was approved. You can sign in and start using the app.</p>
+        <p style="text-align:center;margin:24px 0">
+          <a href="${loginUrl}" style="${EmailService.buttonStyle}">Sign in</a>
+        </p>
       `,
       ),
     });

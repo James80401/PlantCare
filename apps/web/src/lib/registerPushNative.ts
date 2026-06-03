@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { devicesApi } from '../services/api';
+import { getStoredPushToken, setStoredPushToken } from './pushTokenStorage';
 
 let registering = false;
 
@@ -16,6 +17,16 @@ export async function registerPushNative(): Promise<boolean> {
     }
     if (perm.receive !== 'granted') return false;
 
+    const existing = getStoredPushToken();
+    if (existing) {
+      try {
+        await devicesApi.register(existing, Capacitor.getPlatform());
+        return true;
+      } catch {
+        /* re-register below */
+      }
+    }
+
     return await new Promise<boolean>((resolve) => {
       let settled = false;
       const finish = (ok: boolean) => {
@@ -31,6 +42,7 @@ export async function registerPushNative(): Promise<boolean> {
         }
         try {
           await devicesApi.register(ev.value, Capacitor.getPlatform());
+          setStoredPushToken(ev.value);
           finish(true);
         } catch {
           finish(false);

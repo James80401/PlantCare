@@ -17,8 +17,19 @@ export interface Milestone {
   description: string;
   emoji: string;
   unlocked: boolean;
+  unlockedAt?: string | null;
   progressLabel?: string;
 }
+
+export type MilestoneApiRow = {
+  id: string;
+  title: string;
+  description: string;
+  emoji: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+  progressLabel?: string;
+};
 
 export interface EngagementContext {
   plantCount: number;
@@ -150,6 +161,39 @@ export function getOldestPlantAgeDays(
 
   const oldest = dates.reduce((min, date) => (date < min ? date : min), dates[0]);
   return Math.max(0, differenceInCalendarDays(startOfDay(currentDate), oldest));
+}
+
+export function milestonesFromApi(rows: MilestoneApiRow[] | undefined): Milestone[] | null {
+  if (!rows?.length) return null;
+  return rows.map((row) => ({
+    id: row.id as MilestoneId,
+    title: row.title,
+    description: row.description,
+    emoji: row.emoji,
+    unlocked: row.unlocked,
+    unlockedAt: row.unlockedAt,
+    progressLabel: row.progressLabel,
+  }));
+}
+
+export function resolveMilestones(
+  apiRows: MilestoneApiRow[] | undefined,
+  ctx: EngagementContext,
+): Milestone[] {
+  const apiMilestones = milestonesFromApi(apiRows);
+  if (!apiMilestones) return deriveMilestones(ctx);
+
+  const byId = new Map(apiMilestones.map((milestone) => [milestone.id, milestone]));
+  return MILESTONE_DEFS.map((definition) => (
+    byId.get(definition.id) ?? {
+      id: definition.id,
+      title: definition.title,
+      description: definition.description,
+      emoji: definition.emoji,
+      unlocked: false,
+      progressLabel: definition.progressLabel?.(ctx),
+    }
+  ));
 }
 
 export function deriveMilestones(ctx: EngagementContext): Milestone[] {

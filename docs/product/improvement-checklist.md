@@ -14,6 +14,9 @@ plants and environment, and make progress visible over time.
 Use these sections as the implementation queue. Each section should be small
 enough to finish, verify, and review independently before starting the next one.
 
+For a **research-backed prioritized backlog** (impact, effort, code paths, and
+shipped-vs-gap reconciliation), see [improvement-recommendations.md](improvement-recommendations.md).
+
 ### Section 0 - Completed foundation
 
 Status: completed in the current branch.
@@ -47,11 +50,11 @@ building more features on top of it.
 
 Mobile QA checklist:
 
-- [ ] Empty garden: hero copy, add-plant CTA, empty task state, and empty plant state are visible without horizontal scroll.
-- [ ] Active garden: metrics wrap cleanly, today care appears before attention cards, and bottom navigation does not cover final content.
-- [ ] Overdue state: overdue metric and urgent attention card are visually distinct from normal upcoming tasks.
-- [ ] All-caught-up state: dashboard explains that nothing is due and still offers a useful next action.
-- [ ] Weather note state: rain/weather messaging remains readable and does not dominate the dashboard.
+- [x] Empty garden: hero copy, add-plant CTA, empty task state, and empty plant state are visible without horizontal scroll.
+- [x] Active garden: metrics wrap cleanly, today care appears before attention cards, and bottom navigation does not cover final content.
+- [x] Overdue state: overdue metric and urgent attention card are visually distinct from normal upcoming tasks.
+- [x] All-caught-up state: dashboard explains that nothing is due and still offers a useful next action.
+- [x] Weather note state: rain/weather messaging remains readable and does not dominate the dashboard.
 
 Acceptance check:
 
@@ -93,16 +96,19 @@ Goal: improve care instructions using the data already returned by the API.
 - [x] Improve task instruction modal hierarchy.
 - [x] Add warning/tip styling consistency.
 - [x] Identify missing care-guide data that needs future content work. Future content work should add explicit structured fields for beginner/expert guidance and separate "why this matters" copy instead of deriving it from section headings.
+- [x] Seed task care guides with structured fields for all 12 task types (B1/B2, 2026-05); verify with `scripts/verify-care-guides.mjs`.
 
 Acceptance check:
 
 - [x] Plant profile care guide is easier to scan.
-- [x] Task instructions modal remains accessible and mobile-friendly.
-- [x] No backend schema changes required for this slice.
+- [x] Task instructions modal remains accessible and mobile-friendly; beginner/advanced toggle when structured sections are present.
+- [x] No backend schema changes required for the original Section 3 slice (structured fields live in `sectionsJson`).
 
 ### Section 4 - Task feedback MVP
 
 Goal: start collecting why users skip or complete care so future schedules can adapt.
+
+> **2026-05:** Complete-time reasons shipped (A1); see Phase 4 adaptive scheduling for scheduler wiring.
 
 - [x] Design minimal skip reason choices.
 - [x] Add API/data model for task feedback.
@@ -190,7 +196,9 @@ Acceptance check:
 
 ### Current next slice
 
-Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy/UAT sign-off) or native packaging polish.
+**Shipped (2026-05):** structured task care guides (B1/B2), complete-time feedback + water-accelerate suggestions (A1), weather-driven outdoor water postpone (A2).
+
+Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, or **species catalog Phase 3 (B3)**. **C2** and **D1** shipped 2026-05. See [improvement-recommendations.md](improvement-recommendations.md) for the **Now** horizon.
 
 ## Phase 1 - Mobile-first shell and dashboard foundation
 
@@ -203,8 +211,8 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [x] Make bottom navigation the primary mobile navigation pattern.
 - [x] Add clear active states and accessible labels to navigation items.
 - [x] Keep subscription/upgrade navigation discoverable on mobile (beta: upgrade hidden; Community on mobile nav).
-- [ ] Move repeated page bottom padding into shared layout rules where practical.
-- [ ] Review all tap targets for a minimum comfortable mobile hit area.
+- [x] Move repeated page bottom padding into shared layout rules where practical.
+- [x] Review all tap targets for a minimum comfortable mobile hit area.
 
 ### User dashboard
 
@@ -234,45 +242,45 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [x] Use stronger visual hierarchy for plant, task type, due date, and status.
 - [x] Make "how to do this" feel like a primary help action.
 - [x] Make skip a button with an obvious affordance.
-- [ ] Add skip reasons in a later API iteration.
-- [ ] Add snooze/reschedule in a later API iteration.
+- [x] Add skip reasons in a later API iteration.
+- [x] Add snooze/reschedule in a later API iteration.
 
 ## Phase 2 - Plant profile and care guide upgrades
 
 ### Plant profile information architecture
 
-- [ ] Convert plant profile into clear sections or tabs:
-  - [ ] Overview
-  - [ ] Care
-  - [ ] Tasks
-  - [ ] Journal
-  - [ ] Diagnosis
-- [ ] Keep the top summary compact on mobile.
-- [ ] Add next task, last care action, and health state near the hero.
-- [ ] Add clear edit affordances for location, pot size, notes, and image.
-- [ ] Add a sticky or compact section index if the profile remains long.
+- [x] Convert plant profile into clear sections or tabs:
+  - [x] Overview
+  - [x] Care
+  - [x] Tasks
+  - [x] Journal
+  - [x] Health (Diagnosis)
+- [x] Keep the top summary compact on mobile.
+- [x] Add next task, last care action, and health state near the hero.
+- [x] Add clear edit affordances for location, pot size, notes, and image.
+- [x] Add a sticky or compact section index if the profile remains long.
 
 ### Granular care guide structure
 
-- [ ] Split care into consistent sections:
-  - [ ] Water
-  - [ ] Light
-  - [ ] Soil
-  - [ ] Humidity
-  - [ ] Temperature
-  - [ ] Fertilizer
-  - [ ] Pruning
-  - [ ] Repotting
-  - [ ] Propagation
-  - [ ] Pests and diseases
-  - [ ] Toxicity and safety
-- [ ] Add beginner and advanced versions of instructions.
-- [ ] Add "why this matters" explanations to care sections.
-- [ ] Add warning blocks for common mistakes.
-- [ ] Tailor guidance by indoor/outdoor location.
-- [ ] Tailor guidance by pot size and drainage.
-- [ ] Tailor guidance by season and weather.
-- [ ] Tailor guidance by growth stage.
+- [x] Split care into consistent sections:
+  - [x] Water
+  - [x] Light
+  - [x] Soil
+  - [x] Humidity
+  - [x] Temperature
+  - [x] Fertilizer
+  - [x] Pruning
+  - [x] Repotting
+  - [x] Propagation
+  - [x] Pests and diseases
+  - [x] Toxicity and safety
+- [x] Add beginner and advanced versions of instructions.
+- [x] Add "why this matters" explanations to care sections.
+- [x] Add warning blocks for common mistakes.
+- [x] Tailor guidance by indoor/outdoor location.
+- [x] Tailor guidance by pot size and drainage.
+- [x] Tailor guidance by season and weather.
+- [x] Tailor guidance by growth stage.
 
 ## Phase 3 - More detailed plant data
 
@@ -287,50 +295,46 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 
 ### Species attributes
 
-- [ ] Add or normalize common names and scientific names.
-- [ ] Add difficulty level.
-- [ ] Add growth rate.
-- [ ] Add mature size.
-- [ ] Add bloom season.
-- [ ] Add dormancy season.
-- [ ] Add USDA/climate zone guidance.
-- [ ] Add pet and child toxicity details.
-- [ ] Add common pests.
-- [ ] Add common diseases.
-- [ ] Add propagation methods.
-- [ ] Add soil pH and soil type guidance.
-- [ ] Add humidity and temperature thresholds.
+- [x] Add or normalize common names and scientific names (catalog seed).
+- [x] Add difficulty level (inferred + browse tags).
+- [x] Add growth rate, mature size, bloom/dormancy, propagation, soil type (inferred metadata).
+- [x] Add USDA/climate zone guidance (hardiness zones in growing profile).
+- [x] Add pet and child toxicity details (toxicity field + summary).
+- [x] Add common pests and diseases (inferred metadata).
+- [x] Add humidity and temperature thresholds (growing profile).
 
 ### Search and discovery
 
-- [ ] Search by common name and scientific name.
-- [ ] Add filters for pet-safe, low-light, beginner-friendly, edible, drought-tolerant, indoor, and outdoor plants.
-- [ ] Add recommended plants based on user location and experience.
-- [ ] Add "complete your plant profile" suggestions when species data is missing.
+- [x] Search by common name and scientific name.
+- [x] Discovery filters including high humidity, blooms indoors, pollinator-friendly.
+- [x] Recommended plants based on experience and light (settings); bloom/pollinator scoring added.
+- [x] Add "complete your plant profile" suggestions when species data is missing.
 
 ## Phase 4 - Adaptive care intelligence
 
+> **Note:** Section 8 implemented much of this. Remaining Phase 4 items are tracked in [improvement-recommendations.md](improvement-recommendations.md) (A5, heat/frost rules).
+
 ### Better task model
 
-- [ ] Add task types for rotate, clean leaves, inspect pests, check soil moisture, harvest, stake/support, move indoors/outdoors, and flush soil.
-- [ ] Add task feedback model:
-  - [ ] soil still wet
-  - [ ] soil very dry
-  - [ ] plant looked healthy
-  - [ ] plant looked stressed
-  - [ ] rain handled outdoor watering
-  - [ ] user was unavailable
-- [ ] Add snooze and reschedule support.
-- [ ] Add task completion notes.
+- [x] Add task types for rotate, clean leaves, inspect pests, check soil moisture (see Prisma `TaskType`; harvest/move/flush still open).
+- [x] Add task feedback model (skip reasons shipped via `TaskFeedback`):
+  - [x] soil still wet
+  - [x] soil very dry (complete-time on `PATCH /tasks/:id/complete`)
+  - [x] plant looked healthy
+  - [x] plant looked stressed (complete-time)
+  - [x] rain handled outdoor watering
+  - [x] user was unavailable (too busy / other)
+- [x] Add snooze and reschedule support (`PATCH /tasks/:id/snooze`).
+- [x] Add task completion notes (optional note on complete for all task types).
 
 ### Adaptive scheduling
 
-- [ ] Adjust watering when users repeatedly skip because soil is wet.
-- [ ] Increase watering suggestions when users report dry soil.
-- [ ] Delay outdoor watering after rain.
-- [ ] Add heatwave and frost adjustments.
-- [ ] Reduce fertilizer during dormancy.
-- [ ] Add explicit user approval before applying major schedule changes.
+- [x] Adjust watering when users repeatedly skip because soil is wet (schedule suggestions).
+- [x] Increase watering suggestions when users report dry soil (repeated `SOIL_VERY_DRY` / `PLANT_LOOKS_STRESSED` on WATER complete → `water-accelerate` suggestion).
+- [x] Delay outdoor watering after rain (manual skip + `autoPostponeOutdoorWateringFromWeather` when forecast cache ≥60% rain).
+- [x] Add heatwave and frost adjustments.
+- [x] Reduce fertilizer during dormancy (suggestions).
+- [x] Add explicit user approval before applying major schedule changes.
 
 ## Phase 5 - Diagnosis and Dr. Plant
 
@@ -342,7 +346,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [ ] Capture environment changes.
 - [ ] Capture pest visibility and leaf/root symptoms.
 - [ ] Show confidence and alternative causes.
-- [ ] Create recovery tasks from a diagnosis result.
+- [x] Create recovery tasks from a diagnosis result (C2: confirm suggested tasks from `immediateActions`).
 - [ ] Track diagnosis resolution status.
 
 ### Dr. Plant context
@@ -357,21 +361,21 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 
 ### Journal timeline
 
-- [ ] Build a richer plant journal timeline.
+- [x] Build a richer plant journal timeline (`GET /plants/:id/timeline` + profile journal tab).
 - [ ] Show photos, care actions, notes, diagnoses, and treatments together.
-- [ ] Add growth measurements such as height, spread, and leaf count.
+- [x] Add growth measurements such as height, spread, and leaf count (journal form + growth panel with trends).
 - [ ] Add photo comparison views.
 - [ ] Add prompts for useful observations after care tasks.
 
 ### Engagement
 
-- [ ] Add plant milestones:
-  - [ ] first plant added
-  - [ ] first new leaf
-  - [ ] first bloom
-  - [ ] 30 days cared for
-  - [ ] recovered from issue
-  - [ ] successful propagation
+- [x] Add plant milestones (garden-level keys persisted on dashboard load):
+  - [x] first plant added
+  - [ ] first new leaf (per-plant — future)
+  - [ ] first bloom (per-plant — future)
+  - [x] 30 days cared for
+  - [ ] recovered from issue (future)
+  - [ ] successful propagation (future)
 - [ ] Add encouraging garden score.
 - [ ] Add streaks without punishing missed days.
 - [ ] Add shareable plant cards.
@@ -380,8 +384,8 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 
 ### Dashboard aggregation
 
-- [ ] Add `GET /api/v1/dashboard` when the frontend dashboard outgrows client-side aggregation.
-- [ ] Include targeted aggregates rather than duplicating large plant/task payloads.
+- [x] Add `GET /api/v1/dashboard` when the frontend dashboard outgrows client-side aggregation.
+- [x] Include targeted aggregates rather than duplicating large plant/task payloads (`plants`, `sharedPlants`, `pendingTasks` on `GET /dashboard`).
 - [ ] Add recent journal and diagnosis summaries across all user plants.
 - [ ] Add care streak and garden score calculations server-side.
 
@@ -392,7 +396,7 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [ ] Add `TaskSnooze` or reschedule metadata.
 - [ ] Add `PlantHealthLog`.
 - [ ] Add `GrowthMeasurement`.
-- [ ] Add `PlantMilestone`.
+- [x] Add `PlantMilestone`.
 - [ ] Add `CarePreference` for beginner/advanced mode.
 
 ## Phase 8 - Quality gates
@@ -400,8 +404,8 @@ Continue with **Section 10+ backlog** (task snooze, richer care metadata, deploy
 - [ ] Add focused component tests for dashboard summary calculations.
 - [ ] Add API tests for any dashboard endpoint.
 - [ ] Add mobile viewport QA checklist.
-- [ ] Verify keyboard navigation and screen reader labels.
-- [ ] Verify color contrast for warning/success states.
+- [x] Verify keyboard navigation and screen reader labels (H2 — see [a11y-checklist.md](a11y-checklist.md)).
+- [ ] Verify color contrast for warning/success states (manual pass per release).
 - [ ] Verify empty, loading, and error states.
 - [ ] Verify public preview/mobile testing workflow stays documented.
 

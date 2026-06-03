@@ -7,12 +7,16 @@ export const SPECIES_DISCOVERY_FILTERS = [
   { key: 'droughtTolerant', label: 'Drought-tolerant' },
   { key: 'indoor', label: 'Indoor' },
   { key: 'outdoor', label: 'Outdoor' },
+  { key: 'highHumidity', label: 'High humidity' },
+  { key: 'bloomsIndoors', label: 'Blooms indoors' },
+  { key: 'pollinatorFriendly', label: 'Pollinator-friendly' },
 ] as const;
 
 export const SPECIES_BROWSE_SORT_OPTIONS = [
   { value: 'name', label: 'Name (A–Z)' },
   { value: 'waterAsc', label: 'Water less often' },
   { value: 'waterDesc', label: 'Water more often' },
+  { value: 'difficulty', label: 'Easiest first' },
 ] as const;
 
 export type SpeciesBrowseSort = (typeof SPECIES_BROWSE_SORT_OPTIONS)[number]['value'];
@@ -28,4 +32,7 @@ export const defaultSpeciesDiscoveryFilters: Record<SpeciesDiscoveryFilterKey, b
   droughtTolerant: false,
   indoor: false,
   outdoor: false,
+  highHumidity: false,
+  bloomsIndoors: false,
+  pollinatorFriendly: false,
 };

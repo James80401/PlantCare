@@ -3,8 +3,17 @@ import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usersApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useBuddyCompanion } from '../context/BuddyCompanionContext';
 import { registerPushNative } from '../lib/registerPushNative';
+import { unregisterPushNative } from '../lib/unregisterPushNative';
 import type { TemperatureUnit } from '../utils/temperature';
+import {
+  BUDDY_COMPANION_MODE_LABELS,
+  buddyCompanionModes,
+  readBuddyCompanionMode,
+  writeBuddyCompanionMode,
+} from '../hooks/buddy/displayMode';
+import type { BuddyCompanionMode } from '../hooks/buddy/types';
 
 interface LocationOption {
   latitude: number;
@@ -13,8 +22,27 @@ interface LocationOption {
   timezone: string;
 }
 
+const EXPERIENCE_LEVELS = [
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', label: 'Advanced' },
+  { value: 'expert', label: 'Expert' },
+] as const;
+
+const LIGHT_LEVELS = [
+  { value: 'low', label: 'Low light' },
+  { value: 'medium', label: 'Medium light' },
+  { value: 'high', label: 'Bright light' },
+] as const;
+
 export default function Settings() {
-  const { logout } = useAuth();
+  const { logout, refreshUser } = useAuth();
+  const {
+    buddy,
+    missing: buddyMissing,
+    loading: buddyLoading,
+    updateBuddy,
+  } = useBuddyCompanion();
   const navigate = useNavigate();
   const [notifyPush, setNotifyPush] = useState(true);
   const [notifyEmail, setNotifyEmail] = useState(true);
@@ -29,7 +57,15 @@ export default function Settings() {
   const [quietStart, setQuietStart] = useState('');
   const [quietEnd, setQuietEnd] = useState('');
   const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('C');
+  const [experienceLevel, setExperienceLevel] = useState('beginner');
+  const [defaultLightLevel, setDefaultLightLevel] = useState('medium');
+  const [buddyDisplayMode, setBuddyDisplayMode] = useState<BuddyCompanionMode>(() =>
+    readBuddyCompanionMode(),
+  );
+  const [buddyDisplaySaved, setBuddyDisplaySaved] = useState(false);
+  const [buddyDisplayError, setBuddyDisplayError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [carePrefsSaved, setCarePrefsSaved] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -46,8 +82,52 @@ export default function Settings() {
       if (data.temperatureUnit === 'F' || data.temperatureUnit === 'C') {
         setTemperatureUnit(data.temperatureUnit);
       }
+      if (data.experienceLevel) setExperienceLevel(data.experienceLevel);
+      if (data.defaultLightLevel) setDefaultLightLevel(data.defaultLightLevel);
     });
   }, []);
+
+  useEffect(() => {
+    if (!buddy?.floatingCompanionMode) return;
+    setBuddyDisplayMode(buddy.floatingCompanionMode);
+    writeBuddyCompanionMode(buddy.floatingCompanionMode);
+  }, [buddy?.floatingCompanionMode]);
+
+  const handleBuddyDisplayModeChange = async (mode: BuddyCompanionMode) => {
+    setBuddyDisplayMode(mode);
+    setBuddyDisplayError('');
+    writeBuddyCompanionMode(mode);
+
+    if (buddyMissing || !buddy) {
+      setBuddyDisplaySaved(true);
+      setTimeout(() => setBuddyDisplaySaved(false), 2000);
+      return;
+    }
+
+    try {
+      await updateBuddy({ floatingCompanionMode: mode });
+      setBuddyDisplaySaved(true);
+      setTimeout(() => setBuddyDisplaySaved(false), 2000);
+    } catch {
+      setBuddyDisplayError('Could not save Plant Buddy display preference.');
+    }
+  };
+
+  const handleCarePrefsSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+    try {
+      await usersApi.updateCarePreferences({
+        experienceLevel,
+        defaultLightLevel,
+      });
+      await refreshUser();
+      setCarePrefsSaved(true);
+      setTimeout(() => setCarePrefsSaved(false), 2000);
+    } catch {
+      setError('Could not save care preferences.');
+    }
+  };
 
   useEffect(() => {
     if (locationQuery.trim().length < 2) {
@@ -93,6 +173,8 @@ export default function Settings() {
       setTimeout(() => setSaved(false), 2000);
       if (notifyPush && Capacitor.isNativePlatform()) {
         void registerPushNative();
+      } else if (!notifyPush) {
+        void unregisterPushNative();
       }
     } catch (err: unknown) {
       const message =
@@ -136,6 +218,42 @@ export default function Settings() {
         <p className="text-sm text-gray-600 leading-relaxed">
           Your Finch-style companion — journeys, quests, shop, and Garden Town sunshine.
         </p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-gray-700">Floating Buddy</p>
+            {buddyDisplaySaved ? (
+              <span className="text-xs font-medium text-emerald-700">Saved</span>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-1">
+            {buddyCompanionModes().map((mode) => {
+              const active = buddyDisplayMode === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => void handleBuddyDisplayModeChange(mode)}
+                  disabled={buddyLoading}
+                  className={`min-h-10 rounded-lg px-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60 ${
+                    active
+                      ? 'bg-white text-emerald-900 shadow-sm'
+                      : 'text-emerald-800 hover:bg-white/70'
+                  }`}
+                  aria-pressed={active}
+                >
+                  {BUDDY_COMPANION_MODE_LABELS[mode]}
+                </button>
+              );
+            })}
+          </div>
+          {buddyDisplayError ? (
+            <p className="text-sm text-red-600">{buddyDisplayError}</p>
+          ) : (
+            <p className="text-xs leading-relaxed text-gray-500">
+              This controls only the floating companion and follows your account across devices.
+            </p>
+          )}
+        </div>
         <Link
           to="/garden/buddy"
           className="inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
@@ -157,6 +275,51 @@ export default function Settings() {
           Manage household
         </Link>
       </section>
+
+      <form
+        onSubmit={handleCarePrefsSubmit}
+        className="bg-white rounded-xl border border-emerald-100 p-6 space-y-4"
+      >
+        <h2 className="font-semibold text-emerald-950">Care preferences</h2>
+        <p className="text-sm text-gray-600">
+          Used for species recommendations and default detail level on plant care guides.
+        </p>
+        <label className="block text-sm">
+          <span className="font-medium text-gray-700">Experience level</span>
+          <select
+            value={experienceLevel}
+            onChange={(e) => setExperienceLevel(e.target.value)}
+            className="mt-1 w-full rounded-lg border px-3 py-2"
+          >
+            {EXPERIENCE_LEVELS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium text-gray-700">Typical light at home</span>
+          <select
+            value={defaultLightLevel}
+            onChange={(e) => setDefaultLightLevel(e.target.value)}
+            className="mt-1 w-full rounded-lg border px-3 py-2"
+          >
+            {LIGHT_LEVELS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="submit"
+          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+        >
+          Save care preferences
+        </button>
+        {carePrefsSaved ? <p className="text-sm text-emerald-700">Care preferences saved.</p> : null}
+      </form>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-emerald-100 p-6 space-y-4">
         <h2 className="font-semibold">Notifications</h2>

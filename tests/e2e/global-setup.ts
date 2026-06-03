@@ -28,6 +28,7 @@ async function main() {
   const reg = await regRes.json();
 
   let token = reg.accessToken as string | undefined;
+  let refreshToken = reg.refreshToken as string | undefined;
 
   if (reg.requiresVerification) {
     if (isStaging) {
@@ -50,23 +51,27 @@ async function main() {
     });
     const login = await loginRes.json();
     token = login.accessToken;
+    refreshToken = login.refreshToken;
   }
 
   if (!token) {
     throw new Error(`E2E setup: could not obtain access token (${JSON.stringify(reg)})`);
   }
 
-  const onboardingRes = await fetch(`${apiBase}/users/me/onboarding`, {
-    method: 'PUT',
+  const gardenRes = await fetch(`${apiBase}/gardens`, {
+    method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ skip: true }),
+    body: JSON.stringify({ name: 'UAT Garden', location: 'Indoor' }),
   });
-  if (!onboardingRes.ok) {
-    throw new Error(`E2E setup: onboarding failed (${onboardingRes.status})`);
+  if (!gardenRes.ok) {
+    const errBody = await gardenRes.text();
+    throw new Error(`E2E setup: garden create failed (${gardenRes.status}) ${errBody}`);
   }
+  const garden = await gardenRes.json();
+  const gardenId = garden?.id as string | undefined;
 
   const speciesRes = await fetch(`${apiBase}/species/search?q=monstera`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -101,6 +106,7 @@ async function main() {
       },
       body: JSON.stringify({
         speciesId,
+        gardenId,
         nickname: 'UAT E2E Plant',
         location: 'Living Room',
       }),
@@ -129,7 +135,8 @@ async function main() {
       email,
       password,
       accessToken: token,
-      refreshToken: reg.refreshToken,
+      refreshToken,
+      gardenId,
       plantId,
       userId,
     }),

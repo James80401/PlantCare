@@ -5,7 +5,6 @@
 | Screen / flow | Document |
 |---------------|----------|
 | Landing, login, register | [landing-and-auth.md](landing-and-auth.md) |
-| Onboarding wizard | [onboarding.md](onboarding.md) |
 | Garden dashboard | [garden-dashboard.md](garden-dashboard.md) |
 | Browse & discover species | [browse-plants.md](browse-plants.md) |
 | Add plant | [add-plant.md](add-plant.md) |

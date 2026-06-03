@@ -6,9 +6,10 @@ import { CareGuidesModule } from '../care-guides/care-guides.module';
 import { SchedulerModule } from '../scheduler/scheduler.module';
 import { SpeciesModule } from '../species/species.module';
 import { UploadModule } from '../upload/upload.module';
+import { WeatherModule } from '../weather/weather.module';
 
 @Module({
-  imports: [CareGuidesModule, SchedulerModule, SpeciesModule, UploadModule],
+  imports: [CareGuidesModule, SchedulerModule, SpeciesModule, UploadModule, WeatherModule],
   controllers: [PlantsController],
   providers: [PlantsService, PlantNetService],
   exports: [PlantsService],

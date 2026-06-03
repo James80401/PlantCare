@@ -1,6 +1,5 @@
-import BuddyCuteFace from './BuddyCuteFace';
+import BuddyCharacterModel from './BuddyCharacterModel';
 import { faceExpressionForMood, type BuddyFaceExpression } from './buddyFaces';
-import { speciesEmoji } from './species';
 
 interface BuddySpriteProps {
   speciesId: string;
@@ -12,30 +11,6 @@ interface BuddySpriteProps {
   /** Override face expression (e.g. from animation catalog). */
   face?: BuddyFaceExpression;
 }
-
-const sizeClass = {
-  sm: 'text-5xl',
-  md: 'text-7xl',
-  lg: 'text-8xl',
-};
-
-const companionSizeClass = {
-  sm: 'text-3xl',
-  md: 'text-5xl',
-  lg: 'text-6xl',
-};
-
-const faceSizeMap = {
-  sm: 'sm' as const,
-  md: 'sm' as const,
-  lg: 'sm' as const,
-};
-
-const companionFaceSizeMap = {
-  sm: 'xs' as const,
-  md: 'xs' as const,
-  lg: 'sm' as const,
-};
 
 const moodClass: Record<string, string> = {
   WILTING: 'opacity-80 saturate-50',
@@ -52,7 +27,6 @@ export default function BuddySprite({
   face,
 }: BuddySpriteProps) {
   const moodEffect = mood ? moodClass[mood] : '';
-  const sizes = variant === 'companion' ? companionSizeClass : sizeClass;
   const motionClass = traveling
     ? variant === 'companion'
       ? 'buddy-travel-walk'
@@ -61,23 +35,18 @@ export default function BuddySprite({
 
   const faceExpression: BuddyFaceExpression =
     face ?? faceExpressionForMood(mood) ?? (traveling ? 'cozy' : 'happy');
-  const faceSize = variant === 'companion' ? companionFaceSizeMap[size] : faceSizeMap[size];
 
   return (
     <div
       className={`flex items-center justify-center ${motionClass} ${moodEffect}`}
       aria-hidden
     >
-      <span className={`relative ${sizes[size]} select-none`} role="img">
-        {speciesEmoji(speciesId)}
-        <span className="absolute bottom-[6%] left-1/2 -translate-x-1/2">
-          <BuddyCuteFace
-            expression={faceExpression}
-            speciesId={speciesId}
-            size={faceSize}
-          />
-        </span>
-      </span>
+      <BuddyCharacterModel
+        speciesId={speciesId}
+        expression={faceExpression}
+        size={size}
+        variant={variant}
+      />
     </div>
   );
 }

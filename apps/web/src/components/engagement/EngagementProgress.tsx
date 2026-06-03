@@ -17,6 +17,13 @@ export function EngagementProgress({
       aria-label="Your progress"
     >
       <ProgressHeader wellness={wellness} streak={streak} />
+      {milestones.some((m) => m.unlocked) ? (
+        <p className="mt-3 rounded-2xl bg-emerald-100/80 px-3 py-2 text-sm font-medium text-emerald-900">
+          {milestones.filter((m) => m.unlocked).length === 1
+            ? `Nice work — you unlocked “${milestones.find((m) => m.unlocked)!.title}”.`
+            : `${milestones.filter((m) => m.unlocked).length} milestones unlocked — your garden rhythm is building.`}
+        </p>
+      ) : null}
       <MilestoneStrip milestones={milestones} />
     </section>
   );

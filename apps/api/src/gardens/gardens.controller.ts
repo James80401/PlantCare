@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
@@ -25,6 +25,16 @@ export class GardensController {
     return this.gardens.findMine(user.sub);
   }
 
+  @Get('summaries')
+  summaries(@CurrentUser() user: JwtPayload) {
+    return this.gardens.getSummaries(user.sub);
+  }
+
+  @Get(':id')
+  detail(@CurrentUser() user: JwtPayload, @Param('id') gardenId: string) {
+    return this.gardens.getDetail(user.sub, gardenId);
+  }
+
   @Post('invites/accept')
   acceptInvite(@CurrentUser() user: JwtPayload, @Body() dto: AcceptInviteDto) {
     return this.gardens.acceptInvite(user.sub, dto);
@@ -46,6 +56,20 @@ export class GardensController {
     @Body() dto: SharePlantDto,
   ) {
     return this.gardens.sharePlant(user.sub, gardenId, dto);
+  }
+
+  @Get(':id/invites')
+  invites(@CurrentUser() user: JwtPayload, @Param('id') gardenId: string) {
+    return this.gardens.getInvites(user.sub, gardenId);
+  }
+
+  @Delete(':id/members/:memberUserId')
+  removeMember(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') gardenId: string,
+    @Param('memberUserId') memberUserId: string,
+  ) {
+    return this.gardens.removeMember(user.sub, gardenId, memberUserId);
   }
 
   @Get(':id/activity')

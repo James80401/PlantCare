@@ -13,6 +13,14 @@ export type BuddyMood =
   | 'THIRSTY'
   | 'DORMANT';
 
+export const BUDDY_COMPANION_MODES = ['visible', 'minimized', 'hidden'] as const;
+
+export type BuddyCompanionMode = (typeof BUDDY_COMPANION_MODES)[number];
+
+export function isBuddyCompanionMode(value: unknown): value is BuddyCompanionMode {
+  return typeof value === 'string' && BUDDY_COMPANION_MODES.includes(value as BuddyCompanionMode);
+}
+
 export interface BuddyState {
   id: string;
   name: string;
@@ -21,6 +29,17 @@ export interface BuddyState {
   growthStage: string;
   journeyCount: number;
   dewdrops: number;
+  experiencePoints: number;
+  level: number;
+  levelProgress: {
+    level: number;
+    experiencePoints: number;
+    currentLevelXp: number;
+    nextLevelXp: number | null;
+    xpIntoLevel: number;
+    xpForNextLevel: number;
+    progressPercent: number;
+  };
   bloomTokens: number;
   bloomTokensEnabled: boolean;
   sunlightToday: number;
@@ -35,6 +54,7 @@ export interface BuddyState {
   currentBiome: string;
   terrariumLayout: Record<string, unknown>;
   terrariumBackground: string;
+  floatingCompanionMode: BuddyCompanionMode;
   journeyReady: boolean;
   hasActiveJourney: boolean;
   createdAt: string;
@@ -44,9 +64,16 @@ export interface BuddyState {
 export interface JourneyDiscovery {
   id: string;
   biomeId: string;
+  title?: string;
+  encounterName?: string;
+  encounterRole?: 'friend' | 'guide' | 'frenemy' | 'wanderer';
+  encounterMood?: string;
+  rewardFocus?: 'dewdrops' | 'comfort' | 'curiosity' | 'adventure' | 'focus';
   story: string;
   choiceA: string;
   choiceB: string;
+  outcomeA?: string;
+  outcomeB?: string;
 }
 
 export interface JourneyState {

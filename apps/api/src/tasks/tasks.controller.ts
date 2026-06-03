@@ -5,6 +5,7 @@ import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decor
 import { ApplyScheduleSuggestionDto } from './dto/apply-schedule-suggestion.dto';
 import { SkipTaskDto } from './dto/skip-task.dto';
 import { SnoozeTaskDto } from './dto/snooze-task.dto';
+import { CompleteTaskFeedbackDto } from './dto/complete-task-feedback.dto';
 import { TasksService } from './tasks.service';
 
 @ApiTags('tasks')
@@ -38,8 +39,12 @@ export class TasksController {
   }
 
   @Patch(':id/complete')
-  complete(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
-    return this.tasksService.complete(user.sub, id);
+  complete(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: CompleteTaskFeedbackDto,
+  ) {
+    return this.tasksService.complete(user.sub, id, dto);
   }
 
   @Patch(':id/skip')

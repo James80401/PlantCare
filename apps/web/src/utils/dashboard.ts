@@ -298,10 +298,33 @@ export function getSuggestedAction(
     };
   }
 
+  const withOpenDiagnosis = plants.filter((p) => p.unresolvedDiagnosis);
+  if (withOpenDiagnosis.length > 0) {
+    const first = withOpenDiagnosis[0];
+    return {
+      title: 'Follow up on plant health',
+      body:
+        withOpenDiagnosis.length === 1
+          ? `${first.nickname || first.species.commonName} has an open diagnosis. Ask Dr. Plant what to do next.`
+          : `${withOpenDiagnosis.length} plants have open diagnoses. Start with the most recent check-in.`,
+      actionLabel: 'Ask Dr. Plant',
+      actionTo: `/garden/plants/${first.id}/health#dr-plant`,
+    };
+  }
+
+  if (plants.length === 1) {
+    return {
+      title: "You're all caught up",
+      body: 'Nothing is due today. Log a journal note or ask Dr. Plant if something looks off.',
+      actionLabel: 'Ask Dr. Plant',
+      actionTo: `/garden/plants/${plants[0].id}/health#dr-plant`,
+    };
+  }
+
   return {
-    title: 'Log a quick observation',
-    body: 'Add a note or photo to a plant profile so future diagnoses and care advice have better context.',
-    actionLabel: 'Open garden',
+    title: "You're all caught up",
+    body: 'Nothing is due today. Browse your plants, add a journal note, or open Dr. Plant if a leaf looks unhappy.',
+    actionLabel: 'View your plants',
     actionTo: '#plants',
   };
 }

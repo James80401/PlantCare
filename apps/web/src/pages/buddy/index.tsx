@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import BuddySprite from '../../components/buddy/BuddySprite';
+import BuddyScene from '../../components/buddy/BuddyScene';
 import MoodIndicator from '../../components/buddy/MoodIndicator';
 import SunlightBar from '../../components/buddy/SunlightBar';
 import { GROWTH_STAGE_LABEL } from '../../components/buddy/species';
@@ -9,14 +9,26 @@ import { Card } from '../../components/ui/Card';
 import { PageHeader } from '../../components/ui/PageHeader';
 import SeasonalBanner from '../../components/buddy/SeasonalBanner';
 import BuddyTipsCard from '../../components/buddy/BuddyTipsCard';
+import { BuddyPersonalityCard } from '../../components/buddy/BuddyPersonality';
+import {
+  BuddyItemInteractionCard,
+  buddyInteractionItemIds,
+} from '../../components/buddy/BuddySceneActions';
+import {
+  BuddyItemEffectCard,
+  equippedItemsFromBuddy,
+  summarizeItemEffects,
+} from '../../components/buddy/BuddyItemEffects';
 import { useMemo } from 'react';
 import { useBuddy } from '../../hooks/buddy/useBuddy';
 import { useBuddyQuests } from '../../hooks/buddy/useBuddyQuests';
+import { useBuddyShop } from '../../hooks/buddy/useBuddyShop';
 import { buddyApi } from '../../services/api';
 
 export default function BuddyHome() {
   const { buddy, loading, error, refresh } = useBuddy();
   const { data: quests } = useBuddyQuests();
+  const { inventory } = useBuddyShop();
   const [greeting, setGreeting] = useState('');
 
   const claimableQuests = useMemo(() => {
@@ -25,6 +37,21 @@ export default function BuddyHome() {
       (q) => q.completed && !q.rewardClaimed,
     ).length;
   }, [quests]);
+
+  const equippedEffectSummary = useMemo(() => {
+    if (!buddy) return null;
+    const equipped = buddy.equippedItems as Record<string, unknown>;
+    const equippedItems = equippedItemsFromBuddy(equipped, inventory?.items ?? []);
+    return summarizeItemEffects(equippedItems);
+  }, [buddy, inventory?.items]);
+
+  const interactionItemIds = useMemo(() => {
+    if (!buddy) return [];
+    return buddyInteractionItemIds(
+      buddy.equippedItems as Record<string, unknown>,
+      buddy.terrariumLayout as Record<string, unknown>,
+    );
+  }, [buddy]);
 
   useEffect(() => {
     if (!buddy) return;
@@ -51,19 +78,29 @@ export default function BuddyHome() {
 
       <BuddyTipsCard />
 
-      <Card className="flex flex-col items-center gap-4 py-8">
-        <BuddySprite
-          speciesId={buddy.speciesId}
-          size="lg"
-          traveling={buddy.hasActiveJourney}
-          mood={buddy.mood}
-        />
+      <BuddyScene
+        buddy={buddy}
+        mode={buddy.hasActiveJourney ? 'traveling' : 'home'}
+        furniture={(inventory?.items ?? []).filter((item) => item.category === 'FURNITURE')}
+        itemEffects={equippedEffectSummary}
+      />
+
+      {equippedEffectSummary ? <BuddyItemEffectCard summary={equippedEffectSummary} /> : null}
+
+      <BuddyItemInteractionCard itemIds={interactionItemIds} compact />
+
+      <BuddyPersonalityCard trait={buddy.trait} />
+
+      <Card className="flex flex-col items-center gap-4">
         <div className="flex flex-wrap items-center justify-center gap-2">
           <MoodIndicator mood={buddy.mood} />
           <span className="rounded-full bg-lime-100 px-2.5 py-1 text-xs font-semibold text-lime-900">
             {GROWTH_STAGE_LABEL[buddy.growthStage] ?? buddy.growthStage}
           </span>
           <span className="text-xs text-gray-500">{buddy.dewdrops} dewdrops 💧</span>
+          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-900">
+            Level {buddy.level}
+          </span>
           {buddy.bloomTokensEnabled && (
             <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-900">
               {buddy.bloomTokens ?? 0} bloom 🌸
@@ -72,11 +109,30 @@ export default function BuddyHome() {
         </div>
         {buddy.hasActiveJourney ? (
           <p className="text-center text-sm text-emerald-800">
-            {buddy.name} is on a grow journey!
+            {buddy.name} is out in the world. Check the journey scene to follow along.
           </p>
         ) : (
           <SunlightBar value={buddy.sunlightToday} />
         )}
+        <div className="w-full max-w-xs space-y-1">
+          <div className="flex items-center justify-between text-xs font-medium text-emerald-900">
+            <span>Buddy XP</span>
+            <span>
+              {buddy.levelProgress.nextLevelXp === null
+                ? `${buddy.experiencePoints} XP`
+                : `${buddy.levelProgress.xpIntoLevel} / ${buddy.levelProgress.xpForNextLevel} XP`}
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-emerald-100">
+            <div
+              className="h-full rounded-full bg-emerald-600 transition-all"
+              style={{ width: `${buddy.levelProgress.progressPercent}%` }}
+            />
+          </div>
+          <p className="text-center text-xs text-gray-500">
+            Earn XP from care tasks, Buddy activities, quests, and grow journeys.
+          </p>
+        </div>
       </Card>
 
       <Card className="grid grid-cols-2 gap-3 text-center text-sm">

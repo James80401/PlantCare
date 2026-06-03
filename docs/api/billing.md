@@ -5,8 +5,10 @@
 | Method | Path |
 |--------|------|
 | POST | `/billing/checkout` |
+| GET | `/billing/status` |
+| POST | `/billing/portal` |
 | POST | `/billing/webhook` |
 
-Stripe integration; demo mode without keys. Updates `User.planTier` and `Subscription` rows.
+Stripe integration for Premium Checkout, status, Customer Portal, and webhooks. Webhooks update `User.planTier` and `Subscription` rows.
 
 See [integrations/stripe.md](../integrations/stripe.md).

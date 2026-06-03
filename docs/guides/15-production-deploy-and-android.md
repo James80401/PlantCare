@@ -23,11 +23,11 @@ Step-by-step runbook after local dev is working. Goal: **HTTPS API** for Capacit
 
 1. Point DNS:
    - `api.yourdomain.com` → your server IP
-   - `app.yourdomain.com` → same IP (or CDN)
+   - `yourdomain.com` → same IP (or CDN)
 2. Install **Caddy** or **nginx** on the host.
 3. Proxy:
    - `api.yourdomain.com` → `http://127.0.0.1:3001`
-   - `app.yourdomain.com` → `http://127.0.0.1:8080`
+   - `yourdomain.com` → `http://127.0.0.1:8080`
 4. Obtain Let's Encrypt certificates (Caddy does this automatically).
 
 **Example Caddyfile snippet:**
@@ -36,7 +36,7 @@ Step-by-step runbook after local dev is working. Goal: **HTTPS API** for Capacit
 api.yourdomain.com {
   reverse_proxy 127.0.0.1:3001
 }
-app.yourdomain.com {
+yourdomain.com, www.yourdomain.com {
   reverse_proxy 127.0.0.1:8080
 }
 ```
@@ -61,8 +61,8 @@ Required edits in `.env.production`:
 ```env
 JWT_SECRET=<64-char hex>
 JWT_REFRESH_SECRET=<64-char hex>
-FRONTEND_URL=https://app.yourdomain.com
-CORS_ORIGINS=https://app.yourdomain.com
+FRONTEND_URL=https://yourdomain.com
+CORS_ORIGINS=https://yourdomain.com
 VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
 ```
 
@@ -103,16 +103,23 @@ If using Neon/Supabase/RDS instead of the compose `postgres` service:
 
 ## §3 — Verify from your PC
 
+**Recommended (single command after deploy):**
+
+```bash
+npm run production:check
+npm run production:signoff
+npm run production:signoff -- --e2e   # optional Playwright on production web
+```
+
+Manual equivalents:
+
 ```bash
 API_URL=https://api.yourdomain.com/api/v1 npm run verify
 API_URL=https://api.yourdomain.com/api/v1 npm run smoke:buddy
+UAT_WEB_URL=https://yourdomain.com API_URL=https://api.yourdomain.com/api/v1 npm run uat:e2e
 ```
 
-Optional web UAT:
-
-```bash
-UAT_WEB_URL=https://app.yourdomain.com API_URL=https://api.yourdomain.com/api/v1 npm run uat:e2e
-```
+Full runbook: [docs/operations/production-signoff.md](../operations/production-signoff.md)
 
 Share [tester-5-minute.md](../product/tester-5-minute.md) with remote testers.
 
@@ -122,7 +129,7 @@ Share [tester-5-minute.md](../product/tester-5-minute.md) with remote testers.
 
 The web app includes a public route:
 
-**`https://app.yourdomain.com/privacy`**
+**`https://yourdomain.com/privacy`**
 
 Use that URL in Play Console. Customize copy in `apps/web/src/pages/Privacy.tsx` before release.
 
@@ -161,7 +168,9 @@ Opens Android Studio. Then:
 
 Stay on Closed testing until ready for Production.
 
-Detail: [google-play-closed-testing.md](../product/google-play-closed-testing.md).
+Preflight: `npm run mobile:store-check -- --live` and `npm run mobile:preflight`.
+
+Detail: [google-play-closed-testing.md](../product/google-play-closed-testing.md) · Listing copy: [play-store-listing.md](../product/play-store-listing.md).
 
 ---
 

@@ -16,21 +16,16 @@ export class UsersController {
     return this.usersService.getMe(user.sub);
   }
 
-  @Put('me/onboarding')
-  completeOnboarding(
+  @Put('me/care-preferences')
+  updateCarePreferences(
     @CurrentUser() user: JwtPayload,
     @Body()
     body: {
       experienceLevel?: string;
       defaultLightLevel?: string;
-      skip?: boolean;
     },
   ) {
-    return this.usersService.completeOnboarding(user.sub, {
-      experienceLevel: body.experienceLevel || 'beginner',
-      defaultLightLevel: body.defaultLightLevel || 'medium',
-      skip: body.skip,
-    });
+    return this.usersService.updateCarePreferences(user.sub, body);
   }
 
   @Put('me/notification-settings')

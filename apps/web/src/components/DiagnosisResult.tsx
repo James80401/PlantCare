@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 interface StructuredDetail {
   issueName?: string;
   summary?: string;
@@ -5,6 +7,18 @@ interface StructuredDetail {
   immediateActions?: string[];
   longTermCare?: string[];
   whenToSeekHelp?: string;
+  intake?: {
+    symptomDuration?: 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
+    recentCareChange?:
+      | 'NONE'
+      | 'WATERING'
+      | 'LIGHT'
+      | 'REPOT'
+      | 'FERTILIZER'
+      | 'TEMPERATURE'
+      | 'PEST_TREATMENT';
+    pestsVisible?: boolean;
+  };
 }
 
 interface DiagnosisResultProps {
@@ -15,9 +29,12 @@ interface DiagnosisResultProps {
     source?: string;
     detailJson?: string | null;
     resolved?: boolean;
+    imageUrl?: string | null;
+    symptomsText?: string | null;
+    createdAt?: string;
   };
   onResolvedChange?: (resolved: boolean) => void;
-  onCreateFollowUp?: (dueInDays: number) => Promise<void>;
+  onCreateFollowUp?: (dueInDays: number, note?: string) => Promise<void>;
   followUpCreating?: boolean;
   hasFollowUpTask?: boolean;
   updating?: boolean;
@@ -43,6 +60,42 @@ function sourceLabel(source?: string): string {
   }
 }
 
+function intakeLabel(detail: StructuredDetail | null): string[] {
+  if (!detail?.intake) return [];
+  const labels: string[] = [];
+  if (detail.intake.symptomDuration) {
+    labels.push(
+      `Duration: ${
+        {
+          TODAY: 'Today',
+          DAYS_2_3: '2-3 days',
+          DAYS_4_7: '4-7 days',
+          WEEKS_2_PLUS: '2+ weeks',
+        }[detail.intake.symptomDuration]
+      }`,
+    );
+  }
+  if (detail.intake.recentCareChange && detail.intake.recentCareChange !== 'NONE') {
+    labels.push(
+      `Recent change: ${
+        {
+          WATERING: 'Watering',
+          LIGHT: 'Light exposure',
+          REPOT: 'Repotting',
+          FERTILIZER: 'Fertilizer',
+          TEMPERATURE: 'Temperature/humidity',
+          PEST_TREATMENT: 'Pest treatment',
+          NONE: 'None',
+        }[detail.intake.recentCareChange]
+      }`,
+    );
+  }
+  if (detail.intake.pestsVisible != null) {
+    labels.push(`Visible pests: ${detail.intake.pestsVisible ? 'Yes' : 'No'}`);
+  }
+  return labels;
+}
+
 export default function DiagnosisResult({
   diagnosis,
   onResolvedChange,
@@ -51,12 +104,14 @@ export default function DiagnosisResult({
   hasFollowUpTask = false,
   updating = false,
 }: DiagnosisResultProps) {
+  const [followUpNote, setFollowUpNote] = useState('');
   const detail = parseDetail(diagnosis.detailJson);
   const showStructured =
     detail &&
     (detail.likelyCauses?.length ||
       detail.immediateActions?.length ||
       detail.longTermCare?.length);
+  const intakeDetails = intakeLabel(detail);
 
   return (
     <div
@@ -107,6 +162,34 @@ export default function DiagnosisResult({
           <span className="text-xs text-emerald-700">{sourceLabel(diagnosis.source)}</span>
         )}
       </div>
+
+      {diagnosis.symptomsText ? (
+        <p className="text-sm text-gray-600">
+          <span className="font-medium text-emerald-800">Reported: </span>
+          {diagnosis.symptomsText}
+        </p>
+      ) : null}
+      {intakeDetails.length ? (
+        <div className="flex flex-wrap gap-1.5">
+          {intakeDetails.map((item) => (
+            <span
+              key={item}
+              className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-600"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {diagnosis.imageUrl ? (
+        <img
+          src={diagnosis.imageUrl}
+          alt={`Photo submitted for ${diagnosis.resultLabel} diagnosis`}
+          className="max-h-56 w-full rounded-2xl object-cover border border-emerald-100"
+          loading="lazy"
+        />
+      ) : null}
 
       {detail?.summary && <p className="text-gray-800">{detail.summary}</p>}
 
@@ -164,18 +247,33 @@ export default function DiagnosisResult({
               A health check follow-up is already on your task list.
             </p>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {[3, 7, 14].map((days) => (
-                <button
-                  key={days}
-                  type="button"
-                  disabled={followUpCreating}
-                  onClick={() => onCreateFollowUp(days)}
-                  className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
-                >
-                  {followUpCreating ? 'Scheduling…' : `Remind in ${days} days`}
-                </button>
-              ))}
+            <div className="space-y-2">
+              <label className="block">
+                <span className="text-xs font-medium text-gray-600">
+                  What to check on follow-up (optional)
+                </span>
+                <input
+                  type="text"
+                  value={followUpNote}
+                  onChange={(e) => setFollowUpNote(e.target.value)}
+                  placeholder="e.g. lower leaves still yellow, soil moisture"
+                  maxLength={500}
+                  className="mt-1 w-full rounded-xl border border-emerald-100 px-3 py-2 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {[3, 7, 14].map((days) => (
+                  <button
+                    key={days}
+                    type="button"
+                    disabled={followUpCreating}
+                    onClick={() => onCreateFollowUp(days, followUpNote.trim() || undefined)}
+                    className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
+                  >
+                    {followUpCreating ? 'Scheduling…' : `Remind in ${days} days`}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

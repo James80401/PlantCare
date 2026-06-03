@@ -26,8 +26,9 @@ A full-stack plant care companion: personalized watering and care schedules, spe
 cp .env.example .env    # fill secrets as needed
 npm install
 npm run db:generate && npm run db:push && npm run db:seed
-npm run dev:api         # http://localhost:3001
-npm run dev:web         # http://localhost:5173
+npm run dev             # API :3001 + web :5173 together
+npm run dev:api         # http://localhost:3001 only
+npm run dev:web         # http://localhost:5173 only
 ```
 
 | URL | Purpose |
@@ -63,6 +64,9 @@ See [docs/guides/13-operations-deployment-and-quality.md](docs/guides/13-operati
 ```bash
 cp .env.production.example .env.production   # edit domain + secrets
 npm run production:check
+npm run production:signoff   # after deploy: live probes + verify + smoke
+npm run mobile:store-check   # Play closed testing preflight (G4)
+npm run mobile:preflight     # store-check + push-check
 npm run production:up   # on VPS behind HTTPS reverse proxy
 ```
 
@@ -90,7 +94,7 @@ docs/               All documentation (guides, API, architecture, …)
 - **Plants** — add from catalog or identify (PlantNet), profile tabs (overview, care, tasks, journal, health)
 - **Tasks & calendar** — complete, skip (with feedback), snooze, instructions, “why this date”
 - **Species browse** — filters, recommendations, growing metadata
-- **Health** — one-shot diagnosis, Dr. Plant chat, follow-up tasks
+- **Health** — one-shot diagnosis, per-plant Dr. Plant chat (garden cards + profile Health tab), follow-up tasks
 - **Journal** — notes and photos per plant
 - **Household** — shared gardens, invites, plant sharing, activity feed
 - **Community** — posts with optional species/plant context
@@ -109,6 +113,12 @@ docs/               All documentation (guides, API, architecture, …)
 | API modules | [docs/api/INDEX.md](docs/api/INDEX.md) |
 | Deploy | [docs/operations/deployment.md](docs/operations/deployment.md) |
 | UAT / testers | [docs/product/tester-5-minute.md](docs/product/tester-5-minute.md) |
+
+---
+
+## Agent / contributor workflow
+
+After finishing work: **commit**, **push**, and **sync to `main`**. See [AGENTS.md](AGENTS.md) and `.cursor/rules/workflow.mdc`.
 
 ---
 

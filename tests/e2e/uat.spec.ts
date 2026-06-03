@@ -9,6 +9,7 @@ function loadAuth() {
     accessToken: string;
     refreshToken?: string;
     email?: string;
+    gardenId?: string;
     plantId?: string;
   };
 }
@@ -89,6 +90,40 @@ test.describe('UAT checklist — authenticated flows', () => {
     await expectNoHorizontalScroll(page);
   });
 
+  test('core accessibility landmarks are present', async ({ page }) => {
+    await page.goto('/garden');
+    await expect(page.locator('main#main-content')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Skip to main content/i })).toBeAttached();
+    await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible();
+    await page.goto('/garden/tasks');
+    await expect(page.getByRole('heading', { name: /Care tasks/i })).toBeVisible();
+    const snooze = page.getByRole('button', { name: /^Snooze$/i }).first();
+    if (await snooze.isVisible()) {
+      await snooze.click();
+      await expect(page.getByRole('region', { name: /Snooze options/i })).toBeVisible();
+    }
+  });
+
+  test('Dr. Plant chat is reachable from plant health tab', async ({ page }) => {
+    const auth = loadAuth();
+    let plantId = auth.plantId;
+    if (!plantId) {
+      await openAddPlantSearch(page);
+      await page.getByLabel(/Species name/i).fill('pothos');
+      await page.getByRole('button', { name: /Pothos/i }).first().click();
+      await page.getByRole('button', { name: /Save plant/i }).click();
+      await page.waitForURL(/\/garden\/plants\/[^/]+/);
+      plantId = page.url().match(/\/garden\/plants\/([^/]+)/)?.[1]!;
+    }
+    await page.goto(`/garden/plants/${plantId}/health#dr-plant`);
+    await expect(page.getByRole('heading', { name: /^Dr\. Plant$/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.locator('#dr-plant')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Send$/i })).toBeEnabled();
+    await expectNoHorizontalScroll(page);
+  });
+
   test('plant buddy home and activities load', async ({ page }) => {
     await page.goto('/garden/buddy');
     await expect(page.getByRole('heading', { name: 'UAT Buddy' })).toBeVisible({ timeout: 15_000 });
@@ -157,9 +192,11 @@ test.describe('UAT checklist — authenticated flows', () => {
     });
     const plantId = page.url().match(/\/garden\/plants\/([^/]+)/)?.[1]!;
     await page.goto(`/garden/plants/${plantId}/health`);
-    await expect(page.getByRole('button', { name: /Run diagnosis/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /^Dr\. Plant$/i })).toBeVisible({
       timeout: 15_000,
     });
+    await page.getByText(/One-shot diagnosis/i).click();
+    await expect(page.getByRole('button', { name: /Run diagnosis/i })).toBeVisible();
     await page.getByLabel(/What are you seeing/i).fill('Yellow leaves and wet soil');
     await page.getByRole('button', { name: /Run diagnosis/i }).click();
     await expect(page.getByText(/Treatment plan/i)).toBeVisible({ timeout: 15_000 });
@@ -255,7 +292,30 @@ test.describe('UAT checklist — authenticated flows', () => {
       await howTo.click();
       await expect(page.getByRole('dialog')).toBeVisible();
       await expect(page.locator('[role="dialog"]')).toContainText(/Water|Light|Step/i);
+      const beginnerToggle = page.getByRole('button', { name: /^Beginner$/i });
+      if (await beginnerToggle.isVisible().catch(() => false)) {
+        await page.getByRole('button', { name: /^Advanced$/i }).click();
+        await expect(page.getByRole('button', { name: /^Advanced$/i })).toHaveAttribute(
+          'aria-pressed',
+          'true',
+        );
+      }
     }
+  });
+
+  test('task snooze shifts due date from tasks page', async ({ page }) => {
+    await openAddPlantSearch(page);
+    await page.getByLabel(/Species name/i).fill('snake');
+    await page.getByRole('button', { name: /Snake Plant/i }).first().click();
+    await page.getByRole('button', { name: /Save plant/i }).click();
+    await page.waitForURL(/\/garden\/plants\//);
+
+    await page.goto('/garden/tasks');
+    const snoozeBtn = page.getByRole('button', { name: /^Snooze$/i }).first();
+    await expect(snoozeBtn).toBeVisible({ timeout: 10_000 });
+    await snoozeBtn.click();
+    await page.getByRole('button', { name: /^Tomorrow$/i }).click();
+    await expect(snoozeBtn).not.toHaveAttribute('aria-expanded', 'true');
   });
 
   test('schedule explanation modal opens from tasks', async ({ page }) => {
@@ -319,17 +379,7 @@ test.describe('UAT checklist — public auth', () => {
     await page.getByRole('button', { name: /^Sign in$/i }).click();
     await page.waitForURL(/\/garden/, { timeout: 15_000 });
     const token = await page.evaluate(() => localStorage.getItem('accessToken'));
-    if (token) {
-      await fetch('http://localhost:3001/api/v1/users/me/onboarding', {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ skip: true }),
-      });
-      await page.goto('/garden');
-    }
+    if (token) await page.goto('/garden');
     await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible({ timeout: 15_000 });
   });
 
@@ -347,9 +397,8 @@ test.describe('UAT checklist — public auth', () => {
     await page.getByLabel(/Name/i).fill('UAT Browser');
     await page.getByRole('button', { name: /Create account/i }).click();
     const verified = page.getByText(/check your email|verify/i);
-    const onboarding = page.getByRole('button', { name: /Get started/i });
     const garden = page.getByRole('heading', { name: /Hi,/i });
-    await expect(verified.or(onboarding).or(garden)).toBeVisible({ timeout: 30_000 });
+    await expect(verified.or(garden)).toBeVisible({ timeout: 30_000 });
   });
 });
 
@@ -378,13 +427,13 @@ test.describe('UAT checklist — mobile layout', () => {
       token = login.accessToken;
     }
 
-    await fetch('http://localhost:3001/api/v1/users/me/onboarding', {
-      method: 'PUT',
+    await fetch('http://localhost:3001/api/v1/gardens', {
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ skip: true }),
+      body: JSON.stringify({ name: 'Empty Mobile Garden', location: 'Indoor' }),
     });
 
     await page.addInitScript((t) => localStorage.setItem('accessToken', t), token);
@@ -414,6 +463,21 @@ test.describe('UAT checklist — mobile layout', () => {
     await page.goto('/garden');
     await page.getByRole('link', { name: 'Tips' }).click();
     await expect(page.getByRole('heading', { name: /Plant tips & wins/i })).toBeVisible();
+    await expectNoHorizontalScroll(page);
+  });
+});
+
+test.describe('Demo seed account', () => {
+  test('demo login opens garden with sample plants', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel(/^Email$/i).fill('demo@plantcare.local');
+    await page.getByLabel(/^Password$/i).fill('DemoPlant1!');
+    await page.getByRole('button', { name: /Sign in/i }).click();
+    await page.waitForURL(/\/garden/, { timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible();
+    await expect(page.getByText(/Window Snake|Shelf Pothos/i).first()).toBeVisible({
+      timeout: 10_000,
+    });
     await expectNoHorizontalScroll(page);
   });
 });

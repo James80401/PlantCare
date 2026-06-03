@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { isToday } from 'date-fns';
 import { tasksApi } from '../services/api';
-import type { TaskSkipFeedback } from '../utils/taskFeedback';
+import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
 import { groupTasksByDay, type TaskItem } from '../utils/taskGroups';
 
 const COMPLETE_ANIM_MS = 650;
@@ -70,8 +70,8 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
     }
   };
 
-  const handleComplete = (id: string) => {
-    void runWithAnimation(id, 'completing', () => tasksApi.complete(id));
+  const handleComplete = (id: string, feedback?: TaskCompleteFeedback) => {
+    void runWithAnimation(id, 'completing', () => tasksApi.complete(id, feedback));
   };
 
   const handleSkip = (id: string, feedback?: TaskSkipFeedback) => {

@@ -106,10 +106,10 @@ export default function GenericActivityFlow({ activityType }: Props) {
 
         {activityType === 'PEST_INSPECTION' && plantId && (
           <a
-            href={`/garden/plants/${plantId}/health`}
+            href={`/garden/plants/${plantId}/health#dr-plant`}
             className="text-sm font-medium text-emerald-800 hover:underline"
           >
-            Open Dr. Plant for this plant →
+            Ask Dr. Plant for this plant →
           </a>
         )}
 

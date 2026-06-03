@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
+import { ImageModerationService } from '../common/image-moderation.service';
 import { CreateJournalDto } from './dto/create-journal.dto';
 import { UpdateJournalDto } from './dto/update-journal.dto';
 
@@ -9,6 +10,7 @@ export class JournalService {
   constructor(
     private prisma: PrismaService,
     private upload: UploadService,
+    private imageModeration: ImageModerationService,
   ) {}
 
   async findAll(userId: string, plantId: string) {
@@ -26,8 +28,17 @@ export class JournalService {
     file?: Express.Multer.File,
   ) {
     await this.assertPlant(userId, plantId);
+    if (!file && !dto.notes?.trim()) {
+      throw new BadRequestException('Add a note or photo.');
+    }
     let photoUrl: string | undefined;
-    if (file) photoUrl = await this.upload.saveFile(file);
+    if (file) {
+      await this.imageModeration.assertImageAllowed(file, {
+        feature: 'journal_create',
+        userId,
+      });
+      photoUrl = await this.upload.saveFile(file);
+    }
 
     return this.prisma.journalEntry.create({
       data: {
@@ -55,7 +66,19 @@ export class JournalService {
     if (!entry) throw new NotFoundException('Journal entry not found');
 
     let photoUrl = entry.photoUrl;
-    if (file) photoUrl = await this.upload.saveFile(file);
+    if (dto.removePhoto) photoUrl = null;
+    if (file) {
+      await this.imageModeration.assertImageAllowed(file, {
+        feature: 'journal_update',
+        userId,
+      });
+      photoUrl = await this.upload.saveFile(file);
+    }
+
+    const nextNotes = dto.notes !== undefined ? dto.notes : entry.notes;
+    if (!file && !dto.removePhoto && !nextNotes?.trim() && !photoUrl) {
+      throw new BadRequestException('Add a note or photo.');
+    }
 
     return this.prisma.journalEntry.update({
       where: { id: entryId },
@@ -64,7 +87,7 @@ export class JournalService {
         ...(dto.heightCm !== undefined ? { heightCm: dto.heightCm } : {}),
         ...(dto.widthCm !== undefined ? { widthCm: dto.widthCm } : {}),
         ...(dto.leafCount !== undefined ? { leafCount: dto.leafCount } : {}),
-        ...(file ? { photoUrl } : {}),
+        photoUrl,
       },
     });
   }

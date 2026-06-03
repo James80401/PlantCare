@@ -1,9 +1,12 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormError } from '../components/a11y/FormError';
+import { StatusMessage } from '../components/a11y/StatusMessage';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import {
   communityApi,
+  plantsApi,
   speciesApi,
   type CommunityCommentSummary,
   type CommunityPostSummary,
@@ -74,11 +77,13 @@ function PostComments({
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="text-xs font-semibold text-emerald-800 hover:underline"
+        aria-expanded={open}
+        aria-controls={`comments-${postId}`}
       >
         {open ? 'Hide' : 'View'} comments ({commentCount})
       </button>
       {open ? (
-        <div className="mt-2 space-y-2">
+        <div id={`comments-${postId}`} className="mt-2 space-y-2" role="region" aria-label="Comments">
           {loading ? (
             <p className="text-xs text-gray-500">Loading comments…</p>
           ) : comments.length === 0 ? (
@@ -115,36 +120,62 @@ function PostComments({
               {posting ? '…' : 'Reply'}
             </Button>
           </form>
-          {error ? <p className="text-xs text-red-600">{error}</p> : null}
+          {error ? <FormError className="text-xs">{error}</FormError> : null}
         </div>
       ) : null}
     </div>
   );
 }
 
+const PAGE_SIZE = 15;
+
 export default function Community() {
   const { user } = useAuth();
   const [posts, setPosts] = useState<CommunityPostSummary[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
   const [body, setBody] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [speciesQuery, setSpeciesQuery] = useState('');
   const [speciesId, setSpeciesId] = useState('');
   const [speciesOptions, setSpeciesOptions] = useState<Array<{ id: string; commonName: string }>>([]);
   const [posting, setPosting] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(imageFile);
+    setImagePreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [imageFile]);
+
+  const loadPage = useCallback(async (cursor?: string) => {
+    const loadingMorePage = Boolean(cursor);
+    if (loadingMorePage) setLoadingMore(true);
+    else setLoading(true);
     setError('');
     try {
-      const { data } = await communityApi.listPosts(40);
-      setPosts(data);
+      const { data } = await communityApi.listPosts({ limit: PAGE_SIZE, cursor });
+      setPosts((current) => (loadingMorePage ? [...current, ...data.posts] : data.posts));
+      setNextCursor(data.nextCursor);
+      setHasMore(data.hasMore);
     } catch {
-      setError('Could not load community posts.');
+      setError(
+        loadingMorePage ? 'Could not load more posts.' : 'Could not load community posts.',
+      );
     } finally {
-      setLoading(false);
+      if (loadingMorePage) setLoadingMore(false);
+      else setLoading(false);
     }
   }, []);
+
+  const load = useCallback(() => loadPage(), [loadPage]);
 
   useEffect(() => {
     load();
@@ -170,11 +201,19 @@ export default function Community() {
     if (!body.trim()) return;
     setPosting(true);
     try {
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        const upload = await plantsApi.upload(imageFile);
+        imageUrl = upload.data.url;
+      }
       await communityApi.createPost({
         body: body.trim(),
         speciesId: speciesId || undefined,
+        imageUrl,
       });
       setBody('');
+      setImageFile(null);
+      setImagePreview(null);
       setSpeciesId('');
       setSpeciesQuery('');
       await load();
@@ -253,27 +292,60 @@ export default function Community() {
               </ul>
             ) : null}
           </div>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-emerald-800" htmlFor="community-image">
+              Photo (optional)
+            </label>
+            <input
+              id="community-image"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                setImageFile(file);
+              }}
+              className="w-full rounded-2xl border border-emerald-100 px-3 py-2 text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-emerald-800"
+            />
+            {imagePreview ? (
+              <div className="space-y-2">
+                <img
+                  src={imagePreview}
+                  alt="Post preview"
+                  className="max-h-56 w-full rounded-2xl border border-emerald-100 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setImageFile(null)}
+                  className="text-xs font-semibold text-red-700 hover:underline"
+                >
+                  Remove photo
+                </button>
+              </div>
+            ) : null}
+          </div>
           <Button type="submit" fullWidth disabled={posting || !body.trim()}>
             {posting ? 'Posting…' : 'Share with community'}
           </Button>
         </form>
       </Card>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <FormError>{error}</FormError> : null}
 
       {loading ? (
-        <p className="text-sm text-gray-500">Loading feed…</p>
+        <StatusMessage>Loading feed…</StatusMessage>
       ) : posts.length === 0 ? (
         <p className="rounded-2xl border border-emerald-100 bg-white p-6 text-center text-sm text-gray-500">
           No posts yet — be the first to share a tip.
         </p>
       ) : (
+        <section aria-label="Community feed">
         <ul className="space-y-3">
           {posts.map((post) => (
             <li key={post.id}>
+              <article aria-labelledby={`post-${post.id}-author`}>
               <Card className="space-y-2">
                 <div>
-                  <p className="text-sm font-semibold text-emerald-900">
+                  <p id={`post-${post.id}-author`} className="text-sm font-semibold text-emerald-900">
                     {post.author?.name || 'Gardener'}
                   </p>
                   <p className="text-xs text-gray-400">
@@ -285,14 +357,23 @@ export default function Community() {
                     {post.species.commonName}
                   </span>
                 ) : null}
+                {post.imageUrl ? (
+                  <img
+                    src={post.imageUrl}
+                    alt={`Photo shared by ${post.author?.name || 'gardener'}`}
+                    className="max-h-96 w-full rounded-2xl border border-emerald-100 object-cover"
+                    loading="lazy"
+                  />
+                ) : null}
                 <p className="text-sm leading-6 text-gray-700 whitespace-pre-wrap">{post.body}</p>
                 <div className="flex flex-wrap items-center gap-3">
                   <button
                     type="button"
                     onClick={() => handleLike(post.id)}
-                    className={`text-xs font-semibold ${
+                    className={`inline-flex min-h-11 items-center text-xs font-semibold ${
                       post.likedByMe ? 'text-rose-700' : 'text-emerald-800 hover:underline'
                     }`}
+                    aria-pressed={Boolean(post.likedByMe)}
                   >
                     {post.likedByMe ? '♥ Liked' : '♡ Like'} ({post._count?.likes ?? 0})
                   </button>
@@ -315,9 +396,24 @@ export default function Community() {
                   </button>
                 ) : null}
               </Card>
+              </article>
             </li>
           ))}
         </ul>
+        {hasMore ? (
+          <div className="mt-4 flex justify-center">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={loadingMore || !nextCursor}
+              aria-busy={loadingMore}
+              onClick={() => nextCursor && loadPage(nextCursor)}
+            >
+              {loadingMore ? 'Loading…' : 'Load more posts'}
+            </Button>
+          </div>
+        ) : null}
+        </section>
       )}
     </div>
   );

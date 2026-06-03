@@ -8,6 +8,7 @@ import { SchedulerService } from '../scheduler/scheduler.service';
 import { sharedPlantInclude, userCanCompletePlantTask, userCanViewPlantTasks } from '../gardens/task-access';
 import { SkipTaskDto } from './dto/skip-task.dto';
 import { SnoozeTaskDto } from './dto/snooze-task.dto';
+import { type CompleteTaskFeedbackDto } from './dto/complete-task-feedback.dto';
 import { TaskCompletedEvent } from './events/task-completed.event';
 
 @Injectable()
@@ -24,6 +25,8 @@ export class TasksService {
     const toDate = to
       ? new Date(to)
       : new Date(fromDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    await this.scheduler.autoPostponeOutdoorWateringFromWeather(userId);
 
     return this.prisma.task.findMany({
       where: {
@@ -42,16 +45,33 @@ export class TasksService {
     });
   }
 
-  async complete(userId: string, taskId: string) {
+  async complete(userId: string, taskId: string, feedback?: CompleteTaskFeedbackDto) {
     const task = await this.loadTaskForUser(userId, taskId, 'complete');
 
-    const updated = await this.prisma.task.update({
-      where: { id: taskId },
-      data: {
-        status: TaskStatus.DONE,
-        completedAt: new Date(),
-      },
-      include: { plant: { include: { species: true } } },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const done = await tx.task.update({
+        where: { id: taskId },
+        data: {
+          status: TaskStatus.DONE,
+          completedAt: new Date(),
+        },
+        include: { plant: { include: { species: true } } },
+      });
+
+      const note = feedback?.note?.trim();
+      if (feedback && (feedback.reason || note)) {
+        await tx.taskFeedback.create({
+          data: {
+            taskId,
+            userId,
+            action: 'COMPLETE',
+            reason: feedback.reason ?? 'OTHER',
+            note: note || undefined,
+          },
+        });
+      }
+
+      return done;
     });
 
     await this.scheduler.onTaskCompleted(taskId);

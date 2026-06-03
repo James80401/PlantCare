@@ -14,9 +14,17 @@ export class CommunityController {
   constructor(private community: CommunityService) {}
 
   @Get('posts')
-  listPosts(@CurrentUser() user: JwtPayload, @Query('limit') limit?: string) {
-    const parsed = parseInt(limit || '30', 10);
-    return this.community.listPosts(Number.isFinite(parsed) ? parsed : 30, user.sub);
+  listPosts(
+    @CurrentUser() user: JwtPayload,
+    @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
+  ) {
+    const parsed = parseInt(limit || '20', 10);
+    return this.community.listPosts(
+      Number.isFinite(parsed) ? parsed : 20,
+      user.sub,
+      cursor?.trim() || undefined,
+    );
   }
 
   @Post('posts')

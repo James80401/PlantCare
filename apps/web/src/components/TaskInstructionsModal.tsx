@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { FormError } from './a11y/FormError';
+import { StatusMessage } from './a11y/StatusMessage';
+import { useAuth } from '../context/AuthContext';
+import { useDialogA11y } from '../hooks/useDialogA11y';
+import { StructuredCareSectionCard } from './care/StructuredCareSectionCard';
 import { tasksApi } from '../services/api';
-import {
-  careSectionToneClasses,
-  getCareSectionMeta,
-  sectionLead,
-} from '../utils/careGuideSections';
-import { formatGuideBody, taskTypeLabel } from '../utils/tasks';
+import { taskTypeLabel } from '../utils/tasks';
+import type { CareDetailLevel } from '../pages/plant-profile/types';
 
 export interface TaskInstructionsModalProps {
   taskId: string;
@@ -24,6 +25,10 @@ interface GuideImage {
 interface GuideSection {
   heading: string;
   body: string;
+  whyItMatters?: string;
+  beginnerBody?: string;
+  advancedBody?: string;
+  warnings?: string[];
   images: GuideImage[];
 }
 
@@ -40,15 +45,25 @@ function sectionAnchor(heading: string, index: number): string {
   return `guide-sec-${index}-${heading.slice(0, 20).replace(/\W+/g, '-').toLowerCase()}`;
 }
 
+function defaultCareDetailLevel(experienceLevel?: string | null): CareDetailLevel {
+  if (experienceLevel === 'advanced' || experienceLevel === 'expert') {
+    return 'advanced';
+  }
+  return 'beginner';
+}
+
 export default function TaskInstructionsModal({
   taskId,
   taskType,
   plantLabel,
   onClose,
 }: TaskInstructionsModalProps) {
+  const { user } = useAuth();
+  const defaultDetailLevel = defaultCareDetailLevel(user?.experienceLevel);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [guide, setGuide] = useState<Instructions | null>(null);
+  const { initialFocusRef } = useDialogA11y(true, onClose);
 
   useEffect(() => {
     setLoading(true);
@@ -89,27 +104,31 @@ export default function TaskInstructionsModal({
             </h2>
           </div>
           <button
+            ref={initialFocusRef}
             type="button"
             onClick={onClose}
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-2xl leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-            aria-label="Close"
+            aria-label="Close care instructions"
           >
             ×
           </button>
         </div>
 
         <div className="p-4 space-y-5 sm:p-5">
-          {loading && (
-            <div className="space-y-3">
-              <div className="h-24 animate-pulse rounded-2xl bg-emerald-50" />
-              <div className="h-32 animate-pulse rounded-2xl bg-gray-100" />
-            </div>
-          )}
-          {error && (
-            <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {loading ? (
+            <>
+              <StatusMessage className="sr-only">Loading care instructions…</StatusMessage>
+              <div className="space-y-3" aria-hidden>
+                <div className="h-24 animate-pulse rounded-2xl bg-emerald-50" />
+                <div className="h-32 animate-pulse rounded-2xl bg-gray-100" />
+              </div>
+            </>
+          ) : null}
+          {error ? (
+            <FormError className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-red-700">
               {error}
-            </p>
-          )}
+            </FormError>
+          ) : null}
           {guide && (
             <>
               <section className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
@@ -132,7 +151,10 @@ export default function TaskInstructionsModal({
                 <p className="mt-3 text-sm leading-6 text-gray-700">{guide.summary}</p>
               </section>
               {showToc && (
-                <nav className="text-sm border border-emerald-100 rounded-2xl p-3 bg-white">
+                <nav
+                  className="text-sm border border-emerald-100 rounded-2xl p-3 bg-white"
+                  aria-label="Care guide sections"
+                >
                   <p className="font-semibold text-emerald-900 mb-2">Jump to</p>
                   <ul className="flex flex-wrap gap-2">
                     {guide.sections.map((sec, i) => (
@@ -149,78 +171,53 @@ export default function TaskInstructionsModal({
                 </nav>
               )}
               {guide.sections.map((section, index) => (
-                <InstructionSection
-                  key={`${section.heading}-${index}`}
-                  section={section}
-                  anchor={sectionAnchor(section.heading, index)}
-                />
+                <div key={`${section.heading}-${index}`} id={sectionAnchor(section.heading, index)} className="scroll-mt-24">
+                  <StructuredCareSectionCard
+                    heading={section.heading}
+                    body={section.body}
+                    whyItMatters={section.whyItMatters}
+                    beginnerBody={section.beginnerBody}
+                    advancedBody={section.advancedBody}
+                    warnings={section.warnings}
+                    defaultDetailLevel={defaultDetailLevel}
+                    footer={
+                      section.images.length > 0 ? (
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          {section.images.map((img) => (
+                            <figure
+                              key={img.url}
+                              className={`overflow-hidden rounded-2xl border ${
+                                img.mediaType === 'photo'
+                                  ? 'border-gray-200 bg-gray-50'
+                                  : 'border-emerald-100 bg-emerald-50/50'
+                              }`}
+                            >
+                              <img
+                                src={img.url}
+                                alt={img.altText}
+                                className="w-full h-auto max-h-64 object-cover object-center"
+                                loading="lazy"
+                              />
+                              <figcaption className="flex gap-2 px-3 py-2 text-xs text-gray-600">
+                                <span className="min-w-0 flex-1">{img.caption}</span>
+                                {img.mediaType === 'photo' && (
+                                  <span className="flex-shrink-0 text-gray-400">
+                                    Reference photo
+                                  </span>
+                                )}
+                              </figcaption>
+                            </figure>
+                          ))}
+                        </div>
+                      ) : undefined
+                    }
+                  />
+                </div>
               ))}
             </>
           )}
         </div>
       </div>
     </div>
-  );
-}
-
-function InstructionSection({ section, anchor }: { section: GuideSection; anchor: string }) {
-  const meta = getCareSectionMeta(section.heading);
-  const toneClasses = careSectionToneClasses(meta.tone);
-  const lead = sectionLead(section);
-
-  return (
-    <section
-      id={anchor}
-      className={`space-y-3 scroll-mt-24 rounded-2xl border p-4 ${toneClasses.card}`}
-    >
-      <div>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${toneClasses.badge}`}>
-          {meta.label}
-        </span>
-        <h3 className="mt-3 text-lg font-semibold text-emerald-950">{section.heading}</h3>
-        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-gray-500">
-          {meta.intent}
-        </p>
-      </div>
-
-      {lead ? (
-        <p className="rounded-xl bg-white/75 px-3 py-2 text-sm font-medium leading-6 text-gray-700">
-          {lead}
-        </p>
-      ) : null}
-
-      <div
-        className="text-sm text-gray-700 leading-6 prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2"
-        dangerouslySetInnerHTML={{ __html: formatGuideBody(section.body) }}
-      />
-
-      {section.images.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {section.images.map((img) => (
-            <figure
-              key={img.url}
-              className={`overflow-hidden rounded-2xl border ${
-                img.mediaType === 'photo'
-                  ? 'border-gray-200 bg-gray-50'
-                  : 'border-emerald-100 bg-emerald-50/50'
-              }`}
-            >
-              <img
-                src={img.url}
-                alt={img.altText}
-                className="w-full h-auto max-h-64 object-cover object-center"
-                loading="lazy"
-              />
-              <figcaption className="flex gap-2 px-3 py-2 text-xs text-gray-600">
-                <span className="min-w-0 flex-1">{img.caption}</span>
-                {img.mediaType === 'photo' && (
-                  <span className="flex-shrink-0 text-gray-400">Reference photo</span>
-                )}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      )}
-    </section>
   );
 }

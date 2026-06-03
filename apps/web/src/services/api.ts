@@ -1,25 +1,56 @@
 import axios from 'axios';
-import type { BuddyState, BuddyTrait, JourneyResponse } from '../hooks/buddy/types';
+import type {
+  BuddyCompanionMode,
+  BuddyState,
+  BuddyTrait,
+  JourneyResponse,
+} from '../hooks/buddy/types';
+import type { ShopItem } from '../hooks/buddy/shopTypes';
 import { trackEvent } from '../utils/analytics';
-import type { TaskSkipFeedback } from '../utils/taskFeedback';
+import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api/v1';
 
 const api = axios.create({
   baseURL: apiBaseURL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 60_000,
 });
 
+/** Public auth routes — no Bearer token (avoids refresh loops on forgot-password). */
+function isPublicAuthPath(url?: string) {
+  const path = url?.split('?')[0] ?? '';
+  return (
+    path === '/auth/register' ||
+    path === '/auth/login' ||
+    path === '/auth/forgot-password' ||
+    path === '/auth/reset-password' ||
+    path === '/auth/resend-verification' ||
+    path === '/auth/refresh' ||
+    path === '/auth/verify-email' ||
+    path.startsWith('/auth/verify-email/')
+  );
+}
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (isPublicAuthPath(config.url)) {
+    config.headers.delete('Authorization');
+    (config as { skipAuthRefresh?: boolean }).skipAuthRefresh = true;
+  } else {
+    const token = localStorage.getItem('accessToken');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
+  // FormData needs a multipart boundary; a preset Content-Type breaks uploads and fields.
+  if (config.data instanceof FormData) {
+    config.headers.delete('Content-Type');
+  }
   return config;
 });
 
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !(error.config as { skipAuthRefresh?: boolean })?.skipAuthRefresh) {
       const refresh = localStorage.getItem('refreshToken');
       if (refresh && !error.config._retry) {
         error.config._retry = true;
@@ -45,16 +76,66 @@ export const authApi = {
   login: (email: string, password: string) => api.post('/auth/login', { email, password }),
   verifyEmail: (token: string) => api.post(`/auth/verify-email/${token}`),
   resendVerification: (email: string) => api.post('/auth/resend-verification', { email }),
-  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }, { timeout: 30_000, skipAuthRefresh: true }),
   resetPassword: (token: string, password: string) =>
     api.post('/auth/reset-password', { token, password }),
+  logout: (refreshToken: string) =>
+    api.post('/auth/logout', { refreshToken }, { skipAuthRefresh: true }),
+};
+
+export const adminApi = {
+  listPending: () => api.get('/admin/registrations/pending'),
+  listUsers: () => api.get('/admin/registrations/users'),
+  auditSummary: () => api.get('/admin/audit/summary'),
+  auditLogs: (limit = 100) => api.get('/admin/audit', { params: { limit } }),
+  observability: () => api.get('/admin/observability'),
+  buddyOverview: () =>
+    api.get<{
+      maxLevel: number;
+      catalog: (ShopItem & { levelRequired: number })[];
+      buddies: {
+        user: {
+          id: string;
+          email: string;
+          name?: string | null;
+          accountApprovalStatus: string;
+        };
+        buddy: BuddyState;
+        inventory: {
+          itemId: string;
+          acquiredAt: string;
+          acquireMethod: string;
+          item: ShopItem & { levelRequired: number };
+        }[];
+      }[];
+    }>('/admin/buddy'),
+  setBuddyLevel: (buddyId: string, level: number) =>
+    api.patch(`/admin/buddy/${buddyId}/level`, { level }),
+  unlockBuddyItem: (buddyId: string, itemId: string) =>
+    api.post(`/admin/buddy/${buddyId}/items/${itemId}`),
+  lockBuddyItem: (buddyId: string, itemId: string) =>
+    api.delete(`/admin/buddy/${buddyId}/items/${itemId}`),
+  approve: (userId: string) => api.post(`/admin/registrations/${userId}/approve`),
+  reject: (userId: string) => api.post(`/admin/registrations/${userId}/reject`),
+  disable: (userId: string) => api.post(`/admin/registrations/${userId}/disable`),
+  unpauseAi: (userId: string) => api.post(`/admin/registrations/${userId}/ai/unpause`),
 };
 
 export const plantsApi = {
   list: () => api.get('/plants'),
   get: (id: string) => api.get(`/plants/${id}`),
-  update: (id: string, data: { location?: string; notes?: string }) =>
-    api.patch(`/plants/${id}`, data),
+  timeline: (id: string) => api.get(`/plants/${id}/timeline`),
+  update: (
+    id: string,
+    data: {
+      nickname?: string;
+      location?: string;
+      potSize?: string;
+      notes?: string;
+      imageUrl?: string | null;
+    },
+  ) => api.patch(`/plants/${id}`, data),
   create: (data: Record<string, unknown>) => api.post('/plants', data),
   delete: (id: string) => api.delete(`/plants/${id}`),
   identify: (file: File) => {
@@ -89,6 +170,9 @@ export const speciesApi = {
     droughtTolerant?: string;
     indoor?: string;
     outdoor?: string;
+    highHumidity?: string;
+    pollinatorFriendly?: string;
+    bloomsIndoors?: string;
   }) => api.get('/species/browse', { params }),
   get: (id: string) => api.get(`/species/${id}`),
   recommended: (limit = 12) =>
@@ -126,7 +210,8 @@ export const tasksApi = {
   scheduleSuggestions: () => api.get('/tasks/schedule-suggestions'),
   applyScheduleSuggestion: (suggestionId: string) =>
     api.post(`/tasks/schedule-suggestions/${encodeURIComponent(suggestionId)}/apply`),
-  complete: (id: string) => api.patch(`/tasks/${id}/complete`),
+  complete: (id: string, feedback?: TaskCompleteFeedback) =>
+    api.patch(`/tasks/${id}/complete`, feedback ?? {}),
   skip: (id: string, feedback?: TaskSkipFeedback) => api.patch(`/tasks/${id}/skip`, feedback ?? {}),
   snooze: (id: string, days: 1 | 3 | 7) => api.patch(`/tasks/${id}/snooze`, { days }),
   instructions: (id: string) => api.get(`/tasks/${id}/instructions`),
@@ -153,13 +238,20 @@ export const journalApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  update: (plantId: string, entryId: string, payload: JournalPayload, photo?: File) => {
+  update: (
+    plantId: string,
+    entryId: string,
+    payload: JournalPayload,
+    photo?: File,
+    removePhoto?: boolean,
+  ) => {
     const form = new FormData();
     if (payload.notes !== undefined) form.append('notes', payload.notes);
     if (payload.heightCm != null) form.append('heightCm', String(payload.heightCm));
     if (payload.widthCm != null) form.append('widthCm', String(payload.widthCm));
     if (payload.leafCount != null) form.append('leafCount', String(payload.leafCount));
     if (photo) form.append('photo', photo);
+    if (removePhoto) form.append('removePhoto', 'true');
     return api.patch(`/plants/${plantId}/journal/${entryId}`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
@@ -169,9 +261,21 @@ export const journalApi = {
 };
 
 export const diagnosisApi = {
-  submit: (plantId: string, symptomsText: string, image?: File) => {
+  submit: (
+    plantId: string,
+    payload: {
+      symptomsText?: string;
+      symptomDuration?: 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
+      recentCareChange?: 'NONE' | 'WATERING' | 'LIGHT' | 'REPOT' | 'FERTILIZER' | 'TEMPERATURE' | 'PEST_TREATMENT';
+      pestsVisible?: boolean;
+    },
+    image?: File,
+  ) => {
     const form = new FormData();
-    if (symptomsText) form.append('symptomsText', symptomsText);
+    if (payload.symptomsText) form.append('symptomsText', payload.symptomsText);
+    if (payload.symptomDuration) form.append('symptomDuration', payload.symptomDuration);
+    if (payload.recentCareChange) form.append('recentCareChange', payload.recentCareChange);
+    if (payload.pestsVisible != null) form.append('pestsVisible', String(payload.pestsVisible));
     if (image) form.append('image', image);
     return api.post(`/plants/${plantId}/diagnose`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -189,6 +293,18 @@ export const diagnosisApi = {
       dueInDays,
       note,
     }),
+  getRecoverySuggestions: (plantId: string, diagnosisId: string) =>
+    api.get<
+      {
+        key: string;
+        label: string;
+        taskType: string;
+        dueInDays: number;
+        alreadyScheduled: boolean;
+      }[]
+    >(`/plants/${plantId}/diagnose/${diagnosisId}/recovery-suggestions`),
+  applyRecoveryTasks: (plantId: string, diagnosisId: string, keys: string[]) =>
+    api.post(`/plants/${plantId}/diagnose/${diagnosisId}/recovery-tasks`, { keys }),
 };
 
 export const diagnosisChatApi = {
@@ -214,15 +330,60 @@ export const diagnosisChatApi = {
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );
   },
+  saveJournalNote: (plantId: string, conversationId: string, messageId: string, note?: string) =>
+    api.post(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/journal-note`, {
+      messageId,
+      note,
+    }),
+  scheduleHealthCheck: (
+    plantId: string,
+    conversationId: string,
+    messageId: string,
+    dueInDays = 3,
+    note?: string,
+  ) =>
+    api.post(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/health-check`, {
+      messageId,
+      dueInDays,
+      note,
+    }),
+  getRecoverySuggestions: (plantId: string, conversationId: string, messageId: string, note?: string) =>
+    api.post(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/recovery-suggestions`, {
+      messageId,
+      note,
+    }),
+  getGuidedContextQuestions: (plantId: string, conversationId: string) =>
+    api.get<{
+      title: string;
+      summary: string;
+      questions: {
+        id: string;
+        label: string;
+        prompt: string;
+        type: 'single' | 'text';
+        options?: string[];
+      }[];
+    }>(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/context-questions`),
+  applyRecoveryTasks: (
+    plantId: string,
+    conversationId: string,
+    messageId: string,
+    keys: string[],
+    note?: string,
+  ) =>
+    api.post(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/recovery-tasks`, {
+      messageId,
+      keys,
+      note,
+    }),
 };
 
 export const usersApi = {
   me: () => api.get('/users/me'),
-  completeOnboarding: (data: {
-    experienceLevel: string;
-    defaultLightLevel: string;
-    skip?: boolean;
-  }) => api.put('/users/me/onboarding', data),
+  updateCarePreferences: (data: {
+    experienceLevel?: string;
+    defaultLightLevel?: string;
+  }) => api.put('/users/me/care-preferences', data),
   updateSettings: (data: Record<string, unknown>) =>
     api.put('/users/me/notification-settings', data),
   deleteAccount: () => api.delete('/users/me'),
@@ -234,11 +395,14 @@ export const usersApi = {
 
 export const billingApi = {
   checkout: () => api.post('/billing/checkout'),
+  status: () => api.get('/billing/status'),
+  portal: () => api.post('/billing/portal'),
 };
 
 export const devicesApi = {
   register: (token: string, platform: string) =>
     api.post('/devices', { token, platform }),
+  unregister: (token: string) => api.delete('/devices', { data: { token } }),
 };
 
 export interface GardenMemberSummary {
@@ -272,10 +436,66 @@ export interface PlantShareSummary {
 export interface GardenSummary {
   id: string;
   name: string;
+  /** Temporary backing field for garden environment; expected values are Indoor/Outdoor. */
+  location?: string | null;
   ownerId: string;
   members: GardenMemberSummary[];
   plants: PlantShareSummary[];
   _count?: { invites: number; activity: number };
+}
+
+/** Garden Dashboard detail (GET /gardens/:id). */
+export interface GardenDetailPlant {
+  id: string;
+  nickname?: string | null;
+  imageUrl?: string | null;
+  location?: string | null;
+  species: { commonName: string; scientificName?: string | null };
+  needsAttention: boolean;
+  nextTask?: { taskType: string; dueDate: string } | null;
+}
+export interface GardenDetail {
+  id: string;
+  name: string;
+  /** Temporary backing field for garden environment; expected values are Indoor/Outdoor. */
+  location: string | null;
+  isOwner: boolean;
+  members: GardenMemberSummary[];
+  taskSummary: { dueToday: number; overdue: number; upcoming: number };
+  nextWatering: string | null;
+  notesCount: number;
+  plants: GardenDetailPlant[];
+  tasks: TaskItemSummary[];
+}
+
+/** TaskItem-shaped pending task (matches the web TaskItem used by TaskRow). */
+export interface TaskItemSummary {
+  id: string;
+  taskType: string;
+  dueDate: string;
+  status: string;
+  completedAt?: string | null;
+  plant: {
+    id: string;
+    nickname?: string | null;
+    imageUrl?: string | null;
+    species: { commonName: string };
+  };
+}
+
+/** Landing/My-Gardens summary card (GET /gardens/summaries). */
+export interface GardenSummaryCard {
+  id: string;
+  name: string;
+  /** Temporary backing field for garden environment; expected values are Indoor/Outdoor. */
+  location: string | null;
+  isOwner: boolean;
+  plantCount: number;
+  memberCount: number;
+  tasksDueToday: number;
+  overdue: number;
+  urgentAlerts: number;
+  status: string;
 }
 
 export interface ActivityEventSummary {
@@ -305,11 +525,27 @@ export interface CommunityCommentSummary {
   author?: { id: string; name?: string | null; email?: string };
 }
 
+export interface GardenInviteSummary {
+  id: string;
+  email: string | null;
+  role: 'CAREGIVER' | 'VIEWER';
+  token: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
 export const gardensApi = {
-  create: (name: string) => api.post<GardenSummary>('/gardens', { name }),
+  create: (name: string, environment: 'Indoor' | 'Outdoor' = 'Indoor') =>
+    api.post<GardenSummary>('/gardens', { name, location: environment }),
   mine: () => api.get<GardenSummary[]>('/gardens/mine'),
+  summaries: () => api.get<GardenSummaryCard[]>('/gardens/summaries'),
+  detail: (gardenId: string) => api.get<GardenDetail>(`/gardens/${gardenId}`),
   createInvite: (gardenId: string, data: { email?: string; role: 'CAREGIVER' | 'VIEWER' }) =>
     api.post<{ token: string; emailSent?: boolean }>(`/gardens/${gardenId}/invites`, data),
+  listInvites: (gardenId: string) =>
+    api.get<GardenInviteSummary[]>(`/gardens/${gardenId}/invites`),
+  removeMember: (gardenId: string, memberUserId: string) =>
+    api.delete(`/gardens/${gardenId}/members/${memberUserId}`),
   acceptInvite: (token: string) => api.post('/gardens/invites/accept', { token }),
   sharePlant: (
     gardenId: string,
@@ -332,6 +568,7 @@ export const buddyApi = {
     equippedItems?: Record<string, unknown>;
     terrariumLayout?: Record<string, unknown>;
     terrariumBackground?: string;
+    floatingCompanionMode?: BuddyCompanionMode;
   }) => api.patch<BuddyState>('/buddy', data),
   shopCatalog: () => api.get('/buddy/shop/catalog'),
   shopDaily: () => api.get('/buddy/shop/daily'),
@@ -421,8 +658,17 @@ export const buddyApi = {
   socialFeed: () => api.get('/buddy/social/feed'),
 };
 
+export type CommunityPostsPage = {
+  posts: CommunityPostSummary[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export const communityApi = {
-  listPosts: (limit = 30) => api.get<CommunityPostSummary[]>('/community/posts', { params: { limit } }),
+  listPosts: (params?: { limit?: number; cursor?: string }) =>
+    api.get<CommunityPostsPage>('/community/posts', {
+      params: { limit: params?.limit ?? 20, cursor: params?.cursor },
+    }),
   createPost: (data: { body: string; speciesId?: string; imageUrl?: string }) =>
     api.post<CommunityPostSummary>('/community/posts', data),
   deletePost: (postId: string) => api.delete(`/community/posts/${postId}`),

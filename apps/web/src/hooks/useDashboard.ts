@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { dashboardApi } from '../services/api';
+import type { DashboardPlant } from '../utils/dashboard';
+import type { SharedPlantView } from '../utils/household';
 import type { TaskItem } from '../utils/taskGroups';
 
 export interface DashboardAttention {
@@ -29,6 +31,40 @@ export interface DashboardScheduleSuggestion {
   reversible: boolean;
 }
 
+export interface DashboardHealthStory {
+  openDiagnosisCount: number;
+  recentJournal: Array<{
+    id: string;
+    plantId: string;
+    plantName: string;
+    createdAt: string;
+    notePreview: string | null;
+    photoUrl: string | null;
+    measurements: {
+      heightCm: number | null;
+      widthCm: number | null;
+      leafCount: number | null;
+    };
+  }>;
+  recentDiagnoses: Array<{
+    id: string;
+    plantId: string;
+    plantName: string;
+    resultLabel: string;
+    confidence: number | null;
+    resolved: boolean;
+    createdAt: string;
+  }>;
+  recoveryPlants: Array<{
+    diagnosisId: string;
+    plantId: string;
+    plantName: string;
+    resultLabel: string;
+    createdAt: string;
+    actionTo: string;
+  }>;
+}
+
 export interface DashboardPayload {
   greeting: { name: string; dateLabel: string; statusLine: string };
   metrics: {
@@ -38,10 +74,14 @@ export interface DashboardPayload {
     completedToday: number;
     gardenScore: number;
   };
+  plants: DashboardPlant[];
+  sharedPlants: SharedPlantView[];
+  pendingTasks: TaskItem[];
   todayTasks: TaskItem[];
   attention: DashboardAttention[];
   weekPreview: DashboardWeekDay[];
   scheduleSuggestions: DashboardScheduleSuggestion[];
+  healthStory?: DashboardHealthStory;
   weather: {
     hasLocation: boolean;
     locationLabel?: string | null;
@@ -51,7 +91,16 @@ export interface DashboardPayload {
   engagement: {
     score: number;
     streak: number;
-    milestones: Array<{ id: string; title: string; unlocked: boolean }>;
+    completedInRange: number;
+    milestones: Array<{
+      id: string;
+      title: string;
+      description: string;
+      emoji: string;
+      unlocked: boolean;
+      unlockedAt: string | null;
+      progressLabel?: string;
+    }>;
   };
 }
 

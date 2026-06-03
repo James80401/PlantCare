@@ -12,4 +12,10 @@
 | POST | `/auth/forgot-password` | Send reset |
 | POST | `/auth/reset-password` | Set password |
 
-**Service:** `auth.service.ts` — bcrypt, JWT signing, email tokens.
+Production access gate:
+
+- When SMTP/admin approval is enabled, registration sends a verification email.
+- After verification, non-admin users remain blocked until an admin approves/enables them.
+- Admins manage access at `/admin/registrations`; disabling an account blocks JWT-protected app content.
+
+**Service:** `auth.service.ts` - bcrypt, JWT signing, email tokens.

@@ -9,6 +9,7 @@ import {
 
 const baseBuddy: BuddyPurchaseContext = {
   growthStage: 'SPROUT',
+  level: 4,
   speciesId: 'monstera',
   dewdrops: 50,
   bloomTokens: 0,
@@ -80,6 +81,17 @@ describe('buddy-shop-purchase.util', () => {
     );
     expect(lock).toBe('funds');
     expect(purchaseDenialMessage('funds')).toBe('Not enough dewdrops');
+  });
+
+  it('blocks purchase when buddy level is below item tier requirement', () => {
+    const lock = getPurchaseLockReason(
+      item({ tier: 3 }),
+      { ...baseBuddy, level: 7 },
+      new Set(),
+      true,
+    );
+    expect(lock).toBe('level');
+    expect(purchaseDenialMessage('level')).toContain('Level');
   });
 
   it('blocks bloom token items for non-rose buddies', () => {

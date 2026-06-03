@@ -43,6 +43,18 @@ describe('species discovery filters', () => {
     expect(speciesMatchesFilters(snakePlant, { beginnerFriendly: true })).toBe(true);
     expect(speciesMatchesFilters(snakePlant, { succulent: true })).toBe(true);
   });
+
+  it('matches phase-3 metadata filters', () => {
+    const maidenhair = species({
+      commonName: 'Maidenhair Fern',
+      scientificName: 'Adiantum',
+      wateringFreqDays: 3,
+      careNotes: 'Never let dry out; very high humidity.',
+    });
+    expect(speciesMatchesFilters(maidenhair, { highHumidity: true })).toBe(true);
+    expect(speciesMatchesFilters(basil, { pollinatorFriendly: true })).toBe(true);
+    expect(speciesMatchesFilters(snakePlant, { bloomsIndoors: true })).toBe(false);
+  });
 });
 
 function species(overrides: Record<string, unknown>) {

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import BuddySprite from '../../components/buddy/BuddySprite';
+import BuddyScene from '../../components/buddy/BuddyScene';
 import DiscoveryModal from '../../components/buddy/DiscoveryModal';
+import { JourneyWorldStatus } from '../../components/buddy/BuddyJourneyWorld';
+import { BuddyPersonalityCard, personalityForTrait } from '../../components/buddy/BuddyPersonality';
 import SunlightBar from '../../components/buddy/SunlightBar';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -28,9 +30,11 @@ export default function BuddyJourneyPage() {
   const [starting, setStarting] = useState(false);
   const [responding, setResponding] = useState(false);
   const [discoveryReaction, setDiscoveryReaction] = useState('');
+  const [discoveryOutcome, setDiscoveryOutcome] = useState('');
   const [pageError, setPageError] = useState('');
 
   const traveling = isJourneyTraveling(journey);
+  const personality = buddy ? personalityForTrait(buddy.trait) : null;
   const completedWithDiscovery =
     journey?.completed && journey.discovery && journey.needsChoice && journey.choiceMade === null;
 
@@ -56,10 +60,11 @@ export default function BuddyJourneyPage() {
     setResponding(true);
     try {
       const { data } = await buddyApi.respondDiscovery(journey.id, choice);
+      const response = data as { reaction?: string; outcome?: string };
       setDiscoveryReaction(
-        (data as { reaction?: string }).reaction ?? 'Your buddy appreciated the moment.',
+        response.reaction ?? 'Your buddy appreciated the moment.',
       );
-      await refresh();
+      setDiscoveryOutcome(response.outcome ?? '');
       await refreshBuddy();
     } finally {
       setResponding(false);
@@ -81,8 +86,8 @@ export default function BuddyJourneyPage() {
         title={traveling ? `${buddy.name} is exploring` : 'Send your buddy exploring'}
         description={
           traveling
-            ? `Exploring ${journey?.biomeName ?? 'the garden'} — complete tasks to shorten the trip.`
-            : 'Fill sunlight to 100, then send your buddy on a timed adventure for dewdrops and discoveries.'
+            ? `Exploring ${journey?.biomeName ?? 'the garden'} with ${personality?.choiceTone ?? 'their own style'} - complete tasks to shorten the trip.`
+            : `Fill sunlight to 100, then send your buddy on a timed adventure. ${personality?.journeyStyle ?? ''}`
         }
       />
 
@@ -90,17 +95,35 @@ export default function BuddyJourneyPage() {
         <p className="text-sm text-red-600">{error || pageError}</p>
       ) : null}
 
-      <Card className="space-y-4 py-6">
-        <div className="flex justify-center">
-          <BuddySprite speciesId={buddy.speciesId} size="lg" traveling={traveling} />
-        </div>
+      {traveling && journey ? (
+        <BuddyScene
+          buddy={buddy}
+          mode="traveling"
+          biomeName={journey.biomeName}
+          biomeEmoji={journey.biomeEmoji}
+          progressPercent={journey.progressPercent}
+          remainingLabel={`Returns in ${formatCountdown(journey.remainingSeconds)}`}
+        />
+      ) : (
+        <Card className="space-y-4 py-6">
+          <BuddyScene buddy={buddy} mode="home" compact />
+        </Card>
+      )}
 
+      {traveling && journey ? (
+        <JourneyWorldStatus
+          biomeId={journey.biomeId}
+          biomeName={journey.biomeName}
+          tasksCompleted={journey.tasksCompletedDuring}
+          minutesSaved={journey.minutesSaved}
+        />
+      ) : null}
+
+      <BuddyPersonalityCard trait={buddy.trait} mode="journey" compact={traveling} />
+
+      <Card className="space-y-4 py-5">
         {traveling && journey ? (
           <>
-            <p className="text-center text-2xl" aria-hidden>
-              {journey.biomeEmoji}
-            </p>
-            <p className="text-center text-sm font-medium text-emerald-900">{journey.biomeName}</p>
             <div className="h-2 overflow-hidden rounded-full bg-emerald-100">
               <div
                 className="h-full rounded-full bg-emerald-600 transition-all duration-700"
@@ -123,6 +146,11 @@ export default function BuddyJourneyPage() {
         ) : journey?.completed && journey.discovery ? (
           <div className="space-y-2 text-center text-sm text-gray-700">
             <p className="font-semibold text-emerald-900">{buddy.name} is back!</p>
+            {journey.discovery.title ? (
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                {journey.discovery.title}
+              </p>
+            ) : null}
             <p>{journey.discovery.story}</p>
             {journey.choiceMade !== null ? (
               <p className="text-xs text-gray-500">
@@ -159,6 +187,12 @@ export default function BuddyJourneyPage() {
           stageAdvanced={data?.stageAdvanced}
           newGrowthStage={data?.newGrowthStage}
           onChoice={handleDiscoveryChoice}
+          onDone={() => {
+            setDiscoveryOutcome('');
+            refresh();
+          }}
+          choiceOutcome={discoveryOutcome}
+          choiceReaction={discoveryReaction}
           busy={responding}
         />
       ) : null}

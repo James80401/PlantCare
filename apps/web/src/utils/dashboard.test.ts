@@ -96,7 +96,8 @@ describe('dashboard utilities', () => {
     expect(getSuggestedAction([], [], []).title).toBe('Add your first plant');
     expect(getSuggestedAction(plants, overdueTasks, todayTasks).title).toBe('Catch up gently');
     expect(getSuggestedAction(plants, [], todayTasks).title).toBe('Finish today strong');
-    expect(getSuggestedAction(plants, [], []).title).toBe('Log a quick observation');
+    expect(getSuggestedAction(plants, [], []).title).toBe("You're all caught up");
+    expect(getSuggestedAction([plants[0]], [], []).actionLabel).toBe('Ask Dr. Plant');
   });
 
   it('builds a seven-day preview from pending tasks only', () => {

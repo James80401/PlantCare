@@ -1,0 +1,28 @@
+---
+description: Plant Care agent workflow — commit, sync, and Dr. Plant conventions
+alwaysApply: true
+---
+
+# Plant Care agent workflow
+
+## Git: always commit and sync
+
+After completing a meaningful unit of work (feature, fix, or doc update):
+
+1. **Commit** on the active branch with a clear message (why, not just what).
+2. **Push** the branch to `origin`.
+3. **Sync to `main`**: merge the branch into `main` (or open/merge PR if that is the team norm), push `main`, then return to the feature branch if more work continues.
+
+Do not leave finished changes uncommitted or unpushed unless the user explicitly asks to hold off.
+
+Never force-push `main`/`master`. Do not skip hooks unless the user requests it.
+
+## Dr. Plant (per-plant health chat)
+
+- **Route:** `/garden/plants/:plantId/health#dr-plant`
+- **UI:** `DrPlantChat` on the plant profile **Health** tab; garden dashboard has **Ask Dr. Plant** on each plant card; profile header has **Ask Dr. Plant**.
+- **API:** `GET/POST /api/v1/plants/:plantId/diagnose/conversations` and `.../messages` (multipart: message + optional image).
+- **Requires:** `OPENAI_API_KEY` in API `.env` for live AI replies (503 if missing).
+- **Web client:** Do not set `Content-Type` on `FormData` requests — the axios interceptor strips it so the browser adds the multipart boundary. See `apps/web/src/services/api.ts`.
+
+User-facing steps: [docs/tutorials/using-dr-plant-chat.md](../../docs/tutorials/using-dr-plant-chat.md).

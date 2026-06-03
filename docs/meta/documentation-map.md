@@ -229,6 +229,19 @@ Every documentation file in the Plant Care repository. **Bold** entries are INDE
 
 ---
 
+## product/
+
+| File |
+|------|
+| **INDEX.md** |
+| improvement-recommendations.md |
+| improvement-checklist.md |
+| uat-checklist.md |
+| tester-5-minute.md |
+| google-play-closed-testing.md |
+
+---
+
 ## reference/
 
 | File |

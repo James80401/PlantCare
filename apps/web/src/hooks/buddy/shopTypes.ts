@@ -28,7 +28,8 @@ export interface ShopItem {
   sortOrder: number;
   owned?: boolean;
   canPurchase?: boolean;
-  lockedReason?: 'premium' | 'seasonal' | 'species' | 'stage' | 'funds';
+  lockedReason?: 'premium' | 'seasonal' | 'species' | 'level' | 'stage' | 'funds';
+  levelRequired?: number;
 }
 
 export interface ShopCatalogResponse {
@@ -36,6 +37,7 @@ export interface ShopCatalogResponse {
   bloomTokens: number;
   bloomTokensEnabled: boolean;
   growthStage: string;
+  level: number;
   speciesId: string;
   items: ShopItem[];
 }
@@ -43,6 +45,7 @@ export interface ShopCatalogResponse {
 export interface ShopDailyResponse {
   date: string;
   dewdrops: number;
+  level?: number;
   items: ShopItem[];
 }
 

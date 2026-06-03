@@ -1,7 +1,20 @@
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
-import { PotSize } from '@prisma/client';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
+import { PlantLifeStage, PotSize } from '@prisma/client';
 
 export class CreatePlantDto {
+  @IsString()
+  gardenId!: string;
+
   @IsString()
   speciesId!: string;
 
@@ -18,11 +31,22 @@ export class CreatePlantDto {
   potSize?: PotSize;
 
   @IsOptional()
+  @IsEnum(PlantLifeStage)
+  lifeStage?: PlantLifeStage;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(1200)
+  approximateAgeMonths?: number;
+
+  @IsOptional()
   @IsDateString()
   datePlanted?: string;
 
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['http', 'https'], require_tld: false })
+  @MaxLength(2048)
   imageUrl?: string;
 
   @IsOptional()

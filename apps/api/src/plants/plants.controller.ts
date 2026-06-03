@@ -14,6 +14,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
+import { imageUploadOptions } from '../common/upload-options';
 import { PlantsService } from './plants.service';
 import { CreatePlantDto } from './dto/create-plant.dto';
 import { UpdatePlantDto } from './dto/update-plant.dto';
@@ -32,7 +33,7 @@ export class PlantsController {
 
   @Post('identify')
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', imageUploadOptions))
   identify(
     @CurrentUser() user: JwtPayload,
     @UploadedFile() file: Express.Multer.File,
@@ -41,14 +42,19 @@ export class PlantsController {
   }
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('image'))
-  upload(@UploadedFile() file: Express.Multer.File) {
-    return this.plantsService.uploadImage(file);
+  @UseInterceptors(FileInterceptor('image', imageUploadOptions))
+  upload(@CurrentUser() user: JwtPayload, @UploadedFile() file: Express.Multer.File) {
+    return this.plantsService.uploadImage(user.sub, file);
   }
 
   @Post()
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreatePlantDto) {
     return this.plantsService.create(user.sub, user.planTier as import('@prisma/client').PlanTier, dto);
+  }
+
+  @Get(':id/timeline')
+  timeline(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.plantsService.getTimeline(user.sub, id);
   }
 
   @Get(':id')

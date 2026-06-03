@@ -1,7 +1,7 @@
 # Production-like stack on a VPS. Terminate TLS at reverse proxy (Caddy/nginx), not here.
 #
 #   https://api.yourdomain.com -> api:3001
-#   https://app.yourdomain.com -> web:80
+#   https://yourdomain.com -> web:80
 #
 # Usage:
 #   copy .env.production.example .env.production
@@ -45,7 +45,13 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET}
       FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL}
       CORS_ORIGINS: ${CORS_ORIGINS:-${FRONTEND_URL}}
-      ALL_USERS_PREMIUM: ${ALL_USERS_PREMIUM:-true}
+      ALL_USERS_PREMIUM: ${ALL_USERS_PREMIUM:-false}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_ID_PREMIUM: ${STRIPE_PRICE_ID_PREMIUM:-}
+      PREMIUM_PRICE_LABEL: ${PREMIUM_PRICE_LABEL:-}
+      PREMIUM_TRIAL_DAYS: ${PREMIUM_TRIAL_DAYS:-14}
+      PLANTNET_API_KEY: ${PLANTNET_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
@@ -54,6 +60,8 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
+      REGISTRATION_REQUIRES_ADMIN_APPROVAL: ${REGISTRATION_REQUIRES_ADMIN_APPROVAL:-true}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_REGION: ${AWS_REGION:-us-east-1}
@@ -62,11 +70,11 @@ services:
     volumes:
       - plantcare_prod_uploads:/app/apps/api/uploads
     healthcheck:
-      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3001/api/v1/health']
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 180s
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3001/api/v1/health/ready']
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 600s
 
   web:
     build:

@@ -109,6 +109,39 @@ for (const filter of filters) {
   else fail(`${filter} coverage too low: ${count}`);
 }
 
+function matchesPhase3(species, filter) {
+  const searchable = text(species);
+  const name = species.commonName.toLowerCase();
+  if (filter === 'highHumidity') {
+    return (
+      /fern|calathea|maranta|maidenhair|nerve plant|peace lily/i.test(name) ||
+      /high humidity|never let dry|mist regularly/i.test(searchable)
+    );
+  }
+  if (filter === 'pollinatorFriendly') {
+    return (
+      /pollinator|lavender|sunflower|coneflower|milkweed|bee balm|zinnia|marigold/i.test(
+        searchable,
+      ) ||
+      (matches(species, 'edible') &&
+        (species.sunlight?.toLowerCase().includes('full sun') ||
+          searchable.includes('garden')))
+    );
+  }
+  if (filter === 'bloomsIndoors') {
+    return /orchid|anthurium|bromeliad|african violet|peace lily|begonia|christmas cactus/i.test(
+      name,
+    );
+  }
+  return false;
+}
+
+for (const filter of ['highHumidity', 'pollinatorFriendly', 'bloomsIndoors']) {
+  const count = speciesCatalog.filter((species) => matchesPhase3(species, filter)).length;
+  if (count >= 5) pass(`${filter} coverage: ${count}`);
+  else fail(`${filter} coverage too low: ${count}`);
+}
+
 const duplicateKeys = new Set();
 const seen = new Set();
 for (const species of speciesCatalog) {

@@ -1,0 +1,32 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.repository == 'James80401/PlantCare'
+    steps:
+      - name: Deploy to droplet
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.DEPLOY_SSH_PASSPHRASE }}
+          script_stop: true
+          command_timeout: 45m
+          script: |
+            set -e
+            cd /root/PlantCare
+            git fetch origin main
+            git reset --hard origin/main
+            bash scripts/caddy-remove-basic-auth.sh
+            node scripts/check-production-env.mjs .env.production
+            docker compose -f docker-compose.production.yml --env-file .env.production up -d --build
+            docker compose -f docker-compose.production.yml ps

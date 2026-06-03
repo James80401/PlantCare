@@ -1,4 +1,5 @@
 import { Buddy, BuddyJourney } from '@prisma/client';
+import { buddyLevelProgress } from './constants/leveling';
 
 export function parseStringArray(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((v) => typeof v === 'string');
@@ -50,6 +51,7 @@ export function appendPersonalityChoice(
 
 export function formatBuddy(buddy: Buddy & { journeys?: BuddyJourney[] }) {
   const activeJourney = buddy.journeys?.find((j) => !j.completed) ?? null;
+  const levelProgress = buddyLevelProgress(buddy.experiencePoints);
   return {
     id: buddy.id,
     name: buddy.name,
@@ -58,6 +60,9 @@ export function formatBuddy(buddy: Buddy & { journeys?: BuddyJourney[] }) {
     growthStage: buddy.growthStage,
     journeyCount: buddy.journeyCount,
     dewdrops: buddy.dewdrops,
+    experiencePoints: buddy.experiencePoints,
+    level: levelProgress.level,
+    levelProgress,
     bloomTokens: buddy.bloomTokens ?? 0,
     bloomTokensEnabled: buddy.speciesId === 'rose',
     sunlightToday: buddy.sunlightToday,
@@ -72,6 +77,7 @@ export function formatBuddy(buddy: Buddy & { journeys?: BuddyJourney[] }) {
     currentBiome: buddy.currentBiome,
     terrariumLayout: parseJsonObject(buddy.terrariumLayout),
     terrariumBackground: buddy.terrariumBackground,
+    floatingCompanionMode: buddy.floatingCompanionMode,
     journeyReady: buddy.sunlightToday >= 100 && !activeJourney,
     hasActiveJourney: Boolean(activeJourney),
     createdAt: buddy.createdAt,

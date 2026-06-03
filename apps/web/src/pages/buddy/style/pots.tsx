@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AccessoryPicker from '../../../components/buddy/AccessoryPicker';
+import { BuddyHomeInfoCard, PotHome } from '../../../components/buddy/BuddyItemVisuals';
+import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { useBuddy } from '../../../hooks/buddy/useBuddy';
 import { useBuddyShop } from '../../../hooks/buddy/useBuddyShop';
@@ -30,9 +32,13 @@ export default function BuddyPotsPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
-      <PageHeader eyebrow="Style" title="Pots" description={saving ? 'Saving…' : 'Choose a pot skin'} />
+      <PageHeader eyebrow="Style" title="Buddy homes" description={saving ? 'Saving...' : 'Choose where Buddy lives'} />
+      <Card className="flex flex-col items-center gap-2 py-5">
+        <PotHome itemId={equipped.potSkin} size="lg" open />
+        <BuddyHomeInfoCard itemId={equipped.potSkin} />
+      </Card>
       <AccessoryPicker
-        title="Pot skins"
+        title="Homes"
         category="POT_SKIN"
         items={items}
         equippedId={equipped.potSkin}
@@ -40,7 +46,7 @@ export default function BuddyPotsPage() {
         onEquip={equip}
       />
       <Link to="/garden/buddy/style/shop" className="block text-center text-sm text-emerald-800 hover:underline">
-        Browse shop for more pots
+        Browse shop for more homes
       </Link>
       <Link to="/garden/buddy/style" className="block text-center text-sm font-medium text-emerald-800 hover:underline">
         ← Style hub

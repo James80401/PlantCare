@@ -1,5 +1,7 @@
 import type { ShopItem, ShopItemCategory } from '../../hooks/buddy/shopTypes';
 import { shopLockLabel } from '../../utils/shopLockLabel';
+import { itemEffectFor } from './BuddyItemEffects';
+import { ShopItemPreview } from './BuddyItemVisuals';
 
 interface AccessoryPickerProps {
   title: string;
@@ -17,7 +19,7 @@ const categoryEmoji: Partial<Record<ShopItemCategory, string>> = {
   TOP: '👕',
   GLASSES: '👓',
   HELD_ITEM: '🪴',
-  POT_SKIN: '🏺',
+  POT_SKIN: 'Home',
   BODY_COLOR: '🎨',
   BODY_PATTERN: '✨',
   BACKGROUND: '🖼️',
@@ -51,6 +53,7 @@ export default function AccessoryPicker({
           const owned = item.owned ?? true;
           const selected = equippedId === item.id;
           const canBuy = showShop && !owned && item.canPurchase;
+          const effect = itemEffectFor(item);
 
           return (
             <button
@@ -67,8 +70,14 @@ export default function AccessoryPicker({
                   : 'border-gray-200 bg-white hover:border-emerald-300'
               } ${!owned && !canBuy ? 'opacity-50' : ''}`}
             >
+              <div className="mb-2 flex justify-center">
+                <ShopItemPreview item={item} />
+              </div>
               <p className="font-semibold text-emerald-950">{item.name}</p>
               <p className="mt-1 line-clamp-2 text-xs text-gray-500">{item.description}</p>
+              <p className="mt-2 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800">
+                {effect.label} +{effect.value}
+              </p>
               {owned ? (
                 <p className="mt-2 text-xs font-medium text-emerald-700">
                   {selected ? 'Equipped' : 'Tap to equip'}

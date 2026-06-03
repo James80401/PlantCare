@@ -31,7 +31,7 @@ Deep dive: [architecture/system-overview.md](../architecture/system-overview.md)
 | Module | Controller prefix | Responsibility |
 |--------|-------------------|----------------|
 | **AuthModule** | `/auth` | Register, login, refresh, verify email, password reset |
-| **UsersModule** | `/users` | Profile, onboarding, notification settings, delete account |
+| **UsersModule** | `/users` | Profile, care preferences, notification settings, delete account |
 | **SpeciesModule** | `/species` | Search, browse, recommended, detail |
 | **PlantsModule** | `/plants` | CRUD, identify, uploads |
 | **TasksModule** | `/tasks` | List, complete, skip, snooze, instructions, schedule suggestions |
@@ -121,7 +121,7 @@ Auth: [architecture/auth-and-security.md](../architecture/auth-and-security.md).
 ## Web architecture
 
 - SPA with React Router; no SSR.
-- `ProtectedRoute` + `OnboardingGate` before main `Layout`.
+- `ProtectedRoute` before main `Layout`.
 - Data: hooks (`useDashboard`, `useTasksInRange`) + direct API calls.
 - Optimistic UI on task complete/skip with refresh.
 

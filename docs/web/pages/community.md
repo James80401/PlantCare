@@ -10,7 +10,7 @@ Display and create **community posts** — social feed inside the app.
 
 ## Data sources
 
-- `communityApi.listPosts()`
+- `communityApi.listPosts({ limit, cursor })` — paginated `{ posts, nextCursor, hasMore }`
 - `communityApi.createPost()`
 - `communityApi.deletePost(id)`
 

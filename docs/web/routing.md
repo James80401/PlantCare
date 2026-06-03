@@ -16,11 +16,11 @@
 
 ## Protected `/garden/*`
 
-`ProtectedRoute` → optional onboarding → `OnboardingGate` → `Layout`.
+`ProtectedRoute` → `Layout`. Approved signed-in users enter the garden directly.
 
 | Path | Component |
 |------|-----------|
-| `/garden/onboarding` | `OnboardingWizard` |
+| `/garden/onboarding` | Redirect → `/garden` |
 | `/garden` | `Dashboard` (index) |
 | `/garden/calendar` | `Calendar` |
 | `/garden/plants/browse` | `BrowsePlants` |
@@ -50,4 +50,3 @@
 ## Guards
 
 - **`ProtectedRoute`** — requires valid JWT.
-- **`OnboardingGate`** — redirects to `/garden/onboarding` until onboarding completed or skipped.

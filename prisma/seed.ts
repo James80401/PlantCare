@@ -9,6 +9,7 @@ import { legacySpeciesSeedId, resolveSpeciesPhotoFileKey, speciesPhotoUrl } from
 import { seedCareGuides } from './seed-care-guides';
 import { seedBuddyShop } from './seed-buddy-shop';
 import { seedBuddyQuests } from './seed-buddy-quests';
+import { seedDemoGarden } from './seed-demo-garden';
 
 const prisma = new PrismaClient();
 
@@ -68,6 +69,7 @@ async function main() {
   await seedCareGuides();
   await seedBuddyShop(prisma);
   await seedBuddyQuests(prisma);
+  await seedDemoGarden(prisma);
 }
 
 main()

@@ -4,6 +4,7 @@
 
 | Script | Action |
 |--------|--------|
+| `dev` | API + web together (`scripts/dev.mjs`) |
 | `dev:api` | Nest watch, port 3001 |
 | `dev:web` | Vite, port 5173 |
 | `build` | shared + api + web |

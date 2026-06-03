@@ -1,8 +1,8 @@
 import { ItemUnlockType } from '@prisma/client';
-import { stageMeetsTier } from './constants/shop-seed-data';
+import { levelRequiredForShopTier } from './constants/leveling';
 import { isSeasonalItemAvailable } from './constants/seasonal-events';
 
-export type PurchaseLockReason = 'premium' | 'seasonal' | 'species' | 'stage' | 'funds';
+export type PurchaseLockReason = 'premium' | 'seasonal' | 'species' | 'level' | 'stage' | 'funds';
 
 export interface ShopItemPurchaseInput {
   id: string;
@@ -17,6 +17,7 @@ export interface ShopItemPurchaseInput {
 
 export interface BuddyPurchaseContext {
   growthStage: string;
+  level?: number;
   speciesId: string;
   dewdrops: number;
   bloomTokens: number;
@@ -35,7 +36,7 @@ export function getPurchaseLockReason(
     return 'seasonal';
   }
   if (item.speciesLocked && item.speciesLocked !== buddy.speciesId) return 'species';
-  if (!stageMeetsTier(buddy.growthStage, item.tier)) return 'stage';
+  if ((buddy.level ?? 1) < levelRequiredForShopTier(item.tier)) return 'level';
   if (item.bloomTokenCost > 0) {
     if (buddy.speciesId !== 'rose') return 'species';
     if (buddy.bloomTokens < item.bloomTokenCost) return 'funds';
@@ -74,6 +75,7 @@ export function purchaseDenialMessage(
     premium: 'Premium subscription required for this item',
     seasonal: 'This item is only available during its seasonal event',
     species: 'Your buddy cannot purchase this item yet',
+    level: 'Level up your buddy to unlock this item',
     stage: 'Grow your buddy to unlock this item',
   };
   return messages[lock];

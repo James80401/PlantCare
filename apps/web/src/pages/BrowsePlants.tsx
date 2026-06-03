@@ -11,6 +11,7 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { SkeletonGrid } from '../components/ui/Skeleton';
 import { Button } from '../components/ui/Button';
 import { speciesApi } from '../services/api';
+import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 interface SpeciesItem {
   id: string;
@@ -55,7 +56,7 @@ function filtersToParams(
 
 function sortFromParams(params: URLSearchParams): SpeciesBrowseSort {
   const sort = params.get('sort');
-  if (sort === 'waterAsc' || sort === 'waterDesc') return sort;
+  if (sort === 'waterAsc' || sort === 'waterDesc' || sort === 'difficulty') return sort;
   return 'name';
 }
 
@@ -221,7 +222,7 @@ export default function BrowsePlants() {
                   >
                     {species.defaultImageUrl ? (
                       <img
-                        src={species.defaultImageUrl}
+                        src={resolveApiAssetUrl(species.defaultImageUrl) ?? undefined}
                         alt=""
                         className="h-full w-full object-cover"
                         loading="lazy"
@@ -344,7 +345,7 @@ export default function BrowsePlants() {
           No plants match your search. Try clearing filters or a shorter name.
         </p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-3 sm:gap-4">
           {items.map((species) => (
             <li key={species.id}>
               <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5">
@@ -354,7 +355,7 @@ export default function BrowsePlants() {
                 >
                   {species.defaultImageUrl ? (
                     <img
-                      src={species.defaultImageUrl}
+                      src={resolveApiAssetUrl(species.defaultImageUrl) ?? undefined}
                       alt={species.commonName}
                       title={species.scientificName || species.commonName}
                       className="h-full w-full object-cover"
@@ -414,7 +415,7 @@ export default function BrowsePlants() {
                       ))}
                     </div>
                   ) : null}
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                     <Link
                       to={`/garden/plants/browse/${species.id}`}
                       className="flex-1 rounded-2xl border border-emerald-200 py-2.5 text-center text-sm font-semibold text-emerald-900 hover:bg-emerald-50"

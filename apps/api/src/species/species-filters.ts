@@ -6,6 +6,7 @@ import {
   isSucculentSpecies,
   speciesDiscoveryTags,
 } from './species-catalog-meta';
+import { resolveSpeciesMetadata } from './species-metadata';
 
 export type { SpeciesCatalogMeta, SpeciesDifficulty, SpeciesToxicitySummary } from './species-catalog-meta';
 export { buildSpeciesCatalogMeta, compareSpeciesForSort, speciesDiscoveryTags };
@@ -19,9 +20,12 @@ export interface SpeciesSearchFilters {
   outdoor?: boolean;
   beginnerFriendly?: boolean;
   succulent?: boolean;
+  highHumidity?: boolean;
+  pollinatorFriendly?: boolean;
+  bloomsIndoors?: boolean;
 }
 
-export type SpeciesBrowseSort = 'name' | 'waterAsc' | 'waterDesc';
+export type SpeciesBrowseSort = 'name' | 'waterAsc' | 'waterDesc' | 'difficulty';
 
 export function parseSpeciesSearchFilters(query: {
   petSafe?: string;
@@ -32,6 +36,9 @@ export function parseSpeciesSearchFilters(query: {
   outdoor?: string;
   beginnerFriendly?: string;
   succulent?: string;
+  highHumidity?: string;
+  pollinatorFriendly?: string;
+  bloomsIndoors?: string;
 }): SpeciesSearchFilters {
   return {
     petSafe: query.petSafe === 'true',
@@ -42,6 +49,9 @@ export function parseSpeciesSearchFilters(query: {
     outdoor: query.outdoor === 'true',
     beginnerFriendly: query.beginnerFriendly === 'true',
     succulent: query.succulent === 'true',
+    highHumidity: query.highHumidity === 'true',
+    pollinatorFriendly: query.pollinatorFriendly === 'true',
+    bloomsIndoors: query.bloomsIndoors === 'true',
   };
 }
 
@@ -130,6 +140,20 @@ export function speciesMatchesFilters(species: PlantSpecies, filters: SpeciesSea
   }
 
   if (filters.succulent && !isSucculentSpecies(species)) {
+    return false;
+  }
+
+  const metadata = resolveSpeciesMetadata(species);
+
+  if (filters.highHumidity && metadata.humidity !== 'high') {
+    return false;
+  }
+
+  if (filters.pollinatorFriendly && !metadata.pollinatorFriendly) {
+    return false;
+  }
+
+  if (filters.bloomsIndoors && !metadata.bloomsIndoors) {
     return false;
   }
 

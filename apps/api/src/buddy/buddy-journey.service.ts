@@ -7,7 +7,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { biomeById, defaultBiomeForBuddy, isBiomeUnlocked } from './constants/biomes';
-import { pickDiscovery } from './constants/discoveries';
+import { DISCOVERIES, pickDiscovery } from './constants/discoveries';
 import { StartJourneyDto } from './dto/start-journey.dto';
 import { BuddyService } from './buddy.service';
 import { appendPersonalityChoice, formatBuddy, parseStringArray } from './buddy.utils';
@@ -140,9 +140,19 @@ export class BuddyJourneyService {
       }),
     ]);
 
+    const discovery = DISCOVERIES.find((row) => row.id === journey.discoveryId);
+    const outcome =
+      choice === 0
+        ? discovery?.outcomeA.replace(/\{name\}/g, buddy.name)
+        : discovery?.outcomeB.replace(/\{name\}/g, buddy.name);
+
     return {
       saved: true,
       reaction: discoveryReaction(buddy.trait, choice),
+      outcome,
+      encounterName: discovery?.encounterName,
+      encounterRole: discovery?.encounterRole,
+      rewardFocus: discovery?.rewardFocus,
     };
   }
 

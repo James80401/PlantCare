@@ -8,13 +8,14 @@ import {
   type ReactNode,
 } from 'react';
 import { authApi, usersApi } from '../services/api';
+import { unregisterPushNative } from '../lib/unregisterPushNative';
 
 interface User {
   id: string;
   email: string;
   name?: string;
   planTier: 'FREE' | 'PREMIUM';
-  onboardingCompletedAt?: string | null;
+  isAdmin?: boolean;
   experienceLevel?: string | null;
   defaultLightLevel?: string | null;
 }
@@ -27,7 +28,11 @@ interface AuthContextValue {
     email: string,
     password: string,
     name?: string,
-  ) => Promise<{ requiresVerification?: boolean; message?: string }>;
+  ) => Promise<{
+    requiresVerification?: boolean;
+    requiresAdminApproval?: boolean;
+    message?: string;
+  }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isPremium: boolean;
@@ -52,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: data.email,
         name: data.name,
         planTier: data.planTier,
-        onboardingCompletedAt: data.onboardingCompletedAt,
+        isAdmin: Boolean(data.isAdmin),
         experienceLevel: data.experienceLevel,
         defaultLightLevel: data.defaultLightLevel,
       });
@@ -78,6 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data.requiresVerification) {
       return { requiresVerification: true, message: data.message };
     }
+    if (data.requiresAdminApproval) {
+      return { requiresAdminApproval: true, message: data.message };
+    }
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     setUser(data.user);
@@ -85,6 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      authApi.logout(refreshToken).catch(() => {
+        // best-effort revoke; fall through to client-side clear regardless
+      });
+    }
+    void unregisterPushNative();
     localStorage.clear();
     setUser(null);
   };

@@ -1,4 +1,5 @@
 import DiagnosisResult from './DiagnosisResult';
+import RecoveryTasksPanel from './RecoveryTasksPanel';
 
 interface TreatmentPlanDiagnosis {
   id: string;
@@ -18,16 +19,18 @@ interface TreatmentPlanCardProps {
   followUpCreating?: boolean;
   hasFollowUpTask?: boolean;
   onResolvedChange?: (resolved: boolean) => void;
-  onCreateFollowUp?: (dueInDays: number) => Promise<void>;
+  onCreateFollowUp?: (dueInDays: number, note?: string) => Promise<void>;
 }
 
 export default function TreatmentPlanCard({
+  plantId,
   diagnosis,
   updating,
   followUpCreating,
   hasFollowUpTask,
   onResolvedChange,
   onCreateFollowUp,
+  onRecoveryTasksApplied,
 }: TreatmentPlanCardProps) {
   return (
     <div className="rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50/80 to-white p-4 space-y-3">
@@ -47,6 +50,12 @@ export default function TreatmentPlanCard({
         onCreateFollowUp={onCreateFollowUp}
         followUpCreating={followUpCreating}
         hasFollowUpTask={hasFollowUpTask}
+      />
+      <RecoveryTasksPanel
+        plantId={plantId}
+        diagnosisId={diagnosis.id}
+        resolved={diagnosis.resolved}
+        onApplied={() => onRecoveryTasksApplied?.()}
       />
     </div>
   );

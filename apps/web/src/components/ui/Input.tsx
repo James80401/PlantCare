@@ -1,5 +1,7 @@
-import type { InputHTMLAttributes, ReactNode } from 'react';
+import type { InputHTMLAttributes } from 'react';
+import { useId } from 'react';
 import { cn } from '../../lib/cn';
+import { FormError } from '../a11y/FormError';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -8,7 +10,12 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export function Input({ label, error, hint, className, id, ...props }: InputProps) {
-  const inputId = id || (label ? label.replace(/\s+/g, '-').toLowerCase() : undefined);
+  const autoId = useId();
+  const inputId = id || `input-${autoId}`;
+  const errorId = error ? `${inputId}-error` : undefined;
+  const hintId = hint && !error ? `${inputId}-hint` : undefined;
+  const describedBy = [errorId, hintId].filter(Boolean).join(' ') || undefined;
+
   return (
     <div className="space-y-1.5">
       {label ? (
@@ -18,6 +25,8 @@ export function Input({ label, error, hint, className, id, ...props }: InputProp
       ) : null}
       <input
         id={inputId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
         className={cn(
           'w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-gray-900',
           'placeholder:text-gray-400',
@@ -27,8 +36,16 @@ export function Input({ label, error, hint, className, id, ...props }: InputProp
         )}
         {...props}
       />
-      {error ? <p className="text-xs text-rose-600">{error}</p> : null}
-      {hint && !error ? <p className="text-xs text-gray-500">{hint}</p> : null}
+      {error ? (
+        <FormError id={errorId} className="text-xs">
+          {error}
+        </FormError>
+      ) : null}
+      {hint && !error ? (
+        <p id={hintId} className="text-xs text-gray-500">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -41,7 +58,10 @@ export function Textarea({
   rows = 4,
   ...props
 }: InputHTMLAttributes<HTMLTextAreaElement> & { label?: string; error?: string }) {
-  const inputId = id || (label ? label.replace(/\s+/g, '-').toLowerCase() : undefined);
+  const autoId = useId();
+  const inputId = id || `textarea-${autoId}`;
+  const errorId = error ? `${inputId}-error` : undefined;
+
   return (
     <div className="space-y-1.5">
       {label ? (
@@ -52,14 +72,21 @@ export function Textarea({
       <textarea
         id={inputId}
         rows={rows}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={errorId}
         className={cn(
           'w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm',
           'focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100',
+          error && 'border-rose-300 focus:border-rose-400 focus:ring-rose-100',
           className,
         )}
         {...props}
       />
-      {error ? <p className="text-xs text-rose-600">{error}</p> : null}
+      {error ? (
+        <FormError id={errorId} className="text-xs">
+          {error}
+        </FormError>
+      ) : null}
     </div>
   );
 }

@@ -1,12 +1,10 @@
 import { format } from 'date-fns';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import {
-  careSectionToneClasses,
-  getCareSectionMeta,
-  sectionLead,
-} from '../../utils/careGuideSections';
+import { StructuredCareSectionCard } from '../../components/care/StructuredCareSectionCard';
+import { careSectionToneClasses, getCareSectionMeta } from '../../utils/careGuideSections';
+import { skipReasonLabel } from '../../utils/taskFeedback';
 import { formatGuideBody, taskTypeLabel } from '../../utils/tasks';
-import type { CareOverviewSection, PlantRecord, TimelineEvent } from './types';
+import type { CareDetailLevel, CareOverviewSection, PlantRecord, TimelineEvent } from './types';
 
 export function ProfileSection({
   eyebrow,
@@ -70,12 +68,13 @@ export function SummaryTile({
 }: {
   label: string;
   value: string;
-  tone: 'emerald' | 'amber' | 'sky';
+  tone: 'emerald' | 'amber' | 'sky' | 'rose';
 }) {
   const toneClasses = {
     emerald: 'bg-emerald-50 text-emerald-950',
     amber: 'bg-amber-50 text-amber-950',
     sky: 'bg-sky-50 text-sky-950',
+    rose: 'bg-rose-50 text-rose-950',
   };
 
   return (
@@ -86,34 +85,23 @@ export function SummaryTile({
   );
 }
 
-export function CareGuideCard({ section }: { section: CareOverviewSection }) {
-  const meta = getCareSectionMeta(section.heading);
-  const toneClasses = careSectionToneClasses(meta.tone);
-  const lead = sectionLead(section);
-
+export function CareGuideCard({
+  section,
+  defaultDetailLevel = 'beginner',
+}: {
+  section: CareOverviewSection;
+  defaultDetailLevel?: CareDetailLevel;
+}) {
   return (
-    <article className={`rounded-2xl border p-4 ${toneClasses.card}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${toneClasses.badge}`}>
-            {meta.label}
-          </span>
-          <h3 className="mt-3 font-semibold text-emerald-950">{section.heading}</h3>
-        </div>
-      </div>
-      {lead ? (
-        <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-sm font-medium leading-6 text-gray-700">
-          {lead}
-        </p>
-      ) : null}
-      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-gray-500">
-        {meta.intent}
-      </p>
-      <div
-        className="mt-3 text-sm leading-6 text-gray-700 prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2"
-        dangerouslySetInnerHTML={{ __html: formatGuideBody(section.body) }}
-      />
-    </article>
+    <StructuredCareSectionCard
+      id={section.id}
+      heading={section.heading}
+      whyItMatters={section.whyItMatters}
+      beginnerBody={section.beginnerBody}
+      advancedBody={section.advancedBody}
+      warnings={section.warnings}
+      defaultDetailLevel={defaultDetailLevel}
+    />
   );
 }
 
@@ -121,11 +109,13 @@ export function PlantTimeline({
   events,
   onEditJournal,
   onDeleteJournal,
+  onCompareJournal,
   busyJournalId,
 }: {
   events: TimelineEvent[];
   onEditJournal?: (journalId: string) => void;
   onDeleteJournal?: (journalId: string) => void;
+  onCompareJournal?: (journalId: string) => void;
   busyJournalId?: string | null;
 }) {
   return (
@@ -164,13 +154,23 @@ export function PlantTimeline({
               {event.imageUrl ? (
                 <img
                   src={event.imageUrl}
-                  alt=""
+                  alt={event.type === 'journal' ? 'Journal entry photo' : 'Plant health photo'}
                   className="mt-3 max-h-64 w-full rounded-2xl object-cover"
                   loading="lazy"
                 />
               ) : null}
-              {event.journalId && (onEditJournal || onDeleteJournal) ? (
+              {event.journalId && (onEditJournal || onDeleteJournal || onCompareJournal) ? (
                 <div className="mt-3 flex flex-wrap gap-2">
+                  {onCompareJournal && event.imageUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => onCompareJournal(event.journalId!)}
+                      disabled={busyJournalId === event.journalId}
+                      className="rounded-full bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 hover:bg-sky-100 disabled:opacity-50"
+                    >
+                      Compare
+                    </button>
+                  ) : null}
                   {onEditJournal ? (
                     <button
                       type="button"
@@ -237,6 +237,7 @@ export function RecoveryPanel({
   );
 }
 
+/** @deprecated Profile uses `GET /plants/:id/timeline`; kept for reference and local tooling. */
 export function buildTimelineEvents({
   journalEntries,
   tasks,
@@ -267,19 +268,35 @@ export function buildTimelineEvents({
 
   const taskEvents: TimelineEvent[] = tasks
     .filter((task) => task.status !== 'PENDING' && task.completedAt)
-    .map((task) => ({
-      id: `task-${task.id as string}`,
-      date: new Date(task.completedAt as string),
-      type: 'care' as const,
-      title: `${taskTypeLabel(task.taskType as string)} ${
-        task.status === 'DONE' ? 'completed' : 'skipped'
-      }`,
-      description:
+    .map((task) => {
+      const feedbackList = task.feedback as
+        | Array<{ reason?: string; note?: string | null }>
+        | undefined;
+      const latestFeedback = feedbackList?.[0];
+      const reasonLabel = skipReasonLabel(latestFeedback?.reason);
+      let description =
         task.status === 'SKIPPED'
-          ? 'This care task was skipped. Feedback can help future scheduling improve.'
-          : 'This care task was marked complete.',
-      meta: `Originally due ${format(new Date(task.dueDate as string), 'MMM d')}`,
-    }));
+          ? 'This care task was skipped.'
+          : 'This care task was marked complete.';
+      if (task.status === 'SKIPPED' && reasonLabel) {
+        description = `Skipped: ${reasonLabel}.`;
+        if (latestFeedback?.note?.trim()) {
+          description += ` ${latestFeedback.note.trim()}`;
+        }
+      } else if (task.status === 'SKIPPED') {
+        description += ' Add a skip reason next time to improve scheduling.';
+      }
+      return {
+        id: `task-${task.id as string}`,
+        date: new Date(task.completedAt as string),
+        type: 'care' as const,
+        title: `${taskTypeLabel(task.taskType as string)} ${
+          task.status === 'DONE' ? 'completed' : 'skipped'
+        }`,
+        description,
+        meta: `Originally due ${format(new Date(task.dueDate as string), 'MMM d')}`,
+      };
+    });
 
   const diagnosisEvents: TimelineEvent[] = diagnoses.map((diagnosis) => ({
     id: `diagnosis-${diagnosis.id as string}`,

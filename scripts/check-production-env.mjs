@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { parseEnvText } from './lib/parse-env.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const envPath = resolve(root, process.argv[2] || '.env.production');
@@ -19,19 +20,7 @@ if (!existsSync(envPath)) {
   process.exit(1);
 }
 
-function parseEnv(text) {
-  const vars = {};
-  for (const line of text.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eq = trimmed.indexOf('=');
-    if (eq === -1) continue;
-    vars[trimmed.slice(0, eq).trim()] = trimmed.slice(eq + 1).trim();
-  }
-  return vars;
-}
-
-const vars = parseEnv(readFileSync(envPath, 'utf8'));
+const vars = parseEnvText(readFileSync(envPath, 'utf8'));
 const placeholder = /yourdomain|replace-with|change-me/i;
 
 const required = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'FRONTEND_URL', 'VITE_API_BASE_URL'];
@@ -41,6 +30,7 @@ const missing = required.filter((k) => {
 });
 
 const warnings = [];
+const errors = [];
 
 if (!vars.CORS_ORIGINS && !vars.CORS_ORIGIN) {
   warnings.push('CORS_ORIGINS not set — API will use FRONTEND_URL only (OK for single web origin)');
@@ -48,27 +38,98 @@ if (!vars.CORS_ORIGINS && !vars.CORS_ORIGIN) {
 
 const frontend = vars.FRONTEND_URL || '';
 if (frontend && !frontend.startsWith('https://')) {
-  warnings.push('FRONTEND_URL should use https:// in production');
+  errors.push('FRONTEND_URL should use https:// in production');
 }
 
 const apiBase = vars.VITE_API_BASE_URL || '';
 if (apiBase && !apiBase.endsWith('/api/v1')) {
-  warnings.push('VITE_API_BASE_URL should end with /api/v1');
+  errors.push('VITE_API_BASE_URL should end with /api/v1');
+}
+if (apiBase && !apiBase.startsWith('https://')) {
+  errors.push('VITE_API_BASE_URL should use https:// in production');
 }
 
-if (!vars.FCM_SERVER_KEY) {
-  warnings.push('FCM_SERVER_KEY unset — push will log only until Firebase is configured');
+const corsOriginsRaw = vars.CORS_ORIGINS || vars.CORS_ORIGIN || '';
+const corsOrigins = corsOriginsRaw
+  .split(',')
+  .map((v) => v.trim())
+  .filter(Boolean);
+if (frontend && corsOrigins.length && !corsOrigins.includes(frontend)) {
+  errors.push('CORS_ORIGINS/CORS_ORIGIN must include FRONTEND_URL exactly');
+}
+
+const hasFcmV1 =
+  vars.FIREBASE_PROJECT_ID &&
+  (vars.GOOGLE_APPLICATION_CREDENTIALS ||
+    vars.FIREBASE_SERVICE_ACCOUNT_PATH ||
+    (vars.FIREBASE_CLIENT_EMAIL && vars.FIREBASE_PRIVATE_KEY));
+if (!hasFcmV1 && !vars.FCM_SERVER_KEY) {
+  warnings.push(
+    'FCM not configured — set FIREBASE_PROJECT_ID + service account (v1) or FCM_SERVER_KEY (legacy)',
+  );
+} else if (hasFcmV1) {
+  console.log('  ✓ FCM HTTP v1 credentials detected');
+} else if (vars.FCM_SERVER_KEY) {
+  warnings.push('Using legacy FCM_SERVER_KEY — prefer HTTP v1 service account for new Firebase projects');
 }
 if (!vars.OPENAI_API_KEY) {
   warnings.push('OPENAI_API_KEY unset — Dr. Plant and diagnosis will not work');
 }
+
+const allUsersPremium = vars.ALL_USERS_PREMIUM?.trim().toLowerCase() === 'true';
+if (!allUsersPremium) {
+  for (const key of ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_ID_PREMIUM']) {
+    if (!vars[key]?.trim()) {
+      errors.push(`${key} is required when ALL_USERS_PREMIUM is not true`);
+    }
+  }
+}
+
 if (!vars.SMTP_USER || !vars.SMTP_PASS) {
   warnings.push('SMTP unset — email verification and password reset use auto-verify in dev only');
+} else {
+  console.log('  ✓ SMTP credentials detected');
+  const smtpHost = (vars.SMTP_HOST || '').trim().toLowerCase();
+  const smtpUser = (vars.SMTP_USER || '').trim();
+  const smtpPass = (vars.SMTP_PASS || '').trim().replace(/\s+/g, '');
+  if (smtpHost === 'smtp.sendgrid.net') {
+    if (smtpUser !== 'apikey') {
+      errors.push('Twilio SendGrid SMTP requires SMTP_USER=apikey');
+    }
+    if (!smtpPass.startsWith('SG.')) {
+      errors.push('Twilio SendGrid SMTP requires SMTP_PASS to be a SendGrid API key starting with SG.');
+    }
+    if (vars.SMTP_PORT && String(vars.SMTP_PORT).trim() !== '2525') {
+      warnings.push('DigitalOcean blocks common SMTP ports — use SMTP_PORT=2525 for Twilio SendGrid on DO');
+    }
+  }
+}
+
+const adminApprovalExplicit = vars.REGISTRATION_REQUIRES_ADMIN_APPROVAL?.trim().toLowerCase();
+const adminApprovalEnabled =
+  adminApprovalExplicit !== 'false' &&
+  (adminApprovalExplicit === 'true' || Boolean(vars.SMTP_USER?.trim() && vars.SMTP_PASS?.trim()));
+
+if (adminApprovalEnabled) {
+  if (!vars.SMTP_USER || !vars.SMTP_PASS) {
+    errors.push('Admin approval requires SMTP_USER and SMTP_PASS');
+  }
+  if (!vars.ADMIN_EMAILS?.trim()) {
+    errors.push('Admin approval requires ADMIN_EMAILS (comma-separated admin login emails)');
+  } else {
+    console.log('  ✓ Admin approval enabled (new users need email verify + admin approve)');
+  }
 }
 
 if (missing.length) {
   console.error('Fix required values in .env.production:');
   for (const k of missing) console.error(`  - ${k}`);
+  process.exit(1);
+}
+
+if (errors.length) {
+  console.error('Fix production URL/CORS settings:');
+  for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
 
@@ -80,4 +141,5 @@ console.log('\nAfter deploy:');
 console.log(`  API_URL=${apiUrl} npm run verify`);
 console.log(`  API_URL=${apiUrl} npm run smoke:buddy`);
 console.log(`  UAT_WEB_URL=${frontend} API_URL=${apiUrl} npm run uat:e2e`);
-console.log('\nGuide: docs/guides/15-production-deploy-and-android.md');
+console.log('  npm run production:signoff   # env + live probes + verify + smoke');
+console.log('\nGuide: docs/operations/production-signoff.md');

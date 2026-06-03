@@ -7,4 +7,6 @@
 | GET | `/plants/:plantId/journal` |
 | POST | `/plants/:plantId/journal` |
 
-Optional image on create. Stored as `JournalEntry`.
+Multipart create/update with optional `photo`. At least one of **notes** or **photo** is required on create. PATCH accepts `removePhoto=true` to clear an existing photo.
+
+Stored as `JournalEntry`. Web: plant profile **Journal** tab.

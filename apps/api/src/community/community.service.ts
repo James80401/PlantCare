@@ -3,36 +3,50 @@ import { PrismaService } from '../prisma/prisma.service';
 import { canDeleteCommunityPost } from '../gardens/garden-authz';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePostDto } from './dto/create-post.dto';
+import { mapCommunityPostsForViewer } from './community.mapper';
+
+const postInclude = (viewerId?: string) => ({
+  author: { select: { id: true, name: true, email: true } },
+  species: { select: { id: true, commonName: true } },
+  _count: { select: { comments: true, likes: true } },
+  ...(viewerId
+    ? {
+        likes: {
+          where: { userId: viewerId },
+          select: { id: true },
+          take: 1,
+        },
+      }
+    : {}),
+});
 
 @Injectable()
 export class CommunityService {
   constructor(private prisma: PrismaService) {}
 
-  async listPosts(limit = 30, viewerId?: string) {
+  async listPosts(limit = 20, viewerId?: string, cursor?: string) {
     const take = Math.min(50, Math.max(1, limit));
-    const posts = await this.prisma.communityPost.findMany({
-      take,
+    const rows = await this.prisma.communityPost.findMany({
+      take: take + 1,
+      ...(cursor
+        ? {
+            cursor: { id: cursor },
+            skip: 1,
+          }
+        : {}),
       orderBy: { createdAt: 'desc' },
-      include: {
-        author: { select: { id: true, name: true, email: true } },
-        species: { select: { id: true, commonName: true } },
-        _count: { select: { comments: true, likes: true } },
-        ...(viewerId
-          ? {
-              likes: {
-                where: { userId: viewerId },
-                select: { id: true },
-                take: 1,
-              },
-            }
-          : {}),
-      },
+      include: postInclude(viewerId),
     });
-    if (!viewerId) return posts;
-    return posts.map(({ likes, ...post }) => ({
-      ...post,
-      likedByMe: likes.length > 0,
-    }));
+
+    const hasMore = rows.length > take;
+    const page = hasMore ? rows.slice(0, take) : rows;
+    const posts = mapCommunityPostsForViewer(page, viewerId);
+
+    return {
+      posts,
+      nextCursor: hasMore && page.length ? page[page.length - 1].id : null,
+      hasMore,
+    };
   }
 
   createPost(userId: string, dto: CreatePostDto) {

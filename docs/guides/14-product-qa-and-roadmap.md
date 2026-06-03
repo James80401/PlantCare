@@ -27,6 +27,7 @@ Doc: [user-guide/subscription.md](../user-guide/subscription.md), [reference/sha
 |-----|----------|
 | [uat-checklist.md](../product/uat-checklist.md) | Full UAT matrix |
 | [tester-5-minute.md](../product/tester-5-minute.md) | Quick smoke for testers |
+| [improvement-recommendations.md](../product/improvement-recommendations.md) | Prioritized improvement backlog (research-backed) |
 | [improvement-checklist.md](../product/improvement-checklist.md) | Roadmap / acceptance ideas |
 
 ---

@@ -3,19 +3,28 @@ import { addDays, format, startOfDay, subDays } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
 import { WeatherService } from '../weather/weather.service';
+import { PlantMilestonesService } from '../milestones/plant-milestones.service';
 import {
   buildAttention,
   buildWeekPreview,
   getCareStreak,
   getGardenScore,
-  getOldestPlantAgeDays,
   getOverdueTasks,
+  getPendingTasks,
   getStatusLine,
   getTasksCompletedToday,
   getTodayTasks,
   pickTodayTasks,
   type TaskLike,
 } from './dashboard-helpers';
+import {
+  mapDashboardDiagnosisSummary,
+  mapDashboardJournalEntry,
+  mapDashboardPlant,
+  mapDashboardRecoveryPlant,
+  mapDashboardTask,
+  mapSharedPlantsForUser,
+} from './dashboard.mapper';
 
 @Injectable()
 export class DashboardService {
@@ -23,14 +32,26 @@ export class DashboardService {
     private prisma: PrismaService,
     private scheduler: SchedulerService,
     private weather: WeatherService,
+    private plantMilestones: PlantMilestonesService,
   ) {}
 
   async getDashboard(userId: string, from?: string, to?: string) {
+    await this.scheduler.autoPostponeOutdoorWateringFromWeather(userId);
+
     const now = new Date();
     const fromDate = from ? new Date(from) : addDays(startOfDay(now), -45);
     const toDate = to ? new Date(to) : addDays(startOfDay(now), 14);
 
-    const [user, plants, tasks, unresolvedDiagnoses] = await Promise.all([
+    const [
+      user,
+      plants,
+      gardens,
+      tasks,
+      unresolvedDiagnoses,
+      recentJournalEntries,
+      recentDiagnoses,
+      openDiagnosisCount,
+    ] = await Promise.all([
       this.prisma.user.findUnique({
         where: { id: userId },
         select: { name: true },
@@ -41,7 +62,47 @@ export class DashboardService {
           species: {
             select: {
               commonName: true,
+              scientificName: true,
+              sunlight: true,
               wateringFreqDays: true,
+            },
+          },
+          tasks: {
+            where: { status: 'PENDING' },
+            orderBy: { dueDate: 'asc' },
+            take: 1,
+            select: { dueDate: true, taskType: true, status: true },
+          },
+          diagnoses: {
+            where: { resolved: false },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { resultLabel: true, createdAt: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.garden.findMany({
+        where: {
+          OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+        },
+        include: {
+          members: { select: { userId: true, role: true } },
+          plants: {
+            include: {
+              plant: {
+                include: {
+                  species: {
+                    select: {
+                      commonName: true,
+                      scientificName: true,
+                      sunlight: true,
+                      wateringFreqDays: true,
+                      defaultImageUrl: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -70,6 +131,49 @@ export class DashboardService {
         },
         orderBy: { createdAt: 'desc' },
       }),
+      this.prisma.journalEntry.findMany({
+        where: { plant: { userId } },
+        select: {
+          id: true,
+          plantId: true,
+          photoUrl: true,
+          notes: true,
+          heightCm: true,
+          widthCm: true,
+          leafCount: true,
+          createdAt: true,
+          plant: {
+            select: {
+              nickname: true,
+              species: { select: { commonName: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      this.prisma.diagnosis.findMany({
+        where: { plant: { userId } },
+        select: {
+          id: true,
+          plantId: true,
+          resultLabel: true,
+          confidence: true,
+          resolved: true,
+          createdAt: true,
+          plant: {
+            select: {
+              nickname: true,
+              species: { select: { commonName: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      this.prisma.diagnosis.count({
+        where: { plant: { userId }, resolved: false },
+      }),
     ]);
 
     const taskRows = tasks as TaskLike[];
@@ -97,12 +201,15 @@ export class DashboardService {
       ? this.summarizeWeather(weatherStatus.cachedAdvice, weatherStatus.locationLabel)
       : null;
 
-    const milestones = this.buildMilestones(
+    const milestones = await this.plantMilestones.syncAndListForUser(userId, {
       plantCount,
-      plants.map((p) => p.createdAt),
+      plantCreatedAts: plants.map((p) => p.createdAt),
       completedInRange,
       streak,
-    );
+    });
+
+    const todayTaskRows = pickTodayTasks(taskRows, 5, currentDate);
+    const pendingTaskRows = getPendingTasks(taskRows);
 
     return {
       greeting: {
@@ -117,7 +224,10 @@ export class DashboardService {
         completedToday: completedToday.length,
         gardenScore: score,
       },
-      todayTasks: pickTodayTasks(taskRows, 5, currentDate),
+      plants: plants.map((p) => mapDashboardPlant(p)),
+      sharedPlants: mapSharedPlantsForUser(gardens, userId),
+      pendingTasks: pendingTaskRows.map((t) => mapDashboardTask(t)),
+      todayTasks: todayTaskRows.map((t) => mapDashboardTask(t)),
       attention: buildAttention(
         plants,
         taskRows,
@@ -126,6 +236,19 @@ export class DashboardService {
       ),
       weekPreview: buildWeekPreview(taskRows, currentDate),
       scheduleSuggestions,
+      healthStory: {
+        openDiagnosisCount,
+        recentJournal: recentJournalEntries.map((entry) =>
+          mapDashboardJournalEntry(entry),
+        ),
+        recentDiagnoses: recentDiagnoses.map((diagnosis) =>
+          mapDashboardDiagnosisSummary(diagnosis),
+        ),
+        recoveryPlants: recentDiagnoses
+          .filter((diagnosis) => !diagnosis.resolved)
+          .slice(0, 3)
+          .map((diagnosis) => mapDashboardRecoveryPlant(diagnosis)),
+      },
       weather: weatherStatus.hasLocation
         ? {
             hasLocation: true,
@@ -137,6 +260,7 @@ export class DashboardService {
       engagement: {
         score,
         streak,
+        completedInRange,
         milestones,
       },
     };
@@ -159,21 +283,4 @@ export class DashboardService {
     return `Weather loaded for ${where}`;
   }
 
-  private buildMilestones(
-    plantCount: number,
-    createdAts: Date[],
-    completedInRange: number,
-    streak: number,
-  ) {
-    const oldestDays = getOldestPlantAgeDays(createdAts);
-    const defs = [
-      { id: 'first_plant', title: 'First plant', unlocked: plantCount >= 1 },
-      { id: 'growing_garden', title: 'Growing garden', unlocked: plantCount >= 3 },
-      { id: 'first_care', title: 'First care win', unlocked: completedInRange >= 1 },
-      { id: 'care_rhythm_3', title: '3-day rhythm', unlocked: streak >= 3 },
-      { id: 'care_rhythm_7', title: '7-day rhythm', unlocked: streak >= 7 },
-      { id: 'thirty_days', title: '30 days together', unlocked: oldestDays >= 30 },
-    ];
-    return defs;
-  }
 }

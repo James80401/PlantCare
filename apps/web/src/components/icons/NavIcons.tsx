@@ -75,6 +75,23 @@ export function IconSettings(props: IconProps) {
   );
 }
 
+export function IconAdmin(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 3 5 6v5c0 4.4 2.8 8.5 7 10 4.2-1.5 7-5.6 7-10V6l-7-3z" />
+      <path d="M9 12l2 2 4-5" />
+    </svg>
+  );
+}
+
+export function IconMenu(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  );
+}
+
 export const navIcons = {
   home: IconHome,
   browse: IconLeaf,
@@ -83,4 +100,6 @@ export const navIcons = {
   add: IconPlus,
   community: IconCommunity,
   settings: IconSettings,
+  admin: IconAdmin,
+  menu: IconMenu,
 } as const;

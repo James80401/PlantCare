@@ -40,6 +40,15 @@ enum PotSize {
   LARGE
 }
 
+enum PlantLifeStage {
+  SEED
+  SPROUT
+  SEEDLING
+  YOUNG_PLANT
+  ESTABLISHED
+  MATURE
+}
+
 enum NotificationChannel {
   PUSH
   EMAIL
@@ -53,12 +62,18 @@ enum SubscriptionStatus {
   TRIALING
 }
 
+enum AccountApprovalStatus {
+  APPROVED
+  PENDING
+  REJECTED
+}
+
 model User {
   id                    String         @id @default(cuid())
   email                 String         @unique
   passwordHash          String
   name                  String?
-  planTier              PlanTier       @default(PREMIUM)
+  planTier              PlanTier       @default(FREE)
   stripeCustomerId      String?
   latitude              Float?
   longitude             Float?
@@ -73,11 +88,12 @@ model User {
   identifyCountThisMonth Int           @default(0)
   identifyCountResetAt  DateTime       @default(now())
   emailVerified         Boolean        @default(true)
+  accountApprovalStatus AccountApprovalStatus @default(APPROVED)
   emailVerificationToken String?       @unique
   emailVerificationExpires DateTime?
   passwordResetToken    String?        @unique
   passwordResetExpires  DateTime?
-  onboardingCompletedAt DateTime?
+  aiPausedUntil         DateTime?
   experienceLevel       String?
   defaultLightLevel     String?
   createdAt             DateTime       @default(now())
@@ -95,6 +111,72 @@ model User {
   postLikes             PostLike[]
   activityEvents        ActivityEvent[]
   buddy                 Buddy?
+  plantMilestones       PlantMilestone[]
+  refreshTokens         RefreshToken[]
+  aiUsageEvents         AiUsageEvent[]
+  adminAuditLogs        AdminAuditLog[] @relation("AdminAuditActor")
+}
+
+model AdminAuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?
+  actor        User?    @relation("AdminAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  actorEmail   String?
+  action       String
+  method       String
+  path         String
+  targetUserId String?
+  requestId    String?
+  statusCode   Int
+  outcome      String
+  durationMs   Int
+  ip           String?
+  userAgent    String?
+  metadataJson String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([outcome, createdAt])
+}
+
+model AiUsageEvent {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature        String
+  plantId        String?
+  conversationId String?
+  promptChars    Int      @default(0)
+  imageCount      Int      @default(0)
+  status         String
+  reason         String?
+  createdAt      DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([feature, createdAt])
+  @@index([status, createdAt])
+}
+
+model RefreshToken {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique
+  familyId    String
+  parentId    String?
+  replacedBy  String?
+  revokedAt   DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  userAgent   String?
+  ip          String?
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
 }
 
 model WeatherAdviceCache {
@@ -172,11 +254,15 @@ model Plant {
   id          String       @id @default(cuid())
   userId      String
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gardenId    String
+  garden      Garden       @relation("GardenPlants", fields: [gardenId], references: [id], onDelete: Cascade)
   speciesId   String
   species     PlantSpecies @relation(fields: [speciesId], references: [id])
   nickname    String?
   location    String?
   potSize     PotSize      @default(MEDIUM)
+  lifeStage   PlantLifeStage @default(ESTABLISHED)
+  approximateAgeMonths Int?
   datePlanted DateTime?
   imageUrl    String?
   notes       String?
@@ -187,14 +273,33 @@ model Plant {
   diagnoses              Diagnosis[]
   diagnosisConversations DiagnosisConversation[]
   shares                 PlantShare[]
+  milestones             PlantMilestone[]
 
   @@index([userId])
+  @@index([gardenId])
+}
+
+model PlantMilestone {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plantId      String?
+  plant        Plant?   @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  milestoneKey String
+  title        String
+  unlockedAt   DateTime @default(now())
+
+  @@unique([userId, milestoneKey])
+  @@index([userId])
+  @@index([plantId])
 }
 
 model Task {
   id                String     @id @default(cuid())
   plantId           String
   plant             Plant      @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  gardenId          String?
+  garden            Garden?    @relation("GardenTasks", fields: [gardenId], references: [id], onDelete: Cascade)
   taskType          TaskType
   dueDate           DateTime
   completedAt       DateTime?
@@ -207,6 +312,7 @@ model Task {
 
   @@index([dueDate, status])
   @@index([plantId])
+  @@index([gardenId, status])
   @@index([sourceDiagnosisId])
 }
 
@@ -312,11 +418,14 @@ model DeviceToken {
 model Garden {
   id        String         @id @default(cuid())
   name      String
+  location  String?
   ownerId   String
   owner     User           @relation("GardenOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   members   GardenMember[]
+  homePlants Plant[]       @relation("GardenPlants")
+  tasks     Task[]         @relation("GardenTasks")
   plants    PlantShare[]
   invites   CareInvite[]
   activity  ActivityEvent[]
@@ -456,6 +565,7 @@ model Buddy {
   growthStage         GrowthStage @default(SEED)
   journeyCount        Int         @default(0)
   dewdrops            Int         @default(0)
+  experiencePoints    Int         @default(0)
   bloomTokens         Int         @default(0)
   lastPerfectDayKey   String?
   sunlightToday       Int         @default(0)
@@ -473,6 +583,7 @@ model Buddy {
   personalityChoices  Json        @default("[]")
   terrariumLayout     Json        @default("{}")
   terrariumBackground String      @default("sunny_windowsill")
+  floatingCompanionMode String    @default("hidden")
   gardenCode          String      @unique
   showLastActive      Boolean     @default(true)
   journeys            BuddyJourney[]
@@ -537,6 +648,7 @@ enum BuddySpeciesUnlockType {
   STREAK
   QUEST
   JOURNEY_COUNT
+  LEVEL
   SEASONAL
 }
 

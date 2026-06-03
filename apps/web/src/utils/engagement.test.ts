@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildEngagementContext,
   deriveMilestones,
+  resolveMilestones,
   formatSharePlantText,
   getCareStreak,
   getGardenWellness,
@@ -27,6 +28,25 @@ describe('engagement utilities', () => {
   it('does not punish an incomplete today when yesterday had care', () => {
     const tasks = [doneTask('a', '2026-05-16')];
     expect(getCareStreak(tasks, currentDate)).toBe(1);
+  });
+
+  it('prefers API milestones when the dashboard returns them', () => {
+    const ctx = buildEngagementContext(1, [], [], currentDate);
+    const fromApi = resolveMilestones(
+      [
+        {
+          id: 'growing_garden',
+          title: 'Growing garden',
+          description: 'Three plants',
+          emoji: '🪴',
+          unlocked: true,
+          unlockedAt: '2026-05-01T00:00:00.000Z',
+        },
+      ],
+      ctx,
+    );
+    expect(fromApi.find((item) => item.id === 'growing_garden')?.unlocked).toBe(true);
+    expect(fromApi.find((item) => item.id === 'first_plant')?.unlocked).toBe(false);
   });
 
   it('unlocks milestones from garden context without blocking care flows', () => {

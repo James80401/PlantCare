@@ -4,19 +4,46 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import type { Task } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { TaskType } from '@prisma/client';
 import axios from 'axios';
 import { addDays, startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
+import { ImageModerationService } from '../common/image-moderation.service';
+import { AiUsageService } from '../ai-usage/ai-usage.service';
 import { formatLabel, getAdvice } from './diagnosis-advice';
+import { ApplyRecoveryTasksDto } from './dto/apply-recovery-tasks.dto';
 import { FollowUpTaskDto } from './dto/follow-up-task.dto';
 import { UpdateDiagnosisDto } from './dto/update-diagnosis.dto';
+import {
+  buildRecoverySuggestions,
+  type RecoveryTaskSuggestion,
+} from './diagnosis-recovery.mapper';
 import { LlmDiagnosisService } from './llm-diagnosis.service';
 import { OpenAiRequestError } from './openai-errors';
 
+export type RecoverySuggestionView = RecoveryTaskSuggestion & {
+  alreadyScheduled: boolean;
+};
+
 type DiagnosisSource = 'openai' | 'huggingface' | 'rules';
+type SymptomDuration = 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
+type RecentCareChange =
+  | 'NONE'
+  | 'WATERING'
+  | 'LIGHT'
+  | 'REPOT'
+  | 'FERTILIZER'
+  | 'TEMPERATURE'
+  | 'PEST_TREATMENT';
+
+export interface DiagnosisIntake {
+  symptomDuration?: SymptomDuration;
+  recentCareChange?: RecentCareChange;
+  pestsVisible?: boolean;
+}
 
 @Injectable()
 export class DiagnosisService {
@@ -29,6 +56,8 @@ export class DiagnosisService {
     private upload: UploadService,
     private config: ConfigService,
     private llm: LlmDiagnosisService,
+    private imageModeration: ImageModerationService,
+    private aiUsage: AiUsageService,
   ) {
     this.hfToken = this.config.get<string>('HF_API_TOKEN');
   }
@@ -38,6 +67,7 @@ export class DiagnosisService {
     plantId: string,
     file: Express.Multer.File | undefined,
     symptomsText?: string,
+    intake?: DiagnosisIntake,
   ) {
     const plant = await this.prisma.plant.findFirst({
       where: { id: plantId, userId },
@@ -45,22 +75,56 @@ export class DiagnosisService {
     });
     if (!plant) throw new NotFoundException('Plant not found');
 
-    let imageUrl: string | undefined;
-    if (file) {
-      imageUrl = await this.upload.saveFile(file);
-    }
+    await this.aiUsage.assertPlantIntentOrThrow({
+      feature: 'diagnosis',
+      userId,
+      plantId,
+      text: symptomsText,
+      hasImage: Boolean(file),
+      promptChars: symptomsText?.length ?? 0,
+      imageCount: file ? 1 : 0,
+    });
 
-    const imageHint = file ? await this.classifyImage(file) : undefined;
+    // Kick off image moderation in parallel with the slow upstream calls below
+    // (HuggingFace classify + OpenAI diagnose). On accept this saves the moderation
+    // round-trip from the user's wait time; on reject we throw before persisting.
+    // The HF + OpenAI calls may still complete after a moderation reject, paying for
+    // those tokens — acceptable since rejections are rare relative to total volume.
+    const moderationPromise: Promise<unknown> | undefined = file
+      ? this.imageModeration
+          .assertImageAllowed(file, { feature: 'diagnose', userId })
+          .catch((err) => {
+            // Wrap rejections so we can distinguish moderation errors from upstream model errors.
+            throw err;
+          })
+      : undefined;
+
+    const imageHintPromise: Promise<{ label: string; confidence: number } | undefined> = file
+      ? this.classifyImage(file)
+      : Promise.resolve(undefined);
 
     let source: DiagnosisSource = 'rules';
-    let resultLabel = imageHint?.label ?? 'General plant health review';
-    let confidence = imageHint?.confidence ?? 0.65;
+    let resultLabel: string;
+    let confidence: number;
     let adviceText: string;
     let detailJson: string | undefined;
 
+    const intakeSummary = this.formatIntakeSummary(intake);
+
+    const imageHint = await imageHintPromise;
+    resultLabel = imageHint?.label ?? 'General plant health review';
+    confidence = imageHint?.confidence ?? 0.65;
+
     if (this.llm.isAvailable()) {
       try {
-        const structured = await this.llm.diagnose({
+        await this.aiUsage.reserveCall({
+          feature: 'diagnosis',
+          userId,
+          plantId,
+          promptChars: symptomsText?.length ?? 0,
+          imageCount: file ? 1 : 0,
+        });
+        const structuredPromise = this.llm.diagnose({
           commonName: plant.species.commonName,
           scientificName: plant.species.scientificName,
           sunlight: plant.species.sunlight,
@@ -69,6 +133,7 @@ export class DiagnosisService {
           careNotes: plant.species.careNotes,
           location: plant.location,
           symptomsText,
+          caregiverContext: intakeSummary,
           imageHint: imageHint
             ? { label: formatLabel(imageHint.label), confidence: imageHint.confidence }
             : undefined,
@@ -76,12 +141,19 @@ export class DiagnosisService {
           imageMimeType: file?.mimetype,
         });
 
+        // Await diagnosis and moderation together so total latency = max() not sum().
+        // If moderation rejects, its rejection propagates here.
+        const [structured] = await Promise.all([
+          structuredPromise,
+          moderationPromise ?? Promise.resolve(),
+        ]);
+
         if (structured) {
           source = 'openai';
           resultLabel = structured.issueName;
           confidence = structured.confidence;
           adviceText = this.llm.formatAdviceText(structured);
-          detailJson = JSON.stringify(structured);
+          detailJson = JSON.stringify({ ...structured, intake });
         } else {
           ({ resultLabel, confidence, adviceText, source } = this.rulesFallback(
             imageHint,
@@ -94,16 +166,31 @@ export class DiagnosisService {
         }
         throw err;
       }
-    } else if (imageHint) {
-      source = 'huggingface';
-      resultLabel = formatLabel(imageHint.label);
-      confidence = imageHint.confidence;
-      adviceText = getAdvice(imageHint.label);
     } else {
-      ({ resultLabel, confidence, adviceText, source } = this.rulesFallback(
-        imageHint,
-        symptomsText,
-      ));
+      // No LLM available — still respect moderation if we have a file.
+      if (moderationPromise) await moderationPromise;
+      if (imageHint) {
+        source = 'huggingface';
+        resultLabel = formatLabel(imageHint.label);
+        confidence = imageHint.confidence;
+        adviceText = getAdvice(imageHint.label);
+      } else {
+        ({ resultLabel, confidence, adviceText, source } = this.rulesFallback(
+          imageHint,
+          symptomsText,
+        ));
+      }
+    }
+
+    // Only save the image after we've cleared moderation, to avoid orphaned uploads
+    // when moderation rejects.
+    let imageUrl: string | undefined;
+    if (file) {
+      imageUrl = await this.upload.saveFile(file);
+    }
+
+    if (!detailJson && intake) {
+      detailJson = JSON.stringify({ intake });
     }
 
     return this.prisma.diagnosis.create({
@@ -120,16 +207,97 @@ export class DiagnosisService {
     });
   }
 
+  async getRecoverySuggestions(
+    userId: string,
+    plantId: string,
+    diagnosisId: string,
+  ): Promise<RecoverySuggestionView[]> {
+    const diagnosis = await this.assertDiagnosis(userId, plantId, diagnosisId);
+    const suggestions = buildRecoverySuggestions(
+      diagnosisId,
+      diagnosis.detailJson,
+      diagnosis.adviceText,
+    );
+    const pending = await this.prisma.task.findMany({
+      where: {
+        plantId,
+        sourceDiagnosisId: diagnosisId,
+        status: 'PENDING',
+      },
+      select: { taskType: true },
+    });
+    const scheduledTypes = new Set(pending.map((t) => t.taskType));
+    return suggestions.map((s) => ({
+      ...s,
+      alreadyScheduled: scheduledTypes.has(s.taskType),
+    }));
+  }
+
+  async applyRecoveryTasks(
+    userId: string,
+    plantId: string,
+    diagnosisId: string,
+    dto: ApplyRecoveryTasksDto,
+  ): Promise<Task[]> {
+    const diagnosis = await this.assertDiagnosis(userId, plantId, diagnosisId);
+    const suggestions = buildRecoverySuggestions(
+      diagnosisId,
+      diagnosis.detailJson,
+      diagnosis.adviceText,
+    );
+    const selected = suggestions.filter((s) => dto.keys.includes(s.key));
+    if (selected.length === 0) {
+      throw new BadRequestException('No valid recovery tasks selected.');
+    }
+
+    const gardenId = await this.plantGardenId(plantId);
+    const created: Task[] = [];
+    for (const suggestion of selected) {
+      const existing = await this.prisma.task.findFirst({
+        where: {
+          plantId,
+          sourceDiagnosisId: diagnosisId,
+          taskType: suggestion.taskType,
+          status: 'PENDING',
+        },
+      });
+      if (existing) continue;
+
+      const dueDate = startOfDay(addDays(new Date(), suggestion.dueInDays));
+      const task = await this.prisma.task.create({
+        data: {
+          plantId,
+          gardenId,
+          taskType: suggestion.taskType,
+          dueDate,
+          sourceDiagnosisId: diagnosisId,
+        },
+        include: {
+          plant: { include: { species: true } },
+          sourceDiagnosis: {
+            select: { id: true, resultLabel: true, resolved: true },
+          },
+        },
+      });
+      created.push(task);
+    }
+
+    if (created.length === 0) {
+      throw new BadRequestException(
+        'Selected recovery tasks are already on your schedule.',
+      );
+    }
+
+    return created;
+  }
+
   async createFollowUpTask(
     userId: string,
     plantId: string,
     diagnosisId: string,
     dto: FollowUpTaskDto,
   ) {
-    const diagnosis = await this.prisma.diagnosis.findFirst({
-      where: { id: diagnosisId, plantId, plant: { userId } },
-    });
-    if (!diagnosis) throw new NotFoundException('Diagnosis not found');
+    await this.assertDiagnosis(userId, plantId, diagnosisId);
 
     const dueInDays = dto.dueInDays ?? 3;
     const dueDate = startOfDay(addDays(new Date(), dueInDays));
@@ -148,9 +316,10 @@ export class DiagnosisService {
       );
     }
 
-    return this.prisma.task.create({
+    const task = await this.prisma.task.create({
       data: {
         plantId,
+        gardenId: await this.plantGardenId(plantId),
         taskType: TaskType.HEALTH_CHECK,
         dueDate,
         sourceDiagnosisId: diagnosisId,
@@ -162,6 +331,18 @@ export class DiagnosisService {
         },
       },
     });
+
+    const note = dto.note?.trim();
+    if (note) {
+      await this.prisma.journalEntry.create({
+        data: {
+          plantId,
+          notes: `Health check follow-up in ${dueInDays} day${dueInDays === 1 ? '' : 's'}: ${note}`,
+        },
+      });
+    }
+
+    return task;
   }
 
   async updateStatus(
@@ -170,15 +351,29 @@ export class DiagnosisService {
     diagnosisId: string,
     dto: UpdateDiagnosisDto,
   ) {
-    const diagnosis = await this.prisma.diagnosis.findFirst({
-      where: { id: diagnosisId, plantId, plant: { userId } },
-    });
-    if (!diagnosis) throw new NotFoundException('Diagnosis not found');
+    await this.assertDiagnosis(userId, plantId, diagnosisId);
 
     return this.prisma.diagnosis.update({
       where: { id: diagnosisId },
       data: { resolved: dto.resolved },
     });
+  }
+
+  private async assertDiagnosis(userId: string, plantId: string, diagnosisId: string) {
+    const diagnosis = await this.prisma.diagnosis.findFirst({
+      where: { id: diagnosisId, plantId, plant: { userId } },
+    });
+    if (!diagnosis) throw new NotFoundException('Diagnosis not found');
+    return diagnosis;
+  }
+
+  /** Home garden of a plant, denormalized onto tasks created for it. */
+  private async plantGardenId(plantId: string): Promise<string | undefined> {
+    const plant = await this.prisma.plant.findUnique({
+      where: { id: plantId },
+      select: { gardenId: true },
+    });
+    return plant?.gardenId;
   }
 
   private async classifyImage(
@@ -237,5 +432,35 @@ export class DiagnosisService {
     if (lower.includes('root rot') || lower.includes('mushy')) return 'overwatering';
     if (lower.includes('brown tip') || lower.includes('crispy')) return 'underwatering';
     return 'healthy';
+  }
+
+  private formatIntakeSummary(intake?: DiagnosisIntake): string | undefined {
+    if (!intake) return undefined;
+    const lines: string[] = [];
+    if (intake.symptomDuration) {
+      const duration = {
+        TODAY: 'today',
+        DAYS_2_3: '2-3 days',
+        DAYS_4_7: '4-7 days',
+        WEEKS_2_PLUS: '2+ weeks',
+      }[intake.symptomDuration];
+      lines.push(`Symptom duration: ${duration}`);
+    }
+    if (intake.recentCareChange && intake.recentCareChange !== 'NONE') {
+      const change = {
+        WATERING: 'watering routine changed',
+        LIGHT: 'light exposure changed',
+        REPOT: 'recently repotted',
+        FERTILIZER: 'fertilizer routine changed',
+        TEMPERATURE: 'temperature/humidity shifted',
+        PEST_TREATMENT: 'recent pest treatment',
+        NONE: 'no recent care changes',
+      }[intake.recentCareChange];
+      lines.push(`Recent care change: ${change}`);
+    }
+    if (intake.pestsVisible != null) {
+      lines.push(`Visible pests/webbing: ${intake.pestsVisible ? 'yes' : 'no'}`);
+    }
+    return lines.length ? lines.join('\n') : undefined;
   }
 }

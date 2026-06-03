@@ -6,9 +6,10 @@ import { DiagnosisChatService } from './diagnosis-chat.service';
 import { LlmDiagnosisService } from './llm-diagnosis.service';
 import { UploadModule } from '../upload/upload.module';
 import { WeatherModule } from '../weather/weather.module';
+import { AiUsageModule } from '../ai-usage/ai-usage.module';
 
 @Module({
-  imports: [UploadModule, WeatherModule],
+  imports: [UploadModule, WeatherModule, AiUsageModule],
   controllers: [DiagnosisController, DiagnosisChatController],
   providers: [DiagnosisService, DiagnosisChatService, LlmDiagnosisService],
 })

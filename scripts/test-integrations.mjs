@@ -1,6 +1,8 @@
 /**
- * Smoke-test SMTP and OpenAI from root .env (no secrets printed).
- * Usage: node scripts/test-integrations.mjs [--send-test-email]
+ * Smoke-test SMTP and OpenAI from an env file (no secrets printed).
+ * Usage:
+ *   node scripts/test-integrations.mjs
+ *   node scripts/test-integrations.mjs --env .env.production --send-test-email
  */
 import { readFileSync } from 'fs';
 import { resolve, dirname, join } from 'path';
@@ -34,9 +36,15 @@ function loadEnvFile(path) {
   }
 }
 
-loadEnvFile(join(root, '.env'));
-
 const sendTestEmail = process.argv.includes('--send-test-email');
+
+function argValue(name) {
+  const i = process.argv.indexOf(name);
+  return i >= 0 ? process.argv[i + 1] : undefined;
+}
+
+const envPath = argValue('--env') || join(root, '.env');
+loadEnvFile(resolve(root, envPath));
 
 function clean(value) {
   if (!value) return '';
@@ -57,11 +65,26 @@ async function testSmtp() {
     return { ok: false, detail: 'SMTP_USER or SMTP_PASS missing in .env' };
   }
 
+  if (host === 'smtp.sendgrid.net') {
+    if (user !== 'apikey') {
+      return { ok: false, detail: 'SendGrid SMTP requires SMTP_USER=apikey' };
+    }
+    if (!pass.startsWith('SG.')) {
+      return {
+        ok: false,
+        detail: 'SendGrid SMTP_PASS should be the full API key starting with SG.',
+      };
+    }
+  }
+
   const transport = nodemailer.createTransport({
     host,
     port,
     secure: port === 465,
     requireTLS: port === 587,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
     auth: { user, pass },
   });
 
@@ -154,7 +177,7 @@ async function testOpenAI() {
 }
 
 async function main() {
-  console.log('Plant Care integration checks\n');
+  console.log(`Plant Care integration checks (${envPath})\n`);
 
   const smtp = await testSmtp();
   console.log(smtp.ok ? `✓ SMTP: ${smtp.detail}` : `✗ SMTP: ${smtp.detail}`);

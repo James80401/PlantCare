@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { isAdminEmail } from '../config/registration-policy';
 import { UploadService } from '../upload/upload.service';
 import { WeatherService } from '../weather/weather.service';
+import { effectivePlanTier } from '../config/premium-policy';
 
 @Injectable()
 export class UsersService {
@@ -9,6 +12,7 @@ export class UsersService {
     private prisma: PrismaService,
     private upload: UploadService,
     private weather: WeatherService,
+    private config: ConfigService,
   ) {}
 
   async getMe(userId: string) {
@@ -29,7 +33,6 @@ export class UsersService {
         notifySms: true,
         quietHoursStart: true,
         quietHoursEnd: true,
-        onboardingCompletedAt: true,
         experienceLevel: true,
         defaultLightLevel: true,
         createdAt: true,
@@ -37,30 +40,28 @@ export class UsersService {
       },
     });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    return {
+      ...user,
+      planTier: effectivePlanTier(this.config, user.planTier),
+      isAdmin: isAdminEmail(this.config, user.email),
+    };
   }
 
-  async completeOnboarding(
+  async updateCarePreferences(
     userId: string,
-    data: {
-      experienceLevel: string;
-      defaultLightLevel: string;
-      skip?: boolean;
-    },
+    data: { experienceLevel?: string; defaultLightLevel?: string },
   ) {
     return this.prisma.user.update({
       where: { id: userId },
       data: {
-        experienceLevel: data.experienceLevel || 'beginner',
-        defaultLightLevel: data.defaultLightLevel || 'medium',
-        onboardingCompletedAt: new Date(),
+        ...(data.experienceLevel !== undefined
+          ? { experienceLevel: data.experienceLevel }
+          : {}),
+        ...(data.defaultLightLevel !== undefined
+          ? { defaultLightLevel: data.defaultLightLevel }
+          : {}),
       },
       select: {
-        id: true,
-        email: true,
-        name: true,
-        planTier: true,
-        onboardingCompletedAt: true,
         experienceLevel: true,
         defaultLightLevel: true,
       },

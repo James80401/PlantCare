@@ -1,12 +1,23 @@
 import { Link } from 'react-router-dom';
-import BuddySprite from '../../../components/buddy/BuddySprite';
+import { BuddyActor, BuddyHomeInfoCard, PotHome } from '../../../components/buddy/BuddyItemVisuals';
+import {
+  BuddyItemEffectCard,
+  equippedItemsFromBuddy,
+  summarizeItemEffects,
+} from '../../../components/buddy/BuddyItemEffects';
+import { BuddyPersonalityCard } from '../../../components/buddy/BuddyPersonality';
+import {
+  BuddyItemInteractionCard,
+  buddyInteractionItemIds,
+} from '../../../components/buddy/BuddySceneActions';
 import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { useBuddy } from '../../../hooks/buddy/useBuddy';
+import { useBuddyShop } from '../../../hooks/buddy/useBuddyShop';
 
 const STYLE_LINKS = [
   { to: 'clothing', label: 'Clothing & accessories', desc: 'Hats, tops, glasses, and more' },
-  { to: 'pots', label: 'Pots', desc: 'Pot skins for your buddy' },
+  { to: 'pots', label: 'Homes', desc: 'Choose the little house Buddy lives in' },
   { to: 'terrarium', label: 'Terrarium', desc: 'Backgrounds and furniture' },
   { to: 'species', label: 'Species', desc: 'Switch plant personality' },
   { to: 'shop', label: 'Shop', desc: 'Spend dewdrops on new items' },
@@ -14,6 +25,7 @@ const STYLE_LINKS = [
 
 export default function BuddyStyleHub() {
   const { buddy, loading } = useBuddy();
+  const { inventory } = useBuddyShop();
 
   if (loading || !buddy) {
     return (
@@ -24,6 +36,13 @@ export default function BuddyStyleHub() {
   }
 
   const equipped = buddy.equippedItems as Record<string, string>;
+  const equippedEffectSummary = summarizeItemEffects(
+    equippedItemsFromBuddy(equipped, inventory?.items ?? []),
+  );
+  const interactionItemIds = buddyInteractionItemIds(
+    equipped,
+    buddy.terrariumLayout as Record<string, unknown>,
+  );
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
@@ -34,11 +53,27 @@ export default function BuddyStyleHub() {
       />
 
       <Card className="flex flex-col items-center gap-2 py-6">
-        <BuddySprite speciesId={buddy.speciesId} size="lg" />
+        <div className="flex items-end justify-center gap-2">
+          <PotHome itemId={equipped.potSkin} size="sm" />
+          <BuddyActor
+            speciesId={buddy.speciesId}
+            mood={buddy.mood}
+            equippedItems={equipped}
+            size="lg"
+          />
+        </div>
         <p className="text-xs text-gray-500">
-          {equipped.potSkin ? `Pot: ${equipped.potSkin}` : 'Default look'}
+          {equipped.potSkin ? 'Buddy home equipped' : 'Default Buddy home'}
         </p>
       </Card>
+
+      <BuddyHomeInfoCard itemId={equipped.potSkin} />
+
+      <BuddyPersonalityCard trait={buddy.trait} mode="style" compact />
+
+      <BuddyItemInteractionCard itemIds={interactionItemIds} />
+
+      <BuddyItemEffectCard summary={equippedEffectSummary} />
 
       <div className="grid gap-2">
         {STYLE_LINKS.map((link) => (

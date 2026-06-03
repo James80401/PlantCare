@@ -1,18 +1,20 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { PhotoCaptureZone } from '../components/plants/PhotoCaptureZone';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { PageHeader } from '../components/ui/PageHeader';
-import { PLANT_LOCATIONS } from '../constants/plantLocations';
 import {
   defaultSpeciesDiscoveryFilters,
   SPECIES_DISCOVERY_FILTERS,
   type SpeciesDiscoveryFilterKey,
 } from '../constants/speciesDiscovery';
-import { plantsApi, speciesApi } from '../services/api';
+import { plantsApi, speciesApi, gardensApi, type GardenSummaryCard } from '../services/api';
+import { CreateGardenForm } from '../components/gardens/CreateGardenForm';
+import { useAuth } from '../context/AuthContext';
 import { trackEvent } from '../utils/analytics';
+import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 interface Species {
   id: string;
@@ -27,10 +29,68 @@ interface Species {
 
 type Step = 'photo' | 'confirm' | 'search' | 'details';
 
+const PLANT_LIFE_STAGE_OPTIONS = [
+  {
+    value: 'SEED',
+    label: 'Seed',
+    description: 'Not sprouted yet',
+  },
+  {
+    value: 'SPROUT',
+    label: 'Sprout',
+    description: 'First growth just appeared',
+  },
+  {
+    value: 'SEEDLING',
+    label: 'Seedling',
+    description: 'Small, delicate new plant',
+  },
+  {
+    value: 'YOUNG_PLANT',
+    label: 'Young plant',
+    description: 'Actively growing but not fully established',
+  },
+  {
+    value: 'ESTABLISHED',
+    label: 'Established',
+    description: 'Typical store-bought or settled plant',
+  },
+  {
+    value: 'MATURE',
+    label: 'Mature',
+    description: 'Large, older, or long-settled plant',
+  },
+] as const;
+
 export default function AddPlantWizard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<Step>('photo');
+
+  // Garden-first: a plant must be added into a garden. Resolve the target garden from
+  // the ?gardenId= param (when arriving from a Garden Dashboard) or default to the
+  // user's first garden. If the user has none, gate the wizard behind garden creation.
+  const [gardens, setGardens] = useState<GardenSummaryCard[]>([]);
+  const [gardensLoaded, setGardensLoaded] = useState(false);
+  const [selectedGardenId, setSelectedGardenId] = useState('');
+  const [showCreateGarden, setShowCreateGarden] = useState(false);
+
+  useEffect(() => {
+    gardensApi
+      .summaries()
+      .then(({ data }) => {
+        setGardens(data);
+        const fromParam = searchParams.get('gardenId');
+        const initial =
+          (fromParam && data.some((g) => g.id === fromParam) ? fromParam : '') ||
+          data[0]?.id ||
+          '';
+        setSelectedGardenId(initial);
+      })
+      .catch(() => setGardens([]))
+      .finally(() => setGardensLoaded(true));
+  }, [searchParams]);
 
   const [query, setQuery] = useState('');
   const [speciesList, setSpeciesList] = useState<Species[]>([]);
@@ -39,17 +99,34 @@ export default function AddPlantWizard() {
   const [identifyConfidence, setIdentifyConfidence] = useState<number | null>(null);
 
   const [nickname, setNickname] = useState('');
-  const [location, setLocation] = useState(PLANT_LOCATIONS[0]);
   const [potSize, setPotSize] = useState('MEDIUM');
+  const [lifeStage, setLifeStage] = useState<(typeof PLANT_LIFE_STAGE_OPTIONS)[number]['value']>('ESTABLISHED');
+  const [approximateAgeMonths, setApproximateAgeMonths] = useState('');
   const [datePlanted, setDatePlanted] = useState('');
+  const [notes, setNotes] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [identifyPreview, setIdentifyPreview] = useState<string | null>(null);
+  const [plantPhotoPreview, setPlantPhotoPreview] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const uploadRequestIdRef = useRef(0);
 
   const [error, setError] = useState('');
+  const [limitError, setLimitError] = useState<{ message: string; code: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [identifying, setIdentifying] = useState(false);
   const [activeFilters, setActiveFilters] =
     useState<Record<SpeciesDiscoveryFilterKey, boolean>>(defaultSpeciesDiscoveryFilters);
+
+  const defaultLightLevel = user?.defaultLightLevel || 'medium';
+
+  useEffect(() => {
+    // Surface default light preference by pre-selecting a matching discovery filter.
+    setActiveFilters((current) => {
+      const next = { ...current };
+      if (defaultLightLevel === 'low') next.lowLight = true;
+      return next;
+    });
+  }, [defaultLightLevel]);
 
   useEffect(() => {
     const preselectedId = searchParams.get('speciesId');
@@ -87,6 +164,12 @@ export default function AddPlantWizard() {
     };
   }, [identifyPreview]);
 
+  useEffect(() => {
+    return () => {
+      if (plantPhotoPreview?.startsWith('blob:')) URL.revokeObjectURL(plantPhotoPreview);
+    };
+  }, [plantPhotoPreview]);
+
   const selectSpecies = (species: Species) => {
     setSpeciesId(species.id);
     setSelectedSpecies(species);
@@ -95,11 +178,38 @@ export default function AddPlantWizard() {
     setStep('details');
   };
 
+  const setPlantPhotoFromFile = async (file: File) => {
+    const uploadRequestId = uploadRequestIdRef.current + 1;
+    uploadRequestIdRef.current = uploadRequestId;
+    setImageUploading(true);
+    setError('');
+    setPlantPhotoPreview((current) => {
+      if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+      return URL.createObjectURL(file);
+    });
+    try {
+      const { data } = await plantsApi.upload(file);
+      if (uploadRequestIdRef.current === uploadRequestId) {
+        setImageUrl(data.url);
+      }
+    } catch {
+      if (uploadRequestIdRef.current === uploadRequestId) {
+        setError('Could not upload photo.');
+      }
+    } finally {
+      if (uploadRequestIdRef.current === uploadRequestId) {
+        setImageUploading(false);
+      }
+    }
+  };
+
   const handleIdentify = async (file: File) => {
     if (identifyPreview?.startsWith('blob:')) URL.revokeObjectURL(identifyPreview);
     setIdentifyPreview(URL.createObjectURL(file));
+    void setPlantPhotoFromFile(file);
     setIdentifying(true);
     setError('');
+    setLimitError(null);
     try {
       const { data } = await plantsApi.identify(file);
       const species = data.species as Species;
@@ -111,7 +221,11 @@ export default function AddPlantWizard() {
       );
       setStep('confirm');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const data = (err as { response?: { data?: { message?: string; code?: string } } })?.response?.data;
+      if (data?.code === 'IDENTIFY_LIMIT_REACHED') {
+        setLimitError({ code: data.code, message: data.message || 'Identification limit reached.' });
+      }
+      const msg = data?.message;
       setError(msg || 'Could not identify plant. Try search or browse instead.');
     } finally {
       setIdentifying(false);
@@ -119,12 +233,7 @@ export default function AddPlantWizard() {
   };
 
   const handlePlantPhoto = async (file: File) => {
-    try {
-      const { data } = await plantsApi.upload(file);
-      setImageUrl(data.url);
-    } catch {
-      setError('Could not upload photo.');
-    }
+    await setPlantPhotoFromFile(file);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -133,21 +242,34 @@ export default function AddPlantWizard() {
       setError('Select a species to continue.');
       return;
     }
+    if (!selectedGardenId) {
+      setError('Choose a garden for this plant.');
+      return;
+    }
     setLoading(true);
     setError('');
+    setLimitError(null);
     try {
-      const { data } = await plantsApi.create({
+      await plantsApi.create({
+        gardenId: selectedGardenId,
         speciesId,
         nickname: nickname || undefined,
-        location,
         potSize,
+        lifeStage,
+        approximateAgeMonths:
+          approximateAgeMonths.trim() === '' ? undefined : Number(approximateAgeMonths),
         datePlanted: datePlanted || undefined,
+        notes: notes.trim() || undefined,
         imageUrl: imageUrl || undefined,
       });
       trackEvent('PlantAdded', { speciesId });
-      navigate(`/garden/plants/${data.id}`);
+      navigate(`/garden/gardens/${selectedGardenId}`);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const data = (err as { response?: { data?: { message?: string; code?: string } } })?.response?.data;
+      if (data?.code === 'PLANT_LIMIT_REACHED') {
+        setLimitError({ code: data.code, message: data.message || 'Plant limit reached.' });
+      }
+      const msg = data?.message;
       setError(msg || 'Failed to add plant');
     } finally {
       setLoading(false);
@@ -169,6 +291,73 @@ export default function AddPlantWizard() {
     }
   }, [step]);
 
+  const lightPreferenceLabel =
+    defaultLightLevel === 'low'
+      ? 'Low light'
+      : defaultLightLevel === 'high'
+        ? 'Bright light'
+        : 'Medium light';
+
+  const lightFitLabel = useMemo(() => {
+    if (!selectedSpecies?.sunlight) return null;
+    const sunlight = selectedSpecies.sunlight.toLowerCase();
+    if (defaultLightLevel === 'low') {
+      return sunlight.includes('low')
+        ? 'Good fit for your low-light setup.'
+        : 'May need a brighter spot than your default setup.';
+    }
+    if (defaultLightLevel === 'high') {
+      return sunlight.includes('bright') || sunlight.includes('full sun')
+        ? 'Good fit for your bright-light setup.'
+        : 'Can work in bright spaces, but avoid harsh direct sun if noted.';
+    }
+    return sunlight.includes('medium') || sunlight.includes('indirect')
+      ? 'Good fit for your medium-light setup.'
+      : 'Check this plant’s light notes against your space.';
+  }, [defaultLightLevel, selectedSpecies?.sunlight]);
+
+  const addCreatedGarden = (g: { id: string; name: string; location?: string | null }) => {
+    setGardens((prev) => [
+      {
+        id: g.id,
+        name: g.name,
+        location: g.location ?? null,
+        isOwner: true,
+        plantCount: 0,
+        memberCount: 1,
+        tasksDueToday: 0,
+        overdue: 0,
+        urgentAlerts: 0,
+        status: 'No plants yet',
+      },
+      ...prev,
+    ]);
+    setSelectedGardenId(g.id);
+    setShowCreateGarden(false);
+  };
+
+  // Garden-first gate: a plant must live in a garden. If the user has none, prompt them
+  // to create one before any plant steps.
+  if (gardensLoaded && gardens.length === 0) {
+    return (
+      <div className="mx-auto max-w-lg space-y-5">
+        <PageHeader
+          eyebrow="Grow your garden"
+          title="Create a garden first"
+          description="Plants live inside gardens — shared spaces you and others can tend together. Create your first garden to start adding plants."
+        />
+        <Card className="space-y-3">
+          <CreateGardenForm
+            submitLabel="Create garden & continue"
+            onCreated={addCreatedGarden}
+          />
+        </Card>
+      </div>
+    );
+  }
+
+  const selectedGarden = gardens.find((g) => g.id === selectedGardenId);
+
   return (
     <div className="mx-auto max-w-lg space-y-5">
       <PageHeader
@@ -176,8 +365,59 @@ export default function AddPlantWizard() {
         title="Add a plant"
         description={stepTitle}
       />
+      {gardens.length > 0 ? (
+        <Card className="space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+              <span className="font-medium text-emerald-900">Add to garden</span>
+              <select
+                value={selectedGardenId}
+                onChange={(e) => setSelectedGardenId(e.target.value)}
+                className="rounded-2xl border border-emerald-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-400 focus:outline-none"
+              >
+            {gardens.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+                {g.location ? ` · ${g.location}` : ''}
+                {g.isOwner ? '' : ' (shared)'}
+              </option>
+            ))}
+              </select>
+            </label>
+            <Button
+              type="button"
+              variant={showCreateGarden ? 'ghost' : 'secondary'}
+              onClick={() => setShowCreateGarden((value) => !value)}
+            >
+              {showCreateGarden ? 'Cancel' : 'New garden'}
+            </Button>
+          </div>
+          {selectedGarden && !selectedGarden.isOwner ? (
+            <span className="text-xs text-violet-700">
+              You're a caretaker of this shared garden.
+            </span>
+          ) : null}
+          {showCreateGarden ? (
+            <div className="border-t border-emerald-100 pt-3">
+              <CreateGardenForm submitLabel="Create and select garden" onCreated={addCreatedGarden} />
+            </div>
+          ) : null}
+        </Card>
+      ) : null}
+      <p className="text-xs text-gray-600">
+        Typical light from Settings: <span className="font-semibold text-emerald-900">{lightPreferenceLabel}</span>{' '}
+        · used to guide discovery and care fit.
+      </p>
 
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {limitError ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          <p className="font-semibold">{limitError.message}</p>
+          <Link to="/garden/subscription" className="mt-2 inline-block font-semibold text-emerald-800 hover:underline">
+            View Premium options
+          </Link>
+        </div>
+      ) : null}
 
       {step === 'photo' && (
         <Card className="space-y-4">
@@ -187,6 +427,7 @@ export default function AddPlantWizard() {
             busy={identifying}
             previewUrl={identifyPreview}
             onFile={handleIdentify}
+            sourceMode="both"
           />
           <Button variant="secondary" fullWidth onClick={() => setStep('search')}>
             Search by name instead
@@ -206,7 +447,7 @@ export default function AddPlantWizard() {
             <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-emerald-50">
               {selectedSpecies.defaultImageUrl ? (
                 <img
-                  src={selectedSpecies.defaultImageUrl}
+                  src={resolveApiAssetUrl(selectedSpecies.defaultImageUrl) ?? undefined}
                   alt=""
                   className="h-full w-full object-cover"
                 />
@@ -289,6 +530,11 @@ export default function AddPlantWizard() {
                 );
               })}
             </div>
+            {defaultLightLevel === 'low' ? (
+              <p className="mt-2 text-xs text-gray-500">
+                Low-light filter is preselected from your care preferences.
+              </p>
+            ) : null}
           </div>
           {speciesList.length > 0 && (
             <ul className="max-h-72 space-y-2 overflow-auto">
@@ -318,16 +564,29 @@ export default function AddPlantWizard() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Card className="space-y-3">
             {selectedSpecies ? (
-              <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm">
-                <span className="text-gray-600">Species: </span>
-                <span className="font-semibold text-emerald-950">{selectedSpecies.commonName}</span>
-                <button
-                  type="button"
-                  className="ml-2 text-xs font-semibold text-emerald-800 underline"
-                  onClick={() => setStep('search')}
-                >
-                  Change
-                </button>
+              <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm space-y-2">
+                <p>
+                  <span className="text-gray-600">Species: </span>
+                  <span className="font-semibold text-emerald-950">{selectedSpecies.commonName}</span>
+                  <button
+                    type="button"
+                    className="ml-2 text-xs font-semibold text-emerald-800 underline"
+                    onClick={() => setStep('search')}
+                  >
+                    Change
+                  </button>
+                </p>
+                {selectedSpecies.sunlight ? (
+                  <p className="text-gray-700">
+                    <span className="font-medium text-emerald-900">Light:</span> {selectedSpecies.sunlight}
+                  </p>
+                ) : null}
+                {lightFitLabel ? <p className="text-xs text-emerald-700">{lightFitLabel}</p> : null}
+                {selectedSpecies.toxicity ? (
+                  <p className="text-gray-700">
+                    <span className="font-medium text-emerald-900">Safety:</span> {selectedSpecies.toxicity}
+                  </p>
+                ) : null}
               </div>
             ) : null}
             <Input
@@ -336,21 +595,50 @@ export default function AddPlantWizard() {
               onChange={(e) => setNickname(e.target.value)}
               placeholder="e.g. Kitchen monstera"
             />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Where it grows</label>
-              <select
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full rounded-2xl border border-emerald-100 px-4 py-3 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-              >
-                {PLANT_LOCATIONS.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm">
+              <p className="font-medium text-emerald-950">Growing area</p>
+              <p className="mt-1 text-gray-700">
+                This plant will inherit{' '}
+                <span className="font-semibold text-emerald-900">
+                  {selectedGarden?.location || 'the selected garden area'}
+                </span>{' '}
+                from {selectedGarden?.name || 'its garden'}.
+              </p>
               <p className="mt-1 text-xs text-gray-500">
-                Outdoor locations skip indoor misting reminders.
+                Change the garden to change whether new plants are indoor or outdoor.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Plant age / stage
+                </label>
+                <select
+                  value={lifeStage}
+                  onChange={(e) =>
+                    setLifeStage(e.target.value as (typeof PLANT_LIFE_STAGE_OPTIONS)[number]['value'])
+                  }
+                  className="w-full rounded-2xl border border-emerald-100 px-4 py-3 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                >
+                  {PLANT_LIFE_STAGE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label} - {option.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Input
+                label="Approximate age in months (optional)"
+                type="number"
+                min="0"
+                max="1200"
+                inputMode="numeric"
+                value={approximateAgeMonths}
+                onChange={(e) => setApproximateAgeMonths(e.target.value)}
+                placeholder="e.g. 3"
+              />
+              <p className="text-xs text-gray-500">
+                Age helps DrPlant tune reminders. Sprouts and seedlings skip harsh care tasks and get closer moisture checks.
               </p>
             </div>
             <div>
@@ -371,19 +659,40 @@ export default function AddPlantWizard() {
               value={datePlanted}
               onChange={(e) => setDatePlanted(e.target.value)}
             />
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700">Notes (optional)</span>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Where you bought it, care quirks, pet safety reminders…"
+                rows={3}
+                className="mt-2 w-full rounded-2xl border border-emerald-100 px-4 py-3 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              />
+            </label>
           </Card>
 
           <Card>
-            <p className="mb-2 text-sm font-medium text-gray-700">Your plant photo (optional)</p>
+            <div className="mb-2">
+              <p className="text-sm font-medium text-gray-700">Your plant photo (optional)</p>
+              {plantPhotoPreview && identifyPreview ? (
+                <p className="mt-1 text-xs text-emerald-700">
+                  Using the identification photo. You can replace it here.
+                </p>
+              ) : null}
+            </div>
             <PhotoCaptureZone
               label="Add a photo for your garden"
-              previewUrl={imageUrl || null}
+              hint={imageUploading ? 'Uploading photo...' : undefined}
+              busy={imageUploading}
+              busyLabel="Uploading photo..."
+              previewUrl={plantPhotoPreview || imageUrl || null}
               onFile={handlePlantPhoto}
+              sourceMode="both"
             />
           </Card>
 
-          <Button type="submit" fullWidth disabled={loading}>
-            {loading ? 'Saving…' : 'Save plant'}
+          <Button type="submit" fullWidth disabled={loading || imageUploading}>
+            {loading ? 'Saving…' : imageUploading ? 'Uploading photo...' : 'Save plant'}
           </Button>
           {step !== 'photo' && (
             <Button type="button" variant="ghost" fullWidth onClick={() => setStep('photo')}>

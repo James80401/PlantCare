@@ -3,7 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { NotificationChannel, TaskStatus } from '@prisma/client';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
-import { sendFcmNotification } from './fcm.client';
+import { resolveFcmTransport, sendFcmNotification } from './fcm.client';
+import { buildCareReminderPush, type TaskReminderRow } from './task-reminder-copy';
 
 @Injectable()
 export class NotificationsService {
@@ -24,6 +25,16 @@ export class NotificationsService {
   }
 
   async sendDueTaskReminders() {
+    const count = await this.sendTaskRemindersForWindow({ overdue: false });
+    this.logger.log(`Processed due-today reminders for ${count} users`);
+  }
+
+  async sendOverdueTaskReminders() {
+    const count = await this.sendTaskRemindersForWindow({ overdue: true });
+    this.logger.log(`Processed overdue reminders for ${count} users`);
+  }
+
+  private async sendTaskRemindersForWindow(options: { overdue: boolean }): Promise<number> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -32,12 +43,13 @@ export class NotificationsService {
     const tasks = await this.prisma.task.findMany({
       where: {
         status: TaskStatus.PENDING,
-        dueDate: { gte: today, lt: tomorrow },
         notifiedAt: null,
+        dueDate: options.overdue ? { lt: today } : { gte: today, lt: tomorrow },
       },
       include: {
         plant: { include: { species: true, user: true } },
       },
+      orderBy: { dueDate: 'asc' },
     });
 
     const byUser = new Map<string, typeof tasks>();
@@ -51,19 +63,34 @@ export class NotificationsService {
       const user = userTasks[0].plant.user;
       if (this.isQuietHours(user)) continue;
 
-      const lines = userTasks.map(
-        (t) =>
-          `${t.taskType}: ${t.plant.nickname || t.plant.species.commonName} (due ${t.dueDate.toLocaleDateString()})`,
-      );
-      const message = `Plant care reminders:\n${lines.join('\n')}`;
+      const rows: TaskReminderRow[] = userTasks.map((t) => ({
+        taskType: t.taskType,
+        plantId: t.plantId,
+        dueDate: t.dueDate,
+        plant: {
+          nickname: t.plant.nickname,
+          species: { commonName: t.plant.species.commonName },
+        },
+      }));
+      const push = buildCareReminderPush(rows, { overdue: options.overdue });
+      const emailSubject = options.overdue ? 'Overdue plant care' : 'Plant care due today';
+      const emailBody = userTasks
+        .map(
+          (t) =>
+            `${t.taskType}: ${t.plant.nickname || t.plant.species.commonName} (due ${t.dueDate.toLocaleDateString()})`,
+        )
+        .join('\n');
 
       if (user.notifyEmail) {
-        await this.sendEmail(user.email, 'Plant Care Reminders', message);
-        await this.log(userId, NotificationChannel.EMAIL, message);
+        await this.sendEmail(user.email, emailSubject, emailBody);
+        await this.log(userId, NotificationChannel.EMAIL, `${emailSubject}\n${emailBody}`);
       }
 
       if (user.notifyPush) {
-        await this.sendPush(userId, 'Plant Care', lines[0]);
+        await this.sendPush(userId, push.title, push.body, {
+          tag: options.overdue ? 'overdue' : 'due',
+          route: push.route,
+        });
       }
 
       await this.prisma.task.updateMany({
@@ -72,7 +99,7 @@ export class NotificationsService {
       });
     }
 
-    this.logger.log(`Processed reminders for ${byUser.size} users`);
+    return byUser.size;
   }
 
   async registerDevice(userId: string, token: string, platform: string) {
@@ -81,6 +108,13 @@ export class NotificationsService {
       create: { userId, token, platform },
       update: { platform },
     });
+  }
+
+  async unregisterDevice(userId: string, token: string) {
+    const result = await this.prisma.deviceToken.deleteMany({
+      where: { userId, token },
+    });
+    return { removed: result.count };
   }
 
   private async sendEmail(to: string, subject: string, text: string) {
@@ -112,7 +146,7 @@ export class NotificationsService {
     if (this.isQuietHours(user)) return;
 
     if (user.notifyPush) {
-      await this.sendPush(userId, title, body, tag);
+      await this.sendPush(userId, title, body, { tag });
     }
     if (user.notifyEmail) {
       await this.sendEmail(user.email, title, body);
@@ -134,7 +168,18 @@ export class NotificationsService {
     return Boolean(row);
   }
 
-  private async sendPush(userId: string, title: string, body: string, tag = 'push') {
+  private async sendPush(
+    userId: string,
+    title: string,
+    body: string,
+    options: string | { tag?: string; route?: string } = 'push',
+  ) {
+    const tag = typeof options === 'string' ? options : (options.tag ?? 'push');
+    const route =
+      typeof options === 'string'
+        ? this.pushRouteForTag(options)
+        : (options.route ?? this.pushRouteForTag(tag));
+
     const rows = await this.prisma.deviceToken.findMany({ where: { userId } });
     const message = `${title}: ${body}`;
     const logTag = `[${tag}] ${message}`;
@@ -145,8 +190,8 @@ export class NotificationsService {
       return;
     }
 
-    const fcmKey = this.config.get<string>('FCM_SERVER_KEY');
-    if (!fcmKey) {
+    const transport = resolveFcmTransport((key) => this.config.get<string>(key));
+    if (transport.mode === 'none') {
       this.logger.log(`[push mock] ${userId} (${rows.length} devices): ${message}`);
       await this.log(userId, NotificationChannel.PUSH, logTag);
       return;
@@ -154,10 +199,11 @@ export class NotificationsService {
 
     try {
       const result = await sendFcmNotification(
-        fcmKey,
+        transport,
         rows.map((r) => r.token),
         title,
         body,
+        { route, plantId: route.startsWith('/garden/plants/') ? route.split('/').pop()! : '' },
       );
       if (result.invalidTokens.length) {
         await this.prisma.deviceToken.deleteMany({
@@ -168,12 +214,26 @@ export class NotificationsService {
         );
       }
       this.logger.log(
-        `FCM sent ${result.sent}/${rows.length} to user ${userId} (${result.failed} failed)`,
+        `FCM ${transport.mode} sent ${result.sent}/${rows.length} to user ${userId} (${result.failed} failed)`,
       );
       await this.log(userId, NotificationChannel.PUSH, logTag);
     } catch (err) {
       this.logger.warn(`FCM failed for ${userId}: ${err}`);
       await this.log(userId, NotificationChannel.PUSH, `${logTag} (FCM error)`);
+    }
+  }
+
+  private pushRouteForTag(tag: string): string {
+    switch (tag) {
+      case 'buddy':
+        return '/garden/buddy/journey';
+      case 'mood':
+        return '/garden/buddy';
+      case 'overdue':
+      case 'due':
+        return '/garden/tasks';
+      default:
+        return '/garden/tasks';
     }
   }
 

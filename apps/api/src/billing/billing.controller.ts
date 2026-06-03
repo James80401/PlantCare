@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Headers,
   Post,
   RawBodyRequest,
@@ -23,6 +24,20 @@ export class BillingController {
   @UseGuards(JwtAuthGuard)
   checkout(@CurrentUser() user: JwtPayload) {
     return this.billingService.createCheckoutSession(user.sub, user.email);
+  }
+
+  @Get('status')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  status(@CurrentUser() user: JwtPayload) {
+    return this.billingService.getStatus(user.sub);
+  }
+
+  @Post('portal')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  portal(@CurrentUser() user: JwtPayload) {
+    return this.billingService.createPortalSession(user.sub);
   }
 
   @Post('webhook')
