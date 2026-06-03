@@ -17,22 +17,24 @@ type BuddySceneProps = {
 };
 
 type SceneMoment = {
+  id: string;
   label: string;
   className: string;
   reaction?: string;
 };
 
 const HOME_MOMENTS: SceneMoment[] = [
-  { label: 'Idle', className: 'translate-x-0', reaction: 'hmm' },
-  { label: 'Peeking inside', className: '-translate-x-10', reaction: 'cozy' },
-  { label: 'Checking treasures', className: 'translate-x-8', reaction: 'ooh' },
-  { label: 'Tiny stretch', className: 'translate-x-0 -translate-y-2', reaction: 'ahh' },
+  { id: 'idle', label: 'Idle', className: 'translate-x-0', reaction: 'hmm' },
+  { id: 'peek', label: 'Peeking inside', className: '-translate-x-10', reaction: 'cozy' },
+  { id: 'treasure', label: 'Checking treasures', className: 'translate-x-8', reaction: 'ooh' },
+  { id: 'nap', label: 'Napping by the door', className: '-translate-x-2 translate-y-1', reaction: 'zzz' },
+  { id: 'stretch', label: 'Tiny stretch', className: 'translate-x-0 -translate-y-2', reaction: 'ahh' },
 ];
 
 const TRAVEL_MOMENTS: SceneMoment[] = [
-  { label: 'Exploring trail', className: '-translate-x-8', reaction: 'go!' },
-  { label: 'Found something', className: 'translate-x-4 -translate-y-1', reaction: '!' },
-  { label: 'Following light', className: 'translate-x-10', reaction: 'sun' },
+  { id: 'trail', label: 'Exploring trail', className: '-translate-x-8', reaction: 'go!' },
+  { id: 'found', label: 'Found something', className: 'translate-x-4 -translate-y-1', reaction: '!' },
+  { id: 'light', label: 'Following light', className: 'translate-x-10', reaction: 'sun' },
 ];
 
 const TRAIT_REACTIONS: Record<BuddyTrait, string[]> = {
@@ -122,6 +124,11 @@ export default function BuddyScene({
       <div className="absolute left-7 top-8 h-16 w-16 rounded-full bg-yellow-200/80 shadow-[0_0_45px_rgba(253,224,71,0.65)]" />
       <div className="absolute bottom-0 left-0 right-0 h-28 rounded-t-[50%] bg-emerald-700/25" />
       <div className="absolute bottom-0 left-0 right-0 h-16 bg-emerald-900/10" />
+      <div className="absolute bottom-11 left-1/2 h-10 w-52 -translate-x-1/2 rounded-[50%] bg-amber-100/45 blur-sm" />
+      <div className="absolute bottom-16 left-[34%] h-3 w-8 rotate-[-8deg] rounded-full bg-white/40" />
+      <div className="absolute bottom-20 left-[55%] h-3 w-10 rotate-[10deg] rounded-full bg-white/40" />
+      <div className="absolute right-10 top-28 h-2 w-2 rounded-full bg-yellow-100 shadow-[0_0_14px_rgba(254,240,138,.9)]" />
+      <div className="absolute right-20 top-44 h-1.5 w-1.5 rounded-full bg-yellow-100 shadow-[0_0_12px_rgba(254,240,138,.85)]" />
 
       {mode === 'traveling' ? (
         <>
@@ -146,9 +153,21 @@ export default function BuddyScene({
           <PotHome
             itemId={typeof equipped.potSkin === 'string' ? equipped.potSkin : null}
             size={compact ? 'md' : 'lg'}
-            open={moment.label === 'Peeking inside'}
+            open={moment.id === 'peek' || moment.id === 'nap'}
             className="absolute bottom-14 left-5 sm:left-10"
           />
+          {moment.id === 'treasure' ? (
+            <div className="absolute bottom-14 left-[58%] z-20 h-12 w-14 rounded-2xl bg-amber-200 shadow-md ring-2 ring-amber-700/40">
+              <div className="absolute -top-2 left-1/2 h-5 w-10 -translate-x-1/2 rounded-t-full bg-amber-300 ring-2 ring-amber-700/30" />
+              <span className="absolute left-3 top-4 h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="absolute right-4 top-5 h-2 w-2 rounded-full bg-rose-400" />
+            </div>
+          ) : null}
+          {moment.id === 'nap' ? (
+            <div className="absolute bottom-16 left-[26%] z-20 h-8 w-20 rounded-full bg-white/70 shadow-sm">
+              <span className="absolute right-4 top-2 text-xs font-bold text-emerald-900">zzz</span>
+            </div>
+          ) : null}
           {placedFurniture.map(({ slot, itemId, item }, index) => (
             <div
               key={`${slot}-${itemId}`}
