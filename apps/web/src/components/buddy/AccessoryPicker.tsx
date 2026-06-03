@@ -1,5 +1,6 @@
 import type { ShopItem, ShopItemCategory } from '../../hooks/buddy/shopTypes';
 import { shopLockLabel } from '../../utils/shopLockLabel';
+import { ShopItemPreview } from './BuddyItemVisuals';
 
 interface AccessoryPickerProps {
   title: string;
@@ -67,6 +68,9 @@ export default function AccessoryPicker({
                   : 'border-gray-200 bg-white hover:border-emerald-300'
               } ${!owned && !canBuy ? 'opacity-50' : ''}`}
             >
+              <div className="mb-2 flex justify-center">
+                <ShopItemPreview item={item} />
+              </div>
               <p className="font-semibold text-emerald-950">{item.name}</p>
               <p className="mt-1 line-clamp-2 text-xs text-gray-500">{item.description}</p>
               {owned ? (

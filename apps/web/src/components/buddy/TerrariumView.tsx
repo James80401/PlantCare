@@ -1,4 +1,5 @@
 import type { ShopItem } from '../../hooks/buddy/shopTypes';
+import { furnitureEmoji } from './BuddyItemVisuals';
 
 interface TerrariumViewProps {
   backgroundKey: string;
@@ -43,7 +44,7 @@ export default function TerrariumView({
             >
               {item ? (
                 <>
-                  <span className="text-2xl">🪴</span>
+                  <span className="text-2xl">{furnitureEmoji(item.id)}</span>
                   <span className="mt-1 text-[10px] font-medium text-emerald-900">
                     {item.name}
                   </span>

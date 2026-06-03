@@ -4,9 +4,21 @@ import AccessoryPicker from '../../../components/buddy/AccessoryPicker';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
-import type { ShopItem } from '../../../hooks/buddy/shopTypes';
+import type { ShopItem, ShopItemCategory } from '../../../hooks/buddy/shopTypes';
 import { useBuddyShop } from '../../../hooks/buddy/useBuddyShop';
 import { shopLockLabel } from '../../../utils/shopLockLabel';
+
+const SHOP_SECTIONS: { title: string; category: ShopItemCategory }[] = [
+  { title: 'Hats', category: 'HAT' },
+  { title: 'Tops', category: 'TOP' },
+  { title: 'Glasses', category: 'GLASSES' },
+  { title: 'Held items', category: 'HELD_ITEM' },
+  { title: 'Pots', category: 'POT_SKIN' },
+  { title: 'Colors', category: 'BODY_COLOR' },
+  { title: 'Patterns', category: 'BODY_PATTERN' },
+  { title: 'Backgrounds', category: 'BACKGROUND' },
+  { title: 'Furniture', category: 'FURNITURE' },
+];
 
 export default function BuddyShopPage() {
   const { catalog, daily, loading, error, purchase, refresh } = useBuddyShop();
@@ -108,33 +120,18 @@ export default function BuddyShopPage() {
 
       {message && <p className="text-center text-sm text-emerald-800">{message}</p>}
 
-      <AccessoryPicker
-        title="Hats"
-        category="HAT"
-        items={shopItems}
-        dewdrops={catalog.dewdrops}
-        showShop
-        onEquip={() => {}}
-        onPurchase={handlePurchase}
-      />
-      <AccessoryPicker
-        title="Tops"
-        category="TOP"
-        items={shopItems}
-        dewdrops={catalog.dewdrops}
-        showShop
-        onEquip={() => {}}
-        onPurchase={handlePurchase}
-      />
-      <AccessoryPicker
-        title="Pots"
-        category="POT_SKIN"
-        items={shopItems}
-        dewdrops={catalog.dewdrops}
-        showShop
-        onEquip={() => {}}
-        onPurchase={handlePurchase}
-      />
+      {SHOP_SECTIONS.map((section) => (
+        <AccessoryPicker
+          key={section.category}
+          title={section.title}
+          category={section.category}
+          items={shopItems}
+          dewdrops={catalog.dewdrops}
+          showShop
+          onEquip={() => {}}
+          onPurchase={handlePurchase}
+        />
+      ))}
 
       <Link
         to="/garden/buddy/style"

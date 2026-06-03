@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AccessoryPicker from '../../../components/buddy/AccessoryPicker';
-import BuddySprite from '../../../components/buddy/BuddySprite';
+import { BuddyActor } from '../../../components/buddy/BuddyItemVisuals';
 import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { EQUIP_SLOTS } from '../../../hooks/buddy/shopTypes';
@@ -46,7 +46,12 @@ export default function BuddyClothingPage() {
       <PageHeader eyebrow="Style" title="Clothing" description={saving ? 'Saving…' : 'Tap owned items to equip'} />
 
       <Card className="flex justify-center py-4">
-        <BuddySprite speciesId={buddy.speciesId} size="md" />
+        <BuddyActor
+          speciesId={buddy.speciesId}
+          mood={buddy.mood}
+          equippedItems={equipped}
+          size="lg"
+        />
       </Card>
 
       {clothingSlots.map((slot) => (

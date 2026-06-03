@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import BuddySprite from '../../components/buddy/BuddySprite';
+import BuddyScene from '../../components/buddy/BuddyScene';
 import MoodIndicator from '../../components/buddy/MoodIndicator';
 import SunlightBar from '../../components/buddy/SunlightBar';
 import { GROWTH_STAGE_LABEL } from '../../components/buddy/species';
@@ -12,11 +12,13 @@ import BuddyTipsCard from '../../components/buddy/BuddyTipsCard';
 import { useMemo } from 'react';
 import { useBuddy } from '../../hooks/buddy/useBuddy';
 import { useBuddyQuests } from '../../hooks/buddy/useBuddyQuests';
+import { useBuddyShop } from '../../hooks/buddy/useBuddyShop';
 import { buddyApi } from '../../services/api';
 
 export default function BuddyHome() {
   const { buddy, loading, error, refresh } = useBuddy();
   const { data: quests } = useBuddyQuests();
+  const { inventory } = useBuddyShop();
   const [greeting, setGreeting] = useState('');
 
   const claimableQuests = useMemo(() => {
@@ -51,13 +53,13 @@ export default function BuddyHome() {
 
       <BuddyTipsCard />
 
-      <Card className="flex flex-col items-center gap-4 py-8">
-        <BuddySprite
-          speciesId={buddy.speciesId}
-          size="lg"
-          traveling={buddy.hasActiveJourney}
-          mood={buddy.mood}
-        />
+      <BuddyScene
+        buddy={buddy}
+        mode={buddy.hasActiveJourney ? 'traveling' : 'home'}
+        furniture={(inventory?.items ?? []).filter((item) => item.category === 'FURNITURE')}
+      />
+
+      <Card className="flex flex-col items-center gap-4">
         <div className="flex flex-wrap items-center justify-center gap-2">
           <MoodIndicator mood={buddy.mood} />
           <span className="rounded-full bg-lime-100 px-2.5 py-1 text-xs font-semibold text-lime-900">
@@ -75,7 +77,7 @@ export default function BuddyHome() {
         </div>
         {buddy.hasActiveJourney ? (
           <p className="text-center text-sm text-emerald-800">
-            {buddy.name} is on a grow journey!
+            {buddy.name} is out in the world. Check the journey scene to follow along.
           </p>
         ) : (
           <SunlightBar value={buddy.sunlightToday} />

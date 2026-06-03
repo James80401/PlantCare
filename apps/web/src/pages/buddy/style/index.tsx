@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import BuddySprite from '../../../components/buddy/BuddySprite';
+import { BuddyActor, PotHome } from '../../../components/buddy/BuddyItemVisuals';
 import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { useBuddy } from '../../../hooks/buddy/useBuddy';
@@ -34,9 +34,17 @@ export default function BuddyStyleHub() {
       />
 
       <Card className="flex flex-col items-center gap-2 py-6">
-        <BuddySprite speciesId={buddy.speciesId} size="lg" />
+        <div className="flex items-end justify-center gap-2">
+          <PotHome itemId={equipped.potSkin} size="sm" />
+          <BuddyActor
+            speciesId={buddy.speciesId}
+            mood={buddy.mood}
+            equippedItems={equipped}
+            size="lg"
+          />
+        </div>
         <p className="text-xs text-gray-500">
-          {equipped.potSkin ? `Pot: ${equipped.potSkin}` : 'Default look'}
+          {equipped.potSkin ? `Pot-home: ${equipped.potSkin}` : 'Default pot-home'}
         </p>
       </Card>
 

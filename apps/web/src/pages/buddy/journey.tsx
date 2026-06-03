@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import BuddySprite from '../../components/buddy/BuddySprite';
+import BuddyScene from '../../components/buddy/BuddyScene';
 import DiscoveryModal from '../../components/buddy/DiscoveryModal';
 import SunlightBar from '../../components/buddy/SunlightBar';
 import { Button } from '../../components/ui/Button';
@@ -90,11 +90,22 @@ export default function BuddyJourneyPage() {
         <p className="text-sm text-red-600">{error || pageError}</p>
       ) : null}
 
-      <Card className="space-y-4 py-6">
-        <div className="flex justify-center">
-          <BuddySprite speciesId={buddy.speciesId} size="lg" traveling={traveling} />
-        </div>
+      {traveling && journey ? (
+        <BuddyScene
+          buddy={buddy}
+          mode="traveling"
+          biomeName={journey.biomeName}
+          biomeEmoji={journey.biomeEmoji}
+          progressPercent={journey.progressPercent}
+          remainingLabel={`Returns in ${formatCountdown(journey.remainingSeconds)}`}
+        />
+      ) : (
+        <Card className="space-y-4 py-6">
+          <BuddyScene buddy={buddy} mode="home" compact />
+        </Card>
+      )}
 
+      <Card className="space-y-4 py-5">
         {traveling && journey ? (
           <>
             <p className="text-center text-2xl" aria-hidden>

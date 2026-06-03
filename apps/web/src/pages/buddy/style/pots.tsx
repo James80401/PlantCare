@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AccessoryPicker from '../../../components/buddy/AccessoryPicker';
+import { PotHome } from '../../../components/buddy/BuddyItemVisuals';
+import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { useBuddy } from '../../../hooks/buddy/useBuddy';
 import { useBuddyShop } from '../../../hooks/buddy/useBuddyShop';
@@ -31,6 +33,12 @@ export default function BuddyPotsPage() {
   return (
     <div className="mx-auto max-w-lg space-y-5">
       <PageHeader eyebrow="Style" title="Pots" description={saving ? 'Saving…' : 'Choose a pot skin'} />
+      <Card className="flex flex-col items-center gap-2 py-5">
+        <PotHome itemId={equipped.potSkin} size="lg" open />
+        <p className="text-center text-sm text-emerald-900">
+          Your buddy's pot is their little home.
+        </p>
+      </Card>
       <AccessoryPicker
         title="Pot skins"
         category="POT_SKIN"
