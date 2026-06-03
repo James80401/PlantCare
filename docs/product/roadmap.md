@@ -37,8 +37,8 @@ next time that area is touched.
 
 | ID | Item | Status | Source details |
 |----|------|--------|----------------|
-| G3 | Complete production deploy sign-off against the real public URL | Now | Run `production:check`, `production:signoff`, optional production E2E, then record a sign-off artifact. See [production-signoff.md](../operations/production-signoff.md) and [uat-checklist.md](uat-checklist.md#f-pre-release-for-remote-testers). |
-| G4 | Complete Android closed testing readiness | Now | Run mobile store/live checks, configure production `VITE_API_BASE_URL`, generate a signed AAB, upload to an internal or closed track, and confirm at least one tester install. See [google-play-closed-testing.md](google-play-closed-testing.md). |
+| G3 | Complete production deploy sign-off against the real public URL | Now | Public web is `https://drplant.app`; API base is `https://api.drplant.app/api/v1`. Live-only probes passed on 2026-06-03. Remaining: run full `production:check`, `production:signoff`, optional production E2E, then record a sign-off artifact. See [production-signoff.md](../operations/production-signoff.md) and [uat-checklist.md](uat-checklist.md#f-pre-release-for-remote-testers). |
+| G4 | Complete Android closed testing readiness | Now | Use production `VITE_API_BASE_URL=https://api.drplant.app/api/v1`, run mobile store/live checks, generate a signed AAB, upload to an internal or closed track, and confirm at least one tester install. See [google-play-closed-testing.md](google-play-closed-testing.md). |
 | A11Y-QA | Run manual accessibility QA for the release | Ongoing | Keyboard pass, screen reader error announcements, 200% zoom, and focus-ring visibility. See [a11y-checklist.md](a11y-checklist.md). |
 | PRIVATE-DEPLOY | Complete private HTTPS deployment path if this app is not public yet | Now, if applicable | Domain, VPS, DNS, Docker stack, Caddy, admin approval gate, and sign-off. See [private-online-setup.md](../operations/private-online-setup.md). |
 
