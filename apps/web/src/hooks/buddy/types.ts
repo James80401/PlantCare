@@ -64,9 +64,16 @@ export interface BuddyState {
 export interface JourneyDiscovery {
   id: string;
   biomeId: string;
+  title?: string;
+  encounterName?: string;
+  encounterRole?: 'friend' | 'guide' | 'frenemy' | 'wanderer';
+  encounterMood?: string;
+  rewardFocus?: 'dewdrops' | 'comfort' | 'curiosity' | 'adventure' | 'focus';
   story: string;
   choiceA: string;
   choiceB: string;
+  outcomeA?: string;
+  outcomeB?: string;
 }
 
 export interface JourneyState {

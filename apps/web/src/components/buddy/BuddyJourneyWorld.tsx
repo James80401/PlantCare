@@ -41,6 +41,21 @@ export function biomeVisual(biomeId?: string | null): BiomeVisual {
 }
 
 export function encounterForDiscovery(discovery?: Pick<JourneyDiscovery, 'id' | 'biomeId'> | null) {
+  const explicit = discovery as
+    | (Pick<JourneyDiscovery, 'id' | 'biomeId'> &
+        Partial<Pick<JourneyDiscovery, 'encounterName' | 'encounterRole'>>)
+    | null
+    | undefined;
+  if (explicit?.encounterName) {
+    return {
+      name: explicit.encounterName,
+      role: explicit.encounterRole ?? 'new encounter',
+      face: explicit.encounterRole === 'frenemy' ? 'o_o' : '*-*',
+      body: explicit.encounterRole === 'frenemy' ? 'bg-yellow-700' : 'bg-emerald-500',
+      shell: explicit.encounterRole === 'guide' ? 'bg-sky-100' : 'bg-lime-200',
+    };
+  }
+
   const id = discovery?.id ?? '';
   if (id.includes('beetle') || id.includes('mushroom')) {
     return {
@@ -171,9 +186,20 @@ export function DiscoveryEncounterCard({
       <div className="flex items-center gap-4">
         <EncounterFigure discovery={discovery} />
         <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+            {discovery.title ?? 'Journey encounter'}
+          </p>
           <p className={`text-sm font-bold ${visual.tone}`}>{encounter.name}</p>
-          <p className="text-xs font-semibold text-emerald-900/80">{encounter.role}</p>
+          <p className="text-xs font-semibold text-emerald-900/80">
+            {encounter.role}
+            {discovery.encounterMood ? ` - ${discovery.encounterMood}` : ''}
+          </p>
           <p className="mt-1 text-xs text-gray-700">Returned with +{dewdropsEarned} dewdrops.</p>
+          {discovery.rewardFocus ? (
+            <p className="mt-1 text-xs font-semibold text-amber-900">
+              Focus: {discovery.rewardFocus}
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

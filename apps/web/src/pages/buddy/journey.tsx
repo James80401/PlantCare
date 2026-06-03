@@ -29,6 +29,7 @@ export default function BuddyJourneyPage() {
   const [starting, setStarting] = useState(false);
   const [responding, setResponding] = useState(false);
   const [discoveryReaction, setDiscoveryReaction] = useState('');
+  const [discoveryOutcome, setDiscoveryOutcome] = useState('');
   const [pageError, setPageError] = useState('');
 
   const traveling = isJourneyTraveling(journey);
@@ -57,10 +58,11 @@ export default function BuddyJourneyPage() {
     setResponding(true);
     try {
       const { data } = await buddyApi.respondDiscovery(journey.id, choice);
+      const response = data as { reaction?: string; outcome?: string };
       setDiscoveryReaction(
-        (data as { reaction?: string }).reaction ?? 'Your buddy appreciated the moment.',
+        response.reaction ?? 'Your buddy appreciated the moment.',
       );
-      await refresh();
+      setDiscoveryOutcome(response.outcome ?? '');
       await refreshBuddy();
     } finally {
       setResponding(false);
@@ -140,6 +142,11 @@ export default function BuddyJourneyPage() {
         ) : journey?.completed && journey.discovery ? (
           <div className="space-y-2 text-center text-sm text-gray-700">
             <p className="font-semibold text-emerald-900">{buddy.name} is back!</p>
+            {journey.discovery.title ? (
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                {journey.discovery.title}
+              </p>
+            ) : null}
             <p>{journey.discovery.story}</p>
             {journey.choiceMade !== null ? (
               <p className="text-xs text-gray-500">
@@ -176,6 +183,12 @@ export default function BuddyJourneyPage() {
           stageAdvanced={data?.stageAdvanced}
           newGrowthStage={data?.newGrowthStage}
           onChoice={handleDiscoveryChoice}
+          onDone={() => {
+            setDiscoveryOutcome('');
+            refresh();
+          }}
+          choiceOutcome={discoveryOutcome}
+          choiceReaction={discoveryReaction}
           busy={responding}
         />
       ) : null}
