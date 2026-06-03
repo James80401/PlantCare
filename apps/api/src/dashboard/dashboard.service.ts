@@ -210,6 +210,16 @@ export class DashboardService {
 
     const todayTaskRows = pickTodayTasks(taskRows, 5, currentDate);
     const pendingTaskRows = getPendingTasks(taskRows);
+    const careSummary = this.buildCareSummary(
+      plantCount,
+      pendingTaskRows,
+      overdueTasks,
+      todayTasks,
+      completedToday.length,
+      openDiagnosisCount,
+      unresolvedDiagnoses,
+      plants,
+    );
 
     return {
       greeting: {
@@ -224,6 +234,7 @@ export class DashboardService {
         completedToday: completedToday.length,
         gardenScore: score,
       },
+      careSummary,
       plants: plants.map((p) => mapDashboardPlant(p)),
       sharedPlants: mapSharedPlantsForUser(gardens, userId),
       pendingTasks: pendingTaskRows.map((t) => mapDashboardTask(t)),
@@ -281,6 +292,128 @@ export class DashboardService {
     if (alert) return `${where}: ${alert}`;
     if (plantLine) return plantLine;
     return `Weather loaded for ${where}`;
+  }
+
+  private buildCareSummary(
+    plantCount: number,
+    pendingTasks: TaskLike[],
+    overdueTasks: TaskLike[],
+    todayTasks: TaskLike[],
+    completedToday: number,
+    openDiagnosisCount: number,
+    unresolvedDiagnoses: Array<{ plantId: string; resultLabel: string }>,
+    plants: Array<{
+      id: string;
+      nickname: string | null;
+      species: { commonName: string };
+    }>,
+  ) {
+    const plantNameById = new Map(
+      plants.map((plant) => [plant.id, plant.nickname || plant.species.commonName]),
+    );
+    const taskPlantName = (task: TaskLike | undefined) =>
+      task ? task.plant.nickname || task.plant.species.commonName : null;
+    const baseCounts = {
+      overdue: overdueTasks.length,
+      dueToday: todayTasks.length,
+      completedToday,
+      pending: pendingTasks.length,
+      openDiagnoses: openDiagnosisCount,
+    };
+
+    if (plantCount === 0) {
+      return {
+        status: 'empty',
+        headline: 'Add your first plant',
+        body: 'Plant Care will build a personalized care plan once your garden has a plant.',
+        actionLabel: 'Add plant',
+        actionTo: '/garden/plants/new',
+        focusPlantId: null,
+        focusPlantName: null,
+        counts: baseCounts,
+      };
+    }
+
+    const overdueTask = overdueTasks[0];
+    if (overdueTask) {
+      const plantName = taskPlantName(overdueTask);
+      return {
+        status: 'overdue',
+        headline: 'Catch up gently',
+        body:
+          overdueTasks.length === 1
+            ? `${plantName} has one overdue care task.`
+            : `${plantName} and ${overdueTasks.length - 1} other task${
+                overdueTasks.length === 2 ? '' : 's'
+              } need attention.`,
+        actionLabel: 'Review overdue care',
+        actionTo: '/garden/tasks/overdue',
+        focusPlantId: overdueTask.plant.id,
+        focusPlantName: plantName,
+        counts: baseCounts,
+      };
+    }
+
+    const todayTask = todayTasks[0];
+    if (todayTask) {
+      const plantName = taskPlantName(todayTask);
+      return {
+        status: 'due_today',
+        headline: 'Finish today strong',
+        body:
+          todayTasks.length === 1
+            ? `${plantName} has one task due today.`
+            : `${plantName} and ${todayTasks.length - 1} other task${
+                todayTasks.length === 2 ? '' : 's'
+              } are due today.`,
+        actionLabel: 'Open today\'s tasks',
+        actionTo: '/garden/tasks/today',
+        focusPlantId: todayTask.plant.id,
+        focusPlantName: plantName,
+        counts: baseCounts,
+      };
+    }
+
+    const diagnosis = unresolvedDiagnoses[0];
+    if (diagnosis) {
+      const plantName = plantNameById.get(diagnosis.plantId) ?? 'A plant';
+      return {
+        status: 'health_attention',
+        headline: 'Check plant health',
+        body: `${plantName} has an unresolved diagnosis: ${diagnosis.resultLabel}.`,
+        actionLabel: 'Open Dr. Plant',
+        actionTo: `/garden/plants/${diagnosis.plantId}/health#dr-plant`,
+        focusPlantId: diagnosis.plantId,
+        focusPlantName: plantName,
+        counts: baseCounts,
+      };
+    }
+
+    if (completedToday > 0) {
+      return {
+        status: 'progress',
+        headline: 'Nice progress today',
+        body: `You completed ${completedToday} care task${
+          completedToday === 1 ? '' : 's'
+        } today. Add an observation if you notice new growth.`,
+        actionLabel: 'Open journal',
+        actionTo: '/garden#plants',
+        focusPlantId: null,
+        focusPlantName: null,
+        counts: baseCounts,
+      };
+    }
+
+    return {
+      status: 'calm',
+      headline: 'You\'re all caught up',
+      body: 'No care tasks are due right now. This is a good moment to add a photo or journal note.',
+      actionLabel: 'Review plants',
+      actionTo: '/garden#plants',
+      focusPlantId: null,
+      focusPlantName: null,
+      counts: baseCounts,
+    };
   }
 
 }

@@ -31,6 +31,23 @@ export interface DashboardScheduleSuggestion {
   reversible: boolean;
 }
 
+export interface DashboardCareSummary {
+  status: 'empty' | 'overdue' | 'due_today' | 'health_attention' | 'progress' | 'calm';
+  headline: string;
+  body: string;
+  actionLabel: string;
+  actionTo: string;
+  focusPlantId: string | null;
+  focusPlantName: string | null;
+  counts: {
+    overdue: number;
+    dueToday: number;
+    completedToday: number;
+    pending: number;
+    openDiagnoses: number;
+  };
+}
+
 export interface DashboardHealthStory {
   openDiagnosisCount: number;
   recentJournal: Array<{
@@ -76,6 +93,7 @@ export interface DashboardPayload {
   };
   plants: DashboardPlant[];
   sharedPlants: SharedPlantView[];
+  careSummary?: DashboardCareSummary;
   pendingTasks: TaskItem[];
   todayTasks: TaskItem[];
   attention: DashboardAttention[];

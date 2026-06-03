@@ -255,6 +255,7 @@ describe('DashboardService', () => {
     expect(scheduler.autoPostponeOutdoorWateringFromWeather).toHaveBeenCalledWith(userId);
     expect(Object.keys(result).sort()).toEqual([
       'attention',
+      'careSummary',
       'engagement',
       'greeting',
       'healthStory',
@@ -278,6 +279,22 @@ describe('DashboardService', () => {
       overdue: 1,
       completedToday: 1,
       gardenScore: 90,
+    });
+    expect(result.careSummary).toEqual({
+      status: 'overdue',
+      headline: 'Catch up gently',
+      body: 'Monsty has one overdue care task.',
+      actionLabel: 'Review overdue care',
+      actionTo: '/garden/tasks/overdue',
+      focusPlantId: 'plant-1',
+      focusPlantName: 'Monsty',
+      counts: {
+        overdue: 1,
+        dueToday: 1,
+        completedToday: 1,
+        pending: 2,
+        openDiagnoses: 2,
+      },
     });
     expect(result.todayTasks.map((task) => task.id)).toEqual(['task-overdue', 'task-today']);
     expect(result.pendingTasks.map((task) => task.id)).toEqual(['task-overdue', 'task-today']);
@@ -383,5 +400,33 @@ describe('DashboardService', () => {
         orderBy: { createdAt: 'desc' },
       }),
     );
+  });
+
+  it('summarizes a calm garden without task or diagnosis focus', async () => {
+    const { service, prisma } = createService();
+    prisma.task.findMany.mockResolvedValueOnce([]);
+    prisma.diagnosis.findMany
+      .mockReset()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    prisma.diagnosis.count.mockResolvedValueOnce(0);
+
+    const result = await service.getDashboard(userId);
+
+    expect(result.careSummary).toMatchObject({
+      status: 'calm',
+      headline: "You're all caught up",
+      actionLabel: 'Review plants',
+      actionTo: '/garden#plants',
+      counts: {
+        overdue: 0,
+        dueToday: 0,
+        completedToday: 0,
+        pending: 0,
+        openDiagnoses: 0,
+      },
+    });
+    expect(result.healthStory.openDiagnosisCount).toBe(0);
+    expect(result.todayTasks).toEqual([]);
   });
 });

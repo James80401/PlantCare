@@ -163,6 +163,7 @@ export default function Dashboard() {
   const attentionItems = dash?.attention ?? [];
   const metrics = dash?.metrics;
   const healthStory = dash?.healthStory;
+  const careSummary = dash?.careSummary;
 
   const drPlantAction = useMemo((): To => {
     if (allGardenPlants.length === 1) {
@@ -196,7 +197,14 @@ export default function Dashboard() {
     return null;
   }, [attentionItems, allGardenPlants, plants]);
 
-  const recommendedAction = getSuggestedAction(plants, overdueTasks, todayTasks);
+  const recommendedAction = careSummary
+    ? {
+        title: careSummary.headline,
+        body: careSummary.body,
+        actionLabel: careSummary.actionLabel,
+        actionTo: careSummary.actionTo,
+      }
+    : getSuggestedAction(plants, overdueTasks, todayTasks);
   const completedTodayCount = metrics?.completedToday ?? 0;
   const engagementContext = useMemo(
     () => ({

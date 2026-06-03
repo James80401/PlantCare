@@ -25,11 +25,17 @@ The web `Dashboard.tsx` also loads plants and tasks separately for interactions;
 |-------|-------------|
 | `greeting` | `name`, `dateLabel`, `statusLine` |
 | `metrics` | `totalPlants`, `dueToday`, overdue counts |
+| `careSummary` | Server-computed primary care recommendation: status, headline, body, action, focus plant, and counts |
 | `todayTasks` | Preview rows for task list UI |
 | `attention` | Plants/issues needing care (priority) |
 | `weekPreview` | 7-day task counts |
 | `scheduleSuggestions` | Adaptive schedule proposals |
 | `engagement` | Score, streak, milestones context |
+
+`careSummary` is the preferred lightweight field for the dashboard's first
+recommended action. The broader `plants`, `pendingTasks`, `todayTasks`, and
+`healthStory` fields remain available for existing UI sections while the
+dashboard payload is slimmed over time.
 
 Implementation: `dashboard.service.ts` + `dashboard-helpers.ts`.
 
