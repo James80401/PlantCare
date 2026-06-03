@@ -164,6 +164,11 @@ export default function Dashboard() {
   const metrics = dash?.metrics;
   const healthStory = dash?.healthStory;
   const careSummary = dash?.careSummary;
+  const plantCount = metrics?.totalPlants ?? plants.length;
+  const dueTodayCount = careSummary?.counts.dueToday ?? metrics?.dueToday ?? todayTasks.length;
+  const overdueCount = careSummary?.counts.overdue ?? metrics?.overdue ?? overdueTasks.length;
+  const completedTodayCount =
+    careSummary?.counts.completedToday ?? metrics?.completedToday ?? 0;
 
   const drPlantAction = useMemo((): To => {
     if (allGardenPlants.length === 1) {
@@ -205,26 +210,25 @@ export default function Dashboard() {
         actionTo: careSummary.actionTo,
       }
     : getSuggestedAction(plants, overdueTasks, todayTasks);
-  const completedTodayCount = metrics?.completedToday ?? 0;
   const engagementContext = useMemo(
     () => ({
-      plantCount: plants.length,
+      plantCount,
       oldestPlantAgeDays: getOldestPlantAgeDays(plants.map((plant) => plant.createdAt)),
       completedInRange: dash?.engagement.completedInRange ?? 0,
       streak: dash?.engagement.streak ?? 0,
     }),
-    [dash?.engagement, plants],
+    [dash?.engagement, plantCount, plants],
   );
   const gardenWellness = useMemo(
     () =>
       getGardenWellness(
-        plants.length,
-        overdueTasks.length,
-        todayTasks.length,
+        plantCount,
+        overdueCount,
+        dueTodayCount,
         engagementContext.completedInRange,
         engagementContext.streak,
       ),
-    [engagementContext, overdueTasks.length, plants.length, todayTasks.length],
+    [dueTodayCount, engagementContext, overdueCount, plantCount],
   );
   const milestones = useMemo(
     () => resolveMilestones(dash?.engagement.milestones, engagementContext),
@@ -237,7 +241,6 @@ export default function Dashboard() {
   const gardenScore = dash?.engagement.score ?? gardenWellness.score;
   const needsAttentionCount = attentionItems.filter((item) => item.priority !== 'info').length;
   const dashboardLoading = dashLoading;
-  const plantCount = metrics?.totalPlants ?? plants.length;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
 
   return (
@@ -291,20 +294,20 @@ export default function Dashboard() {
             />
             <DashboardMetric
               label="Due today"
-              value={metrics?.dueToday ?? todayTasks.length}
-              helper={todayTasks.length ? 'Ready for care' : 'Nothing urgent today'}
+              value={dueTodayCount}
+              helper={dueTodayCount ? 'Ready for care' : 'Nothing urgent today'}
               accent="amber"
               to="/garden/tasks/today"
-              highlight={todayTasks.length > 0}
+              highlight={dueTodayCount > 0}
             />
             <DashboardMetric
               label="Overdue"
-              value={overdueTasks.length}
-              helper={overdueTasks.length ? 'Needs attention' : 'All caught up'}
+              value={overdueCount}
+              helper={overdueCount ? 'Needs attention' : 'All caught up'}
               accent="rose"
               to="/garden/tasks/overdue"
-              highlight={overdueTasks.length > 0}
-              urgent={overdueTasks.length > 0}
+              highlight={overdueCount > 0}
+              urgent={overdueCount > 0}
             />
             <DashboardMetric
               label="Completed"
