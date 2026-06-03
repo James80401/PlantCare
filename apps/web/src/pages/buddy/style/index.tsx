@@ -1,8 +1,14 @@
 import { Link } from 'react-router-dom';
 import { BuddyActor, PotHome } from '../../../components/buddy/BuddyItemVisuals';
+import {
+  BuddyItemEffectCard,
+  equippedItemsFromBuddy,
+  summarizeItemEffects,
+} from '../../../components/buddy/BuddyItemEffects';
 import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { useBuddy } from '../../../hooks/buddy/useBuddy';
+import { useBuddyShop } from '../../../hooks/buddy/useBuddyShop';
 
 const STYLE_LINKS = [
   { to: 'clothing', label: 'Clothing & accessories', desc: 'Hats, tops, glasses, and more' },
@@ -14,6 +20,7 @@ const STYLE_LINKS = [
 
 export default function BuddyStyleHub() {
   const { buddy, loading } = useBuddy();
+  const { inventory } = useBuddyShop();
 
   if (loading || !buddy) {
     return (
@@ -24,6 +31,9 @@ export default function BuddyStyleHub() {
   }
 
   const equipped = buddy.equippedItems as Record<string, string>;
+  const equippedEffectSummary = summarizeItemEffects(
+    equippedItemsFromBuddy(equipped, inventory?.items ?? []),
+  );
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
@@ -47,6 +57,8 @@ export default function BuddyStyleHub() {
           {equipped.potSkin ? `Pot-home: ${equipped.potSkin}` : 'Default pot-home'}
         </p>
       </Card>
+
+      <BuddyItemEffectCard summary={equippedEffectSummary} />
 
       <div className="grid gap-2">
         {STYLE_LINKS.map((link) => (

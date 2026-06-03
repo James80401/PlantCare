@@ -1,5 +1,6 @@
 import type { ShopItem, ShopItemCategory } from '../../hooks/buddy/shopTypes';
 import { shopLockLabel } from '../../utils/shopLockLabel';
+import { itemEffectFor } from './BuddyItemEffects';
 import { ShopItemPreview } from './BuddyItemVisuals';
 
 interface AccessoryPickerProps {
@@ -52,6 +53,7 @@ export default function AccessoryPicker({
           const owned = item.owned ?? true;
           const selected = equippedId === item.id;
           const canBuy = showShop && !owned && item.canPurchase;
+          const effect = itemEffectFor(item);
 
           return (
             <button
@@ -73,6 +75,9 @@ export default function AccessoryPicker({
               </div>
               <p className="font-semibold text-emerald-950">{item.name}</p>
               <p className="mt-1 line-clamp-2 text-xs text-gray-500">{item.description}</p>
+              <p className="mt-2 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800">
+                {effect.label} +{effect.value}
+              </p>
               {owned ? (
                 <p className="mt-2 text-xs font-medium text-emerald-700">
                   {selected ? 'Equipped' : 'Tap to equip'}

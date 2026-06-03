@@ -1,4 +1,5 @@
 import { getAnimationById, type BuddyAnimationDef } from './buddyCompanionAnimations';
+import type { BuddyItemEffectKind } from './BuddyItemEffects';
 import type { BuddyTrait } from '../../hooks/buddy/types';
 
 export type SceneActionId =
@@ -144,6 +145,26 @@ export const TRAVEL_ACTIONS: SceneAction[] = [
   },
 ];
 
+const HOME_EFFECT_ACTIONS: Record<BuddyItemEffectKind, SceneActionId[]> = {
+  comfort: ['nap', 'inspect-home', 'idle'],
+  curiosity: ['object-play', 'inspect-home', 'treasure'],
+  adventure: ['wander', 'weather-watch', 'object-play'],
+  sunlight: ['weather-watch', 'celebrate', 'wander'],
+  dewdrops: ['treasure', 'object-play', 'inspect-home'],
+  style: ['celebrate', 'object-play', 'idle'],
+  focus: ['inspect-home', 'weather-watch', 'treasure'],
+};
+
+const TRAVEL_EFFECT_ACTIONS: Record<BuddyItemEffectKind, SceneActionId[]> = {
+  comfort: ['travel-rest', 'travel-scout'],
+  curiosity: ['travel-find', 'travel-scout'],
+  adventure: ['travel-walk', 'travel-scout', 'travel-find'],
+  sunlight: ['travel-walk', 'travel-find'],
+  dewdrops: ['travel-find', 'travel-scout'],
+  style: ['travel-find', 'travel-walk'],
+  focus: ['travel-scout', 'travel-find'],
+};
+
 const POKE_REACTIONS: Record<BuddyTrait, PokeReaction[]> = {
   RESILIENT: [
     { label: 'Proud pop', animationId: 'proud-stand', reaction: 'ta-da' },
@@ -179,6 +200,24 @@ export function animationForAction(action: Pick<SceneAction, 'animationId'>): Bu
 export function reactionForTrait(trait: BuddyTrait): PokeReaction {
   const pool = POKE_REACTIONS[trait] ?? POKE_REACTIONS.RESILIENT;
   return pool[Math.floor(Math.random() * pool.length)] ?? pool[0];
+}
+
+export function actionRotationForEffect(
+  mode: 'home' | 'traveling',
+  primaryEffect?: BuddyItemEffectKind,
+): SceneAction[] {
+  const base = mode === 'traveling' ? TRAVEL_ACTIONS : HOME_ACTIONS;
+  if (!primaryEffect) return base;
+
+  const preferredIds =
+    mode === 'traveling'
+      ? TRAVEL_EFFECT_ACTIONS[primaryEffect]
+      : HOME_EFFECT_ACTIONS[primaryEffect];
+  const preferred = preferredIds
+    .map((id) => base.find((action) => action.id === id))
+    .filter(Boolean) as SceneAction[];
+  const rest = base.filter((action) => !preferredIds.includes(action.id));
+  return [...preferred, ...rest];
 }
 
 export function SceneActionEffect({ action, compact }: { action: SceneAction; compact?: boolean }) {

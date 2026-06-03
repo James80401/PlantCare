@@ -9,6 +9,11 @@ import { Card } from '../../components/ui/Card';
 import { PageHeader } from '../../components/ui/PageHeader';
 import SeasonalBanner from '../../components/buddy/SeasonalBanner';
 import BuddyTipsCard from '../../components/buddy/BuddyTipsCard';
+import {
+  BuddyItemEffectCard,
+  equippedItemsFromBuddy,
+  summarizeItemEffects,
+} from '../../components/buddy/BuddyItemEffects';
 import { useMemo } from 'react';
 import { useBuddy } from '../../hooks/buddy/useBuddy';
 import { useBuddyQuests } from '../../hooks/buddy/useBuddyQuests';
@@ -27,6 +32,13 @@ export default function BuddyHome() {
       (q) => q.completed && !q.rewardClaimed,
     ).length;
   }, [quests]);
+
+  const equippedEffectSummary = useMemo(() => {
+    if (!buddy) return null;
+    const equipped = buddy.equippedItems as Record<string, unknown>;
+    const equippedItems = equippedItemsFromBuddy(equipped, inventory?.items ?? []);
+    return summarizeItemEffects(equippedItems);
+  }, [buddy, inventory?.items]);
 
   useEffect(() => {
     if (!buddy) return;
@@ -57,7 +69,10 @@ export default function BuddyHome() {
         buddy={buddy}
         mode={buddy.hasActiveJourney ? 'traveling' : 'home'}
         furniture={(inventory?.items ?? []).filter((item) => item.category === 'FURNITURE')}
+        itemEffects={equippedEffectSummary}
       />
+
+      {equippedEffectSummary ? <BuddyItemEffectCard summary={equippedEffectSummary} /> : null}
 
       <Card className="flex flex-col items-center gap-4">
         <div className="flex flex-wrap items-center justify-center gap-2">

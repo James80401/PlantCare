@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { BuddyActor, PotHome, furnitureEmoji } from './BuddyItemVisuals';
 import { EncounterFigure, TravelLandmarks, biomeVisual } from './BuddyJourneyWorld';
 import {
-  HOME_ACTIONS,
   SceneActionEffect,
-  TRAVEL_ACTIONS,
+  actionRotationForEffect,
   animationForAction,
   reactionForTrait,
 } from './BuddySceneActions';
+import type { BuddyItemEffectSummary } from './BuddyItemEffects';
 import type { BuddyState, BuddyTrait } from '../../hooks/buddy/types';
 import type { ShopItem } from '../../hooks/buddy/shopTypes';
 
@@ -21,6 +21,7 @@ type BuddySceneProps = {
   progressPercent?: number;
   remainingLabel?: string;
   furniture?: ShopItem[];
+  itemEffects?: BuddyItemEffectSummary | null;
   compact?: boolean;
 };
 
@@ -57,6 +58,7 @@ export default function BuddyScene({
   progressPercent,
   remainingLabel,
   furniture = [],
+  itemEffects,
   compact,
 }: BuddySceneProps) {
   const [actionIndex, setActionIndex] = useState(0);
@@ -70,7 +72,7 @@ export default function BuddyScene({
   const sceneKey = mode === 'traveling' ? buddy.currentBiome : buddy.terrariumBackground;
   const travelVisual = biomeVisual(sceneKey);
   const background = mode === 'traveling' ? travelVisual.sky : sceneBackground(sceneKey);
-  const actions = mode === 'traveling' ? TRAVEL_ACTIONS : HOME_ACTIONS;
+  const actions = actionRotationForEffect(mode, itemEffects?.primary);
   const scheduledAction = actions[actionIndex % actions.length];
   const activeAction = pokeReaction
     ? {
@@ -205,6 +207,11 @@ export default function BuddyScene({
       </div>
       <div className="absolute bottom-5 right-5 max-w-[46%] rounded-2xl bg-emerald-950/70 px-3 py-2 text-right text-xs font-semibold text-white shadow-sm backdrop-blur">
         Now: {activeAction.label}
+        {itemEffects && itemEffects.totalScore > 0 ? (
+          <span className="mt-0.5 block text-[0.68rem] font-medium text-emerald-100">
+            Item boost: {itemEffects.effects[0]?.label}
+          </span>
+        ) : null}
       </div>
     </section>
   );
