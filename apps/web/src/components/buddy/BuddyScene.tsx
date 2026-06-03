@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BuddyActor, PotHome, furnitureEmoji } from './BuddyItemVisuals';
 import { EncounterFigure, TravelLandmarks, biomeVisual } from './BuddyJourneyWorld';
+import {
+  HOME_ACTIONS,
+  SceneActionEffect,
+  TRAVEL_ACTIONS,
+  animationForAction,
+  reactionForTrait,
+} from './BuddySceneActions';
 import type { BuddyState, BuddyTrait } from '../../hooks/buddy/types';
 import type { ShopItem } from '../../hooks/buddy/shopTypes';
 
@@ -15,35 +22,6 @@ type BuddySceneProps = {
   remainingLabel?: string;
   furniture?: ShopItem[];
   compact?: boolean;
-};
-
-type SceneMoment = {
-  id: string;
-  label: string;
-  className: string;
-  reaction?: string;
-};
-
-const HOME_MOMENTS: SceneMoment[] = [
-  { id: 'idle', label: 'Idle', className: 'translate-x-0', reaction: 'hmm' },
-  { id: 'peek', label: 'Peeking inside', className: '-translate-x-10', reaction: 'cozy' },
-  { id: 'treasure', label: 'Checking treasures', className: 'translate-x-8', reaction: 'ooh' },
-  { id: 'nap', label: 'Napping by the door', className: '-translate-x-2 translate-y-1', reaction: 'zzz' },
-  { id: 'stretch', label: 'Tiny stretch', className: 'translate-x-0 -translate-y-2', reaction: 'ahh' },
-];
-
-const TRAVEL_MOMENTS: SceneMoment[] = [
-  { id: 'trail', label: 'Exploring trail', className: '-translate-x-8', reaction: 'go!' },
-  { id: 'found', label: 'Found something', className: 'translate-x-4 -translate-y-1', reaction: '!' },
-  { id: 'light', label: 'Following light', className: 'translate-x-10', reaction: 'sun' },
-];
-
-const TRAIT_REACTIONS: Record<BuddyTrait, string[]> = {
-  RESILIENT: ['I got this', 'ta-da', 'again!'],
-  SUN_SEEKER: ['sunny!', 'beam!', 'more light'],
-  NIGHT_BLOOMER: ['hehe', 'softly', 'moon glow'],
-  WILD: ['whee!', 'zoom!', 'boing'],
-  TENDER: ['aww', 'thank you', 'happy'],
 };
 
 const BACKGROUND_CLASS: Record<string, string> = {
@@ -81,15 +59,31 @@ export default function BuddyScene({
   furniture = [],
   compact,
 }: BuddySceneProps) {
-  const [momentIndex, setMomentIndex] = useState(0);
-  const [pokeReaction, setPokeReaction] = useState<string | null>(null);
+  const [actionIndex, setActionIndex] = useState(0);
+  const [pokeReaction, setPokeReaction] = useState<{
+    reaction: string;
+    animationId: string;
+    label: string;
+  } | null>(null);
   const equipped = (buddy.equippedItems ?? {}) as Record<string, unknown>;
   const layout = (buddy.terrariumLayout ?? {}) as Record<string, unknown>;
   const sceneKey = mode === 'traveling' ? buddy.currentBiome : buddy.terrariumBackground;
   const travelVisual = biomeVisual(sceneKey);
   const background = mode === 'traveling' ? travelVisual.sky : sceneBackground(sceneKey);
-  const moments = mode === 'traveling' ? TRAVEL_MOMENTS : HOME_MOMENTS;
-  const moment = moments[momentIndex % moments.length];
+  const actions = mode === 'traveling' ? TRAVEL_ACTIONS : HOME_ACTIONS;
+  const scheduledAction = actions[actionIndex % actions.length];
+  const activeAction = pokeReaction
+    ? {
+        ...scheduledAction,
+        id: scheduledAction.id,
+        label: pokeReaction.label,
+        caption: 'reacting to your tap',
+        animationId: pokeReaction.animationId,
+        reaction: pokeReaction.reaction,
+        effect: 'sparkles' as const,
+      }
+    : scheduledAction;
+  const activeAnimation = animationForAction(activeAction);
   const placedFurniture = useMemo(() => displayFurniture(layout, furniture), [layout, furniture]);
   const heightClass = compact ? 'min-h-[18rem]' : 'min-h-[26rem]';
 
@@ -97,7 +91,7 @@ export default function BuddyScene({
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) return;
     const id = window.setInterval(() => {
-      setMomentIndex((index) => index + 1);
+      setActionIndex((index) => index + 1);
     }, mode === 'traveling' ? 4200 : 3600);
     return () => window.clearInterval(id);
   }, [mode]);
@@ -109,8 +103,7 @@ export default function BuddyScene({
   }, [pokeReaction]);
 
   const poke = () => {
-    const pool = TRAIT_REACTIONS[buddy.trait] ?? TRAIT_REACTIONS.RESILIENT;
-    setPokeReaction(pool[Math.floor(Math.random() * pool.length)]);
+    setPokeReaction(reactionForTrait(buddy.trait as BuddyTrait));
   };
 
   return (
@@ -160,21 +153,9 @@ export default function BuddyScene({
           <PotHome
             itemId={typeof equipped.potSkin === 'string' ? equipped.potSkin : null}
             size={compact ? 'md' : 'lg'}
-            open={moment.id === 'peek' || moment.id === 'nap'}
+            open={activeAction.id === 'inspect-home' || activeAction.id === 'nap'}
             className="absolute bottom-14 left-5 sm:left-10"
           />
-          {moment.id === 'treasure' ? (
-            <div className="absolute bottom-14 left-[58%] z-20 h-12 w-14 rounded-2xl bg-amber-200 shadow-md ring-2 ring-amber-700/40">
-              <div className="absolute -top-2 left-1/2 h-5 w-10 -translate-x-1/2 rounded-t-full bg-amber-300 ring-2 ring-amber-700/30" />
-              <span className="absolute left-3 top-4 h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="absolute right-4 top-5 h-2 w-2 rounded-full bg-rose-400" />
-            </div>
-          ) : null}
-          {moment.id === 'nap' ? (
-            <div className="absolute bottom-16 left-[26%] z-20 h-8 w-20 rounded-full bg-white/70 shadow-sm">
-              <span className="absolute right-4 top-2 text-xs font-bold text-emerald-900">zzz</span>
-            </div>
-          ) : null}
           {placedFurniture.map(({ slot, itemId, item }, index) => (
             <div
               key={`${slot}-${itemId}`}
@@ -189,11 +170,13 @@ export default function BuddyScene({
         </>
       )}
 
+      <SceneActionEffect action={activeAction} compact={compact} />
+
       <button
         type="button"
         onClick={poke}
         className={`absolute bottom-10 left-1/2 z-30 -translate-x-1/2 transition duration-700 ${
-          moment.className
+          activeAction.className
         } focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/80`}
         aria-label={`Poke ${buddy.name}`}
       >
@@ -203,7 +186,9 @@ export default function BuddyScene({
           traveling={mode === 'traveling'}
           equippedItems={equipped}
           size={compact ? 'md' : 'lg'}
-          reaction={pokeReaction ?? moment.reaction}
+          reaction={activeAction.reaction}
+          animationClass={activeAnimation.cssClass}
+          face={activeAnimation.face}
         />
       </button>
 
@@ -214,9 +199,12 @@ export default function BuddyScene({
         <p className="mt-0.5 text-lg font-bold text-emerald-950">{buddy.name}</p>
         <p className="mt-1 text-xs text-gray-600">
           {mode === 'traveling'
-            ? moment.label
-            : `${moment.label} in their pot-home`}
+            ? activeAction.caption
+            : activeAction.caption}
         </p>
+      </div>
+      <div className="absolute bottom-5 right-5 max-w-[46%] rounded-2xl bg-emerald-950/70 px-3 py-2 text-right text-xs font-semibold text-white shadow-sm backdrop-blur">
+        Now: {activeAction.label}
       </div>
     </section>
   );

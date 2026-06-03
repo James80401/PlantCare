@@ -1,4 +1,5 @@
 import BuddySprite from './BuddySprite';
+import type { BuddyFaceExpression } from './buddyFaces';
 import type { ShopItem, ShopItemCategory } from '../../hooks/buddy/shopTypes';
 
 type EquippedItems = Record<string, unknown>;
@@ -11,6 +12,8 @@ type BuddyActorProps = {
   size?: 'md' | 'lg';
   reaction?: string | null;
   className?: string;
+  animationClass?: string;
+  face?: BuddyFaceExpression;
 };
 
 type PotHomeProps = {
@@ -256,6 +259,8 @@ export function BuddyActor({
   size = 'lg',
   reaction,
   className = '',
+  animationClass = '',
+  face,
 }: BuddyActorProps) {
   const hat = itemId(equippedItems?.hat);
   const top = itemId(equippedItems?.top);
@@ -275,7 +280,9 @@ export function BuddyActor({
         />
       ) : null}
       {bodyPattern && bodyPattern !== 'pattern_none' ? <PatternOverlay itemId={bodyPattern} /> : null}
-      <BuddySprite speciesId={speciesId} size={size} traveling={traveling} mood={mood} />
+      <div className={animationClass}>
+        <BuddySprite speciesId={speciesId} size={size} traveling={traveling} mood={mood} face={face} />
+      </div>
       {top ? <TopVisual itemId={top} /> : null}
       {glasses ? <GlassesVisual itemId={glasses} /> : null}
       {hat ? (
