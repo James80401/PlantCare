@@ -6,6 +6,7 @@ import {
   SceneActionEffect,
   actionRotationForEffect,
   animationForAction,
+  buddyInteractionItemIds,
   reactionForTrait,
 } from './BuddySceneActions';
 import type { BuddyItemEffectSummary } from './BuddyItemEffects';
@@ -75,7 +76,17 @@ export default function BuddyScene({
   const travelVisual = biomeVisual(sceneKey);
   const background = mode === 'traveling' ? travelVisual.sky : sceneBackground(sceneKey);
   const personality = personalityForTrait(buddy.trait);
-  const actions = actionRotationForEffect(mode, itemEffects?.primary, buddy.trait);
+  const placedFurniture = useMemo(() => displayFurniture(layout, furniture), [layout, furniture]);
+  const interactionItemIds = useMemo(
+    () => buddyInteractionItemIds(equipped, layout),
+    [equipped, layout],
+  );
+  const actions = actionRotationForEffect(
+    mode,
+    itemEffects?.primary,
+    buddy.trait,
+    interactionItemIds,
+  );
   const scheduledAction = actions[actionIndex % actions.length];
   const activeAction = pokeReaction
     ? {
@@ -89,7 +100,6 @@ export default function BuddyScene({
       }
     : scheduledAction;
   const activeAnimation = animationForAction(activeAction);
-  const placedFurniture = useMemo(() => displayFurniture(layout, furniture), [layout, furniture]);
   const heightClass = compact ? 'min-h-[18rem]' : 'min-h-[26rem]';
   const reducedMotion = useReducedMotion();
 

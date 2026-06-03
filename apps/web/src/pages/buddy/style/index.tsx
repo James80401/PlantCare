@@ -6,6 +6,10 @@ import {
   summarizeItemEffects,
 } from '../../../components/buddy/BuddyItemEffects';
 import { BuddyPersonalityCard } from '../../../components/buddy/BuddyPersonality';
+import {
+  BuddyItemInteractionCard,
+  buddyInteractionItemIds,
+} from '../../../components/buddy/BuddySceneActions';
 import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { useBuddy } from '../../../hooks/buddy/useBuddy';
@@ -35,6 +39,10 @@ export default function BuddyStyleHub() {
   const equippedEffectSummary = summarizeItemEffects(
     equippedItemsFromBuddy(equipped, inventory?.items ?? []),
   );
+  const interactionItemIds = buddyInteractionItemIds(
+    equipped,
+    buddy.terrariumLayout as Record<string, unknown>,
+  );
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
@@ -62,6 +70,8 @@ export default function BuddyStyleHub() {
       <BuddyHomeInfoCard itemId={equipped.potSkin} />
 
       <BuddyPersonalityCard trait={buddy.trait} mode="style" compact />
+
+      <BuddyItemInteractionCard itemIds={interactionItemIds} />
 
       <BuddyItemEffectCard summary={equippedEffectSummary} />
 

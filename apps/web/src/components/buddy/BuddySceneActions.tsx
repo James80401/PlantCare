@@ -15,7 +15,27 @@ export type SceneActionId =
   | 'travel-walk'
   | 'travel-scout'
   | 'travel-find'
-  | 'travel-rest';
+  | 'travel-rest'
+  | 'water-practice'
+  | 'soil-dig'
+  | 'lantern-glow'
+  | 'firefly-chase'
+  | 'shades-pose'
+  | 'scholar-inspect'
+  | 'cozy-snuggle'
+  | 'home-swing'
+  | 'fountain-sip'
+  | 'mushroom-game'
+  | 'moss-roll'
+  | 'light-twinkle'
+  | 'pebble-balance'
+  | 'flower-twirl'
+  | 'travel-lantern-scout'
+  | 'travel-firefly-trail'
+  | 'travel-trowel-map'
+  | 'travel-water-share'
+  | 'travel-shades-lookout'
+  | 'travel-cozy-rest';
 
 export type SceneAction = {
   id: SceneActionId;
@@ -31,6 +51,13 @@ type PokeReaction = {
   label: string;
   animationId: string;
   reaction: string;
+};
+
+export type BuddyItemInteraction = {
+  itemIds: string[];
+  actionIds: SceneActionId[];
+  label: string;
+  description: string;
 };
 
 export const HOME_ACTIONS: SceneAction[] = [
@@ -146,6 +173,192 @@ export const TRAVEL_ACTIONS: SceneAction[] = [
   },
 ];
 
+const HOME_ITEM_ACTIONS: SceneAction[] = [
+  {
+    id: 'water-practice',
+    label: 'Water practice',
+    caption: 'practicing careful tiny pours',
+    className: 'translate-x-9 -translate-y-1',
+    animationId: 'water-can',
+    reaction: 'drip',
+    effect: 'weather',
+  },
+  {
+    id: 'soil-dig',
+    label: 'Soil scout',
+    caption: 'checking the best little digging spot',
+    className: '-translate-x-9',
+    animationId: 'seed-plant',
+    reaction: 'dig',
+    effect: 'inspect',
+  },
+  {
+    id: 'lantern-glow',
+    label: 'Lantern glow',
+    caption: 'making the room feel warm and safe',
+    className: 'translate-x-5 -translate-y-2',
+    animationId: 'star-gaze',
+    reaction: 'glow',
+    effect: 'sparkles',
+  },
+  {
+    id: 'firefly-chase',
+    label: 'Firefly chase',
+    caption: 'following soft floating lights',
+    className: 'translate-x-12 -translate-y-3',
+    animationId: 'flutter',
+    reaction: 'twinkle',
+    effect: 'sparkles',
+  },
+  {
+    id: 'shades-pose',
+    label: 'Shades pose',
+    caption: 'showing off the cool look',
+    className: 'translate-x-3 -translate-y-2',
+    animationId: 'cool-shades',
+    reaction: 'cool',
+    effect: 'sparkles',
+  },
+  {
+    id: 'scholar-inspect',
+    label: 'Care scholar',
+    caption: 'studying every tiny detail',
+    className: '-translate-x-7 -translate-y-1',
+    animationId: 'thinking-hard',
+    reaction: 'noted',
+    effect: 'inspect',
+  },
+  {
+    id: 'cozy-snuggle',
+    label: 'Cozy snuggle',
+    caption: 'bundling up for a soft rest',
+    className: '-translate-x-2 translate-y-1',
+    animationId: 'cozy-blanket',
+    reaction: 'cozy',
+    effect: 'zzz',
+  },
+  {
+    id: 'home-swing',
+    label: 'Home swing',
+    caption: 'swaying happily near their home',
+    className: '-translate-x-10 -translate-y-1',
+    animationId: 'sway-slow',
+    reaction: 'sway',
+    effect: 'footprints',
+  },
+  {
+    id: 'fountain-sip',
+    label: 'Fountain sip',
+    caption: 'listening to the little water trickle',
+    className: 'translate-x-10',
+    animationId: 'dew-collect',
+    reaction: 'sip',
+    effect: 'treasure',
+  },
+  {
+    id: 'mushroom-game',
+    label: 'Mushroom game',
+    caption: 'inventing rules around the mushrooms',
+    className: 'translate-x-11 -translate-y-2',
+    animationId: 'hide-seek',
+    reaction: 'peek',
+    effect: 'sparkles',
+  },
+  {
+    id: 'moss-roll',
+    label: 'Moss roll',
+    caption: 'flopping into the soft moss',
+    className: '-translate-x-8 translate-y-1',
+    animationId: 'content-sigh',
+    reaction: 'soft',
+    effect: 'zzz',
+  },
+  {
+    id: 'light-twinkle',
+    label: 'Light twinkle',
+    caption: 'watching the fairy lights blink',
+    className: 'translate-x-4 -translate-y-3',
+    animationId: 'lightbulb',
+    reaction: 'blink',
+    effect: 'sparkles',
+  },
+  {
+    id: 'pebble-balance',
+    label: 'Pebble balance',
+    caption: 'balancing on the smooth pebble',
+    className: 'translate-x-8 -translate-y-1',
+    animationId: 'wobble',
+    reaction: 'steady',
+    effect: 'footprints',
+  },
+  {
+    id: 'flower-twirl',
+    label: 'Flower twirl',
+    caption: 'twirling under the flowers',
+    className: 'translate-x-2 -translate-y-2',
+    animationId: 'bloom',
+    reaction: 'bloom',
+    effect: 'sparkles',
+  },
+];
+
+const TRAVEL_ITEM_ACTIONS: SceneAction[] = [
+  {
+    id: 'travel-lantern-scout',
+    label: 'Lantern scout',
+    caption: 'lighting the safest path',
+    className: '-translate-x-6 -translate-y-1',
+    animationId: 'star-gaze',
+    reaction: 'this way',
+    effect: 'inspect',
+  },
+  {
+    id: 'travel-firefly-trail',
+    label: 'Firefly trail',
+    caption: 'following twinkles between leaves',
+    className: 'translate-x-10 -translate-y-3',
+    animationId: 'flutter',
+    reaction: 'shine',
+    effect: 'sparkles',
+  },
+  {
+    id: 'travel-trowel-map',
+    label: 'Trail map',
+    caption: 'marking a tiny route in the soil',
+    className: '-translate-x-9',
+    animationId: 'journal-scribble',
+    reaction: 'mapped',
+    effect: 'inspect',
+  },
+  {
+    id: 'travel-water-share',
+    label: 'Water share',
+    caption: 'saving a sip for a dry spot',
+    className: 'translate-x-8 -translate-y-1',
+    animationId: 'water-splash',
+    reaction: 'share',
+    effect: 'weather',
+  },
+  {
+    id: 'travel-shades-lookout',
+    label: 'Sunny lookout',
+    caption: 'checking the bright route ahead',
+    className: 'translate-x-4 -translate-y-2',
+    animationId: 'cool-shades',
+    reaction: 'clear',
+    effect: 'travel',
+  },
+  {
+    id: 'travel-cozy-rest',
+    label: 'Cozy trail rest',
+    caption: 'taking a soft pause before moving on',
+    className: '-translate-x-2 translate-y-1',
+    animationId: 'cozy-blanket',
+    reaction: 'rest',
+    effect: 'zzz',
+  },
+];
+
 const HOME_EFFECT_ACTIONS: Record<BuddyItemEffectKind, SceneActionId[]> = {
   comfort: ['nap', 'inspect-home', 'idle'],
   curiosity: ['object-play', 'inspect-home', 'treasure'],
@@ -165,6 +378,170 @@ const TRAVEL_EFFECT_ACTIONS: Record<BuddyItemEffectKind, SceneActionId[]> = {
   style: ['travel-find', 'travel-walk'],
   focus: ['travel-scout', 'travel-find'],
 };
+
+export const ITEM_INTERACTIONS: BuddyItemInteraction[] = [
+  {
+    itemIds: ['held_watering_can', 'held_watering_can_gold'],
+    actionIds: ['water-practice', 'travel-water-share'],
+    label: 'Care practice',
+    description: 'Buddy practices tiny pours at home and shares water on journeys.',
+  },
+  {
+    itemIds: ['held_trowel'],
+    actionIds: ['soil-dig', 'travel-trowel-map'],
+    label: 'Soil scouting',
+    description: 'Buddy digs, checks soil, and marks little trail routes.',
+  },
+  {
+    itemIds: ['held_lantern'],
+    actionIds: ['lantern-glow', 'travel-lantern-scout'],
+    label: 'Lantern guide',
+    description: 'Buddy lights the room at home and scouts safer paths while traveling.',
+  },
+  {
+    itemIds: ['held_fireflies'],
+    actionIds: ['firefly-chase', 'travel-firefly-trail'],
+    label: 'Firefly friend',
+    description: 'Buddy chases twinkles at home and follows them out in the world.',
+  },
+  {
+    itemIds: ['glasses_sun', 'glasses_summer_shades'],
+    actionIds: ['shades-pose', 'travel-shades-lookout'],
+    label: 'Sunny lookout',
+    description: 'Buddy poses confidently and checks bright travel routes.',
+  },
+  {
+    itemIds: ['glasses_round'],
+    actionIds: ['scholar-inspect'],
+    label: 'Care scholar',
+    description: 'Buddy pauses to study the scene with extra focus.',
+  },
+  {
+    itemIds: ['top_scarf', 'top_cozy_scarf', 'top_spring_cardigan', 'top_rose_petals'],
+    actionIds: ['cozy-snuggle', 'travel-cozy-rest'],
+    label: 'Cozy layer',
+    description: 'Buddy takes softer rests and snuggly pauses.',
+  },
+  {
+    itemIds: ['pot_macrame'],
+    actionIds: ['home-swing'],
+    label: 'Swinging home',
+    description: 'Buddy sways around the hanging home.',
+  },
+  {
+    itemIds: ['furn_fountain'],
+    actionIds: ['fountain-sip'],
+    label: 'Fountain sip',
+    description: 'Buddy listens to the water and collects dewdrops.',
+  },
+  {
+    itemIds: ['furn_mushroom_cluster'],
+    actionIds: ['mushroom-game'],
+    label: 'Mushroom game',
+    description: 'Buddy turns the mushroom cluster into a tiny game.',
+  },
+  {
+    itemIds: ['furn_moss_patch'],
+    actionIds: ['moss-roll'],
+    label: 'Moss rest',
+    description: 'Buddy flops into the soft moss for cozy breaks.',
+  },
+  {
+    itemIds: ['furn_fairy_lights', 'furn_string_lights'],
+    actionIds: ['light-twinkle'],
+    label: 'Twinkle watch',
+    description: 'Buddy watches room lights blink and glow.',
+  },
+  {
+    itemIds: ['furn_pebble'],
+    actionIds: ['pebble-balance'],
+    label: 'Pebble balance',
+    description: 'Buddy practices balancing on the smooth pebble.',
+  },
+  {
+    itemIds: ['hat_flower_daisy', 'hat_spring_wreath', 'hat_rose_crown'],
+    actionIds: ['flower-twirl'],
+    label: 'Flower flourish',
+    description: 'Buddy twirls and blooms when wearing floral headwear.',
+  },
+];
+
+function itemActionIdsFor(mode: 'home' | 'traveling', itemIds: string[] = []): SceneActionId[] {
+  if (itemIds.length === 0) return [];
+  const equipped = new Set(itemIds);
+  return ITEM_INTERACTIONS.filter((interaction) =>
+    interaction.itemIds.some((itemId) => equipped.has(itemId)),
+  ).flatMap((interaction) =>
+    interaction.actionIds.filter((id) =>
+      mode === 'traveling' ? id.startsWith('travel-') : !id.startsWith('travel-'),
+    ),
+  );
+}
+
+export function activeItemInteractions(itemIds: string[] = []): BuddyItemInteraction[] {
+  if (itemIds.length === 0) return [];
+  const equipped = new Set(itemIds);
+  return ITEM_INTERACTIONS.filter((interaction) =>
+    interaction.itemIds.some((itemId) => equipped.has(itemId)),
+  );
+}
+
+export function buddyInteractionItemIds(
+  equippedItems: Record<string, unknown> = {},
+  terrariumLayout: Record<string, unknown> = {},
+): string[] {
+  return [
+    ...Object.values(equippedItems),
+    ...Object.values(terrariumLayout),
+  ].filter((value): value is string => typeof value === 'string' && value.length > 0);
+}
+
+export function BuddyItemInteractionCard({
+  itemIds,
+  compact,
+}: {
+  itemIds: string[];
+  compact?: boolean;
+}) {
+  const interactions = activeItemInteractions(itemIds);
+
+  if (interactions.length === 0) {
+    return (
+      <div className="rounded-2xl border border-emerald-100 bg-white/85 px-4 py-3">
+        <p className="text-sm font-bold text-emerald-950">Living item interactions</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Equip held items, cozy clothes, glasses, special homes, or place furniture to unlock unique Buddy actions.
+        </p>
+      </div>
+    );
+  }
+
+  const visible = compact ? interactions.slice(0, 3) : interactions;
+
+  return (
+    <div className="rounded-2xl border border-emerald-100 bg-white/90 px-4 py-3 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-bold text-emerald-950">Living item interactions</p>
+        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-900">
+          {interactions.length} active
+        </span>
+      </div>
+      <div className="mt-3 grid gap-2">
+        {visible.map((interaction) => (
+          <div key={interaction.label} className="rounded-xl bg-emerald-50 px-3 py-2">
+            <p className="text-xs font-bold text-emerald-950">{interaction.label}</p>
+            <p className="mt-0.5 text-xs text-emerald-900">{interaction.description}</p>
+          </div>
+        ))}
+      </div>
+      {compact && interactions.length > visible.length ? (
+        <p className="mt-2 text-xs font-medium text-emerald-800">
+          +{interactions.length - visible.length} more from your current setup
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 const POKE_REACTIONS: Record<BuddyTrait, PokeReaction[]> = {
   RESILIENT: [
@@ -207,8 +584,12 @@ export function actionRotationForEffect(
   mode: 'home' | 'traveling',
   primaryEffect?: BuddyItemEffectKind,
   trait?: BuddyTrait,
+  itemIds: string[] = [],
 ): SceneAction[] {
-  const base = mode === 'traveling' ? TRAVEL_ACTIONS : HOME_ACTIONS;
+  const base =
+    mode === 'traveling'
+      ? [...TRAVEL_ACTIONS, ...TRAVEL_ITEM_ACTIONS]
+      : [...HOME_ACTIONS, ...HOME_ITEM_ACTIONS];
   const personality = personalityForTrait(trait);
   const traitPreferredIds =
     mode === 'traveling'
@@ -220,7 +601,8 @@ export function actionRotationForEffect(
       ? TRAVEL_EFFECT_ACTIONS[primaryEffect]
       : HOME_EFFECT_ACTIONS[primaryEffect]
     : [];
-  const preferredIds = [...new Set([...traitPreferredIds, ...effectPreferredIds])];
+  const itemPreferredIds = itemActionIdsFor(mode, itemIds);
+  const preferredIds = [...new Set([...itemPreferredIds, ...traitPreferredIds, ...effectPreferredIds])];
   if (preferredIds.length === 0) return base;
 
   const preferred = preferredIds

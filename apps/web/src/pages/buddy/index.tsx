@@ -11,6 +11,10 @@ import SeasonalBanner from '../../components/buddy/SeasonalBanner';
 import BuddyTipsCard from '../../components/buddy/BuddyTipsCard';
 import { BuddyPersonalityCard } from '../../components/buddy/BuddyPersonality';
 import {
+  BuddyItemInteractionCard,
+  buddyInteractionItemIds,
+} from '../../components/buddy/BuddySceneActions';
+import {
   BuddyItemEffectCard,
   equippedItemsFromBuddy,
   summarizeItemEffects,
@@ -40,6 +44,14 @@ export default function BuddyHome() {
     const equippedItems = equippedItemsFromBuddy(equipped, inventory?.items ?? []);
     return summarizeItemEffects(equippedItems);
   }, [buddy, inventory?.items]);
+
+  const interactionItemIds = useMemo(() => {
+    if (!buddy) return [];
+    return buddyInteractionItemIds(
+      buddy.equippedItems as Record<string, unknown>,
+      buddy.terrariumLayout as Record<string, unknown>,
+    );
+  }, [buddy]);
 
   useEffect(() => {
     if (!buddy) return;
@@ -74,6 +86,8 @@ export default function BuddyHome() {
       />
 
       {equippedEffectSummary ? <BuddyItemEffectCard summary={equippedEffectSummary} /> : null}
+
+      <BuddyItemInteractionCard itemIds={interactionItemIds} compact />
 
       <BuddyPersonalityCard trait={buddy.trait} />
 
