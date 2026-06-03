@@ -17,10 +17,7 @@
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true,
-    "paths": {
-      "@plant-care/shared": ["../../packages/shared/src"]
-    }
+    "esModuleInterop": true
   },
   "include": ["src/**/*"]
 }
