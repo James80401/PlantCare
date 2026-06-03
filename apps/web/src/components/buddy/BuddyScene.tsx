@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { BuddyActor, PotHome, furnitureEmoji } from './BuddyItemVisuals';
 import { EncounterFigure, TravelLandmarks, biomeVisual } from './BuddyJourneyWorld';
 import {
@@ -88,15 +89,15 @@ export default function BuddyScene({
   const activeAnimation = animationForAction(activeAction);
   const placedFurniture = useMemo(() => displayFurniture(layout, furniture), [layout, furniture]);
   const heightClass = compact ? 'min-h-[18rem]' : 'min-h-[26rem]';
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) return;
     const id = window.setInterval(() => {
       setActionIndex((index) => index + 1);
     }, mode === 'traveling' ? 4200 : 3600);
     return () => window.clearInterval(id);
-  }, [mode]);
+  }, [mode, reducedMotion]);
 
   useEffect(() => {
     if (!pokeReaction) return;
@@ -199,11 +200,7 @@ export default function BuddyScene({
           {mode === 'traveling' ? 'Out in the world' : 'At home'}
         </p>
         <p className="mt-0.5 text-lg font-bold text-emerald-950">{buddy.name}</p>
-        <p className="mt-1 text-xs text-gray-600">
-          {mode === 'traveling'
-            ? activeAction.caption
-            : activeAction.caption}
-        </p>
+        <p className="mt-1 text-xs text-gray-600">{activeAction.caption}</p>
       </div>
       <div className="absolute bottom-5 right-5 max-w-[46%] rounded-2xl bg-emerald-950/70 px-3 py-2 text-right text-xs font-semibold text-white shadow-sm backdrop-blur">
         Now: {activeAction.label}

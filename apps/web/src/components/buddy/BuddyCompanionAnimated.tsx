@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { cssClassForAnimation, durationForAnimation } from './buddyCompanionAnimations';
 import type { BuddyAnimationDef } from './buddyAnimationCatalog';
 import { buildCompanionAnimationRotation } from './buddyCompanionRotation';
@@ -50,16 +51,15 @@ export default function BuddyCompanionAnimated({
     setActIndex(0);
   }, [rotationKey]);
 
-  useEffect(() => {
-    if (traveling || !currentDef) return;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reducedMotion) return;
+  const reducedMotion = useReducedMotion();
 
+  useEffect(() => {
+    if (traveling || !currentDef || reducedMotion) return;
     const id = window.setTimeout(() => {
       setActIndex((i) => (i + 1) % actRotation.length);
     }, durationForAnimation(currentDef));
     return () => window.clearTimeout(id);
-  }, [traveling, actIndex, currentDef, actRotation.length]);
+  }, [traveling, actIndex, currentDef, actRotation.length, reducedMotion]);
 
   const motionClass = traveling ? 'buddy-travel-walk' : cssClassForAnimation(currentDef);
   const moodEffect = mood ? moodClass[mood] : '';

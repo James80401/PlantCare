@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Button } from '../ui/Button';
 import type { JourneyDiscovery } from '../../hooks/buddy/types';
 import { DiscoveryEncounterCard } from './BuddyJourneyWorld';
@@ -25,6 +26,30 @@ export default function DiscoveryModal({
   choiceReaction,
   busy,
 }: DiscoveryModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Move focus into the dialog when it opens and restore it to the previously focused
+  // element when it closes — basic modal focus management for keyboard/screen-reader users.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const focusTarget = panelRef.current?.querySelector<HTMLElement>(
+      'button:not([disabled])',
+    );
+    focusTarget?.focus();
+    return () => previouslyFocused?.focus?.();
+  }, []);
+
+  // Escape dismisses only once a choice has been made (the "Done" state); before that the
+  // modal intentionally requires a response.
+  useEffect(() => {
+    if (!choiceOutcome || !onDone) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onDone();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [choiceOutcome, onDone]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
@@ -32,7 +57,7 @@ export default function DiscoveryModal({
       aria-modal="true"
       aria-labelledby="discovery-title"
     >
-      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+      <div ref={panelRef} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
         <h2 id="discovery-title" className="text-lg font-bold text-emerald-950">
           {discovery.title ?? 'Discovery encounter'}
         </h2>
