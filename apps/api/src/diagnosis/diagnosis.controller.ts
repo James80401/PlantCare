@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { imageUploadOptions } from '../common/upload-options';
 import { DiagnosisService } from './diagnosis.service';
+import { DiagnosisChatService } from './diagnosis-chat.service';
 import { ApplyRecoveryTasksDto } from './dto/apply-recovery-tasks.dto';
 import { FollowUpTaskDto } from './dto/follow-up-task.dto';
 import { UpdateDiagnosisDto } from './dto/update-diagnosis.dto';
@@ -24,7 +25,15 @@ import { UpdateDiagnosisDto } from './dto/update-diagnosis.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('plants/:plantId/diagnose')
 export class DiagnosisController {
-  constructor(private diagnosisService: DiagnosisService) {}
+  constructor(
+    private diagnosisService: DiagnosisService,
+    private chat: DiagnosisChatService,
+  ) {}
+
+  @Get('context')
+  getContextSummary(@CurrentUser() user: JwtPayload, @Param('plantId') plantId: string) {
+    return this.chat.getContextSummary(user.sub, plantId);
+  }
 
   @Post()
   @UseInterceptors(FileInterceptor('image', imageUploadOptions))

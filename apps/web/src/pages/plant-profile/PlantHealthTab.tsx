@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import DiagnosisForm from '../../components/DiagnosisForm';
 import DiagnosisResult from '../../components/DiagnosisResult';
 import DrPlantChat from '../../components/DrPlantChat';
+import DrPlantContextPanel from '../../components/DrPlantContextPanel';
 import TreatmentPlanCard from '../../components/TreatmentPlanCard';
 import { usePlantProfile } from './PlantProfileContext';
 import { DR_PLANT_SECTION_ID } from './constants';
@@ -39,6 +40,8 @@ export default function PlantHealthTab() {
               <DiagnosisForm plantName={ctx.plantLabel} onSubmit={ctx.submitDiagnosis} />
             </div>
           </section>
+
+          <DrPlantContextPanel plantId={ctx.id} />
 
           <DrPlantChat plantId={ctx.id} plantName={ctx.plantLabel} />
 

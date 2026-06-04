@@ -305,7 +305,20 @@ export const diagnosisApi = {
     >(`/plants/${plantId}/diagnose/${diagnosisId}/recovery-suggestions`),
   applyRecoveryTasks: (plantId: string, diagnosisId: string, keys: string[]) =>
     api.post(`/plants/${plantId}/diagnose/${diagnosisId}/recovery-tasks`, { keys }),
+  getContextSummary: (plantId: string) =>
+    api.get<DrPlantContextSummary>(`/plants/${plantId}/diagnose/context`),
 };
+
+export interface DrPlantContextItem {
+  category: 'care' | 'health' | 'tasks' | 'feedback' | 'journal' | 'weather';
+  label: string;
+  detail?: string;
+}
+
+export interface DrPlantContextSummary {
+  intro: string;
+  items: DrPlantContextItem[];
+}
 
 export const diagnosisChatApi = {
   list: (plantId: string) =>

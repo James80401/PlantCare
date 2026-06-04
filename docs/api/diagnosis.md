@@ -66,6 +66,32 @@ Creates a **`HEALTH_CHECK`** task linked via `sourceDiagnosisId`. Optional `note
 
 **Files:** `diagnosis.controller.ts`, `diagnosis-chat.controller.ts`, `llm-diagnosis.service.ts`
 
+## Context summary (shipped)
+
+| Method | Path |
+|--------|------|
+| GET | `/plants/:plantId/diagnose/context` |
+
+Returns a user-facing summary of the **same** signals Dr. Plant feeds the model
+(see `DiagnosisChatService.gatherContextSignals`), as readable chips for a
+"What Dr. Plant sees" panel on the Health tab. No prompt internals or secrets are
+exposed. Shape:
+
+```json
+{
+  "intro": "Dr. Plant tailors answers using your plant's recent care and conditions:",
+  "items": [
+    { "category": "care", "label": "Care baseline", "detail": "Living room · medium pot · water ~every 7 days · light: Bright indirect" },
+    { "category": "health", "label": "Open issue: Overwatering", "detail": "Noted Jun 2" },
+    { "category": "tasks", "label": "2 upcoming care tasks", "detail": "next: Water Jun 6" }
+  ]
+}
+```
+
+`category` is one of `care | health | tasks | feedback | journal | weather`.
+**Files:** `dr-plant-context.ts` (pure builder), `diagnosis-chat.service.ts`,
+`diagnosis.controller.ts`; web `DrPlantContextPanel.tsx`.
+
 Chat actions are explicit user-confirmed actions from a Dr. Plant reply:
 
 - `journal-note` saves the selected assistant reply, or an explicit `note`, as a plant journal entry.

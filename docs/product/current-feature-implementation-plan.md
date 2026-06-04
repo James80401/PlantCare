@@ -162,6 +162,16 @@ task, diagnosis, weather, and journal context.
 - Missing context questions remain easy to answer.
 - No API secrets or prompt internals are exposed.
 
+**Status (2026-06-03):** shipped. `GET /plants/:id/diagnose/context` returns a
+user-facing summary of the same signals the assistant uses (care baseline,
+open diagnosis, upcoming tasks, recent skip/complete feedback, journal, weather)
+built by a pure `dr-plant-context.ts` builder that reuses the chat service's
+`gatherContextSignals`. The Health tab renders a compact, expandable
+"What Dr. Plant sees" panel (`DrPlantContextPanel`) above the chat. No prompt
+internals are exposed. **Remaining in Track 3:** Slice 3.2 recovery
+follow-through is already largely shipped (Health tab shows active/resolved
+diagnoses, follow-up tasks linked to diagnosis, and a recovery timeline).
+
 ### Slice 3.2 - Recovery follow-through
 
 - Improve the visibility of recovery tasks and follow-up notes created from diagnosis.

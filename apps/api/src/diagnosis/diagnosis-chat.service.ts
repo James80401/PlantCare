@@ -13,6 +13,10 @@ import { ImageModerationService } from '../common/image-moderation.service';
 import { AiUsageService } from '../ai-usage/ai-usage.service';
 import { LlmDiagnosisService, type ChatTurn, type PlantContext } from './llm-diagnosis.service';
 import { OpenAiRequestError } from './openai-errors';
+import {
+  buildDrPlantContextSummary,
+  type DrPlantContextSummary,
+} from './dr-plant-context';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
@@ -59,10 +63,10 @@ export class DiagnosisChatService {
     return plant;
   }
 
-  private async buildPlantContext(
+  private async gatherContextSignals(
     plant: Awaited<ReturnType<typeof this.getPlantForUser>>,
     userId: string,
-  ): Promise<PlantContext> {
+  ) {
     const since = subDays(new Date(), 45);
 
     const [journalEntries, pendingTasks, recentFeedback, lastDiagnosis, weatherStatus] =
@@ -101,6 +105,59 @@ export class DiagnosisChatService {
         }),
         this.weather.getAdviceStatus(userId),
       ]);
+
+    return { journalEntries, pendingTasks, recentFeedback, lastDiagnosis, weatherStatus };
+  }
+
+  /**
+   * User-facing version of the Dr. Plant context: the same signals fed to the
+   * model, returned as readable chips for a "What Dr. Plant sees" panel.
+   */
+  async getContextSummary(userId: string, plantId: string): Promise<DrPlantContextSummary> {
+    const plant = await this.getPlantForUser(userId, plantId);
+    const { journalEntries, pendingTasks, recentFeedback, lastDiagnosis, weatherStatus } =
+      await this.gatherContextSignals(plant, userId);
+
+    const weatherAlert = weatherStatus.cachedAdvice?.overviewAlerts?.[0]?.title;
+
+    return buildDrPlantContextSummary({
+      location: plant.location,
+      potSize: plant.potSize,
+      wateringFreqDays: plant.species.wateringFreqDays,
+      sunlight: plant.species.sunlight,
+      journal: journalEntries.map((entry) => ({
+        notes: entry.notes,
+        createdAt: entry.createdAt,
+      })),
+      pendingTasks: pendingTasks.map((task) => ({
+        taskType: task.taskType,
+        dueDate: task.dueDate,
+      })),
+      feedback: recentFeedback.map((f) => ({
+        action: f.action,
+        reason: f.reason,
+        note: f.note,
+      })),
+      activeDiagnosis:
+        lastDiagnosis && !lastDiagnosis.resolved
+          ? {
+              resultLabel: lastDiagnosis.resultLabel,
+              createdAt: lastDiagnosis.createdAt,
+            }
+          : null,
+      weatherAlert:
+        weatherAlert && weatherStatus.locationLabel
+          ? { label: weatherAlert, location: weatherStatus.locationLabel }
+          : null,
+    });
+  }
+
+  private async buildPlantContext(
+    plant: Awaited<ReturnType<typeof this.getPlantForUser>>,
+    userId: string,
+  ): Promise<PlantContext> {
+    const { journalEntries, pendingTasks, recentFeedback, lastDiagnosis, weatherStatus } =
+      await this.gatherContextSignals(plant, userId);
 
     const lines: string[] = [];
 
