@@ -45,20 +45,31 @@ export function buildPlantTimeline(
   const taskEvents: PlantTimelineEventDto[] = tasks
     .filter((task) => task.status !== 'PENDING' && task.completedAt)
     .map((task) => {
-      const latestFeedback = task.feedback[0];
-      const reasonLabel = skipReasonLabel(latestFeedback?.reason);
+      // Only the feedback row whose action matches the terminal status is the
+      // "why" for this event; SNOOZE rows are reschedules, not skip/complete
+      // reasons, and must not be rendered as such.
+      const terminalAction = task.status === 'SKIPPED' ? 'SKIP' : 'COMPLETE';
+      const terminalFeedback = task.feedback.find((f) => f.action === terminalAction);
+      const snoozeCount = task.feedback.filter((f) => f.action === 'SNOOZE').length;
+      const reasonLabel = skipReasonLabel(terminalFeedback?.reason);
       let description =
         task.status === 'SKIPPED'
           ? 'This care task was skipped.'
           : 'This care task was marked complete.';
       if (task.status === 'SKIPPED' && reasonLabel) {
         description = `Skipped: ${reasonLabel}.`;
-        if (latestFeedback?.note?.trim()) {
-          description += ` ${latestFeedback.note.trim()}`;
+        if (terminalFeedback?.note?.trim()) {
+          description += ` ${terminalFeedback.note.trim()}`;
         }
       } else if (task.status === 'SKIPPED') {
         description += ' Add a skip reason next time to improve scheduling.';
       }
+
+      const dueLabel = `${snoozeCount > 0 ? 'Due' : 'Originally due'} ${format(
+        task.dueDate,
+        'MMM d',
+      )}`;
+      const meta = snoozeCount > 0 ? `${dueLabel} · rescheduled ${snoozeCount}×` : dueLabel;
 
       return {
         id: `task-${task.id}`,
@@ -68,7 +79,7 @@ export function buildPlantTimeline(
           task.status === 'DONE' ? 'completed' : 'skipped'
         }`,
         description,
-        meta: `Originally due ${format(task.dueDate, 'MMM d')}`,
+        meta,
       };
     });
 

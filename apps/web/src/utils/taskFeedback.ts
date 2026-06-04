@@ -72,3 +72,28 @@ export function completeReasonLabel(reason: string | undefined): string | null {
   if (!reason) return null;
   return TASK_COMPLETE_REASONS.find((r) => r.value === reason)?.label ?? reason;
 }
+
+export interface TaskFeedbackRecord {
+  action?: string;
+  reason?: string;
+  note?: string | null;
+}
+
+/**
+ * Picks the feedback row that explains a terminal task, matching its action to
+ * the task status. A task may also carry SNOOZE rows (reschedules); those are
+ * never the complete/skip reason, so returning them would mislabel history.
+ */
+export function pickTerminalFeedback(
+  feedback: TaskFeedbackRecord[] | undefined,
+  status: string,
+): TaskFeedbackRecord | undefined {
+  if (!feedback?.length) return undefined;
+  const action = status === 'SKIPPED' ? 'SKIP' : 'COMPLETE';
+  return feedback.find((entry) => entry.action === action);
+}
+
+/** Number of times a task was snoozed/rescheduled. */
+export function countSnoozeFeedback(feedback: TaskFeedbackRecord[] | undefined): number {
+  return feedback?.filter((entry) => entry.action === 'SNOOZE').length ?? 0;
+}

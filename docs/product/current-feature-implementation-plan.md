@@ -107,6 +107,16 @@ consistent across dashboard, calendar, and plant profile.
 - Existing one-tap flows remain fast.
 - Feedback persists and is visible where it helps future care decisions.
 
+**Status (2026-06-03):** `TaskRow` already exposes complete/skip/snooze with
+reasons + notes consistently across dashboard, calendar, garden, filtered, and
+plant-profile surfaces. This slice's history-surfacing piece shipped: the plant
+profile "Recent history" and the plant timeline now pick the **terminal**
+feedback by `action` (fixing a bug where a prior SNOOZE row was mislabeled as the
+complete/skip reason on tasks finished without explicit feedback) and surface
+**reschedule status** ("rescheduled N×"). Backend now returns the full per-task
+feedback trail (`plants.service` findOne + timeline). **Remaining:** Slice 2.2
+post-care observation prompts.
+
 ### Slice 2.2 - Post-care observation prompts
 
 - After completing meaningful tasks, prompt for optional observation notes without blocking completion.

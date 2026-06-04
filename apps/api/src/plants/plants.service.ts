@@ -80,7 +80,10 @@ export class PlantsService {
           orderBy: { dueDate: 'desc' },
           take: 40,
           include: {
-            feedback: { orderBy: { createdAt: 'desc' }, take: 1 },
+            // Fetch the full feedback trail (newest first) so the UI can pick the
+            // terminal complete/skip reason and count reschedules, instead of
+            // blindly using the most recent row (which may be a SNOOZE).
+            feedback: { orderBy: { createdAt: 'desc' }, take: 20 },
           },
         },
         journalEntries: { orderBy: { createdAt: 'desc' }, take: 10 },
@@ -122,7 +125,7 @@ export class PlantsService {
         orderBy: { completedAt: 'desc' },
         take: 50,
         include: {
-          feedback: { orderBy: { createdAt: 'desc' }, take: 1 },
+          feedback: { orderBy: { createdAt: 'desc' }, take: 20 },
         },
       }),
       this.prisma.diagnosis.findMany({

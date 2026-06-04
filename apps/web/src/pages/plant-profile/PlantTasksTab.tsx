@@ -3,7 +3,10 @@ import TaskRow from '../../components/tasks/TaskRow';
 import TaskScheduleExplanationLink from '../../components/TaskScheduleExplanationLink';
 import {
   completeReasonLabel,
+  countSnoozeFeedback,
+  pickTerminalFeedback,
   skipReasonLabel,
+  type TaskFeedbackRecord,
 } from '../../utils/taskFeedback';
 import { taskTypeLabel } from '../../utils/tasks';
 import { usePlantProfile } from './PlantProfileContext';
@@ -93,7 +96,9 @@ function RecentTaskHistoryCard({
   const status = String(task.status);
   const completedAt = String(task.completedAt);
   const dueDate = String(task.dueDate);
-  const feedback = latestFeedback(task);
+  const feedbackList = task.feedback as TaskFeedbackRecord[] | undefined;
+  const feedback = pickTerminalFeedback(feedbackList, status);
+  const snoozeCount = countSnoozeFeedback(feedbackList);
   const reason = feedbackReasonLabel(status, feedback?.reason);
   const note = typeof feedback?.note === 'string' ? feedback.note.trim() : '';
   const isSkipped = status === 'SKIPPED';
@@ -116,8 +121,13 @@ function RecentTaskHistoryCard({
 
       <div className="mt-3 grid gap-2 text-sm text-gray-700 sm:grid-cols-2">
         <p className="rounded-xl bg-emerald-50/60 px-3 py-2">
-          <span className="font-semibold text-emerald-900">Originally due: </span>
+          <span className="font-semibold text-emerald-900">
+            {snoozeCount > 0 ? 'Final due: ' : 'Originally due: '}
+          </span>
           {format(new Date(dueDate), 'MMM d')}
+          {snoozeCount > 0 ? (
+            <span className="text-gray-500"> · rescheduled {snoozeCount}×</span>
+          ) : null}
         </p>
         <p className="rounded-xl bg-sky-50/70 px-3 py-2">
           <span className="font-semibold text-sky-900">Feedback: </span>
@@ -141,13 +151,6 @@ function RecentTaskHistoryCard({
       </div>
     </li>
   );
-}
-
-function latestFeedback(task: PlantRecord) {
-  const feedbackList = task.feedback as
-    | Array<{ reason?: string; note?: string | null }>
-    | undefined;
-  return feedbackList?.[0];
 }
 
 function feedbackReasonLabel(status: string, reason: string | undefined) {
