@@ -33,3 +33,31 @@ export function mapTimelineFromApi(events: PlantTimelineEventApi[]): TimelineEve
     journalId: event.journalId,
   }));
 }
+
+export type TimelineFilter = 'all' | TimelineEvent['type'];
+
+export interface TimelineTypeCounts {
+  all: number;
+  journal: number;
+  care: number;
+  diagnosis: number;
+}
+
+export function countTimelineByType(events: TimelineEvent[]): TimelineTypeCounts {
+  return events.reduce<TimelineTypeCounts>(
+    (counts, event) => {
+      counts.all += 1;
+      counts[event.type] += 1;
+      return counts;
+    },
+    { all: 0, journal: 0, care: 0, diagnosis: 0 },
+  );
+}
+
+export function filterTimelineEvents(
+  events: TimelineEvent[],
+  filter: TimelineFilter,
+): TimelineEvent[] {
+  if (filter === 'all') return events;
+  return events.filter((event) => event.type === filter);
+}

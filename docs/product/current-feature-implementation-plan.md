@@ -208,6 +208,16 @@ journal photos, care actions, diagnoses, measurements, and milestones.
 - Users can distinguish observations, care events, diagnoses, and progress changes.
 - Tests cover representative mixed timelines.
 
+**Status (2026-06-03):** the profile timeline (`GET /plants/:id/timeline`,
+rendered by `PlantTimeline`) already groups journal, care, and diagnosis events
+consistently newest-first with per-type icons. This slice added **type filter
+chips** (All / Journal / Care / Health, with per-type counts) that appear once
+the timeline is long enough to warrant narrowing (≥6 events spanning ≥2 types),
+plus a clean empty state when a filter matches nothing. Filtering logic lives in
+testable helpers (`countTimelineByType`, `filterTimelineEvents`). Slice 4.2
+(photo before/after compare + measurement deltas) is already shipped in the
+Journal tab sidebar.
+
 ### Slice 4.2 - Photo comparison and growth review
 
 - Add a simple before/after photo compare flow using existing journal photos.

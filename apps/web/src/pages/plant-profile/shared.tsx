@@ -1,10 +1,22 @@
 import { format } from 'date-fns';
-import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { StructuredCareSectionCard } from '../../components/care/StructuredCareSectionCard';
 import { careSectionToneClasses, getCareSectionMeta } from '../../utils/careGuideSections';
 import { skipReasonLabel } from '../../utils/taskFeedback';
 import { formatGuideBody, taskTypeLabel } from '../../utils/tasks';
+import {
+  countTimelineByType,
+  filterTimelineEvents,
+  type TimelineFilter,
+} from '../../utils/plantTimeline';
 import type { CareDetailLevel, CareOverviewSection, PlantRecord, TimelineEvent } from './types';
+
+const TIMELINE_FILTERS: Array<{ key: TimelineFilter; label: string }> = [
+  { key: 'all', label: 'All' },
+  { key: 'journal', label: 'Journal' },
+  { key: 'care', label: 'Care' },
+  { key: 'diagnosis', label: 'Health' },
+];
 
 export function ProfileSection({
   eyebrow,
@@ -118,6 +130,16 @@ export function PlantTimeline({
   onCompareJournal?: (journalId: string) => void;
   busyJournalId?: string | null;
 }) {
+  const [filter, setFilter] = useState<TimelineFilter>('all');
+  const counts = useMemo(() => countTimelineByType(events), [events]);
+  const visible = useMemo(() => filterTimelineEvents(events, filter), [events, filter]);
+
+  const distinctTypes =
+    (counts.journal > 0 ? 1 : 0) + (counts.care > 0 ? 1 : 0) + (counts.diagnosis > 0 ? 1 : 0);
+  // Only offer filters once the timeline is long enough to be worth narrowing
+  // and actually mixes types.
+  const showFilters = events.length >= 6 && distinctTypes >= 2;
+
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -126,8 +148,38 @@ export function PlantTimeline({
           {events.length} event{events.length === 1 ? '' : 's'}
         </span>
       </div>
+
+      {showFilters ? (
+        <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Filter timeline by type">
+          {TIMELINE_FILTERS.filter((option) => counts[option.key] > 0).map((option) => {
+            const active = filter === option.key;
+            return (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => setFilter(option.key)}
+                aria-pressed={active}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  active
+                    ? 'bg-emerald-800 text-white'
+                    : 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100'
+                }`}
+              >
+                {option.label} {counts[option.key]}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {visible.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-3 py-4 text-sm text-gray-500">
+          No {filter === 'all' ? '' : `${timelineTypeLabel(filter).toLowerCase()} `}events to show.
+        </p>
+      ) : null}
+
       <ol className="relative space-y-4 border-l border-emerald-100 pl-4">
-        {events.map((event) => (
+        {visible.map((event) => (
           <li key={event.id} className="relative">
             <span
               className={`absolute -left-[1.55rem] top-4 flex h-5 w-5 items-center justify-center rounded-full text-xs ${timelineDotClass(event.type)}`}
