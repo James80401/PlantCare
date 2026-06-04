@@ -129,6 +129,16 @@ post-care observation prompts.
 - If they do write a note, it appears in plant history and can be used as care context.
 - API and web tests cover note persistence and display.
 
+**Status (2026-06-03):** the optional post-care prompt already exists in
+`TaskRow` (completing a task offers a reason for watering plus a free-text note,
+without blocking one-tap completion). This slice's history-surfacing piece
+shipped: completed tasks now render their observation (completion reason + note)
+in the **plant timeline**, not just on the tasks tab — previously DONE events
+showed only a generic "marked complete" line. **Remaining:** optionally feed
+recent completion observations into Dr. Plant context (overlaps Track 3 / Slice
+3.1) and an explicit "also save as a journal note" affordance if product wants
+observations promoted into the journal proper.
+
 ## Track 3 - Dr. Plant and recovery polish
 
 **Goal:** Make Dr. Plant advice easier to trust and act on using existing plant,

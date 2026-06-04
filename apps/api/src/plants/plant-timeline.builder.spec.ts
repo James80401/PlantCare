@@ -92,6 +92,42 @@ describe('buildPlantTimeline', () => {
     expect(result.events[0].description).toContain('Top inch dry only');
   });
 
+  it('surfaces the post-care observation (reason and note) on a completed task', () => {
+    const result = buildPlantTimeline(
+      [],
+      [
+        {
+          id: 't-obs',
+          plantId: 'p1',
+          gardenId: 'g1',
+          taskType: TaskType.WATER,
+          status: TaskStatus.DONE,
+          dueDate: new Date('2026-03-01'),
+          completedAt: baseDate,
+          createdAt: baseDate,
+          notifiedAt: null,
+          sourceDiagnosisId: null,
+          feedback: [
+            {
+              id: 'fc1',
+              taskId: 't-obs',
+              userId: 'user-1',
+              action: 'COMPLETE',
+              reason: 'SOIL_VERY_DRY',
+              note: 'Drooping leaves perked up after watering',
+              createdAt: baseDate,
+            },
+          ],
+        },
+      ],
+      [],
+    );
+
+    expect(result.events[0].title).toContain('completed');
+    expect(result.events[0].description).toContain('soil was very dry');
+    expect(result.events[0].description).toContain('Drooping leaves perked up after watering');
+  });
+
   it('does not render a prior snooze as the complete/skip reason and notes reschedules', () => {
     const result = buildPlantTimeline(
       [],

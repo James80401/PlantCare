@@ -13,9 +13,21 @@ const SKIP_REASON_LABELS: Record<string, string> = {
   OTHER: 'Other reason',
 };
 
+const COMPLETE_REASON_LABELS: Record<string, string> = {
+  SOIL_VERY_DRY: 'Soil was very dry',
+  PLANT_LOOKS_STRESSED: 'Plant looked stressed',
+  PLANT_LOOKS_HEALTHY: 'Plant looked healthy',
+  OTHER: 'Other reason',
+};
+
 function skipReasonLabel(reason: string | null | undefined): string | null {
   if (!reason) return null;
   return SKIP_REASON_LABELS[reason] ?? reason;
+}
+
+function completeReasonLabel(reason: string | null | undefined): string | null {
+  if (!reason) return null;
+  return COMPLETE_REASON_LABELS[reason] ?? reason;
 }
 
 export function buildPlantTimeline(
@@ -51,18 +63,30 @@ export function buildPlantTimeline(
       const terminalAction = task.status === 'SKIPPED' ? 'SKIP' : 'COMPLETE';
       const terminalFeedback = task.feedback.find((f) => f.action === terminalAction);
       const snoozeCount = task.feedback.filter((f) => f.action === 'SNOOZE').length;
-      const reasonLabel = skipReasonLabel(terminalFeedback?.reason);
-      let description =
-        task.status === 'SKIPPED'
-          ? 'This care task was skipped.'
-          : 'This care task was marked complete.';
-      if (task.status === 'SKIPPED' && reasonLabel) {
-        description = `Skipped: ${reasonLabel}.`;
-        if (terminalFeedback?.note?.trim()) {
-          description += ` ${terminalFeedback.note.trim()}`;
+      const note = terminalFeedback?.note?.trim();
+
+      let description: string;
+      if (task.status === 'SKIPPED') {
+        const reasonLabel = skipReasonLabel(terminalFeedback?.reason);
+        if (reasonLabel) {
+          description = `Skipped: ${reasonLabel}.`;
+          if (note) description += ` ${note}`;
+        } else {
+          description =
+            'This care task was skipped. Add a skip reason next time to improve scheduling.';
         }
-      } else if (task.status === 'SKIPPED') {
-        description += ' Add a skip reason next time to improve scheduling.';
+      } else {
+        // Surface the post-care observation (reason and/or note) so completing a
+        // task with feedback becomes a visible entry in the plant's history.
+        const reasonLabel = completeReasonLabel(terminalFeedback?.reason);
+        if (reasonLabel || note) {
+          description = reasonLabel
+            ? `Completed — ${reasonLabel.toLowerCase()}.`
+            : 'This care task was marked complete.';
+          if (note) description += ` ${note}`;
+        } else {
+          description = 'This care task was marked complete.';
+        }
       }
 
       const dueLabel = `${snoozeCount > 0 ? 'Due' : 'Originally due'} ${format(
