@@ -33,6 +33,7 @@ import { CreateBuddyDto } from './dto/create-buddy.dto';
 import { UpdateBuddyDto } from './dto/update-buddy.dto';
 import { BuddyShopService } from './buddy-shop.service';
 import {
+  computeStreakUpdate,
   formatBuddy,
   generateGardenCode,
   parseJsonObject,
@@ -387,37 +388,25 @@ export class BuddyService {
   }
 
   private async updateStreak(buddyId: string, lastActiveDate: Date | null) {
-    const today = startOfDay(new Date());
-    const last = lastActiveDate ? startOfDay(lastActiveDate) : null;
-
     const buddy = await this.prisma.buddy.findUnique({ where: { id: buddyId } });
     if (!buddy) return;
 
-    if (last && last.getTime() === today.getTime()) return;
-
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    let streak = 1;
-    if (last && startOfDay(last).getTime() === yesterday.getTime()) {
-      streak = buddy.streakDays + 1;
-    }
-
-    const longest = Math.max(buddy.longestStreak, streak);
-    let bonusDewdrops = 0;
-    if (streak === 7) bonusDewdrops = 50;
-    if (streak === 30) bonusDewdrops = 200;
+    const result = computeStreakUpdate(
+      { streakDays: buddy.streakDays, longestStreak: buddy.longestStreak },
+      lastActiveDate,
+    );
+    if (result.alreadyActiveToday) return;
 
     await this.prisma.buddy.update({
       where: { id: buddyId },
       data: {
-        streakDays: streak,
-        longestStreak: longest,
-        lastActiveDate: today,
-        ...(bonusDewdrops > 0
+        streakDays: result.streakDays,
+        longestStreak: result.longestStreak,
+        lastActiveDate: startOfDay(new Date()),
+        ...(result.bonusDewdrops > 0
           ? { experiencePoints: { increment: BUDDY_XP_REWARDS.STREAK_BONUS } }
           : {}),
-        ...(bonusDewdrops > 0 ? { dewdrops: { increment: bonusDewdrops } } : {}),
+        ...(result.bonusDewdrops > 0 ? { dewdrops: { increment: result.bonusDewdrops } } : {}),
       },
     });
   }

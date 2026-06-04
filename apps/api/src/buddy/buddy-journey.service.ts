@@ -10,7 +10,12 @@ import { biomeById, defaultBiomeForBuddy, isBiomeUnlocked } from './constants/bi
 import { DISCOVERIES, pickDiscovery } from './constants/discoveries';
 import { StartJourneyDto } from './dto/start-journey.dto';
 import { BuddyService } from './buddy.service';
-import { appendPersonalityChoice, formatBuddy, parseStringArray } from './buddy.utils';
+import {
+  appendPersonalityChoice,
+  computeJourneyDurationMs,
+  formatBuddy,
+  parseStringArray,
+} from './buddy.utils';
 import { discoveryReaction } from './constants/buddy-dialogue';
 import { JourneyCompletedEvent } from './events/journey-completed.event';
 
@@ -24,14 +29,12 @@ export class BuddyJourneyService {
   ) {}
 
   private journeyDurationMs(growthStage: string, biomeHours: number): number {
-    const demoMinutes = this.config.get<string>('BUDDY_JOURNEY_MINUTES');
-    if (demoMinutes) {
-      return Math.max(1, parseInt(demoMinutes, 10)) * 60 * 1000;
-    }
-    if (this.config.get<string>('NODE_ENV') !== 'production') {
-      return 2 * 60 * 1000;
-    }
-    return biomeHours * 60 * 60 * 1000;
+    void growthStage;
+    return computeJourneyDurationMs({
+      demoMinutes: this.config.get<string>('BUDDY_JOURNEY_MINUTES'),
+      isProduction: this.config.get<string>('NODE_ENV') === 'production',
+      biomeHours,
+    });
   }
 
   async getActiveJourney(userId: string) {

@@ -1,5 +1,75 @@
 import { Buddy, BuddyJourney } from '@prisma/client';
+import { startOfDay } from 'date-fns';
 import { buddyLevelProgress } from './constants/leveling';
+
+export interface StreakInput {
+  streakDays: number;
+  longestStreak: number;
+}
+
+export interface StreakUpdate {
+  /** True when the buddy was already active today — caller should make no change. */
+  alreadyActiveToday: boolean;
+  streakDays: number;
+  longestStreak: number;
+  bonusDewdrops: number;
+}
+
+/**
+ * Pure midnight-streak decision: given the current streak and the last active
+ * day, compute the new streak after activity "now". A consecutive day extends
+ * the streak; a gap resets it to 1; same-day activity is a no-op. Milestone days
+ * (7, 30) award bonus dewdrops.
+ */
+export function computeStreakUpdate(
+  current: StreakInput,
+  lastActiveDate: Date | null,
+  now: Date = new Date(),
+): StreakUpdate {
+  const today = startOfDay(now);
+  const last = lastActiveDate ? startOfDay(lastActiveDate) : null;
+
+  if (last && last.getTime() === today.getTime()) {
+    return {
+      alreadyActiveToday: true,
+      streakDays: current.streakDays,
+      longestStreak: current.longestStreak,
+      bonusDewdrops: 0,
+    };
+  }
+
+  const yesterday = startOfDay(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const streak = last && last.getTime() === yesterday.getTime() ? current.streakDays + 1 : 1;
+  const longestStreak = Math.max(current.longestStreak, streak);
+
+  let bonusDewdrops = 0;
+  if (streak === 7) bonusDewdrops = 50;
+  if (streak === 30) bonusDewdrops = 200;
+
+  return { alreadyActiveToday: false, streakDays: streak, longestStreak, bonusDewdrops };
+}
+
+/**
+ * How long a buddy journey runs, in ms. An explicit `BUDDY_JOURNEY_MINUTES`
+ * override (at least 1 minute) accelerates journeys for demos/tests; outside
+ * production journeys default to 2 minutes; in production they take the biome's
+ * configured hours.
+ */
+export function computeJourneyDurationMs(opts: {
+  demoMinutes?: string | null;
+  isProduction: boolean;
+  biomeHours: number;
+}): number {
+  if (opts.demoMinutes) {
+    return Math.max(1, parseInt(opts.demoMinutes, 10)) * 60 * 1000;
+  }
+  if (!opts.isProduction) {
+    return 2 * 60 * 1000;
+  }
+  return opts.biomeHours * 60 * 60 * 1000;
+}
 
 export function parseStringArray(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((v) => typeof v === 'string');

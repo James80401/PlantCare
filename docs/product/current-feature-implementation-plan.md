@@ -325,6 +325,17 @@ Android closed testing path.
 - Cover midnight streak behavior and accelerated journey timer behavior.
 - Keep shop purchase edge cases covered.
 
+**Status (2026-06-03):** the two date-driven behaviors the roadmap calls out are
+now extracted into pure, unit-tested helpers in `buddy.utils.ts`:
+`computeStreakUpdate` (consecutive-day extend, same-day no-op, gap reset, 7/30-day
+bonuses) and `computeJourneyDurationMs` (the `BUDDY_JOURNEY_MINUTES` accelerated
+timer with a 1-minute floor, the 2-minute non-prod default, and biome-hours in
+production). `buddy.service.updateStreak` and
+`buddy-journey.service.journeyDurationMs` now delegate to them, so the logic is
+covered without flaky timer/Prisma integration. Shop purchase edge cases remain
+covered by `buddy-shop-purchase.util.spec`. **Remaining:** broader event-listener
+integration tests and the Slice 7.2 mobile/tone polish pass.
+
 ### Slice 7.2 - Buddy polish pass
 
 - Mobile layout pass on iOS and Android.
