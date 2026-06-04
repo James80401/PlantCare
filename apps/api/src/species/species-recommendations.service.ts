@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { inferDifficulty, isSucculentSpecies, speciesDiscoveryTags } from './species-catalog-meta';
 import { enrichSpeciesRecord } from './species-enrich';
-import { resolveSpeciesMetadata } from './species-metadata';
+import { scoreSpeciesFit } from './species-recommendation-scoring';
 
 @Injectable()
 export class SpeciesRecommendationsService {
@@ -19,60 +18,22 @@ export class SpeciesRecommendationsService {
 
     const species = await this.prisma.plantSpecies.findMany();
     const scored = species
-      .map((item) => ({
-        item,
-        score: this.scoreSpecies(item, experience, lightLevel),
-      }))
+      .map((item) => {
+        const fit = scoreSpeciesFit(item, experience, lightLevel);
+        return { item, score: fit.score, reasons: fit.reasons };
+      })
       .filter((row) => row.score > 0)
       .sort((a, b) => b.score - a.score || a.item.commonName.localeCompare(b.item.commonName));
 
     const slice = scored.slice(0, Math.min(24, Math.max(1, limit)));
     return {
-      items: slice.map((row) => enrichSpeciesRecord(row.item)),
+      items: slice.map((row) => ({
+        ...enrichSpeciesRecord(row.item),
+        // Top few "why recommended" chips for this specific plant.
+        matchReasons: row.reasons.slice(0, 3),
+      })),
       reason: this.buildReasonLabel(experience, lightLevel),
     };
-  }
-
-  private scoreSpecies(
-    species: Parameters<typeof enrichSpeciesRecord>[0],
-    experience: string,
-    lightLevel: string,
-  ) {
-    let score = 1;
-    const difficulty = inferDifficulty(species);
-    const tags = speciesDiscoveryTags(species);
-    const metadata = resolveSpeciesMetadata(species);
-    const sunlight = species.sunlight?.toLowerCase() ?? '';
-
-    if (experience === 'beginner') {
-      if (difficulty === 'Beginner') score += 4;
-      else if (difficulty === 'Moderate') score += 1;
-      else score -= 2;
-    } else if (experience === 'intermediate') {
-      if (difficulty === 'Moderate') score += 3;
-      if (difficulty === 'Beginner') score += 2;
-    } else if (experience === 'advanced') {
-      if (difficulty === 'Advanced') score += 3;
-      if (difficulty === 'Moderate') score += 2;
-    }
-
-    if (lightLevel === 'low') {
-      if (tags.includes('Low light') || sunlight.includes('low')) score += 3;
-      if (isSucculentSpecies(species) && !sunlight.includes('low')) score -= 1;
-    } else if (lightLevel === 'high' || lightLevel === 'bright') {
-      if (sunlight.includes('bright') || sunlight.includes('full sun')) score += 3;
-    } else {
-      if (tags.includes('Indoor-friendly') || sunlight.includes('indirect')) score += 2;
-    }
-
-    if (tags.includes('Pet-safe') && experience === 'beginner') score += 1;
-
-    if (metadata.bloomsIndoors && experience !== 'advanced') score += 1;
-    if (metadata.pollinatorFriendly && tags.includes('Outdoor-friendly')) score += 2;
-    if (metadata.humidity === 'high' && lightLevel === 'low') score -= 2;
-    if (metadata.humidity === 'high' && (lightLevel === 'medium' || !lightLevel)) score += 1;
-
-    return score;
   }
 
   private buildReasonLabel(experience: string, lightLevel: string) {

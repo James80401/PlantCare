@@ -264,6 +264,14 @@ coverage and filters, not a new catalog product.
 - Browse and add-plant recommendations explain fit clearly.
 - Tests or verification scripts cover new recommendation inputs.
 
+**Status (2026-06-03):** shipped. `GET /species/recommended` now returns
+per-plant `matchReasons` alongside the overall list label. Scoring was extracted
+into a pure, unit-tested `scoreSpeciesFit` (`species-recommendation-scoring.ts`)
+that collects the human-readable reasons (Easy to care for, Tolerates low light,
+Pet-safe, Blooms indoors, Pollinator favorite, etc.) from the same signals it
+scores — so the explanation can't drift from the ranking. The Browse
+"Recommended for you" rail renders these as chips per card.
+
 ## Track 6 - Quality, accessibility, and mobile release checks
 
 **Goal:** Make existing features safer to ship through the live public URL and

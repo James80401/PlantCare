@@ -6,8 +6,25 @@
 |--------|------|-------------|
 | GET | `/species/search?q=` | Search catalog (local DB) |
 | GET | `/species/:id` | Species detail |
+| GET | `/species/recommended?limit=` | Personalized picks for the current user |
 
 **PerenualService** optionally enriches from external API when key set.
+
+## Recommendations (shipped)
+
+`GET /species/recommended` scores the catalog against the user's
+`experienceLevel` and `defaultLightLevel` and returns:
+
+- `items[]` — enriched species, each with `matchReasons: string[]` ("why
+  recommended" chips such as `Easy to care for`, `Tolerates low light`,
+  `Pet-safe`, `Blooms indoors`, `Pollinator favorite`).
+- `reason` — one overall label for the list (e.g. *"Recommended beginner-friendly
+  picks suited to lower light."*).
+
+Scoring + per-plant reasons are produced by the pure
+`species-recommendation-scoring.ts` (`scoreSpeciesFit`), so the score and the
+explanation copy can't drift. The web Browse "Recommended for you" rail renders
+the per-plant `matchReasons` as chips.
 
 Seed data: `prisma/data/species-catalog.ts`
 

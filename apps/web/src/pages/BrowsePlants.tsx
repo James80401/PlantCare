@@ -24,6 +24,7 @@ interface SpeciesItem {
   discoveryTags?: string[];
   difficulty?: string;
   toxicitySummary?: string;
+  matchReasons?: string[];
 }
 
 interface BrowseResponse {
@@ -242,6 +243,18 @@ export default function BrowsePlants() {
                       <p className="mt-1 text-[0.65rem] font-medium text-lime-800">
                         {species.difficulty}
                       </p>
+                    ) : null}
+                    {species.matchReasons?.length ? (
+                      <ul className="mt-1.5 flex flex-wrap gap-1">
+                        {species.matchReasons.map((reason) => (
+                          <li
+                            key={reason}
+                            className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[0.6rem] font-medium text-emerald-800 ring-1 ring-emerald-100"
+                          >
+                            {reason}
+                          </li>
+                        ))}
+                      </ul>
                     ) : null}
                   </div>
                 </article>
