@@ -53,14 +53,16 @@ export class BuddyNotificationsListener {
       const already = await this.notifications.hasBuddyNudgeToday(buddy.userId, 'mood');
       if (already) continue;
 
+      // Warm, plant-grounded, never guilt-inducing (Buddy is non-punishing):
+      // frame nudges around helping the plants, with no obligation to the buddy.
       const title =
         buddy.mood === BuddyMood.DORMANT
           ? `${buddy.name} is resting`
-          : `${buddy.name} misses you`;
+          : `${buddy.name} would love a little care`;
       const body =
         buddy.mood === BuddyMood.DORMANT
-          ? 'A quick check-in will wake your buddy up — complete a care task today.'
-          : 'Complete a plant task to cheer up your buddy and fill their sunlight bar.';
+          ? 'Whenever you’re ready, a quick care task will wake your buddy up.'
+          : 'Whenever you have a moment, a care task will help your plants — and perk up your buddy.';
 
       await this.notifications.notifyBuddy(buddy.userId, title, body, 'mood');
     }

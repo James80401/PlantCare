@@ -342,6 +342,16 @@ integration tests and the Slice 7.2 mobile/tone polish pass.
 - Tone review for warm, plant-focused, non-pressuring copy.
 - Decide whether server analytics aggregates are needed before adding them.
 
+**Tone review (2026-06-03):** audited the Buddy copy against the non-punishing
+principle. The in-app `buddyPhraseCatalog` is already exemplary (explicit "no
+guilt", "no pressure", gentle mood lines). The one guilt-leaning surface was the
+**mood-nudge push notification** ("{name} misses you" / "complete a plant task to
+cheer up your buddy"), now reworded to warm, plant-grounded, no-obligation copy
+("{name} would love a little care" / "Whenever you have a moment, a care task
+will help your plants — and perk up your buddy."). Added
+`buddy-notifications.listener.spec` as a tone guardrail. **Remaining:** mobile
+iOS/Android layout pass (needs devices) and the server-analytics decision.
+
 ## Recommended first batch
 
 Start with a batch that improves daily value and lowers risk:
