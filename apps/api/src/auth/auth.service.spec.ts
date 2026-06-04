@@ -101,8 +101,91 @@ describe('AuthService refresh token rotation', () => {
     };
     const email = { isConfigured: jest.fn().mockReturnValue(false) };
     const service = new AuthService(prisma as never, jwt as never, config as never, email as never);
-    return { service, prisma, stored };
+    return { service, prisma, stored, jwt, user, email };
   }
+
+  const familyRevoke = {
+    where: { familyId: 'fam-1', revokedAt: null },
+    data: { revokedAt: expect.any(Date) },
+  };
+
+  it('rejects an empty or non-string token without touching the database', async () => {
+    const { service, prisma } = createService();
+    await expect(service.refresh('')).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(prisma.refreshToken.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('rejects when the refresh JWT fails verification', async () => {
+    const { service, jwt, prisma } = createService();
+    jwt.verify.mockImplementation(() => {
+      throw new Error('bad signature');
+    });
+    await expect(service.refresh('tampered')).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(prisma.refreshToken.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unrecognized token without revoking a family', async () => {
+    const { service, prisma } = createService();
+    prisma.refreshToken.findUnique.mockReset();
+    prisma.refreshToken.findUnique.mockResolvedValue(null);
+    await expect(service.refresh('ghost')).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('revokes the family when the token user does not match the JWT subject', async () => {
+    const { service, prisma } = createService({ userId: 'someone-else' });
+    await expect(service.refresh('mismatch')).rejects.toThrow(/mismatch/i);
+    expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith(familyRevoke);
+  });
+
+  it('rejects an expired refresh token without revoking the family', async () => {
+    const { service, prisma } = createService({ expiresAt: new Date(Date.now() - 1_000) });
+    await expect(service.refresh('expired')).rejects.toThrow(/expired/i);
+    expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('revokes the family when the owning user no longer exists', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue(null);
+    await expect(service.refresh('orphan')).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith(familyRevoke);
+  });
+
+  it('rejects when the account is pending or rejected', async () => {
+    const pending = createService();
+    pending.prisma.user.findUnique.mockResolvedValue({
+      ...pending.user,
+      accountApprovalStatus: AccountApprovalStatus.PENDING,
+    });
+    await expect(pending.service.refresh('p')).rejects.toThrow(/approval/i);
+
+    const rejected = createService();
+    rejected.prisma.user.findUnique.mockResolvedValue({
+      ...rejected.user,
+      accountApprovalStatus: AccountApprovalStatus.REJECTED,
+    });
+    await expect(rejected.service.refresh('r')).rejects.toThrow(/not approved/i);
+  });
+
+  it('rejects when email delivery is configured and the address is unverified', async () => {
+    const { service, prisma, user, email } = createService();
+    email.isConfigured.mockReturnValue(true);
+    prisma.user.findUnique.mockResolvedValue({ ...user, emailVerified: false });
+    await expect(service.refresh('unverified')).rejects.toThrow(/not verified/i);
+  });
+
+  it('rotates a valid token: revokes the parent and links its replacement', async () => {
+    const { service, prisma } = createService();
+    const result = await service.refresh('valid');
+
+    expect(result).toHaveProperty('accessToken');
+    expect(result).toHaveProperty('refreshToken');
+    expect(prisma.refreshToken.update).toHaveBeenCalledWith({
+      where: { id: 'rt-1' },
+      data: { revokedAt: expect.any(Date), replacedBy: 'rt-2' },
+    });
+    expect(prisma.refreshToken.updateMany).not.toHaveBeenCalled();
+  });
 
   it('revokes the family when a long-revoked token is replayed', async () => {
     const { service, prisma } = createService({
