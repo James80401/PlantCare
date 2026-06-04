@@ -6,6 +6,9 @@ import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const { speciesCatalog } = require('../prisma/data/species-catalog.ts');
+// Use the SAME inference the seed persists (metadataJson) and the API reads at
+// query time, so this audit can never drift from real filter behavior.
+const { buildMetadataForSpecies } = require('../apps/api/src/species/species-metadata.ts');
 
 let failed = 0;
 
@@ -109,30 +112,21 @@ for (const filter of filters) {
   else fail(`${filter} coverage too low: ${count}`);
 }
 
+const metadataCache = new WeakMap();
+function metadataFor(species) {
+  let meta = metadataCache.get(species);
+  if (!meta) {
+    meta = buildMetadataForSpecies(species);
+    metadataCache.set(species, meta);
+  }
+  return meta;
+}
+
 function matchesPhase3(species, filter) {
-  const searchable = text(species);
-  const name = species.commonName.toLowerCase();
-  if (filter === 'highHumidity') {
-    return (
-      /fern|calathea|maranta|maidenhair|nerve plant|peace lily/i.test(name) ||
-      /high humidity|never let dry|mist regularly/i.test(searchable)
-    );
-  }
-  if (filter === 'pollinatorFriendly') {
-    return (
-      /pollinator|lavender|sunflower|coneflower|milkweed|bee balm|zinnia|marigold/i.test(
-        searchable,
-      ) ||
-      (matches(species, 'edible') &&
-        (species.sunlight?.toLowerCase().includes('full sun') ||
-          searchable.includes('garden')))
-    );
-  }
-  if (filter === 'bloomsIndoors') {
-    return /orchid|anthurium|bromeliad|african violet|peace lily|begonia|christmas cactus/i.test(
-      name,
-    );
-  }
+  const meta = metadataFor(species);
+  if (filter === 'highHumidity') return meta.humidity === 'high';
+  if (filter === 'pollinatorFriendly') return meta.pollinatorFriendly === true;
+  if (filter === 'bloomsIndoors') return meta.bloomsIndoors === true;
   return false;
 }
 

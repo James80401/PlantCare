@@ -181,9 +181,24 @@ function isSucculent(species: SpeciesMetadataInput) {
   );
 }
 
+// Plant groups with a strong, well-documented preference for high humidity.
+// Matched by name so the catalog does not have to repeat misting advice in
+// every careNotes string for the highHumidity filter to work.
+const HIGH_HUMIDITY_NAME =
+  /fern|calathea|maranta|prayer plant|rattlesnake|stromanthe|ctenanthe|fittonia|nerve plant|alocasia|caladium|anthurium|croton|nepenthes|pitcher plant|sundew|venus ?fly ?trap|sarracenia|tillandsia|air plant|orchid|bromeliad|guzmania|neoregelia|vriesea|aechmea|begonia rex|rex begonia|selaginella|spike ?moss/i;
+
+function isHighHumiditySpecies(species: SpeciesMetadataInput): boolean {
+  return HIGH_HUMIDITY_NAME.test(
+    `${species.commonName} ${species.scientificName ?? ''}`.toLowerCase(),
+  );
+}
+
 function inferHumidity(species: SpeciesMetadataInput): SpeciesMetadata['humidity'] {
   const text = searchableText(species);
-  if (/high humidity|mist|humid|never let dry|filtered water|fluoride/.test(text)) {
+  if (
+    /high humidity|mist|humid|never let dry|filtered water|fluoride/.test(text) ||
+    isHighHumiditySpecies(species)
+  ) {
     return 'high';
   }
   if (isSucculent(species) || species.wateringFreqDays >= 12) return 'low';
@@ -330,13 +345,18 @@ function inferPollinatorFriendly(species: SpeciesMetadataInput): boolean {
   );
 }
 
+// Plants commonly grown for reliable indoor flowering with adequate light.
+const BLOOMS_INDOORS_NAME =
+  /orchid|anthurium|bromeliad|guzmania|neoregelia|vriesea|aechmea|african violet|peace lily|begonia|christmas cactus|thanksgiving cactus|kalanchoe|flaming katy|cyclamen|gloxinia|streptocarpus|cape primrose|episcia|hoya|amaryllis|hippeastrum|clivia|lipstick plant|goldfish plant|aeschynanthus|columnea|oxalis|geranium|pelargonium|crown of thorns|jasmine/i;
+
 function inferBloomsIndoors(species: SpeciesMetadataInput, bloomSeason: string): boolean {
+  // Known indoor bloomers take precedence: some (e.g. Christmas cactus) are
+  // succulents whose generic bloom-season copy would otherwise read "rare".
+  if (BLOOMS_INDOORS_NAME.test(species.commonName.toLowerCase())) {
+    return true;
+  }
   if (/non-flowering|pinch flowers|occasional flowers|rare/i.test(bloomSeason.toLowerCase())) {
     return false;
-  }
-  const name = species.commonName.toLowerCase();
-  if (/orchid|anthurium|bromeliad|african violet|peace lily|begonia|christmas cactus/i.test(name)) {
-    return true;
   }
   return /blooms indoors|bloom cycle/i.test(bloomSeason.toLowerCase());
 }
