@@ -109,10 +109,32 @@ export function measurementDeltaSummary(
   return parts.length ? parts.join(' - ') : null;
 }
 
-export function measurementSummaryForEntry(entry: PlantRecord): string | null {
+export type MeasurementValues = {
+  heightCm: number | null;
+  widthCm: number | null;
+  leafCount: number | null;
+};
+
+/**
+ * Human-readable summary of a single set of measurements, e.g.
+ * `"14 cm tall · 20 cm wide · 8 leaves"`. Returns `null` when no
+ * measurement is present so callers can fall back cleanly.
+ *
+ * Shared by the plant journal and the dashboard Garden Story so the
+ * separator (` · `) and copy stay consistent across surfaces.
+ */
+export function formatMeasurementValues(measurements: MeasurementValues): string | null {
   const parts: string[] = [];
-  if (entry.heightCm != null) parts.push(`${entry.heightCm} cm tall`);
-  if (entry.widthCm != null) parts.push(`${entry.widthCm} cm wide`);
-  if (entry.leafCount != null) parts.push(`${entry.leafCount} leaves`);
+  if (measurements.heightCm != null) parts.push(`${measurements.heightCm} cm tall`);
+  if (measurements.widthCm != null) parts.push(`${measurements.widthCm} cm wide`);
+  if (measurements.leafCount != null) parts.push(`${measurements.leafCount} leaves`);
   return parts.length ? parts.join(' · ') : null;
+}
+
+export function measurementSummaryForEntry(entry: PlantRecord): string | null {
+  return formatMeasurementValues({
+    heightCm: entry.heightCm != null ? Number(entry.heightCm) : null,
+    widthCm: entry.widthCm != null ? Number(entry.widthCm) : null,
+    leafCount: entry.leafCount != null ? Number(entry.leafCount) : null,
+  });
 }

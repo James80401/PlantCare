@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   extractMeasurementPoints,
   formatDelta,
+  formatMeasurementValues,
   heightSeries,
   measurementDeltaSummary,
+  measurementSummaryForEntry,
   pickCompareIdsAroundEntry,
   pickLatestPhotoCompareIds,
   pickPhotoCompareIds,
@@ -82,5 +84,27 @@ describe('journalMeasurements', () => {
       { heightCm: 12, widthCm: 14, leafCount: 7 } as never,
     );
     expect(summary).toBe('Height +2 cm - Width -1 cm - Leaves +3');
+  });
+
+  it('formats a measurement set with the shared middle-dot separator', () => {
+    expect(
+      formatMeasurementValues({ heightCm: 14, widthCm: 20, leafCount: 8 }),
+    ).toBe('14 cm tall · 20 cm wide · 8 leaves');
+  });
+
+  it('omits missing measurement fields and returns null when empty', () => {
+    expect(
+      formatMeasurementValues({ heightCm: 10, widthCm: null, leafCount: 5 }),
+    ).toBe('10 cm tall · 5 leaves');
+    expect(
+      formatMeasurementValues({ heightCm: null, widthCm: null, leafCount: null }),
+    ).toBeNull();
+  });
+
+  it('summarizes a journal entry through the shared formatter', () => {
+    expect(
+      measurementSummaryForEntry({ heightCm: 12, widthCm: null, leafCount: null } as never),
+    ).toBe('12 cm tall');
+    expect(measurementSummaryForEntry({ notes: 'no numbers' } as never)).toBeNull();
   });
 });

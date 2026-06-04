@@ -41,6 +41,7 @@ import {
   plantProfileDetailsPath,
 } from '../utils/gardenPaths';
 import { resolveApiAssetUrl } from '../utils/apiAssets';
+import { formatMeasurementValues } from '../utils/journalMeasurements';
 
 interface ScheduleSuggestion {
   id: string;
@@ -705,7 +706,7 @@ function GardenStorySection({ story }: { story: DashboardHealthStory }) {
                     />
                   ) : (
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-xl">
-                      <span aria-hidden>ðŸŒ¿</span>
+                      <span aria-hidden>🌿</span>
                     </div>
                   )}
                   <div className="min-w-0">
@@ -718,7 +719,7 @@ function GardenStorySection({ story }: { story: DashboardHealthStory }) {
                   </div>
                 </div>
                 <p className="mt-2 line-clamp-2 text-sm leading-5 text-gray-700">
-                  {entry.notePreview || measurementSummary(entry.measurements) || 'Progress logged'}
+                  {entry.notePreview || formatMeasurementValues(entry.measurements) || 'Progress logged'}
                 </p>
               </Link>
             ))
@@ -800,16 +801,6 @@ function StoryEmpty({ text }: { text: string }) {
       {text}
     </p>
   );
-}
-
-function measurementSummary(measurements: DashboardHealthStory['recentJournal'][number]['measurements']) {
-  const parts = [
-    measurements.heightCm != null ? `${measurements.heightCm} cm tall` : null,
-    measurements.widthCm != null ? `${measurements.widthCm} cm wide` : null,
-    measurements.leafCount != null ? `${measurements.leafCount} leaves` : null,
-  ].filter(Boolean);
-
-  return parts.join(' - ');
 }
 
 function DashboardMetric({

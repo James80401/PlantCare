@@ -8,6 +8,7 @@
 | [current-feature-implementation-plan.md](current-feature-implementation-plan.md) | PM / dev | Active implementation plan for improving shipped features |
 | [improvement-recommendations.md](improvement-recommendations.md) | PM / dev | Researched, prioritized improvement backlog |
 | [improvement-checklist.md](improvement-checklist.md) | PM / dev | Archived roadmap acceptance criteria and implementation ideas |
+| [species-coverage-report.md](species-coverage-report.md) | PM / dev | Species catalog filter-attribute coverage audit (CONTENT-1 input) |
 | [uat-checklist.md](uat-checklist.md) | QA | Full UAT matrix |
 | [tester-5-minute.md](tester-5-minute.md) | Testers | Quick smoke script |
 | [google-play-closed-testing.md](google-play-closed-testing.md) | Testers / release | Play closed testing program (G4) |
