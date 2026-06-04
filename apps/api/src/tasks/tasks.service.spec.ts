@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { TaskStatus } from '@prisma/client';
 import { TasksService } from './tasks.service';
 
@@ -154,5 +154,21 @@ describe('TasksService', () => {
     const { service } = createService(null);
 
     await expect(service.skip('user-1', 'task-1')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rejects snoozing a task that is not pending', async () => {
+    const { service } = createService({ ...task, status: TaskStatus.DONE });
+
+    await expect(service.snooze('user-1', 'task-1', { days: 3 })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('rejects snoozing a task owned by another user', async () => {
+    const { service } = createService(null);
+
+    await expect(service.snooze('user-1', 'task-1', { days: 1 })).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });
