@@ -97,6 +97,13 @@ Runbook: [google-play-closed-testing.md](google-play-closed-testing.md)
   - [ ] Optional: `npm run production:signoff -- --e2e` (Playwright on public web)
   - [ ] Record: `npm run production:signoff -- --write docs/operations/signoffs/<date>.md`
   - [ ] Runbook: [production-signoff.md](../operations/production-signoff.md)
+- **2026-06-05 — live probes signed off ✓:** after deploying `0b686c3`,
+  `production:signoff --live-only --skip-verify` returned **PASS** — health,
+  readiness (db + uploads), CORS (`drplant.app`), and web all HTTP 200. Artifact
+  written to `docs/operations/signoffs/2026-06-05-production-signoff.md`
+  (gitignored — operator-local). **Deferred:** `verify` / `smoke:buddy` / `--e2e`
+  register users and need the prod `DATABASE_URL`, so run them from an operator
+  environment to fully close G3.
 - [x] Tester instructions below
 - [x] Known limitations listed below
 
@@ -132,4 +139,5 @@ npm run uat:e2e
 | Role | Name | Date | Notes |
 |------|------|------|-------|
 | Dev | Automated 2026-05-18 | | Local UAT automated; staging URL pending deploy |
+| Ops | Automated (Claude) | 2026-06-05 | Deployed `0b686c3`; live production sign-off PASS (health/readiness/CORS/web). Deeper `verify`/`smoke:buddy`/`uat:e2e` deferred — need prod `DATABASE_URL`. |
 | UAT lead | | | Confirm production env URLs when staging is live |
