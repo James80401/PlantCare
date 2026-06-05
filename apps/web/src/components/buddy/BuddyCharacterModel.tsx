@@ -320,8 +320,8 @@ function Wings({ model }: { model: SpeciesModel }) {
 
   return (
     <g className="buddy-model-wings">
-      <path d={left} fill={model.wing} stroke={model.bodyDark} strokeWidth="3" />
-      <path d={right} fill={model.wing} stroke={model.bodyDark} strokeWidth="3" />
+      <path d={left} fill={model.wing} stroke={model.bodyDark} strokeWidth="3" className="buddy-model-wing buddy-model-wing-left" />
+      <path d={right} fill={model.wing} stroke={model.bodyDark} strokeWidth="3" className="buddy-model-wing buddy-model-wing-right" />
       <path d="M35 105 C42 110 48 115 53 122" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" opacity="0.35" fill="none" />
       <path d="M125 105 C118 110 112 115 107 122" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" opacity="0.35" fill="none" />
     </g>
@@ -364,10 +364,14 @@ export default function BuddyCharacterModel({
       <Crest model={model} />
       <Wings model={model} />
 
-      <path d="M62 144 C54 152 51 160 48 168" stroke={model.bodyDark} strokeWidth="9" strokeLinecap="round" fill="none" className="buddy-model-leg buddy-model-leg-left" />
-      <path d="M98 144 C106 152 109 160 112 168" stroke={model.bodyDark} strokeWidth="9" strokeLinecap="round" fill="none" className="buddy-model-leg buddy-model-leg-right" />
-      <ellipse cx="45" cy="168" rx="14" ry="6" fill={model.accent} stroke={model.bodyDark} strokeWidth="2" />
-      <ellipse cx="115" cy="168" rx="14" ry="6" fill={model.accent} stroke={model.bodyDark} strokeWidth="2" />
+      <g className="buddy-model-leg buddy-model-leg-left">
+        <path d="M62 144 C54 152 51 160 48 168" stroke={model.bodyDark} strokeWidth="9" strokeLinecap="round" fill="none" />
+        <ellipse cx="45" cy="168" rx="14" ry="6" fill={model.accent} stroke={model.bodyDark} strokeWidth="2" />
+      </g>
+      <g className="buddy-model-leg buddy-model-leg-right">
+        <path d="M98 144 C106 152 109 160 112 168" stroke={model.bodyDark} strokeWidth="9" strokeLinecap="round" fill="none" />
+        <ellipse cx="115" cy="168" rx="14" ry="6" fill={model.accent} stroke={model.bodyDark} strokeWidth="2" />
+      </g>
 
       <path d={BODY_PATH} fill={`url(#${bodyGradientId})`} stroke={model.bodyDark} strokeWidth="3" />
       <ellipse cx="82" cy="124" rx="34" ry="39" fill={`url(#${bellyGradientId})`} opacity="0.95" />

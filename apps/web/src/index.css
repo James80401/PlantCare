@@ -77,22 +77,42 @@ body {
   display: block;
   overflow: visible;
   filter: drop-shadow(0 12px 14px rgb(6 78 59 / 0.16));
+  transform-origin: 50% 90%;
+  /* Subtle full-body "breathing" so the buddy always feels alive, even while
+     a whole-body action animation plays on the wrapper above it. */
+  animation: buddy-body-breathe 3.8s ease-in-out infinite;
 }
 
+/* Head foliage sways like leaves in a breeze. */
 .buddy-model-crest {
-  transform-origin: 66px 54px;
-  animation: buddy-crest-breathe 3.6s ease-in-out infinite;
+  transform-origin: 80px 62px;
+  animation: buddy-crest-sway 4s ease-in-out infinite;
 }
 
-.buddy-model-wings {
-  transform-origin: 80px 105px;
-  animation: buddy-wing-sway 3.2s ease-in-out infinite;
+/* Arms/wings wave independently and out of sync for a lifelike gesture. */
+.buddy-model-wing-left {
+  transform-origin: 50px 100px;
+  animation: buddy-wing-wave-left 2.8s ease-in-out infinite;
 }
 
-.buddy-model-leg {
-  transform-origin: 66px 116px;
+.buddy-model-wing-right {
+  transform-origin: 110px 100px;
+  animation: buddy-wing-wave-right 3.1s ease-in-out infinite;
 }
 
+/* Legs (each grouped with its foot) gently shift weight foot-to-foot at rest. */
+.buddy-model-leg-left {
+  transform-origin: 62px 144px;
+  animation: buddy-idle-step 2.6s ease-in-out infinite;
+}
+
+.buddy-model-leg-right {
+  transform-origin: 98px 144px;
+  animation: buddy-idle-step 2.6s ease-in-out infinite;
+  animation-delay: -1.3s;
+}
+
+/* Travel overrides the idle weight-shift with a larger marching step. */
 .buddy-travel-walk .buddy-model-leg-left {
   animation: buddy-step-left 0.6s ease-in-out infinite;
 }
@@ -101,43 +121,79 @@ body {
   animation: buddy-step-right 0.6s ease-in-out infinite;
 }
 
-@keyframes buddy-crest-breathe {
+@keyframes buddy-body-breathe {
   0%,
   100% {
-    transform: rotate(-1.5deg) translateY(0);
+    transform: scale(1, 1);
   }
   50% {
-    transform: rotate(1.5deg) translateY(-2px);
+    transform: scale(0.99, 1.02);
   }
 }
 
-@keyframes buddy-wing-sway {
+@keyframes buddy-crest-sway {
   0%,
   100% {
-    transform: rotate(-1.5deg);
+    transform: rotate(-2.5deg) translateY(0);
   }
   50% {
-    transform: rotate(1.5deg);
+    transform: rotate(2.5deg) translateY(-1.5px);
+  }
+}
+
+@keyframes buddy-wing-wave-left {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  30% {
+    transform: rotate(-15deg);
+  }
+  60% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes buddy-wing-wave-right {
+  0%,
+  100% {
+    transform: rotate(3deg);
+  }
+  35% {
+    transform: rotate(15deg);
+  }
+  65% {
+    transform: rotate(-3deg);
+  }
+}
+
+@keyframes buddy-idle-step {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  50% {
+    transform: rotate(3deg) translateY(-2px);
   }
 }
 
 @keyframes buddy-step-left {
   0%,
   100% {
-    transform: rotate(-5deg);
+    transform: rotate(-7deg) translateY(0);
   }
   50% {
-    transform: rotate(8deg);
+    transform: rotate(10deg) translateY(-3px);
   }
 }
 
 @keyframes buddy-step-right {
   0%,
   100% {
-    transform: rotate(8deg);
+    transform: rotate(10deg) translateY(-3px);
   }
   50% {
-    transform: rotate(-5deg);
+    transform: rotate(-7deg) translateY(0);
   }
 }
 
@@ -288,6 +344,13 @@ body {
   .buddy-speech-in,
   .buddy-panel-in,
   .buddy-chip-expanded,
+  .buddy-idle-bob,
+  .buddy-character-model,
+  .buddy-model-crest,
+  .buddy-model-wing-left,
+  .buddy-model-wing-right,
+  .buddy-model-leg-left,
+  .buddy-model-leg-right,
   .buddy-travel-stage,
   .buddy-travel-stage .buddy-travel-walk {
     animation: none !important;
