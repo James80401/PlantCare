@@ -55,7 +55,23 @@ Patterns used across Plant Care web. Re-run this list when adding major UI.
 ## Automated
 
 - [x] Playwright: landmarks + skip link (`tests/e2e/uat.spec.ts`)
-- [ ] Optional: `@axe-core/playwright` on `/garden` in CI (add when ready)
+- [x] Vitest + `jest-axe`: structural axe scan on key rendered surfaces
+  (`apps/web/src/a11y.test.tsx` — TaskRow, DrPlantContextPanel). Runs in the web
+  unit suite; `color-contrast` is disabled there (jsdom has no layout) and stays
+  on the manual pass.
+- [ ] Optional: `@axe-core/playwright` on `/garden` in CI (add when ready) — for
+  contrast + full-page rules a headless browser can evaluate.
+
+## Code audit log
+
+- **2026-06-05 (code-level sweep):** no defects found across the standard
+  categories — every `<img>` has `alt`; no click handlers on non-interactive
+  elements; all `<select>`/`<input>` are labelled (wrapped `<label>` or
+  `id`+`htmlFor`); icon-only controls carry an accessible name; `index.html` has
+  `lang="en"`, a `<title>`, and a zoomable viewport (`initial-scale=1`, no
+  `maximum-scale`/`user-scalable=no`). Added the `jest-axe` guard above to catch
+  structural regressions automatically. Manual keyboard/screen-reader/contrast
+  passes remain a per-release human step.
 
 ## Related components
 
