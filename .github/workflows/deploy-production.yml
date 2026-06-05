@@ -29,4 +29,4 @@ jobs:
             bash scripts/caddy-remove-basic-auth.sh
             node scripts/check-production-env.mjs .env.production
             docker compose -f docker-compose.production.yml --env-file .env.production up -d --build
-            docker compose -f docker-compose.production.yml ps
+            docker compose -f docker-compose.production.yml --env-file .env.production ps
