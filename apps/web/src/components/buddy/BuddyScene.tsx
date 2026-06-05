@@ -14,7 +14,7 @@ import type { BuddyState, BuddyTrait } from '../../hooks/buddy/types';
 import type { ShopItem } from '../../hooks/buddy/shopTypes';
 import { personalityForTrait } from './BuddyPersonality';
 import { buddyBackgroundAccent, buddyBackgroundClass } from './buddyBackgrounds';
-import { SceneBackdrop } from './BuddySceneBackdrop';
+import { SceneBackdrop, SceneForeground } from './BuddySceneBackdrop';
 
 type SceneMode = 'home' | 'traveling';
 
@@ -170,6 +170,7 @@ export default function BuddyScene({
               {furnitureEmoji(itemId)}
             </div>
           ))}
+          <SceneForeground />
         </>
       )}
 
