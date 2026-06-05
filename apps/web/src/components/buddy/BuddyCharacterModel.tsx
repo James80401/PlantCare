@@ -1,12 +1,21 @@
 import { useId } from 'react';
 import type { BuddyFaceExpression } from './buddyFaces';
+import {
+  BuddyClothingOverFace,
+  BuddyClothingUnderFace,
+  type EquippedItems,
+} from './buddyClothingSvg';
 
 type BuddyCharacterModelProps = {
   speciesId: string;
   expression: BuddyFaceExpression;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'companion';
+  equipped?: EquippedItems | null;
 };
+
+const BODY_PATH =
+  'M37 104 C37 58 60 42 82 42 C111 42 134 65 134 105 C134 148 112 166 82 166 C52 166 37 142 37 104 Z';
 
 type SpeciesModel = {
   body: string;
@@ -324,7 +333,9 @@ export default function BuddyCharacterModel({
   expression,
   size = 'md',
   variant = 'default',
+  equipped,
 }: BuddyCharacterModelProps) {
+  const equippedItems = (equipped ?? {}) as EquippedItems;
   const model = modelFor(speciesId);
   const dimensions = variant === 'companion' ? COMPANION_SIZE_CLASS[size] : SIZE_CLASS[size];
   const svgId = useId().replace(/:/g, '');
@@ -358,14 +369,16 @@ export default function BuddyCharacterModel({
       <ellipse cx="45" cy="168" rx="14" ry="6" fill={model.accent} stroke={model.bodyDark} strokeWidth="2" />
       <ellipse cx="115" cy="168" rx="14" ry="6" fill={model.accent} stroke={model.bodyDark} strokeWidth="2" />
 
-      <path d="M37 104 C37 58 60 42 82 42 C111 42 134 65 134 105 C134 148 112 166 82 166 C52 166 37 142 37 104 Z" fill={`url(#${bodyGradientId})`} stroke={model.bodyDark} strokeWidth="3" />
+      <path d={BODY_PATH} fill={`url(#${bodyGradientId})`} stroke={model.bodyDark} strokeWidth="3" />
       <ellipse cx="82" cy="124" rx="34" ry="39" fill={`url(#${bellyGradientId})`} opacity="0.95" />
+      <BuddyClothingUnderFace equipped={equippedItems} bodyPath={BODY_PATH} />
       <path d="M50 72 C61 56 99 55 116 74" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" opacity="0.38" fill="none" />
       <circle cx="54" cy="99" r="7" fill={model.cheek} opacity="0.72" />
       <circle cx="116" cy="99" r="7" fill={model.cheek} opacity="0.72" />
       <Face expression={expression} model={model} />
       <path d="M80 91 L73 100 Q80 106 87 100 Z" fill={model.accent} stroke="#7c4a12" strokeWidth="1.8" strokeLinejoin="round" />
       <path d="M60 137 C73 148 99 148 114 137" stroke="#064e3b" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.16" />
+      <BuddyClothingOverFace equipped={equippedItems} />
     </svg>
   );
 }

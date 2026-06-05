@@ -1,5 +1,6 @@
 import BuddyCharacterModel from './BuddyCharacterModel';
 import { faceExpressionForMood, type BuddyFaceExpression } from './buddyFaces';
+import type { EquippedItems } from './buddyClothingSvg';
 
 interface BuddySpriteProps {
   speciesId: string;
@@ -10,6 +11,8 @@ interface BuddySpriteProps {
   variant?: 'default' | 'companion';
   /** Override face expression (e.g. from animation catalog). */
   face?: BuddyFaceExpression;
+  /** Equipped cosmetics, rendered as SVG layers anchored to the character. */
+  equipped?: EquippedItems | null;
 }
 
 const moodClass: Record<string, string> = {
@@ -25,6 +28,7 @@ export default function BuddySprite({
   mood,
   variant = 'default',
   face,
+  equipped,
 }: BuddySpriteProps) {
   const moodEffect = mood ? moodClass[mood] : '';
   const motionClass = traveling
@@ -46,6 +50,7 @@ export default function BuddySprite({
         expression={faceExpression}
         size={size}
         variant={variant}
+        equipped={equipped}
       />
     </div>
   );
