@@ -1,5 +1,6 @@
 import BuddySprite from './BuddySprite';
 import type { BuddyFaceExpression } from './buddyFaces';
+import { buddyBackgroundClass } from './buddyBackgrounds';
 import type { ShopItem, ShopItemCategory } from '../../hooks/buddy/shopTypes';
 
 type EquippedItems = Record<string, unknown>;
@@ -241,8 +242,12 @@ export function ShopItemPreview({ item }: { item: ShopItem }) {
 
   if (item.category === 'BACKGROUND') {
     return (
-      <div className="h-20 w-24 overflow-hidden rounded-2xl bg-gradient-to-b from-sky-200 via-lime-100 to-emerald-300 shadow-inner">
-        <div className="mt-8 h-12 rounded-t-full bg-white/35" />
+      <div
+        className={`h-20 w-24 overflow-hidden rounded-2xl bg-gradient-to-b ${buddyBackgroundClass(
+          item.id,
+        )} shadow-inner`}
+      >
+        <div className="mt-9 h-11 rounded-t-[40%] bg-emerald-900/15" />
       </div>
     );
   }

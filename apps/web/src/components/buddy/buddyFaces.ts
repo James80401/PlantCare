@@ -17,11 +17,10 @@ export type BuddyFaceExpression =
   | 'dizzy'
   | 'focused';
 
-export const BUDDY_FACE_BY_MOOD: Partial<Record<string, BuddyFaceExpression>> = {
-  WILTING: 'sleepy',
-  THIRSTY: 'shy',
-  DORMANT: 'sleepy',
-};
+// Buddy is intentionally always cheerful — neglect never makes it look sad or
+// grey. Moods no longer map to droopy faces (kept as an empty map so callers
+// using faceExpressionForMood simply fall back to a happy expression).
+export const BUDDY_FACE_BY_MOOD: Partial<Record<string, BuddyFaceExpression>> = {};
 
 /** Subtle cheek tint per species (hex). */
 export const BUDDY_SPECIES_FACE_TINT: Record<string, string> = {

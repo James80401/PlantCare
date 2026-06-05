@@ -13,6 +13,8 @@ import type { BuddyItemEffectSummary } from './BuddyItemEffects';
 import type { BuddyState, BuddyTrait } from '../../hooks/buddy/types';
 import type { ShopItem } from '../../hooks/buddy/shopTypes';
 import { personalityForTrait } from './BuddyPersonality';
+import { buddyBackgroundAccent, buddyBackgroundClass } from './buddyBackgrounds';
+import { SceneBackdrop } from './BuddySceneBackdrop';
 
 type SceneMode = 'home' | 'traveling';
 
@@ -27,17 +29,6 @@ type BuddySceneProps = {
   itemEffects?: BuddyItemEffectSummary | null;
   compact?: boolean;
 };
-
-const BACKGROUND_CLASS: Record<string, string> = {
-  sunny_windowsill: 'from-sky-200 via-lime-100 to-emerald-300',
-  greenhouse: 'from-emerald-200 via-lime-100 to-teal-300',
-  moonlit_porch: 'from-indigo-300 via-slate-200 to-emerald-300',
-  rainy_greenhouse: 'from-slate-300 via-sky-100 to-emerald-300',
-};
-
-function sceneBackground(key: string) {
-  return BACKGROUND_CLASS[key] ?? BACKGROUND_CLASS.sunny_windowsill;
-}
 
 function displayFurniture(layout: Record<string, unknown>, furniture: ShopItem[]) {
   return Object.entries(layout)
@@ -74,7 +65,8 @@ export default function BuddyScene({
   const layout = (buddy.terrariumLayout ?? {}) as Record<string, unknown>;
   const sceneKey = mode === 'traveling' ? buddy.currentBiome : buddy.terrariumBackground;
   const travelVisual = biomeVisual(sceneKey);
-  const background = mode === 'traveling' ? travelVisual.sky : sceneBackground(sceneKey);
+  const background = mode === 'traveling' ? travelVisual.sky : buddyBackgroundClass(sceneKey);
+  const backgroundAccent = buddyBackgroundAccent(sceneKey);
   const personality = personalityForTrait(buddy.trait);
   const placedFurniture = useMemo(() => displayFurniture(layout, furniture), [layout, furniture]);
   const interactionItemIds = useMemo(
@@ -126,15 +118,11 @@ export default function BuddyScene({
       className={`relative isolate overflow-hidden rounded-[2rem] border border-emerald-100 bg-gradient-to-b ${background} ${heightClass} shadow-xl shadow-emerald-950/10`}
       aria-label={mode === 'traveling' ? 'Buddy travel scene' : 'Buddy home scene'}
     >
-      <div className="absolute inset-x-0 top-0 h-24 bg-white/30" />
-      <div className="absolute left-7 top-8 h-16 w-16 rounded-full bg-yellow-200/80 shadow-[0_0_45px_rgba(253,224,71,0.65)]" />
-      <div className="absolute bottom-0 left-0 right-0 h-28 rounded-t-[50%] bg-emerald-700/25" />
-      <div className="absolute bottom-0 left-0 right-0 h-16 bg-emerald-900/10" />
+      <div className="absolute inset-x-0 top-0 h-24 bg-white/25" />
+      {mode === 'home' ? <SceneBackdrop accent={backgroundAccent} /> : null}
+      <div className="absolute bottom-0 left-0 right-0 h-28 rounded-t-[50%] bg-emerald-800/20" />
+      <div className="absolute bottom-0 left-0 right-0 h-16 bg-emerald-950/10" />
       <div className="absolute bottom-8 left-[56%] h-9 w-44 -translate-x-1/2 rounded-[50%] bg-amber-100/45 blur-sm" />
-      <div className="absolute bottom-16 left-[34%] h-3 w-8 rotate-[-8deg] rounded-full bg-white/40" />
-      <div className="absolute bottom-20 left-[55%] h-3 w-10 rotate-[10deg] rounded-full bg-white/40" />
-      <div className="absolute right-10 top-28 h-2 w-2 rounded-full bg-yellow-100 shadow-[0_0_14px_rgba(254,240,138,.9)]" />
-      <div className="absolute right-20 top-44 h-1.5 w-1.5 rounded-full bg-yellow-100 shadow-[0_0_12px_rgba(254,240,138,.85)]" />
 
       {mode === 'traveling' ? (
         <>

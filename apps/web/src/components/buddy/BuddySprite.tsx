@@ -15,12 +15,6 @@ interface BuddySpriteProps {
   equipped?: EquippedItems | null;
 }
 
-const moodClass: Record<string, string> = {
-  WILTING: 'opacity-80 saturate-50',
-  THIRSTY: 'opacity-90',
-  DORMANT: 'opacity-60 grayscale',
-};
-
 export default function BuddySprite({
   speciesId,
   size = 'md',
@@ -30,7 +24,8 @@ export default function BuddySprite({
   face,
   equipped,
 }: BuddySpriteProps) {
-  const moodEffect = mood ? moodClass[mood] : '';
+  // Buddy always looks bright and happy — no grey/desaturated "neglected" state.
+  const moodEffect = '';
   const motionClass = traveling
     ? variant === 'companion'
       ? 'buddy-travel-walk'

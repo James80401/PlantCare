@@ -5,6 +5,7 @@ import type { BuddyAnimationDef } from './buddyAnimationCatalog';
 import { buildCompanionAnimationRotation } from './buddyCompanionRotation';
 import BuddyCharacterModel from './BuddyCharacterModel';
 import { faceExpressionForMood, type BuddyFaceExpression } from './buddyFaces';
+import type { EquippedItems } from './buddyClothingSvg';
 import type { BuddyPhraseContext } from './buddyPhraseContext';
 
 interface BuddyCompanionAnimatedProps {
@@ -13,13 +14,9 @@ interface BuddyCompanionAnimatedProps {
   traveling?: boolean;
   mood?: string;
   phraseContext?: BuddyPhraseContext | null;
+  /** Equipped cosmetics so the persistent companion mirrors the buddy's style. */
+  equipped?: EquippedItems | null;
 }
-
-const moodClass: Record<string, string> = {
-  WILTING: 'opacity-80 saturate-50',
-  THIRSTY: 'opacity-90',
-  DORMANT: 'opacity-60 grayscale',
-};
 
 const PROP_POSITION_CLASS: Record<NonNullable<BuddyAnimationDef['propPosition']>, string> = {
   'top-left': 'absolute -left-2 -top-2 text-3xl',
@@ -36,6 +33,7 @@ export default function BuddyCompanionAnimated({
   traveling,
   mood,
   phraseContext,
+  equipped,
 }: BuddyCompanionAnimatedProps) {
   const rotationKey = `${speciesId}-${phraseContext?.name ?? 'none'}`;
   const actRotation = useMemo(
@@ -62,7 +60,8 @@ export default function BuddyCompanionAnimated({
   }, [traveling, actIndex, currentDef, actRotation.length, reducedMotion]);
 
   const motionClass = traveling ? 'buddy-travel-walk' : cssClassForAnimation(currentDef);
-  const moodEffect = mood ? moodClass[mood] : '';
+  // Always cheerful — no grey/desaturated neglected state.
+  const moodEffect = '';
 
   const faceExpression: BuddyFaceExpression = useMemo(() => {
     if (traveling) return 'cozy';
@@ -88,6 +87,7 @@ export default function BuddyCompanionAnimated({
           expression={faceExpression}
           size={size === 'sm' ? 'md' : 'lg'}
           variant="companion"
+          equipped={equipped}
         />
       </div>
 

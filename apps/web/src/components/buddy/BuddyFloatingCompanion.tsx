@@ -357,6 +357,7 @@ export default function BuddyFloatingCompanion() {
               traveling={traveling}
               mood={buddy.mood}
               phraseContext={phraseContext}
+              equipped={buddy.equippedItems}
             />
           </button>
           <button
@@ -415,6 +416,7 @@ export default function BuddyFloatingCompanion() {
               traveling={traveling}
               mood={buddy.mood}
               phraseContext={phraseContext}
+              equipped={buddy.equippedItems}
             />
               </div>
 
@@ -570,6 +572,7 @@ export default function BuddyFloatingCompanion() {
               traveling={traveling}
               mood={buddy.mood}
               phraseContext={phraseContext}
+              equipped={buddy.equippedItems}
             />
             {traveling && (
               <span className="absolute -right-1 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-sky-500 text-xs text-white shadow">
