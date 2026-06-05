@@ -161,7 +161,13 @@ export function PotHome({ itemId: rawItemId, size = 'md', open, className = '' }
         : 'rounded-b-[2.25rem] rounded-t-xl';
 
   return (
-    <div className={`relative ${sizeClass} ${className}`} aria-label={theme.label}>
+    // Outer wrapper takes the caller's positioning (e.g. `absolute bottom-…`);
+    // the inner box is the `relative` containing block for the art pieces. These
+    // must be separate elements — putting `relative` and a caller `absolute` on
+    // one node lets the cascade pick `relative`, which left the home floating in
+    // normal flow instead of sitting on the ground.
+    <div className={className || undefined}>
+      <div className={`relative ${sizeClass}`} aria-label={theme.label}>
       {theme.shape === 'hanging' ? (
         <>
           <div className="absolute left-1/2 top-0 h-20 w-0.5 -translate-x-1/2 bg-amber-100/80" />
@@ -196,6 +202,7 @@ export function PotHome({ itemId: rawItemId, size = 'md', open, className = '' }
       ) : null}
       <div className={`absolute left-1/2 bottom-0 h-3 w-16 -translate-x-1/2 rounded-t-full ${theme.trim}`} />
       <div className="absolute left-1/2 -bottom-1 h-3 w-28 -translate-x-1/2 rounded-full bg-emerald-950/15" />
+      </div>
     </div>
   );
 }

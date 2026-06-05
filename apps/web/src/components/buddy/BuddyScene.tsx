@@ -130,7 +130,7 @@ export default function BuddyScene({
       <div className="absolute left-7 top-8 h-16 w-16 rounded-full bg-yellow-200/80 shadow-[0_0_45px_rgba(253,224,71,0.65)]" />
       <div className="absolute bottom-0 left-0 right-0 h-28 rounded-t-[50%] bg-emerald-700/25" />
       <div className="absolute bottom-0 left-0 right-0 h-16 bg-emerald-900/10" />
-      <div className="absolute bottom-11 left-1/2 h-10 w-52 -translate-x-1/2 rounded-[50%] bg-amber-100/45 blur-sm" />
+      <div className="absolute bottom-8 left-[56%] h-9 w-44 -translate-x-1/2 rounded-[50%] bg-amber-100/45 blur-sm" />
       <div className="absolute bottom-16 left-[34%] h-3 w-8 rotate-[-8deg] rounded-full bg-white/40" />
       <div className="absolute bottom-20 left-[55%] h-3 w-10 rotate-[10deg] rounded-full bg-white/40" />
       <div className="absolute right-10 top-28 h-2 w-2 rounded-full bg-yellow-100 shadow-[0_0_14px_rgba(254,240,138,.9)]" />
@@ -169,7 +169,7 @@ export default function BuddyScene({
             itemId={typeof equipped.potSkin === 'string' ? equipped.potSkin : null}
             size={compact ? 'md' : 'lg'}
             open={activeAction.id === 'inspect-home' || activeAction.id === 'nap'}
-            className="absolute bottom-14 left-5 sm:left-10"
+            className="absolute bottom-14 left-[40%] z-10 -translate-x-1/2"
           />
           {placedFurniture.map(({ slot, itemId, item }, index) => (
             <div
@@ -190,7 +190,7 @@ export default function BuddyScene({
       <button
         type="button"
         onClick={poke}
-        className={`absolute bottom-10 left-1/2 z-30 -translate-x-1/2 transition duration-700 ${
+        className={`absolute bottom-7 left-[56%] z-30 -translate-x-1/2 transition duration-700 ${
           activeAction.className
         } focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/80`}
         aria-label={`Poke ${buddy.name}`}
