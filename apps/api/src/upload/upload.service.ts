@@ -27,7 +27,9 @@ export class UploadService {
     const filename = `${randomUUID()}${ext}`;
     const filepath = path.join(this.uploadDir, filename);
     fs.writeFileSync(filepath, file.buffer);
-    return `${this.publicBaseUrl}/${filename}`;
+    return this.config.get<string>('S3_PUBLIC_URL')
+      ? `${this.publicBaseUrl.replace(/\/$/, '')}/${filename}`
+      : `/uploads/${filename}`;
   }
 
   async deleteByUrl(url: string): Promise<void> {

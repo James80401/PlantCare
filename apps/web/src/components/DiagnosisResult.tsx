@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 interface StructuredDetail {
   issueName?: string;
@@ -184,7 +185,7 @@ export default function DiagnosisResult({
 
       {diagnosis.imageUrl ? (
         <img
-          src={diagnosis.imageUrl}
+          src={resolveApiAssetUrl(diagnosis.imageUrl) ?? undefined}
           alt={`Photo submitted for ${diagnosis.resultLabel} diagnosis`}
           className="max-h-56 w-full rounded-2xl object-cover border border-emerald-100"
           loading="lazy"

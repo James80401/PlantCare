@@ -5,6 +5,7 @@ import { diagnosisChatApi } from '../services/api';
 import { formatApiErrorMessage } from '../utils/apiError';
 import { DR_PLANT_HASH } from '../utils/gardenPaths';
 import { taskTypeLabel } from '../utils/tasks';
+import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 export interface ChatMessage {
   id: string;
@@ -407,7 +408,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
               >
                 {m.imageUrl && (
                   <img
-                    src={m.imageUrl}
+                    src={resolveApiAssetUrl(m.imageUrl) ?? undefined}
                     alt=""
                     className="rounded-lg mb-2 max-h-40 object-cover w-full"
                   />

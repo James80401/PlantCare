@@ -1,5 +1,6 @@
 import { useRef, type ChangeEvent } from 'react';
 import { cn } from '../../lib/cn';
+import { resolveApiAssetUrl } from '../../utils/apiAssets';
 
 export function PhotoCaptureZone({
   label,
@@ -23,6 +24,7 @@ export function PhotoCaptureZone({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const libraryInputRef = useRef<HTMLInputElement>(null);
   const showSourceActions = sourceMode === 'both';
+  const resolvedPreviewUrl = resolveApiAssetUrl(previewUrl);
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,8 +53,8 @@ export function PhotoCaptureZone({
           busy && 'opacity-70 pointer-events-none',
         )}
       >
-        {previewUrl ? (
-          <img src={previewUrl} alt="" className="aspect-[4/3] w-full object-cover" />
+        {resolvedPreviewUrl ? (
+          <img src={resolvedPreviewUrl} alt="" className="aspect-[4/3] w-full object-cover" />
         ) : (
           <div className="flex aspect-[4/3] flex-col items-center justify-center gap-2 px-6 text-center">
             <span className="text-4xl" aria-hidden>

@@ -12,6 +12,7 @@ import {
   type CommunityPostSummary,
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 function PostComments({
   postId,
@@ -359,7 +360,7 @@ export default function Community() {
                 ) : null}
                 {post.imageUrl ? (
                   <img
-                    src={post.imageUrl}
+                    src={resolveApiAssetUrl(post.imageUrl) ?? undefined}
                     alt={`Photo shared by ${post.author?.name || 'gardener'}`}
                     className="max-h-96 w-full rounded-2xl border border-emerald-100 object-cover"
                     loading="lazy"

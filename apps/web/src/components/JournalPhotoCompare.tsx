@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 interface JournalPhotoCompareProps {
   beforeUrl: string;
@@ -13,6 +14,8 @@ export default function JournalPhotoCompare({
   beforeLabel = 'Earlier',
   afterLabel = 'Later',
 }: JournalPhotoCompareProps) {
+  const resolvedBeforeUrl = resolveApiAssetUrl(beforeUrl) ?? beforeUrl;
+  const resolvedAfterUrl = resolveApiAssetUrl(afterUrl) ?? afterUrl;
   const [position, setPosition] = useState(50);
   const [mode, setMode] = useState<'slider' | 'side-by-side'>('slider');
 
@@ -48,9 +51,9 @@ export default function JournalPhotoCompare({
       {mode === 'slider' ? (
         <>
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gray-900">
-            <img src={afterUrl} alt={afterLabel} className="absolute inset-0 h-full w-full object-cover" />
+            <img src={resolvedAfterUrl} alt={afterLabel} className="absolute inset-0 h-full w-full object-cover" />
             <img
-              src={beforeUrl}
+              src={resolvedBeforeUrl}
               alt={beforeLabel}
               className="absolute inset-0 h-full w-full object-cover"
               style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
@@ -79,8 +82,8 @@ export default function JournalPhotoCompare({
         </>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          <PhotoPanel url={beforeUrl} label={beforeLabel} />
-          <PhotoPanel url={afterUrl} label={afterLabel} />
+          <PhotoPanel url={resolvedBeforeUrl} label={beforeLabel} />
+          <PhotoPanel url={resolvedAfterUrl} label={afterLabel} />
         </div>
       )}
     </div>

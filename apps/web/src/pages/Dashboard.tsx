@@ -700,7 +700,7 @@ function GardenStorySection({ story }: { story: DashboardHealthStory }) {
                 <div className="flex gap-3">
                   {entry.photoUrl ? (
                     <img
-                      src={entry.photoUrl}
+                      src={resolveApiAssetUrl(entry.photoUrl) ?? undefined}
                       alt=""
                       className="h-12 w-12 rounded-xl object-cover"
                     />

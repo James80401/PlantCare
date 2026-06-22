@@ -14,6 +14,7 @@ import { journalPrompts } from './constants';
 import { usePlantProfile } from './PlantProfileContext';
 import { PlantTimeline, ProfileSection, SectionEmptyState } from './shared';
 import type { PlantRecord } from './types';
+import { resolveApiAssetUrl } from '../../utils/apiAssets';
 
 export default function PlantJournalTab() {
   const ctx = usePlantProfile();
@@ -187,7 +188,7 @@ function JournalForm() {
         {ctx.journalPhotoPreview ? (
           <div className="mt-3 space-y-2">
             <img
-              src={ctx.journalPhotoPreview}
+              src={resolveApiAssetUrl(ctx.journalPhotoPreview) ?? undefined}
               alt="Journal entry photo preview"
               className="max-h-48 w-full rounded-2xl object-cover border border-emerald-100"
             />

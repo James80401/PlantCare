@@ -9,6 +9,7 @@ import {
   filterTimelineEvents,
   type TimelineFilter,
 } from '../../utils/plantTimeline';
+import { resolveApiAssetUrl } from '../../utils/apiAssets';
 import type { CareDetailLevel, CareOverviewSection, PlantRecord, TimelineEvent } from './types';
 
 const TIMELINE_FILTERS: Array<{ key: TimelineFilter; label: string }> = [
@@ -205,7 +206,7 @@ export function PlantTimeline({
               ) : null}
               {event.imageUrl ? (
                 <img
-                  src={event.imageUrl}
+                  src={resolveApiAssetUrl(event.imageUrl) ?? undefined}
                   alt={event.type === 'journal' ? 'Journal entry photo' : 'Plant health photo'}
                   className="mt-3 max-h-64 w-full rounded-2xl object-cover"
                   loading="lazy"
