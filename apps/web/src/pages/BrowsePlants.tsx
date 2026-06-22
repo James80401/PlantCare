@@ -11,7 +11,7 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { SkeletonGrid } from '../components/ui/Skeleton';
 import { Button } from '../components/ui/Button';
 import { speciesApi } from '../services/api';
-import { resolveApiAssetUrl } from '../utils/apiAssets';
+import { resolveApiThumbnailUrl } from '../utils/apiAssets';
 
 interface SpeciesItem {
   id: string;
@@ -223,7 +223,7 @@ export default function BrowsePlants() {
                   >
                     {species.defaultImageUrl ? (
                       <img
-                        src={resolveApiAssetUrl(species.defaultImageUrl) ?? undefined}
+                        src={resolveApiThumbnailUrl(species.defaultImageUrl, 320) ?? undefined}
                         alt=""
                         className="h-full w-full object-cover"
                         loading="lazy"
@@ -368,7 +368,7 @@ export default function BrowsePlants() {
                 >
                   {species.defaultImageUrl ? (
                     <img
-                      src={resolveApiAssetUrl(species.defaultImageUrl) ?? undefined}
+                      src={resolveApiThumbnailUrl(species.defaultImageUrl, 320) ?? undefined}
                       alt={species.commonName}
                       title={species.scientificName || species.commonName}
                       className="h-full w-full object-cover"

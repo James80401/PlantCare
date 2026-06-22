@@ -22,3 +22,25 @@ export function resolveApiAssetUrl(
   if (!url.startsWith('/')) return url;
   return apiOrigin ? `${apiOrigin}${url}` : url;
 }
+
+export function resolveApiThumbnailUrl(
+  url?: string | null,
+  size: 96 | 160 | 320 | 640 = 160,
+  baseURL = apiBaseURL,
+): string | null {
+  const resolved = resolveApiAssetUrl(url, baseURL);
+  if (!resolved || /^(data:|blob:|\/\/)/i.test(resolved)) return resolved;
+
+  const apiOrigin = /^https?:\/\//i.test(baseURL) ? new URL(baseURL).origin : null;
+  let sourcePath = resolved;
+  if (/^https?:\/\//i.test(resolved)) {
+    const parsed = new URL(resolved);
+    if (!apiOrigin || parsed.origin !== apiOrigin) return resolved;
+    sourcePath = parsed.pathname;
+  }
+
+  if (!sourcePath.startsWith('/uploads/') && !sourcePath.startsWith('/care-guides/photos/')) {
+    return resolved;
+  }
+  return `${baseURL}/media/thumbnail?src=${encodeURIComponent(sourcePath)}&size=${size}`;
+}

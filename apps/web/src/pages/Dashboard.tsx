@@ -40,7 +40,7 @@ import {
   isProfilePhotoAttentionReason,
   plantProfileDetailsPath,
 } from '../utils/gardenPaths';
-import { resolveApiAssetUrl } from '../utils/apiAssets';
+import { resolveApiAssetUrl, resolveApiThumbnailUrl } from '../utils/apiAssets';
 import { formatMeasurementValues } from '../utils/journalMeasurements';
 
 interface ScheduleSuggestion {
@@ -700,7 +700,7 @@ function GardenStorySection({ story }: { story: DashboardHealthStory }) {
                 <div className="flex gap-3">
                   {entry.photoUrl ? (
                     <img
-                      src={resolveApiAssetUrl(entry.photoUrl) ?? undefined}
+                      src={resolveApiThumbnailUrl(entry.photoUrl, 96) ?? undefined}
                       alt=""
                       className="h-12 w-12 rounded-xl object-cover"
                     />
@@ -1139,7 +1139,10 @@ function PlantCard({
 
 function PlantThumb({ plant, size }: { plant: DashboardPlant; size: 'sm' | 'lg' }) {
   const dimensions = size === 'sm' ? 'h-12 w-12 rounded-xl text-xl' : 'h-20 w-20 rounded-2xl text-3xl';
-  const imageUrl = resolveApiAssetUrl(plant.imageUrl ?? plant.species.defaultImageUrl ?? null);
+  const imageUrl = resolveApiThumbnailUrl(
+    plant.imageUrl ?? plant.species.defaultImageUrl ?? null,
+    160,
+  );
 
   return (
     <div className={`${dimensions} flex shrink-0 items-center justify-center overflow-hidden bg-emerald-100`}>
@@ -1148,6 +1151,8 @@ function PlantThumb({ plant, size }: { plant: DashboardPlant; size: 'sm' | 'lg' 
           src={imageUrl}
           alt=""
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
         />
       ) : (
         <span aria-hidden>🌿</span>

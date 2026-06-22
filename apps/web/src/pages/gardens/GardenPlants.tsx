@@ -3,7 +3,7 @@ import { format, parseISO } from 'date-fns';
 import { PageHeader, Card, SkeletonGrid } from '../../components/ui';
 import { FormError } from '../../components/a11y/FormError';
 import { useGardenDetail } from '../../hooks/useGardenDetail';
-import { resolveApiAssetUrl } from '../../utils/apiAssets';
+import { resolveApiThumbnailUrl } from '../../utils/apiAssets';
 import { taskTypeLabel } from '../../utils/tasks';
 import type { GardenDetail } from '../../services/api';
 
@@ -74,6 +74,8 @@ export default function GardenPlants() {
                     src={plantImageUrl(p) ?? undefined}
                     alt=""
                     className="h-14 w-14 rounded-2xl bg-emerald-50 object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-2xl">
@@ -117,5 +119,5 @@ function formatDue(iso: string): string {
 }
 
 function plantImageUrl(plant: GardenDetail['plants'][number]): string | null {
-  return resolveApiAssetUrl(plant.imageUrl ?? plant.species.defaultImageUrl ?? null);
+  return resolveApiThumbnailUrl(plant.imageUrl ?? plant.species.defaultImageUrl ?? null, 160);
 }
