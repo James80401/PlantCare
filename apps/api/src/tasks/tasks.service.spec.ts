@@ -111,6 +111,64 @@ describe('TasksService', () => {
     expect(tx.taskFeedback.create).toHaveBeenCalledTimes(1);
   });
 
+  it('bulk completes authorized pending tasks without requiring feedback', async () => {
+    const tasks = [
+      { ...taskWithPlant, id: 'task-1' },
+      { ...taskWithPlant, id: 'task-2', plantId: 'plant-2' },
+    ];
+    const prisma = {
+      task: {
+        findMany: jest.fn().mockResolvedValue(tasks),
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      },
+    };
+    const scheduler = { onTaskCompleted: jest.fn().mockResolvedValue(undefined) };
+    const eventEmitter = { emit: jest.fn() };
+    const service = new TasksService(
+      prisma as never,
+      scheduler as never,
+      {} as never,
+      eventEmitter as never,
+    );
+
+    const result = await service.bulkComplete('user-1', ['task-1', 'task-2']);
+
+    expect(result.completed).toBe(2);
+    expect(prisma.task.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ['task-1', 'task-2'] }, status: TaskStatus.PENDING },
+      data: { status: TaskStatus.DONE, completedAt: expect.any(Date) },
+    });
+    expect(scheduler.onTaskCompleted).toHaveBeenCalledTimes(2);
+    expect(eventEmitter.emit).toHaveBeenCalledTimes(2);
+  });
+
+  it('schedules only one next reminder for duplicate historical tasks in the same care stop', async () => {
+    const tasks = [
+      { ...taskWithPlant, id: 'older', dueDate: new Date('2026-05-01') },
+      { ...taskWithPlant, id: 'newer', dueDate: new Date('2026-06-01') },
+    ];
+    const prisma = {
+      task: {
+        findMany: jest.fn().mockResolvedValue(tasks),
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      },
+    };
+    const scheduler = { onTaskCompleted: jest.fn().mockResolvedValue(undefined) };
+    const eventEmitter = { emit: jest.fn() };
+    const service = new TasksService(
+      prisma as never,
+      scheduler as never,
+      {} as never,
+      eventEmitter as never,
+    );
+
+    await service.bulkComplete('user-1', ['older', 'newer']);
+
+    expect(scheduler.onTaskCompleted).toHaveBeenCalledTimes(1);
+    expect(scheduler.onTaskCompleted).toHaveBeenCalledWith('newer');
+    expect(eventEmitter.emit).toHaveBeenCalledTimes(1);
+  });
+
   it('snoozes a pending task to today plus N days', async () => {
     const tx = {
       task: {

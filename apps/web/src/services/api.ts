@@ -212,6 +212,11 @@ export const tasksApi = {
     api.post(`/tasks/schedule-suggestions/${encodeURIComponent(suggestionId)}/apply`),
   complete: (id: string, feedback?: TaskCompleteFeedback) =>
     api.patch(`/tasks/${id}/complete`, feedback ?? {}),
+  bulkComplete: (taskIds: string[]) =>
+    api.patch<{ completed: number; taskIds: string[]; completedAt: string }>(
+      '/tasks/bulk/complete',
+      { taskIds },
+    ),
   skip: (id: string, feedback?: TaskSkipFeedback) => api.patch(`/tasks/${id}/skip`, feedback ?? {}),
   snooze: (id: string, days: 1 | 3 | 7) => api.patch(`/tasks/${id}/snooze`, { days }),
   instructions: (id: string) => api.get(`/tasks/${id}/instructions`),

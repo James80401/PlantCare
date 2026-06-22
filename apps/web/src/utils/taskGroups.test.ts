@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { dayLabel, groupTasksByDay, groupTasksByType, type TaskItem } from './taskGroups';
+import {
+  dayLabel,
+  groupDueTasksIntoCareRounds,
+  groupTasksByDay,
+  groupTasksByType,
+  type TaskItem,
+} from './taskGroups';
 
 function atNoon(offsetDays: number): string {
   const d = new Date();
@@ -72,5 +78,39 @@ describe('groupTasksByType', () => {
     expect(groups.map((g) => g.taskType)).toEqual(['WATER', 'FERTILIZE', 'CUSTOM_TYPE']);
     // WATER tasks sorted by due date ascending.
     expect(groups[0].tasks.map((t) => t.id)).toEqual(['w1', 'w2']);
+  });
+});
+
+describe('groupDueTasksIntoCareRounds', () => {
+  it('groups by garden and care type while folding duplicate reminders into one plant stop', () => {
+    const now = new Date('2026-06-22T12:00:00.000Z');
+    const older = {
+      ...makeTask('old-water', '2026-06-01T12:00:00.000Z', 'PENDING', 'WATER'),
+      plant: {
+        id: 'plant-1',
+        nickname: 'Fern',
+        garden: { id: 'garden-1', name: 'Patio' },
+        species: { commonName: 'Boston Fern' },
+      },
+    };
+    const today = {
+      ...makeTask('today-water', '2026-06-22T12:00:00.000Z', 'PENDING', 'WATER'),
+      plant: older.plant,
+    };
+    const future = {
+      ...makeTask('future-feed', '2026-06-23T12:00:00.000Z', 'PENDING', 'FERTILIZE'),
+      plant: older.plant,
+    };
+
+    const rounds = groupDueTasksIntoCareRounds([older, today, future], now);
+
+    expect(rounds).toHaveLength(1);
+    expect(rounds[0].gardenName).toBe('Patio');
+    expect(rounds[0].careTypes[0].taskType).toBe('WATER');
+    expect(rounds[0].careTypes[0].plants).toHaveLength(1);
+    expect(rounds[0].careTypes[0].plants[0].tasks.map((task) => task.id)).toEqual([
+      'old-water',
+      'today-water',
+    ]);
   });
 });

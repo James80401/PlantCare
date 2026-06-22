@@ -7,8 +7,16 @@ describe('GardensService.getSummaries', () => {
     overdue?: Array<{ gardenId: string; n: number }>;
     alerts?: Array<{ gardenId: string; n: number }>;
   }) {
-    const grouped = (rows: Array<{ gardenId: string; n: number }> = []) =>
+    const counted = (rows: Array<{ gardenId: string; n: number }> = []) =>
       rows.map((r) => ({ gardenId: r.gardenId, _count: { _all: r.n } }));
+    const careStops = (rows: Array<{ gardenId: string; n: number }> = []) =>
+      rows.flatMap((r) =>
+        Array.from({ length: r.n }, (_, index) => ({
+          gardenId: r.gardenId,
+          plantId: `plant-${index}`,
+          taskType: `TYPE_${index}`,
+        })),
+      );
 
     const prisma = {
       garden: {
@@ -25,11 +33,11 @@ describe('GardensService.getSummaries', () => {
       task: {
         groupBy: jest
           .fn()
-          .mockResolvedValueOnce(grouped(opts.dueToday))
-          .mockResolvedValueOnce(grouped(opts.overdue)),
+          .mockResolvedValueOnce(careStops(opts.dueToday))
+          .mockResolvedValueOnce(careStops(opts.overdue)),
       },
       plant: {
-        groupBy: jest.fn().mockResolvedValue(grouped(opts.alerts)),
+        groupBy: jest.fn().mockResolvedValue(counted(opts.alerts)),
       },
     };
     const service = new GardensService(prisma as never, {} as never);
@@ -86,6 +94,15 @@ describe('GardensService.getSummaries', () => {
     });
     const [g1] = await service.getSummaries('u1');
     expect(g1.status).toBe('Care due today');
+  });
+
+  it('uses calm waiting language instead of overdue language', async () => {
+    const { service } = makeService({
+      gardens: [{ id: 'g1', name: 'G', location: null, ownerId: 'u1', homePlants: 4, members: 1 }],
+      overdue: [{ gardenId: 'g1', n: 3 }],
+    });
+    const [g1] = await service.getSummaries('u1');
+    expect(g1.status).toBe('Care waiting');
   });
 });
 

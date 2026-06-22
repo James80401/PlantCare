@@ -170,6 +170,15 @@ export default function Dashboard() {
   const plantCount = metrics?.totalPlants ?? plants.length;
   const dueTodayCount = careSummary?.counts.dueToday ?? metrics?.dueToday ?? todayTasks.length;
   const overdueCount = careSummary?.counts.overdue ?? metrics?.overdue ?? overdueTasks.length;
+  const dueCareAreas = useMemo(
+    () => new Set([...overdueTasks, ...todayTasks].map((task) => task.taskType)).size,
+    [overdueTasks, todayTasks],
+  );
+  const gardensReady = useMemo(
+    () =>
+      gardenSummaries.filter((garden) => garden.tasksDueToday > 0 || garden.overdue > 0).length,
+    [gardenSummaries],
+  );
   const completedTodayCount =
     careSummary?.counts.completedToday ?? metrics?.completedToday ?? 0;
 
@@ -298,21 +307,20 @@ export default function Dashboard() {
               to={plants.length === 0 ? undefined : '/garden/insights/score'}
             />
             <DashboardMetric
-              label="Due today"
-              value={dueTodayCount}
-              helper={dueTodayCount ? 'Ready for care' : 'Nothing urgent today'}
+              label="Care areas"
+              value={dueCareAreas}
+              helper={dueCareAreas ? 'Grouped into quick rounds' : 'Nothing urgent today'}
               accent="amber"
-              to="/garden/tasks/today"
-              highlight={dueTodayCount > 0}
+              to="/garden/tasks"
+              highlight={dueCareAreas > 0}
             />
             <DashboardMetric
-              label="Overdue"
-              value={overdueCount}
-              helper={overdueCount ? 'Needs attention' : 'All caught up'}
-              accent="rose"
-              to="/garden/tasks/overdue"
-              highlight={overdueCount > 0}
-              urgent={overdueCount > 0}
+              label="Gardens ready"
+              value={gardensReady}
+              helper={gardensReady ? 'Care when it fits your day' : 'All settled'}
+              accent="emerald"
+              to="/garden/tasks"
+              highlight={gardensReady > 0}
             />
             <DashboardMetric
               label="Completed"

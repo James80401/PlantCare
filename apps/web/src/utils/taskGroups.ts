@@ -18,8 +18,77 @@ export interface TaskItem {
     id: string;
     nickname?: string | null;
     imageUrl?: string | null;
+    garden?: { id: string; name: string } | null;
     species: { commonName: string };
   };
+}
+
+export interface PlantCareRoundItem {
+  plant: TaskItem['plant'];
+  tasks: TaskItem[];
+  oldestDueDate: string;
+}
+
+export interface CareTypeRound {
+  taskType: string;
+  plants: PlantCareRoundItem[];
+  taskIds: string[];
+}
+
+export interface GardenCareRound {
+  gardenId: string;
+  gardenName: string;
+  careTypes: CareTypeRound[];
+  taskIds: string[];
+}
+
+export function groupDueTasksIntoCareRounds(
+  tasks: TaskItem[],
+  now = new Date(),
+): GardenCareRound[] {
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+  const pendingDue = tasks.filter(
+    (task) => task.status === 'PENDING' && parseISO(task.dueDate) <= endOfToday,
+  );
+  const gardens = new Map<string, { name: string; tasks: TaskItem[] }>();
+
+  for (const task of pendingDue) {
+    const gardenId = task.plant.garden?.id ?? 'ungrouped';
+    const gardenName = task.plant.garden?.name ?? 'My garden';
+    const garden = gardens.get(gardenId) ?? { name: gardenName, tasks: [] };
+    garden.tasks.push(task);
+    gardens.set(gardenId, garden);
+  }
+
+  return [...gardens.entries()]
+    .map(([gardenId, garden]) => {
+      const careTypes = groupTasksByType(garden.tasks).map(({ taskType, tasks: typeTasks }) => {
+        const plants = new Map<string, TaskItem[]>();
+        for (const task of typeTasks) {
+          const plantTasks = plants.get(task.plant.id) ?? [];
+          plantTasks.push(task);
+          plants.set(task.plant.id, plantTasks);
+        }
+        return {
+          taskType,
+          plants: [...plants.values()].map((plantTasks) => ({
+            plant: plantTasks[0].plant,
+            tasks: plantTasks,
+            oldestDueDate: [...plantTasks]
+              .sort((a, b) => compareAsc(parseISO(a.dueDate), parseISO(b.dueDate)))[0].dueDate,
+          })),
+          taskIds: typeTasks.map((task) => task.id),
+        };
+      });
+      return {
+        gardenId,
+        gardenName: garden.name,
+        careTypes,
+        taskIds: garden.tasks.map((task) => task.id),
+      };
+    })
+    .sort((a, b) => a.gardenName.localeCompare(b.gardenName));
 }
 
 export interface DayGroup {

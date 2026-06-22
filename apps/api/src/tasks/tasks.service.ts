@@ -82,6 +82,42 @@ export class TasksService {
     return updated;
   }
 
+  async bulkComplete(userId: string, taskIds: string[]) {
+    const uniqueIds = [...new Set(taskIds)];
+    const tasks = await this.prisma.task.findMany({
+      where: { id: { in: uniqueIds }, status: TaskStatus.PENDING },
+      include: { plant: { include: sharedPlantInclude } },
+    });
+    if (tasks.length !== uniqueIds.length) {
+      throw new NotFoundException('One or more tasks could not be completed');
+    }
+    if (tasks.some((task) => !userCanCompletePlantTask(userId, task.plant))) {
+      throw new NotFoundException('One or more tasks could not be completed');
+    }
+
+    const completedAt = new Date();
+    await this.prisma.task.updateMany({
+      where: { id: { in: uniqueIds }, status: TaskStatus.PENDING },
+      data: { status: TaskStatus.DONE, completedAt },
+    });
+
+    const careStops = new Map<string, (typeof tasks)[number]>();
+    for (const task of tasks) {
+      const key = `${task.plantId}:${task.taskType}`;
+      const current = careStops.get(key);
+      if (!current || task.dueDate > current.dueDate) careStops.set(key, task);
+    }
+
+    await Promise.all([...careStops.values()].map((task) => this.scheduler.onTaskCompleted(task.id)));
+    for (const task of careStops.values()) {
+      this.eventEmitter.emit(
+        'task.completed',
+        new TaskCompletedEvent(userId, task.id, task.taskType, task.plantId),
+      );
+    }
+    return { completed: tasks.length, taskIds: uniqueIds, completedAt };
+  }
+
   async skip(userId: string, taskId: string, feedback?: SkipTaskDto) {
     const task = await this.loadTaskForUser(userId, taskId, 'complete');
 

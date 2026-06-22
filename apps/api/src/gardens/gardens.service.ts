@@ -47,7 +47,7 @@ function deriveGardenStatus(input: {
 }): string {
   if (input.plantCount === 0) return 'No plants yet';
   if (input.urgentAlerts > 0) return 'Needs attention';
-  if (input.overdueCount > 0) return 'Care overdue';
+  if (input.overdueCount > 0) return 'Care waiting';
   if (input.tasksDueToday > 0) return 'Care due today';
   return 'All caught up';
 }
@@ -125,22 +125,20 @@ export class GardensService {
 
     const [dueToday, overdue, alerts] = await Promise.all([
       this.prisma.task.groupBy({
-        by: ['gardenId'],
+        by: ['gardenId', 'plantId', 'taskType'],
         where: {
           gardenId: { in: gardenIds },
           status: 'PENDING',
           dueDate: { gte: todayStart, lt: tomorrowStart },
         },
-        _count: { _all: true },
       }),
       this.prisma.task.groupBy({
-        by: ['gardenId'],
+        by: ['gardenId', 'plantId', 'taskType'],
         where: {
           gardenId: { in: gardenIds },
           status: 'PENDING',
           dueDate: { lt: todayStart },
         },
-        _count: { _all: true },
       }),
       this.prisma.plant.groupBy({
         by: ['gardenId'],
@@ -149,14 +147,18 @@ export class GardensService {
       }),
     ]);
 
-    const toMap = (rows: Array<{ gardenId: string | null; _count: { _all: number } }>) => {
+    const toCareStopMap = (rows: Array<{ gardenId: string | null }>) => {
       const m = new Map<string, number>();
-      for (const r of rows) if (r.gardenId) m.set(r.gardenId, r._count._all);
+      for (const r of rows) {
+        if (r.gardenId) m.set(r.gardenId, (m.get(r.gardenId) ?? 0) + 1);
+      }
       return m;
     };
-    const dueTodayMap = toMap(dueToday);
-    const overdueMap = toMap(overdue);
-    const alertsMap = toMap(alerts as Array<{ gardenId: string; _count: { _all: number } }>);
+    const dueTodayMap = toCareStopMap(dueToday);
+    const overdueMap = toCareStopMap(overdue);
+    const alertsMap = new Map(
+      alerts.map((row) => [row.gardenId, row._count._all] as const),
+    );
 
     return gardens.map((g) => {
       const plantCount = g._count.homePlants;
@@ -238,15 +240,16 @@ export class GardensService {
     if (!garden) throw new NotFoundException('Garden not found');
 
     // Derive task buckets, next watering, and per-plant next task from the one task fetch.
-    let dueToday = 0;
-    let overdue = 0;
-    let upcoming = 0;
+    const dueTodayStops = new Set<string>();
+    const overdueStops = new Set<string>();
+    const upcomingStops = new Set<string>();
     let nextWatering: Date | null = null;
     const nextTaskByPlant = new Map<string, { taskType: string; dueDate: Date }>();
     for (const t of pendingTasks) {
-      if (t.dueDate < todayStart) overdue += 1;
-      else if (t.dueDate < tomorrowStart) dueToday += 1;
-      else if (t.dueDate < upcomingEnd) upcoming += 1;
+      const careStopKey = `${t.plant.id}:${t.taskType}`;
+      if (t.dueDate < todayStart) overdueStops.add(careStopKey);
+      else if (t.dueDate < tomorrowStart) dueTodayStops.add(careStopKey);
+      else if (t.dueDate < upcomingEnd) upcomingStops.add(careStopKey);
       if (t.taskType === 'WATER' && (!nextWatering || t.dueDate < nextWatering)) {
         nextWatering = t.dueDate;
       }
@@ -261,7 +264,11 @@ export class GardensService {
       location: garden.location,
       isOwner: garden.ownerId === userId,
       members: garden.members,
-      taskSummary: { dueToday, overdue, upcoming },
+      taskSummary: {
+        dueToday: dueTodayStops.size,
+        overdue: overdueStops.size,
+        upcoming: upcomingStops.size,
+      },
       nextWatering: nextWatering ? nextWatering.toISOString() : null,
       notesCount,
       plants: garden.homePlants.map((p) => ({

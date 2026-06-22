@@ -74,6 +74,32 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
     void runWithAnimation(id, 'completing', () => tasksApi.complete(id, feedback));
   };
 
+  const handleBulkComplete = async (ids: string[]) => {
+    const uniqueIds = [...new Set(ids)];
+    setAnimating((current) => ({
+      ...current,
+      ...Object.fromEntries(uniqueIds.map((id) => [id, 'completing' as const])),
+    }));
+    try {
+      const { data } = await tasksApi.bulkComplete(uniqueIds);
+      setTasks((current) =>
+        current.map((task) =>
+          data.taskIds.includes(task.id)
+            ? { ...task, status: 'DONE', completedAt: data.completedAt }
+            : task,
+        ),
+      );
+    } catch {
+      await load();
+    } finally {
+      setAnimating((current) => {
+        const next = { ...current };
+        uniqueIds.forEach((id) => delete next[id]);
+        return next;
+      });
+    }
+  };
+
   const handleSkip = (id: string, feedback?: TaskSkipFeedback) => {
     void runWithAnimation(id, 'skipping', () => tasksApi.skip(id, feedback));
   };
@@ -95,6 +121,7 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
     dayGroups: groupTasksByDay(tasks),
     load,
     handleComplete,
+    handleBulkComplete,
     handleSkip,
     handleSnooze,
     COMPLETE_ANIM_MS,

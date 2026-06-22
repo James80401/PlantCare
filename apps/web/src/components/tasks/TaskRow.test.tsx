@@ -32,20 +32,18 @@ function renderRow(props: Partial<React.ComponentProps<typeof TaskRow>> = {}) {
 }
 
 describe('TaskRow', () => {
-  it('completes a non-water task without feedback', () => {
+  it('completes a task immediately from the checkmark', () => {
     const { onComplete } = renderRow();
 
     fireEvent.click(screen.getByLabelText(/Mark Fertilize for Monty as done/i));
-    fireEvent.click(screen.getByRole('button', { name: 'Complete' }));
 
-    // The plain "Complete" button submits with no feedback argument.
     expect(onComplete).toHaveBeenCalledWith('task-1');
   });
 
-  it('completes a water task with the selected reason', () => {
+  it('still allows optional water feedback from the secondary action', () => {
     const { onComplete } = renderRow({ task: makeTask({ taskType: 'WATER' as TaskItem['taskType'] }) });
 
-    fireEvent.click(screen.getByLabelText(/Mark Water for Monty as done/i));
+    fireEvent.click(screen.getByRole('button', { name: 'Add note' }));
     fireEvent.click(screen.getByRole('button', { name: /Save feedback & complete/i }));
 
     expect(onComplete).toHaveBeenCalledWith('task-1', { reason: 'SOIL_VERY_DRY', note: undefined });

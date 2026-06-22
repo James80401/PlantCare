@@ -66,7 +66,7 @@ export default function GardenDashboard() {
         <SubsectionCard
           to={`${base}/tasks`}
           title="Tasks"
-          summary={`${taskSummary.dueToday} due today, ${taskSummary.overdue} overdue`}
+          summary={`${taskSummary.dueToday + taskSummary.overdue} care stops ready, ${taskSummary.upcoming} upcoming`}
           accent={taskSummary.overdue > 0 ? 'rose' : 'amber'}
         />
         <SubsectionCard

@@ -12,4 +12,16 @@ describe('TasksController', () => {
 
     expect(tasksService.skip).toHaveBeenCalledWith('user-1', 'task-1', dto);
   });
+
+  it('passes bulk completion ids to the task service', () => {
+    const tasksService = { bulkComplete: jest.fn() };
+    const controller = new TasksController(tasksService as never);
+
+    controller.bulkComplete(
+      { sub: 'user-1', email: 'test@example.com', planTier: 'PREMIUM' },
+      { taskIds: ['task-1', 'task-2'] },
+    );
+
+    expect(tasksService.bulkComplete).toHaveBeenCalledWith('user-1', ['task-1', 'task-2']);
+  });
 });

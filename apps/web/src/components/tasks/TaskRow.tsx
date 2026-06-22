@@ -81,13 +81,13 @@ export default function TaskRow({
         {isPending ? (
           <button
             type="button"
-            onClick={() => setCompleteFeedbackOpen((open) => !open)}
+            onClick={() => onComplete(task.id)}
             disabled={!!animState}
             className="task-check flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
             aria-label={`Mark ${taskTypeLabel(task.taskType)} for ${plantLabel} as done`}
-            aria-expanded={completeFeedbackOpen}
-            aria-controls={completePanelId}
-          />
+          >
+            <span className="text-xl font-bold text-emerald-700" aria-hidden>✓</span>
+          </button>
         ) : (
           <span
             className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
@@ -181,6 +181,15 @@ export default function TaskRow({
                 taskType={task.taskType}
                 plantLabel={plantLabel}
               />
+              <button
+                type="button"
+                onClick={() => setCompleteFeedbackOpen((open) => !open)}
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                aria-expanded={completeFeedbackOpen}
+                aria-controls={completePanelId}
+              >
+                Add note
+              </button>
               <button
                 type="button"
                 onClick={() => setFeedbackOpen((open) => !open)}

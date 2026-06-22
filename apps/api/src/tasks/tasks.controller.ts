@@ -6,6 +6,7 @@ import { ApplyScheduleSuggestionDto } from './dto/apply-schedule-suggestion.dto'
 import { SkipTaskDto } from './dto/skip-task.dto';
 import { SnoozeTaskDto } from './dto/snooze-task.dto';
 import { CompleteTaskFeedbackDto } from './dto/complete-task-feedback.dto';
+import { BulkCompleteTasksDto } from './dto/bulk-complete-tasks.dto';
 import { TasksService } from './tasks.service';
 
 @ApiTags('tasks')
@@ -36,6 +37,11 @@ export class TasksController {
     @Body() _dto: ApplyScheduleSuggestionDto,
   ) {
     return this.tasksService.applyScheduleSuggestion(user.sub, suggestionId);
+  }
+
+  @Patch('bulk/complete')
+  bulkComplete(@CurrentUser() user: JwtPayload, @Body() dto: BulkCompleteTasksDto) {
+    return this.tasksService.bulkComplete(user.sub, dto.taskIds);
   }
 
   @Patch(':id/complete')

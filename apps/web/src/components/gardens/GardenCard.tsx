@@ -3,7 +3,7 @@ import type { GardenSummaryCard } from '../../services/api';
 
 const STATUS_STYLES: Record<string, string> = {
   'Needs attention': 'bg-rose-50 text-rose-700 border-rose-200',
-  'Care overdue': 'bg-amber-50 text-amber-800 border-amber-200',
+  'Care waiting': 'bg-amber-50 text-amber-800 border-amber-200',
   'Care due today': 'bg-emerald-50 text-emerald-800 border-emerald-200',
   'All caught up': 'bg-sky-50 text-sky-700 border-sky-200',
   'No plants yet': 'bg-gray-50 text-gray-600 border-gray-200',
@@ -47,8 +47,8 @@ export function GardenCard({ garden }: { garden: GardenSummaryCard }) {
 
         <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
           <Stat label="Plants" value={garden.plantCount} />
-          <Stat label="Due today" value={garden.tasksDueToday} highlight={garden.tasksDueToday > 0} />
-          <Stat label="Overdue" value={garden.overdue} urgent={garden.overdue > 0} />
+          <Stat label="Care today" value={garden.tasksDueToday} highlight={garden.tasksDueToday > 0} />
+          <Stat label="Care waiting" value={garden.overdue} highlight={garden.overdue > 0} />
         </dl>
 
         {garden.urgentAlerts > 0 ? (
