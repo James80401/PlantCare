@@ -69,11 +69,24 @@ export default function Dashboard() {
     useDashboard();
 
   const [gardenSummaries, setGardenSummaries] = useState<GardenSummaryCard[]>([]);
-  useEffect(() => {
+  const [gardenSummariesLoading, setGardenSummariesLoading] = useState(true);
+  const [gardenSummariesError, setGardenSummariesError] = useState('');
+
+  const loadGardenSummaries = () => {
+    setGardenSummariesError('');
+    setGardenSummariesLoading(true);
     gardensApi
       .summaries()
       .then(({ data }) => setGardenSummaries(data))
-      .catch(() => setGardenSummaries([]));
+      .catch(() => {
+        setGardenSummaries([]);
+        setGardenSummariesError('Could not load garden summaries.');
+      })
+      .finally(() => setGardenSummariesLoading(false));
+  };
+
+  useEffect(() => {
+    loadGardenSummaries();
   }, []);
 
   const refreshAfterTask = async () => {
@@ -255,6 +268,7 @@ export default function Dashboard() {
     attentionSummary?.counts.needsAttention ??
     attentionItems.filter((item) => item.priority !== 'info').length;
   const dashboardLoading = dashLoading;
+  const gardensLoading = dashLoading || gardenSummariesLoading;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
 
   return (
@@ -293,8 +307,14 @@ export default function Dashboard() {
           <div className="relative mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <DashboardMetric
               label="My Gardens"
-              value={gardenSummaries.length}
-              helper={gardenSummaries.length ? 'View all gardens' : 'Create your first garden'}
+              value={gardenSummariesLoading ? '...' : gardenSummaries.length}
+              helper={
+                gardenSummariesLoading
+                  ? 'Loading gardens'
+                  : gardenSummaries.length
+                    ? 'View all gardens'
+                    : 'Create your first garden'
+              }
               accent="emerald"
               to="/garden/gardens"
               highlight
@@ -419,11 +439,26 @@ export default function Dashboard() {
           />
 
           {gardenSummaries.length === 0 ? (
-            dashboardLoading ? (
+            gardensLoading ? (
               <>
                 <StatusMessage className="sr-only">Loading gardens…</StatusMessage>
                 <DashboardSkeleton />
               </>
+            ) : gardenSummariesError ? (
+              <section className="rounded-3xl border border-amber-100 bg-amber-50/80 p-5 shadow-sm shadow-emerald-900/5">
+                <h3 className="font-semibold text-amber-950">Garden summaries are unavailable</h3>
+                <p className="mt-1 text-sm leading-6 text-amber-900">
+                  Your dashboard can still load care tasks and plants. Try the summaries again when
+                  the connection settles.
+                </p>
+                <button
+                  type="button"
+                  onClick={loadGardenSummaries}
+                  className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-amber-900 ring-1 ring-amber-200 hover:bg-amber-50"
+                >
+                  Retry summaries
+                </button>
+              </section>
             ) : (
               <EmptyState
                 title="Create your first garden"

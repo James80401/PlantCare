@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { PLANT_LOCATIONS } from '../../constants/plantLocations';
 import { useTasksInRange } from '../../hooks/useTasksInRange';
 import { plantsApi, journalApi, diagnosisApi } from '../../services/api';
+import { Skeleton } from '../../components/ui/Skeleton';
 import type { TaskCompleteFeedback, TaskSkipFeedback } from '../../utils/taskFeedback';
 import { taskTypeLabel } from '../../utils/tasks';
 import { mapTimelineFromApi } from '../../utils/plantTimeline';
@@ -101,6 +102,8 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [plant, setPlant] = useState<PlantRecord | null>(null);
+  const [plantLoading, setPlantLoading] = useState(true);
+  const [plantError, setPlantError] = useState('');
   const [journalNotes, setJournalNotes] = useState('');
   const [journalPhoto, setJournalPhoto] = useState<File | null>(null);
   const [journalPhotoInputKey, setJournalPhotoInputKey] = useState(0);
@@ -135,16 +138,26 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
 
   const load = useCallback(async () => {
     if (!id) return;
-    const [plantRes, timelineRes] = await Promise.all([
-      plantsApi.get(id),
-      plantsApi.timeline(id),
-    ]);
-    setPlant(plantRes.data);
-    setTimelineEvents(mapTimelineFromApi(timelineRes.data.events));
+    setPlantError('');
+    setPlantLoading(true);
+    try {
+      const [plantRes, timelineRes] = await Promise.all([
+        plantsApi.get(id),
+        plantsApi.timeline(id),
+      ]);
+      setPlant(plantRes.data);
+      setTimelineEvents(mapTimelineFromApi(timelineRes.data.events));
+    } catch {
+      setPlant(null);
+      setTimelineEvents([]);
+      setPlantError('Could not load this plant profile.');
+    } finally {
+      setPlantLoading(false);
+    }
   }, [id]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   useEffect(() => {
@@ -216,7 +229,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     try {
       await journalApi.create(id, journalPayload(), journalPhoto ?? undefined);
       resetJournalForm();
-      load();
+      void load();
     } catch {
       setJournalError('Could not save journal entry.');
     }
@@ -235,7 +248,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
         journalRemovePhoto,
       );
       resetJournalForm();
-      load();
+      void load();
     } catch {
       setJournalError('Could not update journal entry.');
     }
@@ -248,7 +261,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     try {
       await journalApi.remove(id, entryId);
       if (editingJournalId === entryId) resetJournalForm();
-      load();
+      void load();
     } finally {
       setBusyJournalId(null);
     }
@@ -335,7 +348,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
           ),
         };
       });
-      if (note?.trim()) load();
+      if (note?.trim()) void load();
     } finally {
       setFollowUpCreatingId(null);
     }
@@ -363,12 +376,12 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
 
   const handleCompleteTask = (taskId: string, feedback?: TaskCompleteFeedback) => {
     completeFromHook(taskId, feedback);
-    window.setTimeout(() => load(), 700);
+    window.setTimeout(() => void load(), 700);
   };
 
   const handleSkipTask = (taskId: string, feedback?: TaskSkipFeedback) => {
     skipFromHook(taskId, feedback);
-    window.setTimeout(() => load(), 700);
+    window.setTimeout(() => void load(), 700);
   };
 
   const plantPendingFromHook = useMemo(() => {
@@ -519,7 +532,11 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
 
   return (
     <PlantProfileContext.Provider value={value}>
-      {value ? children : <p className="text-gray-500">Loading…</p>}
+      {value ? (
+        children
+      ) : (
+        <PlantProfilePending error={plantError} loading={plantLoading} onRetry={load} />
+      )}
     </PlantProfileContext.Provider>
   );
 }
@@ -534,4 +551,71 @@ export function usePlantProfile() {
 
 export function usePlantProfileOptional() {
   return useContext(PlantProfileContext);
+}
+
+function PlantProfilePending({
+  error,
+  loading,
+  onRetry,
+}: {
+  error: string;
+  loading: boolean;
+  onRetry: () => Promise<void>;
+}) {
+  if (error && !loading) {
+    return (
+      <section className="rounded-3xl border border-rose-100 bg-rose-50 p-5 shadow-sm shadow-emerald-900/5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-rose-700">
+          Plant profile
+        </p>
+        <h1 className="mt-1 text-xl font-semibold text-rose-950">{error}</h1>
+        <p className="mt-2 text-sm leading-6 text-rose-800">
+          The rest of the garden is still available. Retry this plant profile when the
+          connection settles.
+        </p>
+        <button
+          type="button"
+          onClick={() => void onRetry()}
+          className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-900 ring-1 ring-rose-200 hover:bg-rose-50"
+        >
+          Retry profile
+        </button>
+      </section>
+    );
+  }
+
+  return <PlantProfileSkeleton />;
+}
+
+function PlantProfileSkeleton() {
+  return (
+    <div className="space-y-5" role="status" aria-label="Loading plant profile">
+      <div className="flex gap-2">
+        <Skeleton className="h-5 w-24" />
+        <Skeleton className="h-5 w-32" />
+      </div>
+      <section className="overflow-hidden rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm shadow-emerald-900/5 sm:p-6">
+        <div className="grid gap-5 sm:grid-cols-[9rem_minmax(0,1fr)]">
+          <Skeleton className="h-36 w-full rounded-3xl sm:w-36" />
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-56 max-w-full" />
+            <Skeleton className="h-4 w-44" />
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+              {Array.from({ length: 5 }, (_, index) => (
+                <Skeleton key={index} className="h-20 rounded-2xl" />
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-10 w-32 rounded-full" />
+              <Skeleton className="h-10 w-28 rounded-full" />
+              <Skeleton className="h-10 w-36 rounded-full" />
+            </div>
+          </div>
+        </div>
+      </section>
+      <Skeleton className="h-12 rounded-2xl" />
+      <Skeleton className="h-56 rounded-3xl" />
+    </div>
+  );
 }
