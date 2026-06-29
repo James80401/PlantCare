@@ -197,7 +197,11 @@ api.yourdomain.com {
   reverse_proxy 127.0.0.1:3001
 }
 
-yourdomain.com, www.yourdomain.com {
+www.yourdomain.com {
+  redir https://yourdomain.com{uri} permanent
+}
+
+yourdomain.com {
   reverse_proxy 127.0.0.1:8080
 }
 ```
@@ -234,7 +238,11 @@ api.drplant.app {
 	reverse_proxy 127.0.0.1:3001
 }
 
-drplant.app, www.drplant.app {
+www.drplant.app {
+	redir https://drplant.app{uri} permanent
+}
+
+drplant.app {
 	reverse_proxy 127.0.0.1:8080
 }
 EOF

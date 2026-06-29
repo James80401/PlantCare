@@ -89,6 +89,13 @@ VITE_MARKETING_INDEXABLE=false
 VITE_CANONICAL_BASE_URL=https://drplant.app
 ```
 
+Canonical URL convention:
+
+- Primary host is `https://drplant.app`.
+- `https://www.drplant.app` redirects to the apex host with a permanent redirect.
+- Public and app paths use no trailing slash except the root path `/`.
+- `VITE_CANONICAL_BASE_URL` must stay `https://drplant.app` unless the canonical host decision changes.
+
 Expected outcome:
 
 - `/` sends guests to `/login`.

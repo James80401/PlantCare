@@ -149,12 +149,17 @@ Only Organization `sameAs` remains, pending official social URLs.
 
 ---
 
-## Tier E — SPA hygiene ⏳ PLANNED
+## Tier E - SPA hygiene DONE (2026-06-29)
 
-- [ ] **E1 — Host canonicalization** — enforce one host form (www vs non-www) with a 301 (`nginx.conf`).
-- [ ] **E2 — Trailing-slash convention** — pick one and 301 to it.
-- [ ] **E3 — Document** the host/trailing-slash choice next to `VITE_CANONICAL_BASE_URL`.
-- [ ] **E4 — Truthful `lastmod`** — keep sitemap `lastmod` accurate if/when emitted (already optional).
+- [x] **E1 - Host canonicalization** - canonical host is `https://drplant.app`. Caddy permanently
+  redirects `https://www.drplant.app{uri}` to `https://drplant.app{uri}` in
+  `scripts/caddy-remove-basic-auth.sh`.
+- [x] **E2 - Trailing-slash convention** - paths use no trailing slash except `/`. nginx permanently
+  redirects `/<path>/` to `/<path>` before SPA fallback in `apps/web/nginx.conf`.
+- [x] **E3 - Document** the host/trailing-slash choice next to `VITE_CANONICAL_BASE_URL` in
+  [`prelaunch-seo-funnel.md`](./prelaunch-seo-funnel.md).
+- [x] **E4 - Truthful `lastmod`** - sitemap `lastmod` remains optional and is omitted unless a route
+  has an explicit maintained `lastmod` value.
 
 **Acceptance:** one canonical host + slash form enforced by redirect; documented.
 
