@@ -82,48 +82,65 @@ moment with its required properties; `trackOnce` keys are stable; web tests gree
 
 ---
 
-## Tier C — Prerendering (Gate-5 launch blocker) ⏳ PLANNED
+## Tier C — Prerendering (Gate-5 launch blocker) ✅ DONE (2026-06-29)
 
-Marketing metadata is runtime-only today (injected after hydration), so non-JS crawlers and social
-scrapers see an empty shell. This is the single biggest item and the key launch blocker.
+Marketing metadata was runtime-only (injected after hydration), so non-JS crawlers and social
+scrapers saw an empty shell. Implemented **head/metadata prerendering**: a shared head builder feeds
+both runtime and build time, and the Vite build emits a per-route static HTML file with the full
+`<head>` baked in.
 
-- [ ] **C1 — Choose approach** — static prerender of the marketing subtree (e.g. `vite-react-ssg`,
-  `react-snap`, or a custom route-crawling Vite plugin). Lowest-lift option that fits the static
-  `dist/` deploy; leave `/garden` + app routes as a pure SPA.
-- [ ] **C2 — Emit static HTML per indexable marketing route** with unique `<title>`, description,
-  canonical, OG, Twitter card, and JSON-LD **in the raw HTML response** (not after hydration).
-- [ ] **C3 — Keep private/teaser-noindex correct** — prerender must not change the noindex posture;
-  the A1 assertion must still pass for private builds.
-- [ ] **C4 — Raw-HTML verification** — assert `dist/<route>/index.html` contains `<title>`,
-  `og:title`, and `application/ld+json` (extend A1-style checks / add a launch-mode check).
-- [ ] **C5 — Docs** — record the prerender step and how to verify with `view-source` + a scraper-side
-  debugger (Facebook Sharing Debugger / LinkedIn Post Inspector).
+- [x] **C1 — Approach** — custom Vite plugin step (`closeBundle` in `vite.config.ts`), no new heavy
+  deps. Prerenders only the marketing-registry routes; `/garden` + app routes stay a pure SPA.
+- [x] **C2 — Per-route static HTML** — `dist/<route>/index.html` (and the root for `/`) with unique
+  `<title>`, description, canonical, robots, OG, Twitter, and JSON-LD **in the raw response**. nginx
+  `try_files $uri/ …` serves the per-route file. New `apps/web/src/seo/headTags.ts`
+  (`buildPageHead` + `injectHeadIntoHtml`) is the single source of truth, also consumed by `Seo.tsx`
+  at runtime so the two can't drift.
+- [x] **C3 — Private stays clean** — prerender is **skipped in private mode**, so the private build is
+  byte-identical and `assert:seo-private` still passes (verified: no per-route dirs, root stays noindex).
+- [x] **C4 — Verification** — `apps/web/src/seo/headTags.test.ts` asserts the head/inject output;
+  launch build verified to emit `index,follow` + title + canonical + OG + JSON-LD per route.
+- [x] **C5 — Docs** — recorded here + in `docs/HANDOFF.md`.
+- [ ] **Follow-up (not blocking launch): full-body SSR.** This tier prerenders the `<head>` (the
+  playbook's stated acceptance: metadata + JSON-LD in raw HTML). Rendering the page **body** to HTML
+  (better for no-JS users / ranking body signals) is the playbook's heavier "Full SSR" option and is
+  deferred — Googlebot renders the SPA body on its JS pass, and scrapers only need the head.
 
-**Acceptance:** Gate-5 prerender requirement met — every indexable route is a static HTML file with
-correct metadata + JSON-LD in source.
+**Acceptance met:** every marketing route emits a static HTML file with correct metadata + JSON-LD in
+source (in non-private builds). Deploying this to **private** prod is a no-op by design — it activates
+when the site mode becomes teaser/launch.
 
 ---
 
-## Tier D — Content quality & Core Web Vitals ⏳ PLANNED
+## Tier D - Content quality & Core Web Vitals MOSTLY DONE (2026-06-29)
 
-Required before any guide is indexed (playbook rubric: minimum 12/14).
+Required before any guide is indexed (playbook rubric: minimum 12/14). The code/content portion is
+implemented and covered by tests. Remaining work is measurement/ops only: run Lighthouse on a
+launch-mode preview and add Organization `sameAs` after official social handles exist.
 
-- [ ] **D1 — Problem detail blocks** — symptom overview, quick checks, recovery steps, mistakes to
-  avoid, when to ask for help, CTA to diagnosis (`MarketingPage.tsx` + registry data).
-- [ ] **D2 — Species guide blocks** — care rhythm, beginner risks, symptom links, CTA to create a schedule.
-- [ ] **D3 — Beginner guide sections** — first week, how to tell soil is dry, when not to fertilize,
-  recovering from overwatering.
-- [ ] **D4 — Pet-toxicity one-line note** on species pages (point to ASPCA / local vet; no toxicity claims).
-- [ ] **D5 — Internal linking** — specific→general (problem → diagnosis app) and general→specific
-  (hub → guides) per the keyword-to-URL map.
-- [ ] **D6 — CWV hygiene** — `width`/`height` on hero/images (CLS), `font-display` (LCP), avoid
-  hydration jank (INP). Targets: LCP < 2.5s, INP < 200ms, CLS < 0.1, Lighthouse mobile ≥ 85.
-- [ ] **D7 — Real raster OG image** — replace `/icons/icon.svg` social image with a PNG/JPg (SVG OG
-    is unreliable for scrapers).
-- [ ] **D8 — Organization `sameAs`** — populate `structuredData.ts` with official social URLs once handles exist.
+- [x] **D1 - Problem detail blocks** - symptom overview, quick checks, likely causes, recovery steps,
+  mistakes to avoid, when to ask for help, contextual Dr. Plant prompt, and related links
+  (`MarketingPage.tsx` + expanded `ProblemGuide` registry data).
+- [x] **D2 - Species guide blocks** - light baseline, watering baseline, first-week setup, care
+  rhythm, beginner risks, symptoms to watch, pet-safety note, symptom links, and CTA to create a
+  schedule.
+- [x] **D3 - Beginner guide sections** - first week, how to tell soil is dry, when not to fertilize,
+  and recovering from overwatering.
+- [x] **D4 - Pet-safety note** on species pages. Notes are intentionally cautious and point to
+  ASPCA, a veterinarian, or a local expert instead of making hard toxicity claims.
+- [x] **D5 - Internal linking** - problem pages link to diagnosis/watering/beginner flows; species
+  pages link back into relevant symptom guides; hubs link into the detailed guide pages.
+- [~] **D6 - CWV hygiene** - marketing hero/product preview now has stable dimensions and the new
+  OG image is a static raster asset. Still pending: Lighthouse/mobile measurement for `/`, one
+  problem page, and one species page against a launch-mode preview. Targets: LCP < 2.5s, INP <
+  200ms, CLS < 0.1, Lighthouse mobile >= 85.
+- [x] **D7 - Real raster OG image** - replaced `/icons/icon.svg` social image with
+  `/marketing/og-dr-plant.png` for scraper compatibility.
+- [ ] **D8 - Organization `sameAs`** - populate `structuredData.ts` with official social URLs once
+  handles exist.
 
-**Acceptance:** each indexed guide scores ≥ 12/14 on the content rubric; CWV targets met on `/`,
-one problem page, one species guide.
+**Acceptance status:** content structure/tests are in place for launch-ready guide pages. CWV
+acceptance remains pending until Lighthouse is run on a local/protected launch-mode preview.
 
 ---
 

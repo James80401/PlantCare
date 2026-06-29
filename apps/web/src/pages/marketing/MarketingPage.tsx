@@ -5,7 +5,10 @@ import {
   findSpeciesGuide,
   problemGuides,
   speciesGuides,
+  type MarketingInternalLink,
   type MarketingRouteMeta,
+  type ProblemGuide,
+  type SpeciesGuide,
 } from '../../seo/marketingRegistry';
 import { publicSiteConfig, shouldRenderMarketingRoutes } from '../../seo/siteConfig';
 import { trackEvent } from '../../utils/analytics';
@@ -43,6 +46,58 @@ function CtaLink({ route, label, to }: { route: MarketingRouteMeta; label?: stri
       {ctaLabel}
     </Link>
   );
+}
+
+function SectionIntro({ eyebrow, title, text }: { eyebrow?: string; title: string; text?: string }) {
+  return (
+    <div className="max-w-3xl">
+      {eyebrow ? <p className="text-sm font-bold uppercase tracking-wide text-emerald-800">{eyebrow}</p> : null}
+      <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-[#18362b]">{title}</h2>
+      {text ? <p className="mt-3 leading-7 text-[#18362b]/72">{text}</p> : null}
+    </div>
+  );
+}
+
+function BulletPanel({ title, items }: { title: string; items: string[] }) {
+  return (
+    <section className="rounded-2xl border border-emerald-950/10 bg-[#fbfaf6] p-5">
+      <h3 className="text-lg font-bold text-[#18362b]">{title}</h3>
+      <ul className="mt-4 space-y-3">
+        {items.map((item) => (
+          <li key={item} className="rounded-xl bg-white px-4 py-3 text-sm leading-6 text-[#18362b]/75 ring-1 ring-emerald-950/10">
+            {item}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function RelatedLinks({ title, links }: { title: string; links: MarketingInternalLink[] }) {
+  if (!links.length) return null;
+  return (
+    <section className="bg-[#fbfaf6] py-12">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SectionIntro title={title} text="Continue with the next page that matches what you are trying to do." />
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="rounded-2xl border border-emerald-950/10 bg-white p-5 transition hover:border-emerald-700/40 hover:bg-emerald-50/60"
+            >
+              <h3 className="text-lg font-bold text-[#18362b]">{link.label}</h3>
+              <p className="mt-2 text-sm leading-6 text-[#18362b]/70">{link.description}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function problemBySlug(slug: string) {
+  return problemGuides.find((guide) => guide.slug === slug) ?? null;
 }
 
 function MarketingHeader() {
@@ -115,7 +170,7 @@ function PreviewNotice() {
 
 function ProductScene() {
   return (
-    <div className="grid gap-4 rounded-[2rem] border border-emerald-950/10 bg-white p-4 shadow-xl shadow-emerald-950/10 sm:p-5">
+    <div className="grid min-h-[22rem] gap-4 rounded-[2rem] border border-emerald-950/10 bg-white p-4 shadow-xl shadow-emerald-950/10 sm:min-h-[18rem] sm:p-5">
       <div className="rounded-3xl bg-[#18362b] p-4 text-white">
         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-100">Dr. Plant health chat</p>
         <p className="mt-3 text-2xl font-bold">Yellowing lower leaves</p>
@@ -227,24 +282,82 @@ function AppPageBody({ route }: { route: MarketingRouteMeta }) {
 }
 
 function BeginnerBody({ route }: { route: MarketingRouteMeta }) {
+  const sections = [
+    {
+      title: 'Your first week with a new plant',
+      items: [
+        'Keep the plant in one stable spot while it adjusts.',
+        'Check light and soil before changing watering habits.',
+        'Take a baseline photo so you can compare real changes later.',
+      ],
+    },
+    {
+      title: 'How to tell if soil is dry',
+      items: [
+        'Feel below the surface instead of judging only by the top crust.',
+        'Lift the pot after watering and again when dry so weight becomes a clue.',
+        'Use drainage and pot size to understand why some plants dry slowly.',
+      ],
+    },
+    {
+      title: 'When not to fertilize',
+      items: [
+        'Skip fertilizer when a plant is actively stressed or declining.',
+        'Do not fertilize dry roots before watering conditions are stable.',
+        'Wait after repotting or pest treatment unless the care guide says otherwise.',
+      ],
+    },
+    {
+      title: 'Recovering from overwatering',
+      items: [
+        'Pause watering until the soil condition is clear.',
+        'Check drainage, pot size, and whether the mix stays wet for days.',
+        'Use Dr. Plant to turn the symptom into a follow-up health check.',
+      ],
+    },
+  ];
+
   return (
-    <section className="bg-white py-14">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 sm:px-6 md:grid-cols-3">
-        {[
-          ['Light first', 'Most care advice fails if the plant is in the wrong light. Start by matching the plant to the room.'],
-          ['Water by condition', 'Use soil feel, pot weight, and plant symptoms before following a calendar.'],
-          ['Change one thing', 'When a plant struggles, make one safe change and watch the response before piling on fixes.'],
-        ].map(([title, text]) => (
-          <article key={title} className="rounded-2xl border border-emerald-950/10 bg-[#fbfaf6] p-5">
-            <h2 className="text-lg font-bold text-[#18362b]">{title}</h2>
-            <p className="mt-2 leading-7 text-[#18362b]/72">{text}</p>
-          </article>
-        ))}
-        <div className="md:col-span-3">
-          <CtaLink route={route} />
+    <>
+      <section className="bg-white py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <SectionIntro
+            eyebrow="Start here"
+            title="A simple care system for the first month"
+            text="Beginner plant care gets easier when you make fewer guesses. Use light, soil condition, drainage, and slow observation before making big changes."
+          />
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
+            {sections.map((section) => (
+              <BulletPanel key={section.title} title={section.title} items={section.items} />
+            ))}
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <CtaLink route={route} />
+            <Link
+              to="/plant-care-guides"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-emerald-900/20 bg-white px-5 py-3 text-sm font-semibold text-[#18362b] transition hover:border-emerald-800/40"
+            >
+              Browse plant guides
+            </Link>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+      <RelatedLinks
+        title="Beginner next steps"
+        links={[
+          {
+            to: '/plant-problems/yellow-leaves',
+            label: 'Yellow leaves',
+            description: 'Learn what to check before adding more water or fertilizer.',
+          },
+          {
+            to: '/plant-watering-reminder-app',
+            label: 'Watering reminder app',
+            description: 'Build reminders that start with checking the plant, not blindly watering.',
+          },
+        ]}
+      />
+    </>
   );
 }
 
@@ -252,7 +365,12 @@ function ProblemIndex({ route }: { route: MarketingRouteMeta }) {
   return (
     <section className="bg-white py-14">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <SectionIntro
+          eyebrow="Symptom library"
+          title="Start with the symptom you can see"
+          text="Each guide turns a visible problem into safer checks, common causes, recovery steps, and a Dr. Plant prompt."
+        />
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {problemGuides.map((guide) => (
             <Link
               key={guide.slug}
@@ -262,11 +380,18 @@ function ProblemIndex({ route }: { route: MarketingRouteMeta }) {
               <p className="text-sm font-bold uppercase tracking-wide text-emerald-800">{guide.symptom}</p>
               <h2 className="mt-2 text-xl font-bold text-[#18362b]">{guide.title}</h2>
               <p className="mt-2 leading-7 text-[#18362b]/72">{guide.description}</p>
+              <p className="mt-4 text-sm font-semibold text-emerald-800">View checks and recovery steps</p>
             </Link>
           ))}
         </div>
-        <div className="mt-8">
+        <div className="mt-8 flex flex-wrap gap-3">
           <CtaLink route={route} />
+          <Link
+            to="/plant-diagnosis-app"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-emerald-900/20 bg-white px-5 py-3 text-sm font-semibold text-[#18362b] transition hover:border-emerald-800/40"
+          >
+            How Dr. Plant diagnosis works
+          </Link>
         </div>
       </div>
     </section>
@@ -277,36 +402,48 @@ function ProblemGuideBody({ route }: { route: MarketingRouteMeta }) {
   const guide = findProblemGuide(route.path);
   if (!guide) return null;
   return (
-    <section className="bg-white py-14">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 sm:px-6 lg:grid-cols-2">
-        <article className="rounded-2xl border border-emerald-950/10 bg-[#fbfaf6] p-5">
-          <h2 className="text-xl font-bold text-[#18362b]">Quick checks before you react</h2>
-          <ul className="mt-4 space-y-3">
-            {guide.checks.map((item) => (
-              <li key={item} className="rounded-xl bg-white px-4 py-3 text-[#18362b]/75 ring-1 ring-emerald-950/10">
-                {item}
-              </li>
-            ))}
-          </ul>
-        </article>
-        <article className="rounded-2xl border border-emerald-950/10 bg-[#fbfaf6] p-5">
-          <h2 className="text-xl font-bold text-[#18362b]">Beginner-safe recovery steps</h2>
-          <ul className="mt-4 space-y-3">
-            {guide.recovery.map((item) => (
-              <li key={item} className="rounded-xl bg-white px-4 py-3 text-[#18362b]/75 ring-1 ring-emerald-950/10">
-                {item}
-              </li>
-            ))}
-          </ul>
-        </article>
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950 lg:col-span-2">
-          Dr. Plant can help organize symptoms and next steps, but severe toxicity concerns, pet ingestion, or unknown chemical exposure need a qualified local expert.
+    <>
+      <section className="bg-white py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <SectionIntro
+            eyebrow="Symptom overview"
+            title={`What ${guide.symptom.toLowerCase()} can mean`}
+            text={guide.overview}
+          />
+          <div className="mt-8 grid gap-5 lg:grid-cols-2">
+            <BulletPanel title="Quick checks before you react" items={guide.checks} />
+            <BulletPanel title="Common causes to compare" items={guide.likelyCauses} />
+            <BulletPanel title="Beginner-safe recovery steps" items={guide.recovery} />
+            <BulletPanel title="Mistakes to avoid" items={guide.mistakesToAvoid} />
+          </div>
         </div>
-        <div className="lg:col-span-2">
-          <CtaLink route={route} />
+      </section>
+      <section className="bg-[#fbfaf6] py-12">
+        <div className="mx-auto grid max-w-6xl gap-5 px-4 sm:px-6 lg:grid-cols-[1fr_0.85fr]">
+          <article className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
+            <h2 className="text-xl font-bold">When to ask for help</h2>
+            <ul className="mt-4 space-y-3">
+              {guide.whenToAskForHelp.map((item) => (
+                <li key={item} className="rounded-xl bg-white/70 px-4 py-3 text-sm leading-6">
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-sm leading-6">
+              Severe toxicity concerns, pet ingestion, or unknown chemical exposure need a qualified local expert.
+            </p>
+          </article>
+          <aside className="rounded-2xl border border-emerald-950/10 bg-white p-5">
+            <h2 className="text-xl font-bold text-[#18362b]">Ask Dr. Plant with better context</h2>
+            <p className="mt-3 leading-7 text-[#18362b]/72">{guide.drPlantPrompt}</p>
+            <div className="mt-5">
+              <CtaLink route={route} />
+            </div>
+          </aside>
         </div>
-      </div>
-    </section>
+      </section>
+      <RelatedLinks title="Related next steps" links={guide.relatedLinks} />
+    </>
   );
 }
 
@@ -314,7 +451,12 @@ function SpeciesIndex({ route }: { route: MarketingRouteMeta }) {
   return (
     <section className="bg-white py-14">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <SectionIntro
+          eyebrow="Species guides"
+          title="Choose your plant, then build the care rhythm"
+          text="Each beginner guide explains the first week, basic light and watering, common mistakes, and the symptoms worth watching."
+        />
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {speciesGuides.map((guide) => (
             <Link
               key={guide.slug}
@@ -325,48 +467,80 @@ function SpeciesIndex({ route }: { route: MarketingRouteMeta }) {
               <h2 className="mt-2 text-xl font-bold text-[#18362b]">{guide.title}</h2>
               <p className="mt-2 text-sm italic text-[#18362b]/55">{guide.scientificName}</p>
               <p className="mt-2 leading-7 text-[#18362b]/72">{guide.description}</p>
+              <p className="mt-4 text-sm font-semibold text-emerald-800">View first-week care plan</p>
             </Link>
           ))}
         </div>
-        <div className="mt-8">
+        <div className="mt-8 flex flex-wrap gap-3">
           <CtaLink route={route} />
+          <Link
+            to="/plant-problems"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-emerald-900/20 bg-white px-5 py-3 text-sm font-semibold text-[#18362b] transition hover:border-emerald-800/40"
+          >
+            Browse symptom guides
+          </Link>
         </div>
       </div>
     </section>
   );
 }
 
+function speciesProblemLinks(guide: SpeciesGuide): MarketingInternalLink[] {
+  return guide.relatedProblemSlugs
+    .map((slug) => problemBySlug(slug))
+    .filter((problem): problem is ProblemGuide => Boolean(problem))
+    .map((problem) => ({
+      to: `/plant-problems/${problem.slug}`,
+      label: problem.symptom,
+      description: problem.description,
+    }));
+}
+
 function SpeciesGuideBody({ route }: { route: MarketingRouteMeta }) {
   const guide = findSpeciesGuide(route.path);
   if (!guide) return null;
   return (
-    <section className="bg-white py-14">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 sm:px-6 lg:grid-cols-2">
-        <article className="rounded-2xl border border-emerald-950/10 bg-[#fbfaf6] p-5">
-          <h2 className="text-xl font-bold text-[#18362b]">Care rhythm</h2>
-          <ul className="mt-4 space-y-3">
-            {guide.careRhythm.map((item) => (
-              <li key={item} className="rounded-xl bg-white px-4 py-3 text-[#18362b]/75 ring-1 ring-emerald-950/10">
-                {item}
-              </li>
-            ))}
-          </ul>
-        </article>
-        <article className="rounded-2xl border border-emerald-950/10 bg-[#fbfaf6] p-5">
-          <h2 className="text-xl font-bold text-[#18362b]">Beginner risks</h2>
-          <ul className="mt-4 space-y-3">
-            {guide.beginnerRisks.map((item) => (
-              <li key={item} className="rounded-xl bg-white px-4 py-3 text-[#18362b]/75 ring-1 ring-emerald-950/10">
-                {item}
-              </li>
-            ))}
-          </ul>
-        </article>
-        <div className="lg:col-span-2">
-          <CtaLink route={route} />
+    <>
+      <section className="bg-white py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <SectionIntro
+            eyebrow={guide.scientificName}
+            title={`Beginner setup for ${guide.commonName}`}
+            text={guide.description}
+          />
+          <div className="mt-8 grid gap-5 lg:grid-cols-2">
+            <article className="rounded-2xl border border-emerald-950/10 bg-[#fbfaf6] p-5">
+              <h2 className="text-xl font-bold text-[#18362b]">Light and watering baseline</h2>
+              <dl className="mt-4 grid gap-4">
+                <div className="rounded-xl bg-white p-4 ring-1 ring-emerald-950/10">
+                  <dt className="text-sm font-bold uppercase tracking-wide text-emerald-800">Light</dt>
+                  <dd className="mt-1 text-sm leading-6 text-[#18362b]/75">{guide.light}</dd>
+                </div>
+                <div className="rounded-xl bg-white p-4 ring-1 ring-emerald-950/10">
+                  <dt className="text-sm font-bold uppercase tracking-wide text-emerald-800">Watering</dt>
+                  <dd className="mt-1 text-sm leading-6 text-[#18362b]/75">{guide.watering}</dd>
+                </div>
+              </dl>
+            </article>
+            <BulletPanel title="First-week setup" items={guide.firstWeek} />
+            <BulletPanel title="Care rhythm" items={guide.careRhythm} />
+            <BulletPanel title="Beginner risks" items={guide.beginnerRisks} />
+            <BulletPanel title="Symptoms to watch" items={guide.symptomsToWatch} />
+            <article className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
+              <h2 className="text-xl font-bold">Pet safety note</h2>
+              <p className="mt-3 text-sm leading-6">{guide.petSafetyNote}</p>
+              <p className="mt-3 text-sm leading-6">
+                Dr. Plant is not a toxicity database. Use a qualified source for pet ingestion or emergency concerns.
+              </p>
+            </article>
+          </div>
+          <div className="mt-8">
+            <CtaLink route={route} />
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+      <RelatedLinks title={`Common ${guide.commonName} symptom guides`} links={speciesProblemLinks(guide)} />
+    </>
   );
 }
 

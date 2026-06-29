@@ -15,8 +15,10 @@ touching production.
   without an explicit launch decision.
 - **Two active workstreams** ran recently:
   1. **Plant Buddy visual overhaul** — 4 feedback rounds, all shipped & deployed. *Complete.*
-  2. **Pre-launch SEO code subplan (Tiers A–E)** — **Tiers A & B done, deployed.** Tiers C, D, E
-     remain. This is the in-flight workstream.
+  2. **Pre-launch SEO code subplan (Tiers A-E)** - **Tiers A, B & C done.** A & B are deployed;
+     **C (prerender) is merged but a no-op in private prod** - it activates at teaser/launch.
+     **Tier D content polish is mostly done**; remaining D gates are Lighthouse/CWV measurement and
+     official social `sameAs` URLs. Tier E remains. This is the in-flight workstream.
 - **Source of truth docs:**
   - Strategy: [`docs/marketing/prelaunch-seo-funnel.md`](./marketing/prelaunch-seo-funnel.md) (the playbook)
   - Engineering tracker w/ checklists: [`docs/marketing/prelaunch-seo-subplan.md`](./marketing/prelaunch-seo-subplan.md)
@@ -87,6 +89,19 @@ Guardrails & quick wins (no launch decision needed):
   in `App.tsx`.
 - **`llms.txt`**: generated launch-only (absent in private/teaser).
 
+### 3.4 SEO Tier C — DONE (merged; no-op in private prod until launch)
+Head/metadata **prerendering** of the marketing subtree so non-JS crawlers and social scrapers get
+real `title`/description/canonical/OG/JSON-LD in the initial HTML instead of an empty shell.
+- `apps/web/src/seo/headTags.ts` — `buildPageHead` (single source of truth) + `injectHeadIntoHtml`.
+  Consumed by **both** `Seo.tsx` (runtime DOM) and the Vite build (static HTML), so they can't drift.
+- `apps/web/vite.config.ts` `closeBundle` emits `dist/<route>/index.html` per marketing route (root
+  for `/`). **Skipped in private mode** → private build byte-identical, `assert:seo-private` passes.
+  nginx `try_files $uri/ …` serves the per-route files.
+- Verified: launch build emits per-route HTML with `index,follow` + title + canonical + OG + JSON-LD;
+  private build emits no per-route dirs and stays noindex. `headTags.test.ts` locks the contract.
+- **Follow-up (not blocking launch):** full-body SSR. This prerenders the `<head>`; the body still
+  hydrates client-side. Googlebot renders the body on its JS pass and scrapers only need the head.
+
 ### 3.3 SEO Tier B — DONE & DEPLOYED (commit `1494830`)
 Analytics funnel. Most events were already wired by earlier launch-gate work; this tier verified
 the contracts, closed gaps, and locked them in:
@@ -98,77 +113,50 @@ the contracts, closed gaps, and locked them in:
 - Added: `apps/web/src/utils/analytics.test.ts` (gtag forwarding, `trackOnce` fire-once dedup,
   localStorage-blocked fallback).
 
+### 3.5 SEO Tier D content polish - MOSTLY DONE (local, pending deploy/merge)
+Launch-ready guide depth and scraper polish are now in code:
+- Expanded `ProblemGuide` registry data with symptom overviews, quick checks, likely causes,
+  recovery steps, mistakes to avoid, when-to-ask-for-help, Dr. Plant prompts, and related links.
+- Expanded `SpeciesGuide` registry data with light/watering baselines, first-week setup, care
+  rhythms, beginner risks, symptoms to watch, related symptom links, and cautious pet-safety notes.
+- Reworked the marketing guide UI so beginner, problem, and species pages render richer sections,
+  internal links, contextual CTAs, and stable product-preview dimensions.
+- Replaced the SVG social image with a raster OG image at
+  `apps/web/public/marketing/og-dr-plant.png`.
+- Added registry tests that enforce raster social images and minimum content depth for problem and
+  species guide pages.
+
 ---
 
 ## 4. What's left — detailed plan
 
-Recommended order **C → D → E**. Full itemized checklists live in
+Recommended order **D measurement → E**. Full itemized checklists live in
 [`docs/marketing/prelaunch-seo-subplan.md`](./marketing/prelaunch-seo-subplan.md); the plans below
 are the implementation detail for a new owner.
 
-### Tier C — Prerendering (the Gate-5 launch blocker) — NOT STARTED
-**Problem:** Marketing metadata (`title`/description/canonical/OG/Twitter/JSON-LD) is injected at
-runtime by `apps/web/src/seo/Seo.tsx` **after** React hydrates. Non-JS crawlers and social scrapers
-(Facebook/LinkedIn/Slack/Bing/most AI bots) read the initial HTML and stop, so they see an empty
-shell. This must be fixed before any page is meant to rank or be shared.
+### Tier C — Prerendering — ✅ DONE (head/metadata). See §3.4.
+Remaining optional follow-up: **full-body SSR** (render the marketing page body to HTML, not just the
+head). Heavier; not required for launch. If pursued, render only the marketing subtree with a static
+router and guard `window`/`localStorage`/`import.meta.env` for Node — or adopt `vite-react-ssg`.
 
-**Plan:**
-1. Pick the lowest-lift approach that fits the static `dist/` deploy: `vite-react-ssg`,
-   `react-snap`, or a custom Vite plugin that crawls the marketing routes and emits static HTML.
-   Prerender **only** the marketing subtree (the routes in `marketingRegistry.ts`); leave `/garden`
-   and app routes as a pure SPA.
-2. For each indexable marketing route, emit `dist/<route>/index.html` whose raw HTML already
-   contains a unique `<title>`, description, canonical, OG, Twitter card, and JSON-LD. Reuse
-   `structuredData.ts` + the registry; the data already exists — it just needs to be rendered into
-   HTML at build instead of (or in addition to) at runtime.
-3. Keep private/teaser-noindex correct: prerendered HTML must still be `noindex` in those modes, and
-   `assert-private-seo-build.mjs` must still pass for private builds.
-4. Add a verification step (extend the A1 script or add a launch-mode check) asserting that
-   `dist/plant-diagnosis-app/index.html` contains `<title>`, `og:title`, and `application/ld+json`
-   in source.
-5. Document the prerender step; verify with `view-source:` + Facebook Sharing Debugger / LinkedIn
-   Post Inspector.
-
-**Acceptance:** every indexable route is a static HTML file with correct metadata + JSON-LD in the
-raw response. Gate-5 prerender requirement met.
-
-**Watch-outs:** Tailwind v4 + Vite 6 plugin compatibility; the app reads `import.meta.env` and
-`window`/`localStorage` at module load in places — a prerenderer running in Node must guard those.
-The existing `seoOutputPlugin` in `vite.config.ts` is where build-time emission already happens —
-the prerender can live alongside it.
-
-### Tier D — Content quality & Core Web Vitals — NOT STARTED
-Required before any guide is indexed (playbook rubric: minimum **12/14**). Page bodies currently
-render registry data but are thinner than the playbook's page briefs.
-1. **Problem detail blocks** (`MarketingPage.tsx` `ProblemGuideBody`): symptom overview, quick
-   checks, recovery steps, mistakes to avoid, when-to-ask-for-help, CTA. Data lives on
-   `ProblemGuide` in `marketingRegistry.ts` — extend the type + entries.
-2. **Species guide blocks** (`SpeciesGuideBody`): care rhythm, beginner risks, symptom links, CTA.
-3. **Beginner guide sections** (first week, telling if soil is dry, when not to fertilize, recover
-   from overwatering).
-4. **Pet-toxicity one-line note** on species pages (point to ASPCA / local vet; make **no**
-   toxicity claims).
-5. **Internal linking** specific→general (problem → diagnosis app) and general→specific (hub → guides)
-   per the keyword-to-URL map.
-6. **CWV hygiene**: `width`/`height` on hero/images (CLS); `font-display` (LCP); avoid hydration
-   jank (INP). Targets: LCP < 2.5s, INP < 200ms, CLS < 0.1, Lighthouse mobile ≥ 85.
-7. **Real raster OG image**: replace `/icons/icon.svg` (`SOCIAL_IMAGE` in `marketingRegistry.ts`)
-   with a PNG/JPG — SVG OG images are unreliable for scrapers.
-8. **Organization `sameAs`**: populate in `structuredData.ts` once official social handles exist
+### Tier D - Content quality & Core Web Vitals - MOSTLY DONE
+The code/content portion is complete enough for launch-mode preview QA. Remaining gates:
+1. **CWV measurement**: run Lighthouse/mobile on `/`, one problem page, and one species guide in a
+   launch-mode protected preview. Targets: LCP < 2.5s, INP < 200ms, CLS < 0.1, Lighthouse mobile >=
+   85.
+2. **Organization `sameAs`**: populate in `structuredData.ts` once official social handles exist
    (currently `[]`).
+3. **Content QA pass**: before indexing, review the visible copy for unsupported medical/pet-safety
+   claims, stale launch language, and CTA destination fit for the chosen mode.
 
-**Acceptance:** each indexed guide scores ≥ 12/14; CWV targets met on `/`, one problem page, one
-species guide.
+**Acceptance:** content structure/tests are present; CWV targets still need measured evidence on
+`/`, one problem page, and one species guide.
 
-### Tier E — SPA hygiene — NOT STARTED
-1. **Real 404 status**: today unknown paths return `200` + the (noindex) SPA shell via nginx
-   `try_files … /index.html` — a soft 404. Tier A shipped the *noindex NotFound page* (the
-   doc-accepted alternative); a true `404` **status** needs nginx (or prerender) route-awareness.
-   Decide and implement in `apps/web/nginx.conf`.
-2. **Host canonicalization**: enforce one host form (www vs non-www) with a 301 (`nginx.conf`).
-3. **Trailing-slash convention**: pick one and 301 to it.
-4. **Document** the host/slash choice next to `VITE_CANONICAL_BASE_URL`. Keep sitemap `lastmod`
-   truthful if/when emitted.
+### Tier E - SPA hygiene - NOT STARTED
+1. **Host canonicalization**: enforce one host form (www vs non-www) with a 301 (`nginx.conf`).
+2. **Trailing-slash convention**: pick one and 301 to it.
+3. **Document** the host/slash choice next to `VITE_CANONICAL_BASE_URL`.
+4. **Truthful `lastmod`**: keep sitemap `lastmod` accurate if/when emitted.
 
 ---
 

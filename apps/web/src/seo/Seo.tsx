@@ -1,17 +1,9 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import {
-  findMarketingRoute,
-  isAuthOrProtectedPath,
-  isMarketingRouteIndexable,
-} from './marketingRegistry';
-import { buildStructuredData } from './structuredData';
-import { canonicalUrl, publicSiteConfig } from './siteConfig';
+import { findMarketingRoute, isAuthOrProtectedPath, isMarketingRouteIndexable } from './marketingRegistry';
+import { buildPageHead } from './headTags';
+import { publicSiteConfig } from './siteConfig';
 import { trackEvent } from '../utils/analytics';
-
-const DEFAULT_TITLE = 'Dr. Plant - Private Plant Care Preview';
-const DEFAULT_DESCRIPTION =
-  'Dr. Plant is a private pre-launch plant care assistant for houseplant diagnosis, reminders, and recovery routines.';
 
 function setMetaByName(name: string, content: string) {
   let tag = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
@@ -62,35 +54,22 @@ export function Seo() {
 
   useEffect(() => {
     const route = findMarketingRoute(location.pathname);
-    const isIndexable = route ? isMarketingRouteIndexable(route, publicSiteConfig) : false;
-    const title = route?.title ?? (isAuthOrProtectedPath(location.pathname) ? DEFAULT_TITLE : DEFAULT_TITLE);
-    const description = route?.description ?? DEFAULT_DESCRIPTION;
-    const url = canonicalUrl(route?.path ?? location.pathname, publicSiteConfig);
-    const socialImage = route?.socialImage ? canonicalUrl(route.socialImage, publicSiteConfig) : undefined;
+    const head = buildPageHead(route, location.pathname, publicSiteConfig);
 
-    document.title = title;
-    setMetaByName('description', description);
-    setMetaByName('robots', isIndexable ? 'index,follow' : 'noindex,nofollow');
-    setCanonical(url);
+    document.title = head.title;
+    setMetaByName('description', head.description);
+    setMetaByName('robots', head.robots);
+    setCanonical(head.canonical);
 
-    setMetaByProperty('og:title', title);
-    setMetaByProperty('og:description', description);
-    setMetaByProperty('og:url', url);
-    setMetaByProperty('og:site_name', 'Dr. Plant');
-    setMetaByProperty('og:type', route?.structuredData.includes('article') ? 'article' : 'website');
-    if (socialImage) setMetaByProperty('og:image', socialImage);
+    for (const [property, content] of Object.entries(head.og)) setMetaByProperty(property, content);
+    for (const [name, content] of Object.entries(head.twitter)) setMetaByName(name, content);
 
-    setMetaByName('twitter:card', socialImage ? 'summary_large_image' : 'summary');
-    setMetaByName('twitter:title', title);
-    setMetaByName('twitter:description', description);
-    if (socialImage) setMetaByName('twitter:image', socialImage);
-
-    setJsonLd(route ? buildStructuredData(route, publicSiteConfig) : []);
+    setJsonLd(head.jsonLd);
     trackEvent('page_view', {
       path: location.pathname,
       routeType: route ? route.kind : isAuthOrProtectedPath(location.pathname) ? 'protected' : 'app',
       siteMode: publicSiteConfig.mode,
-      indexable: isIndexable,
+      indexable: route ? isMarketingRouteIndexable(route, publicSiteConfig) : false,
     });
   }, [location.pathname]);
 
