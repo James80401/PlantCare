@@ -92,7 +92,9 @@ function PlantProfileShell() {
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
               Plant profile
             </p>
-            <h1 className="mt-1 text-3xl font-bold text-emerald-950 font-display">{plantLabel}</h1>
+            <h1 className="mt-1 break-words text-2xl font-bold text-emerald-950 font-display sm:text-3xl">
+              {plantLabel}
+            </h1>
             <p className="mt-1 text-sm text-gray-500">
               {species.commonName as string}
               {species.scientificName ? (
@@ -165,7 +167,7 @@ function PlantProfileShell() {
               </p>
             ) : null}
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
               <Link
                 to={plantDrPlantPath(ctx.id)}
                 className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-900"
@@ -212,7 +214,7 @@ function PlantProfileShell() {
       ) : null}
 
       <nav
-        className="sticky top-[4.5rem] z-20 overflow-x-auto rounded-2xl border border-emerald-100 bg-white/95 p-1 shadow-sm shadow-emerald-900/5 backdrop-blur"
+        className="sticky top-[calc(4.5rem+env(safe-area-inset-top))] z-20 overflow-x-auto rounded-2xl border border-emerald-100 bg-white/95 p-1 shadow-sm shadow-emerald-900/5 backdrop-blur [-webkit-overflow-scrolling:touch] sm:top-[4.5rem]"
         aria-label="Plant profile sections"
       >
         <div className="flex min-w-max gap-1">

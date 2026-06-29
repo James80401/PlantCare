@@ -82,16 +82,25 @@ function LayoutShell({
   const { missing: buddyMissing } = useBuddyCompanion();
   const buddyQuestClaims = useBuddyQuestBadge(Boolean(user) && !buddyMissing);
   const MenuIcon = navIcons.menu;
-  const primaryItems = user?.isAdmin
+  const desktopPrimaryItems = user?.isAdmin
     ? [...primaryNav, adminNav, settingsNav]
     : [...primaryNav, settingsNav];
-  const secondaryItems = moreNav.filter((item) => {
+  const mobilePrimaryItems = primaryNav;
+  const desktopSecondaryItems = moreNav.filter((item) => {
     if (item.freeOnly && (isPremium || !SHOW_UPGRADE)) return false;
     if (item.premiumOnly && !isPremium) return false;
     if (item.adminOnly && !user?.isAdmin) return false;
     return true;
   });
-  const hasActiveSecondary = secondaryItems.some((item) =>
+  const mobileSecondaryItems = [
+    ...(user?.isAdmin ? [adminNav] : []),
+    settingsNav,
+    ...desktopSecondaryItems,
+  ];
+  const hasActiveDesktopSecondary = desktopSecondaryItems.some((item) =>
+    isActivePath(location.pathname, item.to, item.exact),
+  );
+  const hasActiveMobileSecondary = mobileSecondaryItems.some((item) =>
     isActivePath(location.pathname, item.to, item.exact),
   );
   usePushNotifications(Boolean(user));
@@ -125,7 +134,7 @@ function LayoutShell({
               <span className="block truncate">Plant Care</span>
             </Link>
             <nav className="hidden sm:flex items-center gap-1 text-sm" aria-label="Main">
-              {primaryItems.map(({ to, label, exact }) => {
+              {desktopPrimaryItems.map(({ to, label, exact }) => {
                 const active = isActivePath(location.pathname, to, exact);
                 return (
                   <Link
@@ -143,9 +152,9 @@ function LayoutShell({
                 );
               })}
               <MoreMenu
-                items={secondaryItems}
+                items={desktopSecondaryItems}
                 open={moreOpen}
-                active={hasActiveSecondary}
+                active={hasActiveDesktopSecondary}
                 onToggle={() => setMoreOpen((value) => !value)}
                 menuRef={desktopMoreMenuRef}
                 buddyQuestClaims={buddyQuestClaims}
@@ -184,10 +193,9 @@ function LayoutShell({
         aria-label="Primary"
       >
         <div
-          className="mx-auto grid max-w-lg gap-px"
-          style={{ gridTemplateColumns: `repeat(${primaryItems.length + 1}, minmax(0, 1fr))` }}
+          className="mx-auto grid max-w-lg grid-cols-5 gap-1"
         >
-          {primaryItems.map(({ to, mobileLabel, icon, exact }) => {
+          {mobilePrimaryItems.map(({ to, mobileLabel, icon, exact }) => {
             const active = isActivePath(location.pathname, to, exact);
             const Icon = navIcons[icon];
             return (
@@ -202,7 +210,7 @@ function LayoutShell({
                 }`}
               >
                 <Icon className="h-6 w-6" aria-hidden />
-                <span className="mt-1 font-medium">{mobileLabel}</span>
+                <span className="mt-1 max-w-full truncate text-[11px] font-medium leading-4">{mobileLabel}</span>
               </Link>
             );
           })}
@@ -213,7 +221,7 @@ function LayoutShell({
               aria-expanded={moreOpen}
               aria-controls="mobile-more-menu"
               className={`relative flex min-h-14 w-full flex-col items-center justify-center rounded-2xl px-2 py-1.5 transition ${
-                hasActiveSecondary || moreOpen
+                hasActiveMobileSecondary || moreOpen
                   ? 'bg-emerald-800 text-white shadow-sm'
                   : 'text-gray-500 hover:bg-emerald-50 hover:text-emerald-800'
               }`}
@@ -227,7 +235,7 @@ function LayoutShell({
                   {buddyQuestClaims > 9 ? '9+' : buddyQuestClaims}
                 </span>
               ) : null}
-              <span className="mt-1 font-medium">More</span>
+              <span className="mt-1 max-w-full truncate text-[11px] font-medium leading-4">More</span>
               {buddyQuestClaims > 0 ? (
                 <span className="sr-only">
                   , {buddyQuestClaims} quest{buddyQuestClaims === 1 ? '' : 's'} ready to claim
@@ -237,10 +245,10 @@ function LayoutShell({
             {moreOpen ? (
               <div
                 id="mobile-more-menu"
-                className="absolute bottom-[calc(100%+0.75rem)] right-0 w-56 rounded-2xl border border-emerald-100 bg-white p-2 text-sm shadow-2xl"
+                className="absolute bottom-[calc(100%+0.75rem)] right-0 max-h-[min(70vh,28rem)] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto rounded-2xl border border-emerald-100 bg-white p-2 text-sm shadow-2xl"
               >
                 <MoreMenuLinks
-                  items={secondaryItems}
+                  items={mobileSecondaryItems}
                   buddyQuestClaims={buddyQuestClaims}
                   currentPath={location.pathname}
                 />
