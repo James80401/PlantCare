@@ -19,7 +19,7 @@ describe('DrPlantContextPanel', () => {
       data: {
         intro: 'Dr. Plant tailors answers using your recent care:',
         items: [
-          { category: 'care', label: 'Care baseline', detail: 'Living room · medium pot' },
+          { category: 'care', label: 'Care baseline', detail: 'Living room - medium pot' },
           { category: 'health', label: 'Open issue: Overwatering', detail: 'Noted Jun 2' },
         ],
       },
@@ -29,8 +29,9 @@ describe('DrPlantContextPanel', () => {
 
     expect(await screen.findByText('Care baseline')).toBeInTheDocument();
     expect(screen.getByText('Open issue: Overwatering')).toBeInTheDocument();
-    expect(screen.getByText(/What Dr\. Plant sees/)).toBeInTheDocument();
+    expect(screen.getByText(/What Dr\. Plant can use/)).toBeInTheDocument();
     expect(screen.getByText('2 signals')).toBeInTheDocument();
+    expect(screen.getByText(/saved care history/)).toBeInTheDocument();
     expect(getContextSummary).toHaveBeenCalledWith('plant-1');
   });
 
@@ -42,7 +43,7 @@ describe('DrPlantContextPanel', () => {
     const { container } = render(<DrPlantContextPanel plantId="plant-1" />);
 
     await waitFor(() => expect(getContextSummary).toHaveBeenCalled());
-    expect(screen.queryByText(/What Dr\. Plant sees/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/What Dr\. Plant can use/)).not.toBeInTheDocument();
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -52,7 +53,7 @@ describe('DrPlantContextPanel', () => {
     const { container } = render(<DrPlantContextPanel plantId="plant-1" />);
 
     await waitFor(() => expect(getContextSummary).toHaveBeenCalled());
-    expect(screen.queryByText(/What Dr\. Plant sees/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/What Dr\. Plant can use/)).not.toBeInTheDocument();
     expect(container).toBeEmptyDOMElement();
   });
 });

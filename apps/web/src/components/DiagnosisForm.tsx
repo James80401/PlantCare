@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Textarea } from './ui/Input';
 
 interface DiagnosisFormProps {
@@ -29,6 +29,21 @@ export default function DiagnosisForm({ plantName, onSubmit }: DiagnosisFormProp
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    return () => {
+      if (photoPreview?.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
+    };
+  }, [photoPreview]);
+
+  const clearPhoto = () => {
+    setPhoto(null);
+    setPhotoPreview((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setPhotoKey((key) => key + 1);
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!symptoms.trim() && !photo) {
@@ -51,10 +66,7 @@ export default function DiagnosisForm({ plantName, onSubmit }: DiagnosisFormProp
       setSymptomDuration('TODAY');
       setRecentCareChange('NONE');
       setPestsVisible(false);
-      setPhoto(null);
-      if (photoPreview?.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
-      setPhotoPreview(null);
-      setPhotoKey((key) => key + 1);
+      clearPhoto();
     } catch {
       setError('Could not run diagnosis. Try again in a moment.');
     } finally {
@@ -65,14 +77,14 @@ export default function DiagnosisForm({ plantName, onSubmit }: DiagnosisFormProp
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm space-y-4"
+      className="space-y-4 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm"
     >
-      <motionHeader plantName={plantName} />
+      <DiagnosisHeader plantName={plantName} />
       <Textarea
         label="What are you seeing?"
         value={symptoms}
         onChange={(e) => setSymptoms(e.target.value)}
-        placeholder="Yellow lower leaves, soggy soil, spots on new growth…"
+        placeholder="Yellow lower leaves, soggy soil, spots on new growth..."
         rows={4}
       />
       <div className="grid gap-3 sm:grid-cols-2">
@@ -128,11 +140,12 @@ export default function DiagnosisForm({ plantName, onSubmit }: DiagnosisFormProp
           onChange={(e) => setPestsVisible(e.target.checked)}
           className="h-4 w-4 rounded border-emerald-200 text-emerald-700"
         />
-        I can see pests/webbing/sticky residue
+        I can see pests, webbing, or sticky residue
       </label>
-      <motionPhotoField
+      <DiagnosisPhotoField
         photoKey={photoKey}
         previewUrl={photoPreview}
+        onClear={clearPhoto}
         onPick={(file) => {
           setPhoto(file);
           setPhotoPreview((prev) => {
@@ -141,58 +154,87 @@ export default function DiagnosisForm({ plantName, onSubmit }: DiagnosisFormProp
           });
         }}
       />
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-rose-600" role="alert">
+          {error}
+        </p>
+      ) : null}
       <button
         type="submit"
         disabled={submitting}
         className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-emerald-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {submitting ? 'Analyzing…' : 'Run diagnosis'}
+        {submitting ? 'Analyzing...' : 'Run diagnosis'}
       </button>
     </form>
   );
 }
 
-function motionHeader({ plantName }: { plantName: string }) {
+function DiagnosisHeader({ plantName }: { plantName: string }) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-        Symptom check
+        Symptom intake
       </p>
       <h3 className="mt-1 font-semibold text-emerald-950">Check {plantName}</h3>
       <p className="mt-1 text-sm text-gray-600">
-        Add a clear photo and symptoms for a structured treatment plan.
+        Add symptoms and a clear photo if you have one. Dr. Plant will return a saved plant-care
+        diagnosis with next steps and uncertainty noted.
+      </p>
+      <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900 ring-1 ring-amber-100">
+        If there is mold spreading fast, chemical exposure, or a pet or person may have eaten the
+        plant, treat that as urgent and contact the right professional source.
       </p>
     </div>
   );
 }
 
-function motionPhotoField({
+function DiagnosisPhotoField({
   photoKey,
   previewUrl,
   onPick,
+  onClear,
 }: {
   photoKey: number;
   previewUrl: string | null;
   onPick: (file: File | null) => void;
+  onClear: () => void;
 }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700">Photo (optional)</label>
-      <input
-        key={photoKey}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={(e) => onPick(e.target.files?.[0] ?? null)}
-        className="mt-1.5 block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-800"
-      />
-      {previewUrl ? (
-        <img
-          src={previewUrl}
-          alt="Symptom photo preview"
-          className="mt-3 max-h-48 w-full rounded-2xl object-cover border border-emerald-100"
+    <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <label className="block text-sm font-semibold text-emerald-950">
+            Photo evidence (optional)
+          </label>
+          <p className="mt-1 text-xs leading-5 text-gray-600">
+            Best results come from bright, close photos of the affected leaf plus the whole plant.
+          </p>
+        </div>
+        <input
+          key={photoKey}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={(e) => onPick(e.target.files?.[0] ?? null)}
+          className="block max-w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-800"
         />
+      </div>
+      {previewUrl ? (
+        <div className="mt-3 space-y-2">
+          <img
+            src={previewUrl}
+            alt="Symptom photo preview"
+            className="max-h-48 w-full rounded-2xl border border-emerald-100 object-cover"
+          />
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-xs font-semibold text-rose-700 hover:underline"
+          >
+            Remove photo
+          </button>
+        </div>
       ) : null}
     </div>
   );

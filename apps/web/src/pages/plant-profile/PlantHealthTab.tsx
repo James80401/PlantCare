@@ -5,15 +5,16 @@ import DiagnosisResult from '../../components/DiagnosisResult';
 import DrPlantChat from '../../components/DrPlantChat';
 import DrPlantContextPanel from '../../components/DrPlantContextPanel';
 import TreatmentPlanCard from '../../components/TreatmentPlanCard';
-import { usePlantProfile } from './PlantProfileContext';
+import { taskTypeLabel } from '../../utils/tasks';
 import { DR_PLANT_SECTION_ID } from './constants';
 import { HealthStickyDrPlant } from './HealthStickyDrPlant';
+import { usePlantProfile } from './PlantProfileContext';
 import { ProfileSection, RecoveryPanel, SectionEmptyState } from './shared';
-import { taskTypeLabel } from '../../utils/tasks';
 
 export default function PlantHealthTab() {
   const ctx = usePlantProfile();
   const location = useLocation();
+  const recoveryTasks = ctx.pending.filter((task) => Boolean(task.sourceDiagnosisId));
 
   useEffect(() => {
     if (location.hash.replace('#', '') !== DR_PLANT_SECTION_ID) return;
@@ -25,23 +26,36 @@ export default function PlantHealthTab() {
     <>
       <ProfileSection
         eyebrow="Plant health"
-        title="Diagnosis"
-        description="Ask Dr. Plant about symptoms and review past diagnosis results."
+        title="Health"
+        description="Check symptoms, ask Dr. Plant follow-ups, and keep recovery tasks moving."
       >
         <div className="space-y-5 pb-20 sm:pb-0">
+          <HealthWorkflowGuide
+            activeDiagnosisCount={ctx.activeDiagnosisCount}
+            diagnosisCount={ctx.diagnosisEntries.length}
+            recoveryTaskCount={recoveryTasks.length}
+          />
+
+          <DrPlantContextPanel plantId={ctx.id} />
+
           <section className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
-              Symptom check
-            </p>
-            <p className="mt-1 text-sm text-gray-600">
-              One structured diagnosis with a photo — separate from the chat below.
-            </p>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                  Structured symptom check
+                </p>
+                <p className="mt-1 text-sm text-gray-600">
+                  Use this when you want one saved diagnosis with intake details and an optional photo.
+                </p>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100">
+                Saved to health history
+              </span>
+            </div>
             <div className="mt-3">
               <DiagnosisForm plantName={ctx.plantLabel} onSubmit={ctx.submitDiagnosis} />
             </div>
           </section>
-
-          <DrPlantContextPanel plantId={ctx.id} />
 
           <DrPlantChat plantId={ctx.id} plantName={ctx.plantLabel} />
 
@@ -53,10 +67,7 @@ export default function PlantHealthTab() {
             }}
           />
 
-          <RecoveryTimeline
-            tasks={ctx.pending.filter((task) => Boolean(task.sourceDiagnosisId))}
-            onComplete={ctx.handleCompleteTask}
-          />
+          <RecoveryTimeline tasks={recoveryTasks} onComplete={ctx.handleCompleteTask} />
 
           {ctx.latestUnresolved ? (
             <TreatmentPlanCard
@@ -137,6 +148,69 @@ export default function PlantHealthTab() {
   );
 }
 
+function HealthWorkflowGuide({
+  activeDiagnosisCount,
+  diagnosisCount,
+  recoveryTaskCount,
+}: {
+  activeDiagnosisCount: number;
+  diagnosisCount: number;
+  recoveryTaskCount: number;
+}) {
+  const steps = [
+    {
+      label: '1. Gather context',
+      body: 'Check what Dr. Plant can already see from care history, tasks, journal notes, and weather context.',
+    },
+    {
+      label: '2. Choose the lane',
+      body: 'Use structured diagnosis for a saved photo-backed result, or chat for follow-up questions and recovery planning.',
+    },
+    {
+      label: '3. Track recovery',
+      body: 'Turn advice into health-check tasks, journal recovery notes, and mark the issue recovered when stable.',
+    },
+  ];
+
+  return (
+    <section className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            Health workflow
+          </p>
+          <h3 className="mt-1 font-semibold text-emerald-950">
+            Start with context, then turn advice into follow-up
+          </h3>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-800 ring-1 ring-emerald-100">
+            {diagnosisCount} saved
+          </span>
+          {activeDiagnosisCount > 0 ? (
+            <span className="rounded-full bg-rose-50 px-3 py-1 text-rose-800 ring-1 ring-rose-100">
+              {activeDiagnosisCount} active
+            </span>
+          ) : null}
+          {recoveryTaskCount > 0 ? (
+            <span className="rounded-full bg-lime-50 px-3 py-1 text-lime-900 ring-1 ring-lime-100">
+              {recoveryTaskCount} follow-up
+            </span>
+          ) : null}
+        </div>
+      </div>
+      <ol className="mt-4 grid gap-3 md:grid-cols-3">
+        {steps.map((step) => (
+          <li key={step.label} className="rounded-2xl bg-emerald-50/60 px-3 py-3">
+            <p className="text-sm font-semibold text-emerald-950">{step.label}</p>
+            <p className="mt-1 text-xs leading-5 text-gray-600">{step.body}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 function RecoveryTimeline({
   tasks,
   onComplete,
@@ -153,9 +227,7 @@ function RecoveryTimeline({
           <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">
             Recovery timeline
           </p>
-          <h3 className="mt-1 font-semibold text-emerald-950">
-            Active follow-up tasks
-          </h3>
+          <h3 className="mt-1 font-semibold text-emerald-950">Active follow-up tasks</h3>
         </div>
         <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-lime-900 ring-1 ring-lime-100">
           {tasks.length} open

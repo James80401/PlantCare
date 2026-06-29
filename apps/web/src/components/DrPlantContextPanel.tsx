@@ -7,18 +7,18 @@ import {
 
 const CATEGORY_STYLE: Record<
   DrPlantContextItem['category'],
-  { ring: string; text: string; icon: string }
+  { ring: string; text: string; label: string }
 > = {
-  care: { ring: 'bg-emerald-50 ring-emerald-100', text: 'text-emerald-900', icon: '🌱' },
-  health: { ring: 'bg-rose-50 ring-rose-100', text: 'text-rose-900', icon: '🩺' },
-  tasks: { ring: 'bg-sky-50 ring-sky-100', text: 'text-sky-900', icon: '🗓️' },
-  feedback: { ring: 'bg-amber-50 ring-amber-100', text: 'text-amber-900', icon: '💬' },
-  journal: { ring: 'bg-lime-50 ring-lime-100', text: 'text-lime-900', icon: '📖' },
-  weather: { ring: 'bg-indigo-50 ring-indigo-100', text: 'text-indigo-900', icon: '⛅' },
+  care: { ring: 'bg-emerald-50 ring-emerald-100', text: 'text-emerald-900', label: 'Care' },
+  health: { ring: 'bg-rose-50 ring-rose-100', text: 'text-rose-900', label: 'Health' },
+  tasks: { ring: 'bg-sky-50 ring-sky-100', text: 'text-sky-900', label: 'Tasks' },
+  feedback: { ring: 'bg-amber-50 ring-amber-100', text: 'text-amber-900', label: 'Feedback' },
+  journal: { ring: 'bg-lime-50 ring-lime-100', text: 'text-lime-900', label: 'Journal' },
+  weather: { ring: 'bg-indigo-50 ring-indigo-100', text: 'text-indigo-900', label: 'Weather' },
 };
 
 /**
- * Compact, expandable "What Dr. Plant sees" panel. Surfaces the same recent-care
+ * Compact, expandable "What Dr. Plant can use" panel. Surfaces the same recent-care
  * and condition signals the assistant uses, so advice that references recent
  * events is understandable. Renders nothing if the context can't load.
  */
@@ -46,19 +46,21 @@ export default function DrPlantContextPanel({ plantId }: { plantId: string }) {
   if (failed || !summary || summary.items.length === 0) return null;
 
   return (
-    <details className="group rounded-2xl border border-emerald-100 bg-white/70 p-3">
+    <details className="group rounded-2xl border border-emerald-100 bg-white/80 p-3">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-emerald-900">
-        <span className="flex items-center gap-2">
-          <span aria-hidden>🔎</span> What Dr. Plant sees
-        </span>
+        <span>What Dr. Plant can use</span>
         <span className="text-xs font-medium text-emerald-700">
           {summary.items.length} signal{summary.items.length === 1 ? '' : 's'}
           <span className="ml-1 inline-block transition group-open:rotate-180" aria-hidden>
-            ▾
+            v
           </span>
         </span>
       </summary>
       <p className="mt-2 text-xs leading-5 text-gray-600">{summary.intro}</p>
+      <p className="mt-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-900 ring-1 ring-emerald-100">
+        Dr. Plant uses this plant's saved care history, tasks, journal notes, and recent health
+        records. It is plant-care guidance, not emergency medical or veterinary advice.
+      </p>
       <ul className="mt-3 space-y-2">
         {summary.items.map((item, index) => {
           const style = CATEGORY_STYLE[item.category];
@@ -67,11 +69,17 @@ export default function DrPlantContextPanel({ plantId }: { plantId: string }) {
               key={`${item.category}-${index}`}
               className={`flex items-start gap-2 rounded-xl px-3 py-2 text-sm ring-1 ${style.ring}`}
             >
-              <span aria-hidden>{style.icon}</span>
+              <span
+                className={`mt-0.5 rounded-full bg-white px-2 py-0.5 text-[0.65rem] font-bold uppercase ${style.text}`}
+              >
+                {style.label}
+              </span>
               <span className="min-w-0">
                 <span className={`font-semibold ${style.text}`}>{item.label}</span>
                 {item.detail ? (
-                  <span className="mt-0.5 block text-xs leading-5 text-gray-600">{item.detail}</span>
+                  <span className="mt-0.5 block text-xs leading-5 text-gray-600">
+                    {item.detail}
+                  </span>
                 ) : null}
               </span>
             </li>
