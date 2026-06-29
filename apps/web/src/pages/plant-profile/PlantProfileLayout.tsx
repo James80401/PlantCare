@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { SharePlantCard } from '../../components/engagement/SharePlantCard';
 import { resolveApiAssetUrl } from '../../utils/apiAssets';
@@ -8,6 +8,7 @@ import { DR_PLANT_SECTION_ID, plantDrPlantPath, plantHealthPath, PROFILE_TABS } 
 import { PlantProfileProvider, usePlantProfile } from './PlantProfileContext';
 import { SummaryTile } from './shared';
 import { taskTypeLabel } from '../../utils/tasks';
+
 function PlantProfileShell() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -16,10 +17,7 @@ function PlantProfileShell() {
   useEffect(() => {
     const hash = location.hash.replace('#', '');
     if (!hash) return;
-    const mapped =
-      hash === 'diagnosis' || hash === DR_PLANT_SECTION_ID
-        ? 'health'
-        : hash;
+    const mapped = hash === 'diagnosis' || hash === DR_PLANT_SECTION_ID ? 'health' : hash;
     if (PROFILE_TABS.some((t) => t.id === mapped)) {
       navigate(
         {
@@ -47,8 +45,7 @@ function PlantProfileShell() {
   const fertilizeTask = ctx.pending.find((t) => t.taskType === 'FERTILIZE');
 
   return (
-    <div className="space-y-5 min-w-0">
-      {/* Breadcrumb: Landing → Garden → Plant */}
+    <div className="min-w-0 space-y-5">
       <nav className="flex flex-wrap items-center gap-1.5 text-sm" aria-label="Breadcrumb">
         <Link to="/garden/gardens" className="font-medium text-emerald-700 hover:underline">
           My Gardens
@@ -56,7 +53,7 @@ function PlantProfileShell() {
         {gardenId ? (
           <>
             <span className="text-gray-400" aria-hidden>
-              ›
+              /
             </span>
             <Link
               to={`/garden/gardens/${gardenId}`}
@@ -67,7 +64,7 @@ function PlantProfileShell() {
           </>
         ) : null}
         <span className="text-gray-400" aria-hidden>
-          ›
+          /
         </span>
         <span className="font-semibold text-emerald-950">{plantLabel}</span>
       </nav>
@@ -82,8 +79,11 @@ function PlantProfileShell() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span className="flex h-full items-center justify-center text-5xl" aria-hidden>
-                🌿
+              <span
+                className="flex h-full items-center justify-center text-sm font-semibold text-emerald-800"
+                aria-hidden
+              >
+                Plant
               </span>
             )}
           </div>
@@ -96,11 +96,10 @@ function PlantProfileShell() {
             <p className="mt-1 text-sm text-gray-500">
               {species.commonName as string}
               {species.scientificName ? (
-                <span className="italic"> · {species.scientificName as string}</span>
+                <span className="italic"> - {species.scientificName as string}</span>
               ) : null}
             </p>
 
-            {/* Plant Dashboard: summary cards that drill into detail pages. */}
             <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
               <DrillCard
                 to={carePath}
@@ -150,7 +149,10 @@ function PlantProfileShell() {
               />
             </div>
             <p className="mt-2 text-xs text-gray-500">
-              📍 {careOverview?.environmentLabel ? `${currentLocation} · ${careOverview.environmentLabel}` : currentLocation}
+              Location:{' '}
+              {careOverview?.environmentLabel
+                ? `${currentLocation} - ${careOverview.environmentLabel}`
+                : currentLocation}
             </p>
 
             {species.toxicity ? (
@@ -158,7 +160,7 @@ function PlantProfileShell() {
                 role="note"
                 className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
               >
-                <span aria-hidden>⚠️ </span>
+                <span className="font-semibold">Safety note: </span>
                 {String(species.toxicity)}
               </p>
             ) : null}
@@ -188,6 +190,8 @@ function PlantProfileShell() {
         </div>
       </section>
 
+      <ProfileNextAction />
+
       {ctx.sharingPlant ? (
         <SharePlantCard
           snapshot={{
@@ -197,7 +201,10 @@ function PlantProfileShell() {
             location: currentLocation,
             sunlight: (species.sunlight as string) || null,
             nextCareLabel: nextTask
-              ? `${taskTypeLabel(nextTask.taskType as string)} · ${format(new Date(nextTask.dueDate as string), 'MMM d')}`
+              ? `${taskTypeLabel(nextTask.taskType as string)} - ${format(
+                  new Date(nextTask.dueDate as string),
+                  'MMM d',
+                )}`
               : null,
           }}
           onClose={() => ctx.setSharingPlant(false)}
@@ -214,21 +221,25 @@ function PlantProfileShell() {
               key={section.id}
               to={`/garden/plants/${ctx.id}/${section.id}`}
               className={({ isActive }) =>
-                `rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                `inline-flex items-center rounded-xl px-3 py-2 text-sm font-semibold transition ${
                   isActive
                     ? 'bg-emerald-800 text-white'
                     : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-800'
                 }`
               }
             >
-              {section.label}
-              {section.id === 'tasks' && sectionCounts.tasks ? ` (${sectionCounts.tasks})` : ''}
-              {section.id === 'journal' && sectionCounts.journal
-                ? ` (${sectionCounts.journal})`
-                : ''}
-              {section.id === 'health' && ctx.activeDiagnosisCount > 0
-                ? ` (${ctx.activeDiagnosisCount})`
-                : ''}
+              <span>{section.label}</span>
+              <TabCountBadge
+                count={
+                  section.id === 'tasks'
+                    ? sectionCounts.tasks
+                    : section.id === 'journal'
+                      ? sectionCounts.journal
+                      : section.id === 'health'
+                        ? ctx.activeDiagnosisCount
+                        : 0
+                }
+              />
             </NavLink>
           ))}
         </div>
@@ -236,6 +247,122 @@ function PlantProfileShell() {
 
       <Outlet />
     </div>
+  );
+}
+
+function ProfileNextAction() {
+  const ctx = usePlantProfile();
+  const healthPath = plantDrPlantPath(ctx.id);
+  const tasksPath = `/garden/plants/${ctx.id}/tasks`;
+  const journalPath = `/garden/plants/${ctx.id}/journal`;
+
+  if (ctx.activeDiagnosisCount > 0) {
+    return (
+      <ActionBanner
+        eyebrow="Health follow-up"
+        title={`${ctx.activeDiagnosisCount} active diagnosis ${
+          ctx.activeDiagnosisCount === 1 ? 'needs' : 'need'
+        } attention`}
+        body="Review the latest guidance, add recovery notes, or ask Dr. Plant a follow-up question."
+        to={healthPath}
+        action="Open Dr. Plant"
+        tone="rose"
+      />
+    );
+  }
+
+  if (ctx.nextTask) {
+    const taskLabel = taskTypeLabel(ctx.nextTask.taskType as string);
+    return (
+      <ActionBanner
+        eyebrow="Next care"
+        title={`${taskLabel} is ${formatDueRelative(ctx.nextTask.dueDate as string).toLowerCase()}`}
+        body={`Keep ${ctx.plantLabel}'s schedule moving with the next care step.`}
+        to={tasksPath}
+        action="View tasks"
+        tone="emerald"
+      />
+    );
+  }
+
+  if (ctx.journalEntries.length === 0) {
+    return (
+      <ActionBanner
+        eyebrow="Start the story"
+        title="Add the first journal entry"
+        body="Capture a note, photo, or measurement so future growth changes are easier to compare."
+        to={journalPath}
+        action="Open journal"
+        tone="sky"
+      />
+    );
+  }
+
+  return (
+    <ActionBanner
+      eyebrow="Profile rhythm"
+      title="Care is caught up"
+      body="Add a quick observation after the next visible change to keep this profile useful."
+      to={journalPath}
+      action="Add observation"
+      tone="emerald"
+    />
+  );
+}
+
+function ActionBanner({
+  eyebrow,
+  title,
+  body,
+  to,
+  action,
+  tone,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  to: string;
+  action: string;
+  tone: 'emerald' | 'rose' | 'sky';
+}) {
+  const toneClass =
+    tone === 'rose'
+      ? 'border-rose-100 bg-rose-50/70 text-rose-950'
+      : tone === 'sky'
+        ? 'border-sky-100 bg-sky-50/70 text-sky-950'
+        : 'border-emerald-100 bg-emerald-50/70 text-emerald-950';
+  const actionClass =
+    tone === 'rose'
+      ? 'bg-rose-700 text-white hover:bg-rose-800'
+      : tone === 'sky'
+        ? 'bg-sky-700 text-white hover:bg-sky-800'
+        : 'bg-emerald-800 text-white hover:bg-emerald-900';
+
+  return (
+    <section
+      className={`flex flex-col gap-3 rounded-2xl border px-4 py-3 shadow-sm shadow-emerald-900/5 sm:flex-row sm:items-center sm:justify-between ${toneClass}`}
+    >
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{eyebrow}</p>
+        <h2 className="mt-1 text-base font-semibold">{title}</h2>
+        <p className="mt-1 text-sm opacity-80">{body}</p>
+      </div>
+      <Link
+        to={to}
+        className={`inline-flex min-h-10 shrink-0 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold ${actionClass}`}
+      >
+        {action}
+      </Link>
+    </section>
+  );
+}
+
+function TabCountBadge({ count }: { count: number }) {
+  if (!count) return null;
+  return (
+    <span className="ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-white/80 px-2 py-0.5 text-xs font-bold text-emerald-900 ring-1 ring-emerald-100">
+      {count}
+    </span>
   );
 }
 
