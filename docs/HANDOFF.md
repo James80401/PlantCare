@@ -17,8 +17,8 @@ touching production.
   1. **Plant Buddy visual overhaul** — 4 feedback rounds, all shipped & deployed. *Complete.*
   2. **Pre-launch SEO code subplan (Tiers A-E)** - **Tiers A, B & C done.** A & B are deployed;
      **C (prerender) is merged but a no-op in private prod** - it activates at teaser/launch.
-     **Tier D content polish is mostly done**; remaining D gates are Lighthouse/CWV measurement and
-     official social `sameAs` URLs. Tier E remains. This is the in-flight workstream.
+     **Tier D content polish and CWV lab checks are done**; the only D item left is official social
+     `sameAs` URLs. Tier E remains. This is the in-flight workstream.
 - **Source of truth docs:**
   - Strategy: [`docs/marketing/prelaunch-seo-funnel.md`](./marketing/prelaunch-seo-funnel.md) (the playbook)
   - Engineering tracker w/ checklists: [`docs/marketing/prelaunch-seo-subplan.md`](./marketing/prelaunch-seo-subplan.md)
@@ -113,7 +113,7 @@ the contracts, closed gaps, and locked them in:
 - Added: `apps/web/src/utils/analytics.test.ts` (gtag forwarding, `trackOnce` fire-once dedup,
   localStorage-blocked fallback).
 
-### 3.5 SEO Tier D content polish - MOSTLY DONE (local, pending deploy/merge)
+### 3.5 SEO Tier D content polish - DONE EXCEPT SOCIAL HANDLES
 Launch-ready guide depth and scraper polish are now in code:
 - Expanded `ProblemGuide` registry data with symptom overviews, quick checks, likely causes,
   recovery steps, mistakes to avoid, when-to-ask-for-help, Dr. Plant prompts, and related links.
@@ -125,12 +125,18 @@ Launch-ready guide depth and scraper polish are now in code:
   `apps/web/public/marketing/og-dr-plant.png`.
 - Added registry tests that enforce raster social images and minimum content depth for problem and
   species guide pages.
+- Added async Google Fonts loading in `apps/web/index.html` to reduce landing-page LCP.
+- Lighthouse/mobile launch-mode preview passed the Tier D route set:
+  `/` performance 96 / LCP 2,413 ms / CLS 0.000 / TBT 0 ms;
+  `/plant-problems/yellow-leaves` performance 96 / LCP 2,258 ms / CLS 0.002 / TBT 0 ms;
+  `/plant-care-guides/pothos` performance 95 / LCP 2,411 ms / CLS 0.010 / TBT 0 ms.
+  Audit record: `docs/marketing/tier-d-cwv-audit-2026-06-29.md`.
 
 ---
 
 ## 4. What's left — detailed plan
 
-Recommended order **D measurement → E**. Full itemized checklists live in
+Recommended order **D sameAs when handles exist → E**. Full itemized checklists live in
 [`docs/marketing/prelaunch-seo-subplan.md`](./marketing/prelaunch-seo-subplan.md); the plans below
 are the implementation detail for a new owner.
 
@@ -139,18 +145,15 @@ Remaining optional follow-up: **full-body SSR** (render the marketing page body 
 head). Heavier; not required for launch. If pursued, render only the marketing subtree with a static
 router and guard `window`/`localStorage`/`import.meta.env` for Node — or adopt `vite-react-ssg`.
 
-### Tier D - Content quality & Core Web Vitals - MOSTLY DONE
-The code/content portion is complete enough for launch-mode preview QA. Remaining gates:
-1. **CWV measurement**: run Lighthouse/mobile on `/`, one problem page, and one species guide in a
-   launch-mode protected preview. Targets: LCP < 2.5s, INP < 200ms, CLS < 0.1, Lighthouse mobile >=
-   85.
-2. **Organization `sameAs`**: populate in `structuredData.ts` once official social handles exist
+### Tier D - Content quality & Core Web Vitals - DONE EXCEPT SOCIAL HANDLES
+The code/content portion and Lighthouse lab measurement are complete. Remaining gate:
+1. **Organization `sameAs`**: populate in `structuredData.ts` once official social handles exist
    (currently `[]`).
-3. **Content QA pass**: before indexing, review the visible copy for unsupported medical/pet-safety
-   claims, stale launch language, and CTA destination fit for the chosen mode.
+2. **Final pre-indexing content QA**: repeat shortly before launch for stale launch language and CTA
+   destination fit for the chosen mode.
 
-**Acceptance:** content structure/tests are present; CWV targets still need measured evidence on
-`/`, one problem page, and one species guide.
+**Acceptance:** content structure/tests are present; Lighthouse mobile lab targets passed on `/`,
+one problem page, and one species guide. Real field INP still requires post-launch/open-testing data.
 
 ### Tier E - SPA hygiene - NOT STARTED
 1. **Host canonicalization**: enforce one host form (www vs non-www) with a 301 (`nginx.conf`).

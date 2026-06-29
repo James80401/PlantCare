@@ -112,11 +112,11 @@ when the site mode becomes teaser/launch.
 
 ---
 
-## Tier D - Content quality & Core Web Vitals MOSTLY DONE (2026-06-29)
+## Tier D - Content quality & Core Web Vitals DONE EXCEPT SOCIAL HANDLES (2026-06-29)
 
 Required before any guide is indexed (playbook rubric: minimum 12/14). The code/content portion is
-implemented and covered by tests. Remaining work is measurement/ops only: run Lighthouse on a
-launch-mode preview and add Organization `sameAs` after official social handles exist.
+implemented and covered by tests. Lighthouse/mobile lab measurement now passes on the representative
+route set. Remaining work is blocked on official social handles for Organization `sameAs`.
 
 - [x] **D1 - Problem detail blocks** - symptom overview, quick checks, likely causes, recovery steps,
   mistakes to avoid, when to ask for help, contextual Dr. Plant prompt, and related links
@@ -130,17 +130,22 @@ launch-mode preview and add Organization `sameAs` after official social handles 
   ASPCA, a veterinarian, or a local expert instead of making hard toxicity claims.
 - [x] **D5 - Internal linking** - problem pages link to diagnosis/watering/beginner flows; species
   pages link back into relevant symptom guides; hubs link into the detailed guide pages.
-- [~] **D6 - CWV hygiene** - marketing hero/product preview now has stable dimensions and the new
-  OG image is a static raster asset. Still pending: Lighthouse/mobile measurement for `/`, one
-  problem page, and one species page against a launch-mode preview. Targets: LCP < 2.5s, INP <
-  200ms, CLS < 0.1, Lighthouse mobile >= 85.
+- [x] **D6 - CWV hygiene** - marketing hero/product preview has stable dimensions, the new OG image
+  is a static raster asset, and Google Fonts now load asynchronously with a `noscript` fallback to
+  reduce render-blocking LCP delay. Lighthouse/mobile launch-mode preview results:
+  - `/` - performance 96, LCP 2,413 ms, CLS 0.000, TBT 0 ms.
+  - `/plant-problems/yellow-leaves` - performance 96, LCP 2,258 ms, CLS 0.002, TBT 0 ms.
+  - `/plant-care-guides/pothos` - performance 95, LCP 2,411 ms, CLS 0.010, TBT 0 ms.
+  - Lab note: Lighthouse uses TBT as the interaction proxy; real INP requires field data after
+    launch/open testing.
 - [x] **D7 - Real raster OG image** - replaced `/icons/icon.svg` social image with
   `/marketing/og-dr-plant.png` for scraper compatibility.
 - [ ] **D8 - Organization `sameAs`** - populate `structuredData.ts` with official social URLs once
   handles exist.
 
-**Acceptance status:** content structure/tests are in place for launch-ready guide pages. CWV
-acceptance remains pending until Lighthouse is run on a local/protected launch-mode preview.
+**Acceptance status:** content structure/tests and Lighthouse lab targets are in place for
+launch-ready guide pages. See [`tier-d-cwv-audit-2026-06-29.md`](./tier-d-cwv-audit-2026-06-29.md).
+Only Organization `sameAs` remains, pending official social URLs.
 
 ---
 
