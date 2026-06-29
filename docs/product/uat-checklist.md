@@ -81,6 +81,8 @@ Runbook: [google-play-closed-testing.md](google-play-closed-testing.md)
 
 ## E. Mobile QA (browser / device)
 
+Detailed viewport pass: [mobile-viewport-qa.md](mobile-viewport-qa.md)
+
 - [x] Empty garden state readable, no horizontal scroll (Playwright mobile)
 - [x] Active garden: bottom nav does not cover content (`page-garden` safe-area padding + Playwright)
 - [x] Overdue tasks visually distinct (Playwright: overdue metric + attention card)

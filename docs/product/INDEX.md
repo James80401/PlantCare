@@ -10,6 +10,7 @@
 | [improvement-checklist.md](improvement-checklist.md) | PM / dev | Archived roadmap acceptance criteria and implementation ideas |
 | [species-coverage-report.md](species-coverage-report.md) | PM / dev | Species catalog filter-attribute coverage audit (CONTENT-1 input) |
 | [uat-checklist.md](uat-checklist.md) | QA | Full UAT matrix |
+| [mobile-viewport-qa.md](mobile-viewport-qa.md) | QA / release | Mobile viewport checks for web and native packaging |
 | [tester-5-minute.md](tester-5-minute.md) | Testers | Quick smoke script |
 | [google-play-closed-testing.md](google-play-closed-testing.md) | Testers / release | Play closed testing program (G4) |
 | [play-store-listing.md](play-store-listing.md) | Release | Store copy, data safety draft, graphics |
