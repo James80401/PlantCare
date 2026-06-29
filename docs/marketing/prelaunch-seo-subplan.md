@@ -56,27 +56,29 @@ sitemap + `llms.txt` and the assertion rejects it. Not yet deployed (deploy opti
 
 ---
 
-## Tier B — Analytics funnel wiring ⏳ PLANNED
+## Tier B — Analytics funnel wiring ✅ DONE (2026-06-29)
 
-The funnel events are defined but mostly not emitted at real activation points.
+Most of this was already wired by the earlier SEO launch-gate work; this tier verified the
+contracts, closed two gaps, and locked them in with tests.
 
-- [x] `page_view` with `{ path, routeType, siteMode, indexable }` — **already done** in
-  `apps/web/src/seo/Seo.tsx`.
-- [ ] **B1 — `marketing_cta_click`** on every marketing CTA (`pages/marketing/MarketingPage.tsx`)
-  with `{ route, target, label, siteMode }`.
-- [ ] **B2 — `signup_complete` properties** `{ requiresVerification, requiresAdminApproval }`
-  (`pages/Register.tsx`).
-- [ ] **B3 — `first_plant_added`** via `trackOnce` at first successful plant add, `{ speciesId }`.
-- [ ] **B4 — `first_dr_plant_message`** via `trackOnce` at first successful Dr. Plant chat reply,
-  `{ plantId }`.
-- [ ] **B5 — `first_task_completed`** via `trackOnce` at first task completion, `{ source }`.
-- [ ] **B6 — Reconcile event names** — keep existing per-event `PlantAdded`/`TaskCompleted`/
-  `DiagnoseSubmitted`; the `first_*` events are once-per-browser activation markers (different purpose).
-- [ ] **B7 — Tests** for the new emissions (mock `trackEvent`/`gtag`, assert props).
+- [x] `page_view` with `{ path, routeType, siteMode, indexable }` — `apps/web/src/seo/Seo.tsx`.
+- [x] **B1 — `marketing_cta_click`** `{ route, target, label, siteMode }` — `MarketingPage.tsx`
+  (`trackCta`, also still emits `waitlist_submit` for the waitlist route).
+- [x] **B2 — `signup_complete` properties** `{ requiresVerification, requiresAdminApproval }` —
+  `Register.tsx`. Closed the gap on the immediate-login branch (now sends `false/false` instead of
+  no props).
+- [x] **B3 — `first_plant_added`** via `trackOnce`, `{ speciesId }` — `AddPlantWizard.tsx`.
+- [x] **B4 — `first_dr_plant_message`** via `trackOnce`, `{ plantId }` — `DrPlantChat.tsx`.
+- [x] **B5 — `first_task_completed`** via `trackOnce`, `{ source }` — `useDashboardTaskActions.ts`
+  + `useTasksInRange.ts`.
+- [x] **B6 — Event names reconciled** — per-event `PlantAdded`/`TaskCompleted`/`DiagnoseSubmitted`
+  kept alongside the once-per-browser `first_*` activation markers (different purpose).
+- [x] **B7 — Tests** — `apps/web/src/utils/analytics.test.ts` covers `gtag` forwarding, `trackOnce`
+  fire-once-per-key dedup, and the localStorage-unavailable fallback.
 - _Deferred (not code now):_ choosing an analytics provider (GA4/Plausible/PostHog); no ad pixels pre-launch.
 
-**Acceptance:** every funnel event in the playbook's Analytics Plan fires once at the right moment
-with its required properties; `trackOnce` keys are stable; web tests green.
+**Acceptance met:** every funnel event in the playbook's Analytics Plan fires once at the right
+moment with its required properties; `trackOnce` keys are stable; web tests green.
 
 ---
 

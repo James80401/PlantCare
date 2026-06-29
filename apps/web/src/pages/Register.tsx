@@ -37,7 +37,10 @@ export default function Register() {
         return;
       }
       trackEvent('UserSignedUp');
-      trackEvent('signup_complete');
+      trackEvent('signup_complete', {
+        requiresVerification: false,
+        requiresAdminApproval: false,
+      });
       navigate('/garden');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
