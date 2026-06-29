@@ -165,6 +165,26 @@ Only Organization `sameAs` remains, pending official social URLs.
 
 ---
 
+## Tier F - Production delivery performance STARTED (2026-06-29)
+
+Triggered by hosted Lighthouse checks showing `0 ms` TBT and `0` CLS, but slow regional FCP/LCP
+around 4-6 seconds. That shape points at delivery and first paint, not client-side main-thread work.
+
+- [x] **F1 - Compress production text assets** - Caddy now enables gzip for the web reverse proxy,
+  and nginx allows gzip for proxied responses with `gzip_proxied any`.
+- [x] **F2 - Cache hashed Vite assets** - `/assets/*` now sends
+  `Cache-Control: public, max-age=31536000, immutable`.
+- [x] **F3 - Keep HTML and crawler files fresh** - SPA fallbacks, protected routes, `robots.txt`,
+  `sitemap.xml`, and `llms.txt` send `Cache-Control: no-cache`.
+- [ ] **F4 - Add an edge CDN/cache** - put `drplant.app` behind Cloudflare proxy/cache before public
+  launch so global Lighthouse regions do not all fetch app bytes from the origin droplet.
+- [ ] **F5 - Rerun hosted Lighthouse from multiple regions** after deploy and compare FCP/LCP.
+
+**Acceptance:** production serves compressed JS/CSS, immutable hashed assets, fresh HTML, and global
+Lighthouse scores improve without weakening private-mode `noindex`/empty-sitemap protections.
+
+---
+
 ## Verification reference
 
 - Web tests: `npm run test -w @plant-care/web`

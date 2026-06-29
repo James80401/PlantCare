@@ -11,6 +11,7 @@ www.drplant.app {
 }
 
 drplant.app {
+	encode gzip
 	reverse_proxy 127.0.0.1:8080
 }
 EOF

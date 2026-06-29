@@ -19,7 +19,8 @@ touching production.
      **C (prerender) is merged but a no-op in private prod** - it activates at teaser/launch.
      **Tier D content polish and CWV lab checks are done**; the only D item left is official social
      `sameAs` URLs. **Tier E is done**: apex host + no-trailing-slash canonical redirects are in
-     place. This is the in-flight workstream.
+     place. **Tier F production delivery tuning has started** after hosted Lighthouse showed slow
+     regional FCP/LCP despite 0 ms TBT and 0 CLS.
 - **Source of truth docs:**
   - Strategy: [`docs/marketing/prelaunch-seo-funnel.md`](./marketing/prelaunch-seo-funnel.md) (the playbook)
   - Engineering tracker w/ checklists: [`docs/marketing/prelaunch-seo-subplan.md`](./marketing/prelaunch-seo-subplan.md)
@@ -164,6 +165,15 @@ one problem page, and one species guide. Real field INP still requires post-laun
 3. **Documented** next to `VITE_CANONICAL_BASE_URL` in `docs/marketing/prelaunch-seo-funnel.md`.
 4. **Truthful `lastmod`**: sitemap `lastmod` stays omitted unless route metadata explicitly
    maintains one.
+
+### Tier F - Production delivery performance - STARTED
+Hosted Lighthouse checks showed regional performance in the 60s with FCP/LCP around 4-6 seconds,
+while TBT stayed at `0 ms` and CLS at `0`. First fixes:
+1. **Compression**: Caddy enables gzip for the web reverse proxy; nginx allows proxied gzip.
+2. **Immutable assets**: `/assets/*` sends `Cache-Control: public, max-age=31536000, immutable`.
+3. **Fresh HTML/private files**: SPA fallbacks and crawler files send `Cache-Control: no-cache`.
+4. **Remaining bigger win**: put `drplant.app` behind Cloudflare/CDN edge caching before launch and
+   rerun hosted Lighthouse from the same regions.
 
 ---
 
