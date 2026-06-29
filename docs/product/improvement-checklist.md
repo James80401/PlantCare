@@ -405,7 +405,7 @@ Continue with **Dr. Plant context (C4)**, **FCM v1 + deploy sign-off (G1/G3)**, 
 
 ## Phase 8 - Quality gates
 
-- [ ] Add focused component tests for dashboard summary calculations.
+- [x] Add focused component tests for dashboard summary calculations (`apps/web/src/pages/Dashboard.test.tsx`).
 - [x] Add API tests for any dashboard endpoint (`apps/api/src/dashboard/dashboard.controller.spec.ts`).
 - [x] Add mobile viewport QA checklist (see [mobile-viewport-qa.md](mobile-viewport-qa.md)).
 - [x] Verify keyboard navigation and screen reader labels (H2 — see [a11y-checklist.md](a11y-checklist.md)).
