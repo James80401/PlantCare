@@ -60,8 +60,7 @@ describe('AuthContext', () => {
   it('starts anonymous without calling the user endpoint when no token exists', async () => {
     renderAuth();
 
-    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('ready'));
-
+    expect(screen.getByTestId('loading')).toHaveTextContent('ready');
     expect(screen.getByTestId('user')).toHaveTextContent('anonymous');
     expect(usersApi.me).not.toHaveBeenCalled();
   });

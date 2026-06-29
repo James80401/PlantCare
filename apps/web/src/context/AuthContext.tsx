@@ -40,12 +40,24 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function getStoredToken(key: string) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function hasStoredAccessToken() {
+  return Boolean(getStoredToken('accessToken'));
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(hasStoredAccessToken);
 
   const refreshUser = useCallback(async () => {
-    const token = localStorage.getItem('accessToken');
+    const token = getStoredToken('accessToken');
     if (!token) {
       setUser(null);
       return;

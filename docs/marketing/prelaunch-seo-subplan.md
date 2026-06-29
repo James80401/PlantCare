@@ -176,9 +176,12 @@ around 4-6 seconds. That shape points at delivery and first paint, not client-si
   `Cache-Control: public, max-age=31536000, immutable`.
 - [x] **F3 - Keep HTML and crawler files fresh** - SPA fallbacks, protected routes, `robots.txt`,
   `sitemap.xml`, and `llms.txt` send `Cache-Control: no-cache`.
-- [ ] **F4 - Add an edge CDN/cache** - put `drplant.app` behind Cloudflare proxy/cache before public
+- [x] **F4 - Shorten private first paint** - no-token sessions start auth in `ready` state and the
+  small login surface is eager-loaded with the app shell instead of fetched after the `/` to
+  `/login` client redirect.
+- [ ] **F5 - Add an edge CDN/cache** - put `drplant.app` behind Cloudflare proxy/cache before public
   launch so global Lighthouse regions do not all fetch app bytes from the origin droplet.
-- [ ] **F5 - Rerun hosted Lighthouse from multiple regions** after deploy and compare FCP/LCP.
+- [ ] **F6 - Rerun hosted Lighthouse from multiple regions** after deploy and compare FCP/LCP.
 
 **Acceptance:** production serves compressed JS/CSS, immutable hashed assets, fresh HTML, and global
 Lighthouse scores improve without weakening private-mode `noindex`/empty-sitemap protections.

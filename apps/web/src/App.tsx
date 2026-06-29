@@ -6,12 +6,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { BuddyGate } from './components/BuddyGate';
 import { Skeleton } from './components/ui/Skeleton';
 import { Seo } from './seo/Seo';
+import Login from './pages/Login';
 
-// Eager: landing + structural wrappers (always in the tree, small). Everything else
-// is code-split via React.lazy so the initial bundle only carries the shell. Vite
-// emits a separate chunk per lazy import; the Buddy section (15 pages, gated) and
-// the plant-profile tabs become their own on-demand chunks.
-const Login = lazy(() => import('./pages/Login'));
+// Eager: landing, login, and structural wrappers (always in the private-entry
+// path, small). Everything else is code-split via React.lazy so the initial
+// bundle stays focused on first paint.
 const Register = lazy(() => import('./pages/Register'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const ResendVerification = lazy(() => import('./pages/ResendVerification'));
