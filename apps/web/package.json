@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "assert:seo-private": "node scripts/assert-private-seo-build.mjs",
     "mobile:copy": "npm run build && cap copy",
     "mobile:sync": "npm run build && cap sync",
     "mobile:add:android": "npm run build && cap add android",

@@ -28,7 +28,10 @@ jobs:
       - run: npm run build -w @plant-care/shared
       - run: npm run test -w @plant-care/api
       - run: npm run build -w @plant-care/api
+      - run: npm run test -w @plant-care/web
       - run: npm run build -w @plant-care/web
+      # Guardrail: a default/private build must be noindex with an empty sitemap.
+      - run: npm run assert:seo-private -w @plant-care/web
 
       - name: Buddy API smoke (live server)
         env:

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { buildRobotsTxt, buildSitemapXml, defaultRobotsDirective } from './src/seo/crawlerFiles';
+import { buildLlmsTxt, buildRobotsTxt, buildSitemapXml, defaultRobotsDirective } from './src/seo/crawlerFiles';
 import { indexableMarketingRoutes } from './src/seo/marketingRegistry';
 import { readPublicSiteConfig } from './src/seo/siteConfig';
 
@@ -32,6 +32,11 @@ function seoOutputPlugin() {
         fileName: 'sitemap.xml',
         source: buildSitemapXml(siteConfig, indexableMarketingRoutes(siteConfig)),
       });
+      // Only published once the marketing surface is indexable (launch); empty otherwise.
+      const llmsTxt = buildLlmsTxt(siteConfig);
+      if (llmsTxt) {
+        this.emitFile({ type: 'asset', fileName: 'llms.txt', source: llmsTxt });
+      }
     },
   };
 }

@@ -58,6 +58,7 @@ const GardenTasks = lazy(() => import('./pages/gardens/GardenTasks'));
 const GardenPlants = lazy(() => import('./pages/gardens/GardenPlants'));
 const GardenMembers = lazy(() => import('./pages/gardens/GardenMembers'));
 const MarketingRoutePage = lazy(() => import('./pages/marketing/MarketingPage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 function RouteFallback() {
   return (
@@ -141,7 +142,7 @@ export default function App() {
             <Route path="subscription" element={<Subscription />} />
           </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );

@@ -21,6 +21,11 @@ export interface MarketingRouteMeta {
   summary: string;
   kind: MarketingRouteKind;
   ctaLabel: string;
+  /**
+   * The single head/long-tail term this page is allowed to own (cannibalization
+   * control). No two routes may share one — enforced by marketingRegistry.test.
+   */
+  primaryKeyword: string;
   sitemapPriority: number;
   indexableByMode: Record<PublicSiteMode, boolean>;
   structuredData: StructuredDataKind[];
@@ -203,6 +208,7 @@ const coreRoutes: MarketingRouteMeta[] = [
       'An AI plant doctor for beginners who need a clear next step when leaves yellow, stems droop, or watering gets confusing.',
     kind: 'landing',
     ctaLabel: 'Start with your first plant',
+    primaryKeyword: 'dr plant',
     sitemapPriority: 1,
     indexableByMode: TEASER_INDEX,
     structuredData: ['organization', 'softwareApplication', 'breadcrumb'],
@@ -219,6 +225,7 @@ const coreRoutes: MarketingRouteMeta[] = [
       'Dr. Plant is staying private until launch, but this page is ready for a controlled teaser or testing phase.',
     kind: 'waitlist',
     ctaLabel: 'Request access',
+    primaryKeyword: 'dr plant waitlist',
     sitemapPriority: 0.8,
     indexableByMode: TEASER_INDEX,
     structuredData: ['organization', 'breadcrumb'],
@@ -235,6 +242,7 @@ const coreRoutes: MarketingRouteMeta[] = [
       'Use a guided plant health chat to organize symptoms, photos, likely causes, and follow-up care tasks.',
     kind: 'app',
     ctaLabel: 'Diagnose this plant',
+    primaryKeyword: 'plant diagnosis app',
     sitemapPriority: 0.9,
     indexableByMode: LAUNCH_INDEX,
     structuredData: ['softwareApplication', 'breadcrumb'],
@@ -251,6 +259,7 @@ const coreRoutes: MarketingRouteMeta[] = [
       'Dr. Plant keeps care simple: add a plant, follow the schedule, and ask for help when something looks off.',
     kind: 'app',
     ctaLabel: 'Create your care routine',
+    primaryKeyword: 'plant care app',
     sitemapPriority: 0.9,
     indexableByMode: LAUNCH_INDEX,
     structuredData: ['softwareApplication', 'breadcrumb'],
@@ -267,6 +276,7 @@ const coreRoutes: MarketingRouteMeta[] = [
       'Use reminders as a care checkpoint, not a blind calendar. Dr. Plant helps beginners notice when a plant needs a different rhythm.',
     kind: 'app',
     ctaLabel: 'Build a watering routine',
+    primaryKeyword: 'plant watering reminder app',
     sitemapPriority: 0.85,
     indexableByMode: LAUNCH_INDEX,
     structuredData: ['softwareApplication', 'breadcrumb'],
@@ -283,6 +293,7 @@ const coreRoutes: MarketingRouteMeta[] = [
       'Start with the basics that prevent most plant problems: light, water, drainage, observation, and patient recovery.',
     kind: 'beginner',
     ctaLabel: 'Start with your first plant',
+    primaryKeyword: 'houseplant care for beginners',
     sitemapPriority: 0.85,
     indexableByMode: LAUNCH_INDEX,
     structuredData: ['breadcrumb', 'article'],
@@ -299,6 +310,7 @@ const coreRoutes: MarketingRouteMeta[] = [
       'Start with the symptom you can see, then use Dr. Plant to narrow down what changed and what to do next.',
     kind: 'problem-index',
     ctaLabel: 'Diagnose this plant',
+    primaryKeyword: 'plant problems',
     sitemapPriority: 0.8,
     indexableByMode: LAUNCH_INDEX,
     structuredData: ['breadcrumb'],
@@ -315,6 +327,7 @@ const coreRoutes: MarketingRouteMeta[] = [
       'Learn the care rhythm, common beginner mistakes, and recovery clues for popular houseplants.',
     kind: 'guide-index',
     ctaLabel: 'Create a care schedule',
+    primaryKeyword: 'plant care guides',
     sitemapPriority: 0.8,
     indexableByMode: LAUNCH_INDEX,
     structuredData: ['breadcrumb'],
@@ -331,6 +344,8 @@ const problemRoutes: MarketingRouteMeta[] = problemGuides.map((guide) => ({
   summary: guide.description,
   kind: 'problem',
   ctaLabel: 'Diagnose this plant with Dr. Plant',
+  // Specific long-tail symptom term only — never the `/plant-problems` head term.
+  primaryKeyword: `${guide.symptom.toLowerCase()} on houseplant`,
   sitemapPriority: 0.7,
   indexableByMode: LAUNCH_INDEX,
   structuredData: ['breadcrumb', 'article'],
@@ -346,6 +361,8 @@ const speciesRoutes: MarketingRouteMeta[] = speciesGuides.map((guide) => ({
   summary: guide.description,
   kind: 'species',
   ctaLabel: 'Create a care schedule for this plant',
+  // Specific species term only — never the `/plant-care-guides` head term.
+  primaryKeyword: `${guide.commonName.toLowerCase()} care`,
   sitemapPriority: 0.65,
   indexableByMode: LAUNCH_INDEX,
   structuredData: ['breadcrumb', 'article'],
