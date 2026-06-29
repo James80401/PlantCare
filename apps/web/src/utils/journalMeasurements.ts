@@ -48,10 +48,7 @@ export function pickPhotoCompareIds(
   photoEntries: PlantRecord[],
 ): { beforeId: string; afterId: string } | null {
   if (photoEntries.length < 2) return null;
-  const sorted = [...photoEntries].sort(
-    (a, b) =>
-      new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime(),
-  );
+  const sorted = sortEntriesByDate(photoEntries);
   return {
     beforeId: sorted[0].id as string,
     afterId: sorted[sorted.length - 1].id as string,
@@ -62,10 +59,7 @@ export function pickLatestPhotoCompareIds(
   photoEntries: PlantRecord[],
 ): { beforeId: string; afterId: string } | null {
   if (photoEntries.length < 2) return null;
-  const sorted = [...photoEntries].sort(
-    (a, b) =>
-      new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime(),
-  );
+  const sorted = sortEntriesByDate(photoEntries);
   return {
     beforeId: sorted[sorted.length - 2].id as string,
     afterId: sorted[sorted.length - 1].id as string,
@@ -77,10 +71,7 @@ export function pickCompareIdsAroundEntry(
   entryId: string,
 ): { beforeId: string; afterId: string } | null {
   if (photoEntries.length < 2) return null;
-  const sorted = [...photoEntries].sort(
-    (a, b) =>
-      new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime(),
-  );
+  const sorted = sortEntriesByDate(photoEntries);
   const index = sorted.findIndex((entry) => entry.id === entryId);
   if (index === -1) return null;
   if (index === 0) {
@@ -117,18 +108,15 @@ export type MeasurementValues = {
 
 /**
  * Human-readable summary of a single set of measurements, e.g.
- * `"14 cm tall · 20 cm wide · 8 leaves"`. Returns `null` when no
+ * "14 cm tall - 20 cm wide - 8 leaves". Returns null when no
  * measurement is present so callers can fall back cleanly.
- *
- * Shared by the plant journal and the dashboard Garden Story so the
- * separator (` · `) and copy stay consistent across surfaces.
  */
 export function formatMeasurementValues(measurements: MeasurementValues): string | null {
   const parts: string[] = [];
   if (measurements.heightCm != null) parts.push(`${measurements.heightCm} cm tall`);
   if (measurements.widthCm != null) parts.push(`${measurements.widthCm} cm wide`);
   if (measurements.leafCount != null) parts.push(`${measurements.leafCount} leaves`);
-  return parts.length ? parts.join(' · ') : null;
+  return parts.length ? parts.join(' - ') : null;
 }
 
 export function measurementSummaryForEntry(entry: PlantRecord): string | null {
@@ -137,4 +125,11 @@ export function measurementSummaryForEntry(entry: PlantRecord): string | null {
     widthCm: entry.widthCm != null ? Number(entry.widthCm) : null,
     leafCount: entry.leafCount != null ? Number(entry.leafCount) : null,
   });
+}
+
+function sortEntriesByDate(entries: PlantRecord[]): PlantRecord[] {
+  return [...entries].sort(
+    (a, b) =>
+      new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime(),
+  );
 }

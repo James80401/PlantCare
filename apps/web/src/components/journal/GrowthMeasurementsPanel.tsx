@@ -19,19 +19,19 @@ export function GrowthMeasurementsPanel({ points }: { points: MeasurementPoint[]
   }
 
   return (
-    <div className="rounded-2xl border border-emerald-100 bg-white p-4 space-y-4">
+    <div className="space-y-4 rounded-2xl border border-emerald-100 bg-white p-4">
       <div>
         <p className="text-sm font-semibold text-emerald-950">Growth measurements</p>
         <p className="mt-0.5 text-xs text-gray-500">
           {points.length} logged snapshot{points.length === 1 ? '' : 's'}
-          {latest.date ? ` · latest ${format(latest.date, 'MMM d, yyyy')}` : ''}
+          {latest.date ? ` - latest ${format(latest.date, 'MMM d, yyyy')}` : ''}
         </p>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-3">
         <StatCard
           label="Height"
-          value={latest.heightCm != null ? `${latest.heightCm} cm` : '—'}
+          value={latest.heightCm != null ? `${latest.heightCm} cm` : '-'}
           delta={
             latest.heightCm != null && previous?.heightCm != null
               ? formatDelta(latest.heightCm, previous.heightCm)
@@ -40,7 +40,7 @@ export function GrowthMeasurementsPanel({ points }: { points: MeasurementPoint[]
         />
         <StatCard
           label="Width"
-          value={latest.widthCm != null ? `${latest.widthCm} cm` : '—'}
+          value={latest.widthCm != null ? `${latest.widthCm} cm` : '-'}
           delta={
             latest.widthCm != null && previous?.widthCm != null
               ? formatDelta(latest.widthCm, previous.widthCm)
@@ -49,7 +49,7 @@ export function GrowthMeasurementsPanel({ points }: { points: MeasurementPoint[]
         />
         <StatCard
           label="Leaves"
-          value={latest.leafCount != null ? String(latest.leafCount) : '—'}
+          value={latest.leafCount != null ? String(latest.leafCount) : '-'}
           delta={
             latest.leafCount != null && previous?.leafCount != null
               ? `${latest.leafCount - previous.leafCount >= 0 ? '+' : ''}${latest.leafCount - previous.leafCount}`
@@ -65,14 +65,12 @@ export function GrowthMeasurementsPanel({ points }: { points: MeasurementPoint[]
           </p>
           <HeightSparkline series={height} className="mt-2" />
           <p className="mt-1 text-xs text-gray-500">
-            {height[0].value} cm ({format(height[0].date, 'MMM d')}) → {height[height.length - 1].value}{' '}
-            cm ({format(height[height.length - 1].date, 'MMM d')})
+            {height[0].value} cm ({format(height[0].date, 'MMM d')}) to{' '}
+            {height[height.length - 1].value} cm ({format(height[height.length - 1].date, 'MMM d')})
           </p>
         </div>
       ) : height.length === 1 ? (
-        <p className="text-xs text-gray-500">
-          Log height on one more entry to see a trend line.
-        </p>
+        <p className="text-xs text-gray-500">Log height on one more entry to see a trend line.</p>
       ) : null}
     </div>
   );
@@ -96,7 +94,11 @@ function StatCard({
       {delta ? (
         <p
           className={`text-xs font-medium ${
-            delta.startsWith('+') ? 'text-emerald-700' : delta.startsWith('-') ? 'text-amber-800' : 'text-gray-500'
+            delta.startsWith('+')
+              ? 'text-emerald-700'
+              : delta.startsWith('-')
+                ? 'text-amber-800'
+                : 'text-gray-500'
           }`}
         >
           {delta} vs previous
