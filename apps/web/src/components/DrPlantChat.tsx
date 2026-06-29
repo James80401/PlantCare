@@ -2,6 +2,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { diagnosisChatApi } from '../services/api';
+import { trackOnce } from '../utils/analytics';
 import { formatApiErrorMessage } from '../utils/apiError';
 import { DR_PLANT_HASH } from '../utils/gardenPaths';
 import { taskTypeLabel } from '../utils/tasks';
@@ -154,6 +155,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
       setPhoto(null);
       lastFailedPayload.current = null;
       setLastReplyAt(new Date().toISOString());
+      trackOnce('first_dr_plant_message', 'first_dr_plant_message', { plantId });
       loadConversations();
     } catch (err: unknown) {
       setError(

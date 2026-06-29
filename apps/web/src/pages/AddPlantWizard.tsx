@@ -13,7 +13,7 @@ import {
 import { plantsApi, speciesApi, gardensApi, type GardenSummaryCard } from '../services/api';
 import { CreateGardenForm } from '../components/gardens/CreateGardenForm';
 import { useAuth } from '../context/AuthContext';
-import { trackEvent } from '../utils/analytics';
+import { trackEvent, trackOnce } from '../utils/analytics';
 import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 interface Species {
@@ -263,6 +263,7 @@ export default function AddPlantWizard() {
         imageUrl: imageUrl || undefined,
       });
       trackEvent('PlantAdded', { speciesId });
+      trackOnce('first_plant_added', 'first_plant_added', { speciesId });
       navigate(`/garden/gardens/${selectedGardenId}`);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: { message?: string; code?: string } } })?.response?.data;

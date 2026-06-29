@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { tasksApi } from '../services/api';
+import { trackOnce } from '../utils/analytics';
 import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
 import type { TaskItem } from '../utils/taskGroups';
 
@@ -31,6 +32,9 @@ export function useDashboardTaskActions(
     setAnimating((a) => ({ ...a, [id]: kind }));
     try {
       const { data } = await apiCall();
+      if (kind === 'completing') {
+        trackOnce('first_task_completed', 'first_task_completed', { source: 'dashboard_tasks' });
+      }
       await new Promise((r) => setTimeout(r, COMPLETE_ANIM_MS));
       patchTask(id, { status: data.status, completedAt: data.completedAt });
     } catch {

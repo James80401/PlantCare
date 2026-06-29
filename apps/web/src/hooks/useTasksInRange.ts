@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { isToday } from 'date-fns';
 import { tasksApi } from '../services/api';
+import { trackOnce } from '../utils/analytics';
 import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
 import { groupTasksByDay, type TaskItem } from '../utils/taskGroups';
 
@@ -57,6 +58,9 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
     setAnimating((a) => ({ ...a, [id]: kind }));
     try {
       const { data } = await apiCall();
+      if (kind === 'completing') {
+        trackOnce('first_task_completed', 'first_task_completed', { source: 'tasks_in_range' });
+      }
       await new Promise((r) => setTimeout(r, COMPLETE_ANIM_MS));
       patchTask(id, { status: data.status, completedAt: data.completedAt });
     } catch {

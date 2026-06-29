@@ -1,7 +1,7 @@
 {
-  "name": "Plant Care",
-  "short_name": "Plant Care",
-  "description": "Keep your plants alive with smart reminders, care guides, and Dr. Plant diagnosis.",
+  "name": "Dr. Plant",
+  "short_name": "Dr. Plant",
+  "description": "Private pre-launch plant diagnosis, reminders, care guides, and recovery routines.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

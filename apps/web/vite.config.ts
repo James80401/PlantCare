@@ -1,14 +1,43 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { buildRobotsTxt, buildSitemapXml, defaultRobotsDirective } from './src/seo/crawlerFiles';
+import { indexableMarketingRoutes } from './src/seo/marketingRegistry';
+import { readPublicSiteConfig } from './src/seo/siteConfig';
 
 const allowedHosts = process.env.VITE_DEV_ALLOWED_HOSTS
   ?.split(',')
   .map((host) => host.trim())
   .filter(Boolean);
 
+function seoOutputPlugin() {
+  const siteConfig = readPublicSiteConfig(process.env);
+
+  return {
+    name: 'dr-plant-seo-output',
+    transformIndexHtml(html: string) {
+      return html.replace(
+        /<meta name="robots" content="[^"]*"[^>]*>/,
+        `<meta name="robots" content="${defaultRobotsDirective(siteConfig)}" data-managed="seo-default" />`,
+      );
+    },
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'robots.txt',
+        source: buildRobotsTxt(siteConfig),
+      });
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sitemap.xml',
+        source: buildSitemapXml(siteConfig, indexableMarketingRoutes(siteConfig)),
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), seoOutputPlugin()],
   build: {
     rollupOptions: {
       output: {

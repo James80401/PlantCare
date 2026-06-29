@@ -135,6 +135,9 @@ JWT_REFRESH_SECRET=<run again, different value>
 FRONTEND_URL=https://yourdomain.com
 CORS_ORIGINS=https://yourdomain.com
 VITE_API_BASE_URL=https://api.yourdomain.com/api/v1
+VITE_PUBLIC_SITE_MODE=private
+VITE_MARKETING_INDEXABLE=false
+VITE_CANONICAL_BASE_URL=https://yourdomain.com
 ```
 
 - [ ] **D3.** Validate env (on server, in repo root):
@@ -383,6 +386,7 @@ The phases above are the checklist. For extra detail:
 | Env variables | [production-signoff.md](production-signoff.md) |
 | Docker staging locally first | [deployment.md](deployment.md) |
 | Android / Play later | [../product/google-play-closed-testing.md](../product/google-play-closed-testing.md) |
+| Pre-launch SEO gates | [../marketing/prelaunch-seo-funnel.md](../marketing/prelaunch-seo-funnel.md) |
 | Troubleshooting | Below |
 
 ### Troubleshooting

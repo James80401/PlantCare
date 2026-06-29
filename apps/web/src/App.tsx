@@ -5,6 +5,7 @@ import Home from './components/Home';
 import ProtectedRoute from './components/ProtectedRoute';
 import { BuddyGate } from './components/BuddyGate';
 import { Skeleton } from './components/ui/Skeleton';
+import { Seo } from './seo/Seo';
 
 // Eager: landing + structural wrappers (always in the tree, small). Everything else
 // is code-split via React.lazy so the initial bundle only carries the shell. Vite
@@ -56,6 +57,7 @@ const GardenDashboard = lazy(() => import('./pages/gardens/GardenDashboard'));
 const GardenTasks = lazy(() => import('./pages/gardens/GardenTasks'));
 const GardenPlants = lazy(() => import('./pages/gardens/GardenPlants'));
 const GardenMembers = lazy(() => import('./pages/gardens/GardenMembers'));
+const MarketingRoutePage = lazy(() => import('./pages/marketing/MarketingPage'));
 
 function RouteFallback() {
   return (
@@ -70,8 +72,18 @@ function RouteFallback() {
 export default function App() {
   return (
     <Suspense fallback={<RouteFallback />}>
+      <Seo />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/waitlist" element={<MarketingRoutePage />} />
+        <Route path="/plant-diagnosis-app" element={<MarketingRoutePage />} />
+        <Route path="/plant-care-app" element={<MarketingRoutePage />} />
+        <Route path="/plant-watering-reminder-app" element={<MarketingRoutePage />} />
+        <Route path="/houseplant-care-for-beginners" element={<MarketingRoutePage />} />
+        <Route path="/plant-problems" element={<MarketingRoutePage />} />
+        <Route path="/plant-problems/:problemSlug" element={<MarketingRoutePage />} />
+        <Route path="/plant-care-guides" element={<MarketingRoutePage />} />
+        <Route path="/plant-care-guides/:speciesSlug" element={<MarketingRoutePage />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

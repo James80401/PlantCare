@@ -21,6 +21,7 @@ export default function Register() {
     setError('');
     setSuccess('');
     setLoading(true);
+    trackEvent('signup_start');
     try {
       const result = await register(email, password, name || undefined);
       if (result.requiresVerification || result.requiresAdminApproval) {
@@ -29,9 +30,14 @@ export default function Register() {
             'Check your email to verify your account before signing in.',
         );
         trackEvent('UserSignedUp');
+        trackEvent('signup_complete', {
+          requiresVerification: result.requiresVerification,
+          requiresAdminApproval: result.requiresAdminApproval,
+        });
         return;
       }
       trackEvent('UserSignedUp');
+      trackEvent('signup_complete');
       navigate('/garden');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
