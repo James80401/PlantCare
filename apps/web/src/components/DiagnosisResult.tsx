@@ -8,6 +8,34 @@ interface StructuredDetail {
   immediateActions?: string[];
   longTermCare?: string[];
   whenToSeekHelp?: string;
+  treatmentPlan?: {
+    version?: number;
+    headline?: string;
+    urgency?: 'routine' | 'soon' | 'urgent';
+    matchedProblems?: Array<{
+      id: string;
+      label: string;
+      category: string;
+      overview: string;
+      expectedTimeline: string;
+    }>;
+    careArchetype?: {
+      id: string;
+      label: string;
+      description: string;
+    };
+    steps?: Array<{
+      key?: string;
+      label: string;
+      taskType: string;
+      dueInDays: number;
+      priority?: 'high' | 'medium' | 'low';
+      section?: 'stabilize' | 'treat' | 'prevent' | 'follow_up';
+    }>;
+    mistakesToAvoid?: string[];
+    expectedTimeline?: string;
+    beginnerSafetyNotes?: string[];
+  };
   intake?: {
     symptomDuration?: 'TODAY' | 'DAYS_2_3' | 'DAYS_4_7' | 'WEEKS_2_PLUS';
     recentCareChange?:
@@ -97,6 +125,38 @@ function intakeLabel(detail: StructuredDetail | null): string[] {
   return labels;
 }
 
+function urgencyClass(urgency?: string): string {
+  switch (urgency) {
+    case 'urgent':
+      return 'bg-red-600 text-white';
+    case 'soon':
+      return 'bg-amber-600 text-white';
+    default:
+      return 'bg-emerald-700 text-white';
+  }
+}
+
+function sectionLabel(section?: string): string {
+  switch (section) {
+    case 'stabilize':
+      return 'Stabilize';
+    case 'treat':
+      return 'Treat';
+    case 'prevent':
+      return 'Prevent';
+    case 'follow_up':
+      return 'Follow up';
+    default:
+      return 'Plan';
+  }
+}
+
+function dueLabel(days: number): string {
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  return `In ${days} days`;
+}
+
 export default function DiagnosisResult({
   diagnosis,
   onResolvedChange,
@@ -113,6 +173,7 @@ export default function DiagnosisResult({
       detail.immediateActions?.length ||
       detail.longTermCare?.length);
   const intakeDetails = intakeLabel(detail);
+  const treatmentPlan = detail?.treatmentPlan;
 
   return (
     <div
@@ -193,6 +254,96 @@ export default function DiagnosisResult({
       ) : null}
 
       {detail?.summary && <p className="text-gray-800">{detail.summary}</p>}
+
+      {treatmentPlan ? (
+        <div className="rounded-2xl border border-white/80 bg-white/80 p-3 space-y-3">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                Treatment plan
+              </p>
+              <h4 className="text-base font-semibold text-emerald-950">
+                {treatmentPlan.headline ?? diagnosis.resultLabel}
+              </h4>
+              {treatmentPlan.careArchetype ? (
+                <p className="mt-1 text-xs text-gray-600">
+                  {treatmentPlan.careArchetype.label}: {treatmentPlan.careArchetype.description}
+                </p>
+              ) : null}
+            </div>
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${urgencyClass(
+                treatmentPlan.urgency,
+              )}`}
+            >
+              {treatmentPlan.urgency === 'urgent'
+                ? 'Act now'
+                : treatmentPlan.urgency === 'soon'
+                  ? 'Act soon'
+                  : 'Routine'}
+            </span>
+          </div>
+
+          {treatmentPlan.steps?.length ? (
+            <ol className="space-y-2">
+              {treatmentPlan.steps.slice(0, 5).map((step, index) => (
+                <li
+                  key={step.key ?? `${step.taskType}-${step.label}`}
+                  className="grid grid-cols-[1.75rem_1fr] gap-2"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-700 text-xs font-semibold text-white">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-medium text-gray-900">{step.label}</span>
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
+                        {dueLabel(step.dueInDays)}
+                      </span>
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+                        {sectionLabel(step.section)}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+
+          {treatmentPlan.matchedProblems?.length ? (
+            <div className="flex flex-wrap gap-1.5">
+              {treatmentPlan.matchedProblems.map((problem) => (
+                <span
+                  key={problem.id}
+                  className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-emerald-100"
+                >
+                  {problem.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {treatmentPlan.expectedTimeline ? (
+            <p className="text-xs text-gray-600">
+              <span className="font-semibold text-emerald-800">Recovery window: </span>
+              {treatmentPlan.expectedTimeline}
+            </p>
+          ) : null}
+
+          {treatmentPlan.mistakesToAvoid?.length ? (
+            <details className="text-xs text-gray-600">
+              <summary className="cursor-pointer font-semibold text-emerald-800">
+                What to avoid
+              </summary>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                {treatmentPlan.mistakesToAvoid.slice(0, 4).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+        </div>
+      ) : null}
 
       {showStructured ? (
         <div className="grid sm:grid-cols-2 gap-4">

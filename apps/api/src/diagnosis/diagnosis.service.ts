@@ -23,6 +23,7 @@ import {
 } from './diagnosis-recovery.mapper';
 import { LlmDiagnosisService } from './llm-diagnosis.service';
 import { OpenAiRequestError } from './openai-errors';
+import { buildTreatmentPlan } from '../plant-intelligence/treatment-plan';
 
 export type RecoverySuggestionView = RecoveryTaskSuggestion & {
   alreadyScheduled: boolean;
@@ -192,6 +193,29 @@ export class DiagnosisService {
     if (!detailJson && intake) {
       detailJson = JSON.stringify({ intake });
     }
+
+    const detail = this.parseDetailJson(detailJson);
+    const treatmentPlan = buildTreatmentPlan({
+      issueName: resultLabel,
+      symptomsText,
+      adviceText,
+      imageLabel: imageHint?.label ? formatLabel(imageHint.label) : undefined,
+      confidence,
+      immediateActions: Array.isArray(detail?.immediateActions)
+        ? detail.immediateActions
+        : undefined,
+      longTermCare: Array.isArray(detail?.longTermCare) ? detail.longTermCare : undefined,
+      whenToSeekHelp: typeof detail?.whenToSeekHelp === 'string' ? detail.whenToSeekHelp : undefined,
+      species: {
+        commonName: plant.species.commonName,
+        scientificName: plant.species.scientificName,
+        sunlight: plant.species.sunlight,
+        wateringFreqDays: plant.species.wateringFreqDays,
+        toxicity: plant.species.toxicity,
+        careNotes: plant.species.careNotes,
+      },
+    });
+    detailJson = JSON.stringify({ ...(detail ?? {}), intake, treatmentPlan });
 
     return this.prisma.diagnosis.create({
       data: {
@@ -462,5 +486,15 @@ export class DiagnosisService {
       lines.push(`Visible pests/webbing: ${intake.pestsVisible ? 'yes' : 'no'}`);
     }
     return lines.length ? lines.join('\n') : undefined;
+  }
+
+  private parseDetailJson(detailJson?: string | null): Record<string, unknown> | null {
+    if (!detailJson) return null;
+    try {
+      const parsed = JSON.parse(detailJson);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+      return null;
+    }
   }
 }

@@ -6,10 +6,22 @@ export type RecoveryTaskSuggestion = {
   label: string;
   taskType: TaskType;
   dueInDays: number;
+  priority?: 'high' | 'medium' | 'low';
+  section?: 'stabilize' | 'treat' | 'prevent' | 'follow_up';
+  source?: 'treatment_plan' | 'diagnosis_action' | 'advice_text';
 };
 
 type StructuredDetail = {
   immediateActions?: string[];
+  treatmentPlan?: {
+    steps?: Array<{
+      label?: string;
+      taskType?: TaskType;
+      dueInDays?: number;
+      priority?: 'high' | 'medium' | 'low';
+      section?: 'stabilize' | 'treat' | 'prevent' | 'follow_up';
+    }>;
+  };
 };
 
 const RULES: { pattern: RegExp; taskType: TaskType; dueInDays: number }[] = [
@@ -68,6 +80,7 @@ export function mapActionToSuggestion(
         label,
         taskType: rule.taskType,
         dueInDays: rule.dueInDays,
+        source: 'diagnosis_action',
       };
     }
   }
@@ -76,7 +89,32 @@ export function mapActionToSuggestion(
     label,
     taskType: TaskType.HEALTH_CHECK,
     dueInDays: 1,
+    source: 'diagnosis_action',
   };
+}
+
+function treatmentPlanSuggestions(
+  diagnosisId: string,
+  detail: StructuredDetail | null,
+): RecoveryTaskSuggestion[] {
+  const steps = detail?.treatmentPlan?.steps;
+  if (!Array.isArray(steps)) return [];
+
+  return steps
+    .filter((step) => step?.label && step.taskType)
+    .map((step) => {
+      const label = String(step.label).trim();
+      const taskType = step.taskType as TaskType;
+      return {
+        key: suggestionKey(diagnosisId, label, taskType),
+        label,
+        taskType,
+        dueInDays: Math.max(0, Number(step.dueInDays) || 0),
+        priority: step.priority,
+        section: step.section,
+        source: 'treatment_plan' as const,
+      };
+    });
 }
 
 function parseDetailJson(detailJson?: string | null): StructuredDetail | null {
@@ -103,6 +141,11 @@ export function buildRecoverySuggestions(
   adviceText?: string | null,
 ): RecoveryTaskSuggestion[] {
   const detail = parseDetailJson(detailJson);
+  const treatmentSuggestions = treatmentPlanSuggestions(diagnosisId, detail);
+  if (treatmentSuggestions.length > 0) {
+    return dedupeSuggestions(treatmentSuggestions);
+  }
+
   let actions = detail?.immediateActions?.filter((a) => a?.trim()) ?? [];
   if (actions.length === 0) {
     actions = actionsFromAdviceText(adviceText);
@@ -116,11 +159,24 @@ export function buildRecoverySuggestions(
   const seen = new Set<string>();
   const suggestions: RecoveryTaskSuggestion[] = [];
   for (const action of actions) {
-    const mapped = mapActionToSuggestion(diagnosisId, action);
+    const mapped = {
+      ...mapActionToSuggestion(diagnosisId, action),
+      source: detail?.immediateActions?.length ? ('diagnosis_action' as const) : ('advice_text' as const),
+    };
     const dedupe = `${mapped.taskType}:${mapped.label.toLowerCase()}`;
     if (seen.has(dedupe)) continue;
     seen.add(dedupe);
     suggestions.push(mapped);
   }
   return suggestions;
+}
+
+function dedupeSuggestions(suggestions: RecoveryTaskSuggestion[]): RecoveryTaskSuggestion[] {
+  const seen = new Set<string>();
+  return suggestions.filter((suggestion) => {
+    const dedupe = `${suggestion.taskType}:${suggestion.label.toLowerCase()}`;
+    if (seen.has(dedupe)) return false;
+    seen.add(dedupe);
+    return true;
+  });
 }

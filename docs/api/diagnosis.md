@@ -26,7 +26,11 @@ Use this to mark a diagnosis as active/recovered from the plant profile.
 | GET | `/plants/:plantId/diagnose/:diagnosisId/recovery-suggestions` |
 | POST | `/plants/:plantId/diagnose/:diagnosisId/recovery-tasks` |
 
-`GET` returns suggested tasks mapped from `immediateActions` in `detailJson` (or advice lines), each with `key`, `label`, `taskType`, `dueInDays`, and `alreadyScheduled`.
+`GET` returns suggested tasks mapped from the structured `treatmentPlan.steps`
+in `detailJson` when present, then falls back to `immediateActions` or advice
+lines for older diagnoses. Each item includes `key`, `label`, `taskType`,
+`dueInDays`, `alreadyScheduled`, and may include `priority`, `section`, and
+`source`.
 
 `POST` body:
 
