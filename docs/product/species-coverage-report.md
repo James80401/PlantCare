@@ -1,6 +1,6 @@
 # Species catalog coverage report
 
-> **Status:** measurement artifact, generated 2026-06-03
+> **Status:** measurement artifact, updated 2026-06-30
 > **Navigation:** [Roadmap](roadmap.md) (CONTENT-1) · [Implementation plan — Track 5](current-feature-implementation-plan.md) · [Product INDEX](INDEX.md)
 
 This report is the "where we are" measurement that the roadmap's **CONTENT-1**
@@ -24,19 +24,19 @@ time — so the audit can no longer drift from actual filter behavior. Re-run it
 and update the table below after any edit to `prisma/data/species-catalog.ts` or
 the inference heuristics.
 
-## Current coverage (321 species)
+## Current coverage (447 species)
 
 | Filter attribute | Species tagged | Share | Read |
 |------------------|---------------:|------:|------|
-| `petSafe`            | 214 | 67% | Healthy |
-| `outdoor`            | 213 | 66% | Healthy |
-| `indoor`             | 96  | 30% | Healthy |
-| `edible`             | 93  | 29% | Healthy |
-| `pollinatorFriendly` | 70  | 22% | Healthy |
-| `droughtTolerant`    | 57  | 18% | Adequate |
-| `highHumidity`       | 37  | 12% | Adequate |
-| `bloomsIndoors`      | 17  | 5%  | Adequate |
-| `lowLight`           | 10  | 3%  | **Conservative (by design)** |
+| `petSafe`            | 277 | 62% | Healthy |
+| `outdoor`            | 255 | 57% | Healthy |
+| `indoor`             | 166 | 37% | Healthy |
+| `edible`             | 108 | 24% | Healthy |
+| `pollinatorFriendly` | 83  | 19% | Healthy |
+| `droughtTolerant`    | 95  | 21% | Healthy |
+| `highHumidity`       | 71  | 16% | Healthy |
+| `bloomsIndoors`      | 32  | 7%  | Adequate |
+| `lowLight`           | 18  | 4%  | **Conservative (by design)** |
 
 All structural checks pass: every species includes core search/care fields, and
 there are no duplicate common/scientific name pairs.
@@ -83,3 +83,14 @@ be done only after confirming product priority.
    follow once existing-catalog tagging is accurate, so new content lands with
    correct filter metadata from the start.
 4. Keep this report in sync by re-running `npm run species:verify`.
+
+## Catalog expansion sprint 1 (2026-06-30)
+
+Added a curated high-demand batch across collectible houseplants, aroids,
+prayer plants, hoyas, peperomias, ficus/dracaena/aglaonema variants, ferns,
+succulents, cacti, orchids, carnivorous plants, edible crops, fruit, and
+outdoor ornamentals. The verifier now requires at least 400 species, so future
+catalog shrinkage or accidental data loss is caught in `npm run species:verify`.
+
+Open follow-up: the new rows need licensed photo sourcing before the photo
+coverage gate can move from the old 320-photo baseline to the expanded catalog.

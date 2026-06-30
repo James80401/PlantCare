@@ -56,7 +56,7 @@ Species search on Postgres uses case-insensitive `contains` (`species-name-filte
 | Onboarding | Shipped | E2E covered |
 | Dashboard API | Shipped | Rich UI |
 | Tasks & calendar | Shipped | Snooze, explanations, suggestions |
-| Species browse + metadata | Shipped | 320 species |
+| Species browse + metadata | Shipped | 440+ species |
 | Diagnosis + Dr. Plant | Shipped | Needs OpenAI for full LLM |
 | Journal | Shipped | PATCH/DELETE |
 | Weather | Shipped | Location required |

@@ -4,7 +4,7 @@
 
 ## What it is
 
-Browse lets you explore the **species catalog** (320+ plants) before adding one to your garden. You can filter, sort, see **recommended** picks, and open a detail page with growing metadata (pests, hardiness, humidity, etc.).
+Browse lets you explore the **species catalog** (440+ plants) before adding one to your garden. You can filter, sort, see **recommended** picks, and open a detail page with growing metadata (pests, hardiness, humidity, etc.).
 
 ## How to open it
 

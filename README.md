@@ -80,7 +80,7 @@ Android: [docs/guides/15-production-deploy-and-android.md](docs/guides/15-produc
 apps/api/           NestJS REST API
 apps/web/           React SPA
 packages/shared/    Shared types and limits
-prisma/             Schema, seed (320+ species), care guide data
+prisma/             Schema, seed (440+ species), care guide data
 scripts/            verify.mjs, staging deploy, species photos
 tests/e2e/          Playwright UAT
 docs/               All documentation (guides, API, architecture, …)

@@ -45,7 +45,7 @@ const FEATURES = [
     icon: '📓',
   },
   {
-    title: '240+ species catalog',
+    title: '440+ species catalog',
     description:
       'From monsteras to herbs—browse a rich library of houseplants with science-backed defaults you can fine-tune.',
     icon: '🌱',
@@ -129,7 +129,7 @@ function HeroSection() {
           </div>
           <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-emerald-900/10 pt-8">
             {[
-              { value: '240+', label: 'Plant species' },
+              { value: '440+', label: 'Plant species' },
               { value: '7', label: 'Care task types' },
               { value: 'AI', label: 'Dr. Plant diagnosis' },
             ].map(({ value, label }) => (
@@ -203,7 +203,7 @@ function HowItWorksSection() {
     {
       step: '01',
       title: 'Add your plants',
-      text: 'Search 240+ species or identify from a photo. Set pot size and location.',
+      text: 'Search 440+ species or identify from a photo. Set pot size and location.',
     },
     {
       step: '02',

@@ -8,7 +8,7 @@ npm run db:seed
 
 ## Flow
 
-1. **`prisma/seed.ts`** — upsert 240+ species from `data/species-catalog.ts`
+1. **`prisma/seed.ts`** — upsert 440+ species from `data/species-catalog.ts`
 2. **`prisma/seed-care-guides.ts`** — upsert guides + images per species × task type
 
 ## Data sources

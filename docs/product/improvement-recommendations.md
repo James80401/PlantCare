@@ -84,7 +84,7 @@ Sections 0–9 of the [improvement-checklist](improvement-checklist.md) are larg
 - **Weather** — On-demand 7-day advice, per-plant lines, integration into care overview when cache exists.
 - **Diagnosis** — One-shot API, Dr. Plant chat, follow-up HEALTH_CHECK tasks, recovery status.
 - **Journal** — CRUD, measurements on API, timeline on profile.
-- **Species** — 320 species, ~3,852 care guides (12 task types × species + generics), browse and filters.
+- **Species** — 440+ species, generated care guides across 12 task types, browse and filters.
 - **Social** — Household share, community posts/comments/likes.
 - **Plant Buddy** — Progression, shop, quests (separate lane; see theme I).
 - **Quality** — `npm run verify`, Playwright UAT, demo garden seed (`demo@plantcare.local`).

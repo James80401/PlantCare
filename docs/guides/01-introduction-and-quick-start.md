@@ -8,7 +8,7 @@ Dr. Plant helps people keep plants healthy with:
 
 - **Automated care schedules** — watering, fertilizing, repotting, pest checks, and more, generated from species data and the plant’s environment (indoor/outdoor, light, pot size).
 - **Actionable tasks** — a today-first dashboard and calendar, with instructions, skip feedback, snooze, and schedule explanations.
-- **Species intelligence** — 320+ seeded species, browse/search, recommendations, and rich metadata (pests, hardiness, humidity).
+- **Species intelligence** — 440+ seeded species, browse/search, recommendations, and rich metadata (pests, hardiness, humidity).
 - **Plant health** — photo diagnosis (rules + optional OpenAI), Dr. Plant chat, treatment plans, follow-up tasks.
 - **Journal** — notes and photos per plant, with edit/delete.
 - **Weather** — location-based advice and outdoor watering rain-skip hints.
@@ -65,7 +65,7 @@ Full table: [reference/environment-variables.md](../reference/environment-variab
 ```bash
 npm run db:generate
 npm run db:push
-npm run db:seed      # 320 species, care guides, images metadata
+npm run db:seed      # 440+ species, care guides, images metadata
 ```
 
 ### 4. Run

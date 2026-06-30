@@ -81,7 +81,7 @@ function matches(species, filter) {
   return false;
 }
 
-if (speciesCatalog.length >= 300) {
+if (speciesCatalog.length >= 400) {
   pass(`Catalog size: ${speciesCatalog.length}`);
 } else {
   fail(`Catalog size too small: ${speciesCatalog.length}`);

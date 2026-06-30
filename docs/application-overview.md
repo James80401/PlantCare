@@ -4,7 +4,7 @@
 
 ## What it is
 
-**Dr. Plant** is a full-stack **personal plant garden manager**. Users register, add plants from a catalog of 240+ species, receive auto-generated care schedules (watering, pruning, and premium tasks like fertilizing/misting), complete tasks with step-by-step care instructions, keep a growth journal, and use **Dr. Plant** for AI-powered health diagnosis and chat.
+**Dr. Plant** is a full-stack **personal plant garden manager**. Users register, add plants from a catalog of 440+ species, receive auto-generated care schedules (watering, pruning, and premium tasks like fertilizing/misting), complete tasks with step-by-step care instructions, keep a growth journal, and use **Dr. Plant** for AI-powered health diagnosis and chat.
 
 It is positioned as an **MVP / SaaS-ready** product with optional paid tier (Stripe), extensive internal documentation (~100+ markdown files under [docs/](INDEX.md)), and graceful degradation when third-party API keys are missing (mocks/fallbacks).
 
@@ -124,7 +124,7 @@ Core entities in [prisma/schema.prisma](../prisma/schema.prisma):
 
 **Enums:** `PlanTier`, `TaskType` (WATER, FERTILIZE, PRUNE, MIST, PH_TEST, PEST_CONTROL, REPOT), `TaskStatus`, `PotSize`, `NotificationChannel`, `SubscriptionStatus`.
 
-**Seed:** [prisma/seed.ts](../prisma/seed.ts) loads 240+ species and care guides from [prisma/data/](../prisma/data/).
+**Seed:** [prisma/seed.ts](../prisma/seed.ts) loads 440+ species and care guides from [prisma/data/](../prisma/data/).
 
 ---
 

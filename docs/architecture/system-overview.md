@@ -19,7 +19,7 @@
 | Domain | Responsibility |
 |--------|----------------|
 | **Auth** | Register, JWT, email verify |
-| **Species catalog** | 240+ seeded plants |
+| **Species catalog** | 440+ seeded plants |
 | **Plants & tasks** | User garden + scheduler |
 | **Care guides** | Instruction content |
 | **Diagnosis** | Dr. Plant chat (+ one-shot API) |

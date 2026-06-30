@@ -13,8 +13,8 @@ provider gates instead of pretending the local catalog already covers everything
 
 | Area | Baseline |
 |------|----------|
-| Local species catalog | 321 species |
-| Species photos | 320 local species photos |
+| Local species catalog | 447 species |
+| Species photos | 320 local species photos; new sprint-1 rows still need photo sourcing |
 | Task types | 12 shipped care task types |
 | Diagnosis storage | `Diagnosis.detailJson` stores forward-compatible structured data |
 | Dr. Plant context | Uses care baseline, tasks, diagnoses, journal, weather, and feedback context |
@@ -40,7 +40,7 @@ provider gates instead of pretending the local catalog already covers everything
 | 3. Treatment plan engine | `[x]` | Convert symptoms, diagnosis output, and species context into a structured plan. | Diagnoses save a versioned `treatmentPlan` in `detailJson` without a DB migration. |
 | 4. Recovery task upgrade | `[x]` | Create schedule-ready recovery suggestions from treatment-plan steps first. | Recovery suggestions include treatment-plan steps plus priority/section metadata while preserving existing API keys. |
 | 5. Diagnosis UX upgrade | `[x]` | Show treatment plan, urgency, ordered steps, matched problems, and recovery window. | Diagnosis cards render the plan and still support older diagnoses without treatment plans. |
-| 6. Catalog expansion sprint 1 | `[ ]` | Expand curated high-value inventory beyond the current 321 species. | Add a sourced, verified batch of high-demand houseplants, succulents, edibles, and outdoor ornamentals. |
+| 6. Catalog expansion sprint 1 | `[x]` | Expand curated high-value inventory beyond the original 321 species. | Added a verified high-demand batch across houseplants, succulents, edibles, fruit, orchids, carnivorous plants, and outdoor ornamentals. |
 | 7. Hybrid long-tail identification | `[ ]` | Let users identify plants beyond the local catalog without polluting curated data. | Provider-gated ID/enrichment path records source/confidence and maps to nearest care archetype. |
 | 8. Guide intelligence upgrade | `[ ]` | Make care guides richer and more rescue-oriented. | Guides include common mistakes, diagnosis prompts, recovery links, and species-specific caveats. |
 
@@ -54,16 +54,31 @@ provider gates instead of pretending the local catalog already covers everything
 - Diagnosis result cards now show the treatment plan in the Health tab.
 - Added API and web tests for the treatment-plan path.
 
+## Shipped in catalog expansion sprint 1
+
+- Expanded the local catalog from 321 to 447 species.
+- Raised `scripts/verify-species-catalog.mjs` so 400+ species is now an enforced verification gate.
+- Improved measured coverage:
+  - `petSafe`: 277
+  - `lowLight`: 18
+  - `edible`: 108
+  - `droughtTolerant`: 95
+  - `indoor`: 166
+  - `outdoor`: 255
+  - `highHumidity`: 71
+  - `pollinatorFriendly`: 83
+  - `bloomsIndoors`: 32
+- Photo sourcing remains open for the new sprint-1 rows; do not run a production photo-coverage gate until those assets are fetched, reviewed, and seeded.
+
 ## Next implementation batch
 
-1. Catalog expansion sprint 1:
-   - Add 100-200 high-demand entries, favoring houseplants and beginner rescue searches.
-   - Keep the local catalog curated and verified.
-   - Run `npm run species:verify` and photo coverage checks after the batch.
-
-2. Guide intelligence upgrade:
+1. Guide intelligence upgrade:
    - Add guide sections for common mistakes, rescue signs, and Dr. Plant prompt starters.
    - Prioritize top beginner plants and top problem categories before broad coverage.
+
+2. Sprint-1 photo sourcing:
+   - Fetch, license-check, and seed images for the new catalog rows.
+   - Re-run `npm run species:photos:verify` after DB seed reflects the new catalog.
 
 3. Hybrid long-tail identification:
    - Add an env-gated provider interface for external ID/enrichment.
@@ -88,4 +103,3 @@ provider gates instead of pretending the local catalog already covers everything
 - [ ] `npm run build` before deploy.
 - [ ] `npm run verify:docs` after docs edits.
 - [ ] Live private sign-off after deploy.
-
