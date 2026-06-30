@@ -2,7 +2,7 @@ import { isMarketingRouteIndexable, type MarketingRouteMeta } from './marketingR
 import { buildStructuredData } from './structuredData';
 import { canonicalUrl, type PublicSiteConfig } from './siteConfig';
 
-export const DEFAULT_TITLE = 'Dr. Plant - Private Plant Care Preview';
+export const DEFAULT_TITLE = 'Dr. Plant - Private Preview';
 export const DEFAULT_DESCRIPTION =
   'Dr. Plant is a private pre-launch plant care assistant for houseplant diagnosis, reminders, and recovery routines.';
 

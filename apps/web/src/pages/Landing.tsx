@@ -60,7 +60,7 @@ function LandingHeader() {
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-800 text-lg text-white">
             🌿
           </span>
-          <span className="font-display text-xl font-semibold tracking-tight">Plant Care</span>
+          <span className="font-display text-xl font-semibold tracking-tight">Dr. Plant</span>
         </Link>
         <nav className="hidden items-center gap-8 text-sm font-medium text-[#16352f]/80 md:flex">
           <a href="#features" className="transition hover:text-emerald-800">
@@ -167,7 +167,7 @@ function FeaturesSection() {
     <section id="features" className="scroll-mt-20 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <p className="text-center text-sm font-semibold uppercase tracking-widest text-emerald-700">
-          Plant Care features
+          Dr. Plant features
         </p>
         <h2 className="font-display mt-3 text-center text-3xl font-semibold text-[#16352f] sm:text-4xl">
           Green tools for green thumbs
@@ -246,7 +246,7 @@ function CtaSection() {
           Ready to keep your plants alive?
         </h2>
         <p className="mt-4 text-lg text-[#16352f]/70">
-          Join Plant Care free—set up your first plant in under a minute.
+          Join Dr. Plant free—set up your first plant in under a minute.
         </p>
         <Link
           to="/register"
@@ -264,7 +264,7 @@ function LandingFooter() {
     <footer className="border-t border-emerald-900/5 bg-white/80 py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6">
         <p className="text-sm text-[#16352f]/60">
-          © {new Date().getFullYear()} Plant Care. Keep your plants alive.
+          © {new Date().getFullYear()} Dr. Plant. Keep your plants alive.
         </p>
         <nav className="flex gap-6 text-sm font-medium text-[#16352f]/70">
           <Link to="/login" className="hover:text-emerald-800">

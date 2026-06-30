@@ -2,7 +2,7 @@
 
 > **Navigation:** [Integrations INDEX](INDEX.md)
 
-Plant Care uses **[Open-Meteo](https://open-meteo.com/)** — free, no API key required.
+Dr. Plant uses **[Open-Meteo](https://open-meteo.com/)** — free, no API key required.
 
 ## User flow
 

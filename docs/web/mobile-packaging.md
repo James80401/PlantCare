@@ -2,7 +2,7 @@
 
 > **Navigation:** [Web INDEX](INDEX.md)
 
-Plant Care uses [Capacitor](https://capacitorjs.com/) to package the existing Vite React app for native mobile shells. The web app remains the source of truth: build `apps/web`, then sync the generated `dist/` files into iOS or Android projects.
+Dr. Plant uses [Capacitor](https://capacitorjs.com/) to package the existing Vite React app for native mobile shells. The web app remains the source of truth: build `apps/web`, then sync the generated `dist/` files into iOS or Android projects.
 
 ## Web/mobile API base URL
 

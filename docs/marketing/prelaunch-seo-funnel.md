@@ -339,7 +339,7 @@ Internal links:
 - `/plant-problems/root-rot`
 - `/houseplant-care-for-beginners`
 
-### Plant Care App: `/plant-care-app`
+### Dr. Plant App: `/plant-care-app`
 
 Primary job:
 
@@ -487,7 +487,7 @@ Use this standard for content trust:
 
 Who:
 
-- Dr. Plant by Plant Care.
+- Dr. Plant.
 - Written for beginner houseplant owners.
 
 How:
@@ -626,7 +626,7 @@ The social goal before launch is not mass posting. It is asset creation, handle 
 Try these in order:
 
 - `DrPlantApp`
-- `DrPlantCare`
+- `DrPlantApp`
 - `AskDrPlant`
 - `DrPlantHQ`
 
@@ -726,12 +726,12 @@ The app-store surface should be prepared before mobile launch even if store subm
 App name candidates:
 
 - `Dr. Plant`
-- `Dr. Plant Care`
-- `Dr. Plant: Plant Care`
+- `Dr. Plant App`
+- `Dr. Plant: Houseplant Help`
 
 Subtitle candidates:
 
-- `AI Plant Care Help`
+- `AI Houseplant Help`
 - `Plant Diagnosis Guide`
 - `Houseplant Care Help`
 

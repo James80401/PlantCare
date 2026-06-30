@@ -69,7 +69,7 @@ export class EmailService implements OnModuleInit {
     const configured = this.config.get<string>('EMAIL_FROM')?.trim();
     if (configured) return configured;
     const user = this.config.get<string>('SMTP_USER')!.trim();
-    return `"Plant Care" <${user}>`;
+    return `"Dr. Plant" <${user}>`;
   }
 
   private frontendUrl(path: string): string {
@@ -113,10 +113,10 @@ export class EmailService implements OnModuleInit {
     const greeting = name ? `Hi ${name},` : 'Hi,';
     return this.deliver({
       to,
-      subject: 'Verify your Plant Care account',
+      subject: 'Verify your Dr. Plant account',
       text: `${greeting}\n\nConfirm your email: ${url}\n\nThis link expires in 24 hours.`,
       html: this.wrapHtml(
-        'Welcome to Plant Care',
+        'Welcome to Dr. Plant',
         `
         <p>${greeting}</p>
         <p>Thanks for signing up. Please confirm your email address:</p>
@@ -142,7 +142,7 @@ export class EmailService implements OnModuleInit {
     const roleLabel = role === 'VIEWER' ? 'viewer' : 'caregiver';
     return this.deliver({
       to,
-      subject: `Join ${gardenName} on Plant Care`,
+      subject: `Join ${gardenName} on Dr. Plant`,
       text: `${greeting} to help with plants in "${gardenName}" as a ${roleLabel}.\n\nAccept invite: ${url}\n\nExpires in 7 days.`,
       html: this.wrapHtml(
         'Household invite',
@@ -168,7 +168,7 @@ export class EmailService implements OnModuleInit {
     const who = registrantName ? `${registrantName} (${registrantEmail})` : registrantEmail;
     return this.deliver({
       to: adminTo,
-      subject: 'Plant Care — new registration awaiting approval',
+      subject: 'Dr. Plant — new registration awaiting approval',
       text: `A user completed email verification and needs approval:\n${who}\n\nReview: ${reviewUrl}`,
       html: this.wrapHtml(
         'Registration pending',
@@ -188,13 +188,13 @@ export class EmailService implements OnModuleInit {
     const greeting = name ? `Hi ${name},` : 'Hi,';
     return this.deliver({
       to,
-      subject: 'Your Plant Care account is approved',
+      subject: 'Your Dr. Plant account is approved',
       text: `${greeting}\n\nYour account was approved. You can sign in now: ${loginUrl}`,
       html: this.wrapHtml(
         'Account approved',
         `
         <p>${greeting}</p>
-        <p>Your Plant Care account was approved. You can sign in and start using the app.</p>
+        <p>Your Dr. Plant account was approved. You can sign in and start using the app.</p>
         <p style="text-align:center;margin:24px 0">
           <a href="${loginUrl}" style="${EmailService.buttonStyle}">Sign in</a>
         </p>
@@ -208,7 +208,7 @@ export class EmailService implements OnModuleInit {
     const greeting = name ? `Hi ${name},` : 'Hi,';
     return this.deliver({
       to,
-      subject: 'Reset your Plant Care password',
+      subject: 'Reset your Dr. Plant password',
       text: `${greeting}\n\nReset your password: ${url}\n\nExpires in 1 hour.`,
       html: this.wrapHtml(
         'Password reset',

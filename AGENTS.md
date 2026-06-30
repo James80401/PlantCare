@@ -1,4 +1,4 @@
-# Agent instructions (Plant Care)
+# Agent instructions (Dr. Plant)
 
 ## Workflow
 

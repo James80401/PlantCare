@@ -21,7 +21,7 @@ export function AuthShell({
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <Link to="/" className="font-display text-2xl font-bold text-emerald-950">
-            Plant Care
+            Dr. Plant
           </Link>
           {subtitle ? <p className="mt-2 text-sm text-gray-600">{subtitle}</p> : null}
         </div>

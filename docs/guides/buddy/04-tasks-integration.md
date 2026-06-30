@@ -2,7 +2,7 @@
 
 ## Philosophy
 
-Plant Buddy does **not** create a separate task system. The existing `Task` model, `TaskType` enum, `TaskStatus` enum, and scheduler module in PlantCare are reused entirely. Buddy simply listens for task completion events and awards Sunlight and Dewdrops in response.
+Plant Buddy does **not** create a separate task system. The existing `Task` model, `TaskType` enum, `TaskStatus` enum, and scheduler module in Dr. Plant are reused entirely. Buddy simply listens for task completion events and awards Sunlight and Dewdrops in response.
 
 This keeps data consistent, avoids duplication, and means any improvements to the core task system automatically benefit Buddy.
 

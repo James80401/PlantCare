@@ -16,7 +16,7 @@ export class RootErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Plant Care render error:', error, info.componentStack);
+    console.error('Dr. Plant render error:', error, info.componentStack);
   }
 
   render() {

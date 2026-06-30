@@ -76,7 +76,7 @@ export default function PlantTasksTab() {
         ) : (
           <SectionEmptyState
             title="No recent care history"
-            body="Complete, skip, or snooze tasks to build feedback that helps Plant Care tune this schedule."
+            body="Complete, skip, or snooze tasks to build feedback that helps Dr. Plant tune this schedule."
           />
         )}
       </div>

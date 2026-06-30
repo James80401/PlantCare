@@ -131,7 +131,7 @@ function LayoutShell({
         <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
             <Link to="/garden" className="min-w-0 text-xl font-bold tracking-tight font-display">
-              <span className="block truncate">Plant Care</span>
+              <span className="block truncate">Dr. Plant</span>
             </Link>
             <nav className="hidden sm:flex items-center gap-1 text-sm" aria-label="Main">
               {desktopPrimaryItems.map(({ to, label, exact }) => {

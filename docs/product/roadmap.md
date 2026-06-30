@@ -1,9 +1,9 @@
-# Plant Care roadmap
+# Dr. Plant roadmap
 
 > **Status:** canonical consolidated roadmap, last consolidated 2026-06-03  
 > **Navigation:** [Product INDEX](INDEX.md) · [Current feature implementation plan](current-feature-implementation-plan.md) · [Improvement recommendations](improvement-recommendations.md) · [UAT checklist](uat-checklist.md) · [Production sign-off](../operations/production-signoff.md)
 
-This is the single roadmap source of truth for Plant Care. Older roadmap,
+This is the single roadmap source of truth for Dr. Plant. Older roadmap,
 checklist, release, and Buddy phase documents remain useful as acceptance
 criteria and runbooks, but their unchecked boxes are not automatically current.
 When sources disagree, prefer this roadmap and update the source document the

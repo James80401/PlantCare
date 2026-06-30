@@ -99,12 +99,12 @@ async function testSmtp() {
 
   if (sendTestEmail) {
     const from =
-      clean(process.env.EMAIL_FROM) || `"Plant Care" <${user}>`;
+      clean(process.env.EMAIL_FROM) || `"Dr. Plant" <${user}>`;
     try {
       const info = await transport.sendMail({
         from,
         to: user,
-        subject: 'Plant Care SMTP test',
+        subject: 'Dr. Plant SMTP test',
         text: 'If you received this, SMTP is working.',
         html: '<p>If you received this, <strong>SMTP is working</strong>.</p>',
       });
@@ -177,7 +177,7 @@ async function testOpenAI() {
 }
 
 async function main() {
-  console.log(`Plant Care integration checks (${envPath})\n`);
+  console.log(`Dr. Plant integration checks (${envPath})\n`);
 
   const smtp = await testSmtp();
   console.log(smtp.ok ? `✓ SMTP: ${smtp.detail}` : `✗ SMTP: ${smtp.detail}`);

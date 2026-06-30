@@ -65,7 +65,7 @@ const MILESTONE_DEFS: Array<{
   {
     id: 'first_plant',
     title: 'First plant',
-    description: 'You started a living garden in Plant Care.',
+    description: 'You started a living garden in Dr. Plant.',
     emoji: '🌱',
     isUnlocked: (ctx) => ctx.plantCount >= 1,
   },
@@ -300,7 +300,7 @@ export function formatSharePlantText(snapshot: SharePlantSnapshot) {
     snapshot.sunlight ? `☀️ ${snapshot.sunlight}` : null,
     snapshot.nextCareLabel ? `Next: ${snapshot.nextCareLabel}` : null,
     '',
-    'Tracked with Plant Care',
+    'Tracked with Dr. Plant',
   ].filter((line): line is string => line !== null && line !== '');
 
   return lines.join('\n');

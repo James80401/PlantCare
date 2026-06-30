@@ -22,7 +22,7 @@ const photosDir = join(
   'photos',
   'species',
 );
-const UA = 'PlantCare/1.0 (species catalog; educational use)';
+const UA = 'DrPlant/1.0 (species catalog; educational use)';
 const INAT_DELAY_MS = 1100;
 const COMMONS_DELAY_MS = 3500;
 

@@ -79,7 +79,7 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('Plant Care API')
+    .setTitle('Dr. Plant API')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

@@ -4,7 +4,7 @@
 
 ## Overview
 
-Plant Care delegates specialized work to external APIs. All integrations are **optional** unless noted; the app degrades gracefully when keys are missing.
+Dr. Plant delegates specialized work to external APIs. All integrations are **optional** unless noted; the app degrades gracefully when keys are missing.
 
 | Integration | Required? | Feature impact |
 |-------------|-----------|----------------|

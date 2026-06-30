@@ -439,7 +439,7 @@ export class DashboardService {
       return {
         status: 'empty',
         headline: 'Add your first plant',
-        body: 'Plant Care will build a personalized care plan once your garden has a plant.',
+        body: 'Dr. Plant will build a personalized care plan once your garden has a plant.',
         actionLabel: 'Add plant',
         actionTo: '/garden/plants/new',
         focusPlantId: null,

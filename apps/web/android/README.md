@@ -1,6 +1,6 @@
 # Android (Capacitor)
 
-Native shell for Plant Care. Package: **`com.plantcare.app`**.
+Native shell for Dr. Plant. Package: **`com.plantcare.app`**.
 
 ## Firebase push (FCM)
 

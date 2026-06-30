@@ -15,7 +15,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=you@gmail.com
 SMTP_PASS=your-app-password
-EMAIL_FROM="Plant Care <you@gmail.com>"
+EMAIL_FROM="Dr. Plant <you@gmail.com>"
 FRONTEND_URL=http://localhost:5173
 ```
 

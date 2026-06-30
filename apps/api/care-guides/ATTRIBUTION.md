@@ -20,4 +20,4 @@ Re-download after clone:
 node apps/api/scripts/download-care-guide-photos.mjs
 ```
 
-Diagrams in `src/care-guides/images/` are original SVG illustrations (Plant Care).
+Diagrams in `src/care-guides/images/` are original SVG illustrations (Dr. Plant).

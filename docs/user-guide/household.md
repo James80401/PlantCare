@@ -4,7 +4,7 @@
 
 ## What it is
 
-**Household** lets multiple Plant Care users care for the same plants together. You create a shared **garden**, invite people by email, and **share** specific plants. Collaborators see shared plants on their dashboard and can complete care tasks according to access rules.
+**Household** lets multiple Dr. Plant users care for the same plants together. You create a shared **garden**, invite people by email, and **share** specific plants. Collaborators see shared plants on their dashboard and can complete care tasks according to access rules.
 
 ## How to open it
 

@@ -1,4 +1,4 @@
-# Deploy latest Plant Care to the production droplet over SSH.
+# Deploy latest Dr. Plant to the production droplet over SSH.
 # Reads SMTP settings from local .env and merges them into server .env.production.
 #
 # Usage (from repo root on your PC):

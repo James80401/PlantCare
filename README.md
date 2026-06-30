@@ -1,4 +1,4 @@
-# Plant Care
+# Dr. Plant
 
 A full-stack plant care companion: personalized watering and care schedules, species catalog, health diagnosis (rules + AI), journal, weather-aware advice, household sharing, and a community feed.
 

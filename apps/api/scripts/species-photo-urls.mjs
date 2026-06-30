@@ -1,4 +1,4 @@
-export const UA = 'PlantCare/1.0 (species catalog; educational use)';
+export const UA = 'DrPlant/1.0 (species catalog; educational use)';
 export const FILE_MIN_BYTES = 6_000;
 
 export function photoIdFromMeta(meta) {

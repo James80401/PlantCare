@@ -22,7 +22,7 @@ Use **Twilio SendGrid Email** (Twilio’s transactional email product; formerly 
 | `SMTP_PORT` | `2525` |
 | `SMTP_USER` | `apikey` (literal string, not your email) |
 | `SMTP_PASS` | Twilio SendGrid **API key** (`SG.xxx…`) |
-| `EMAIL_FROM` | Verified sender, e.g. `"Plant Care <you@gmail.com>"` |
+| `EMAIL_FROM` | Verified sender, e.g. `"Dr. Plant <you@gmail.com>"` |
 
 Host stays `smtp.sendgrid.net` — that is Twilio’s SMTP relay hostname.
 
@@ -43,7 +43,7 @@ Twilio SendGrid pricing and free tiers change — confirm on [Twilio SendGrid pr
 
 ### Future: REST API (optional)
 
-Twilio SendGrid also offers `POST https://api.sendgrid.com/v3/mail/send` with a Bearer API key. Plant Care does **not** use that today; SMTP is sufficient. REST would only be worth adding if SMTP relay becomes unavailable.
+Twilio SendGrid also offers `POST https://api.sendgrid.com/v3/mail/send` with a Bearer API key. Dr. Plant does **not** use that today; SMTP is sufficient. REST would only be worth adding if SMTP relay becomes unavailable.
 
 ## Troubleshooting
 

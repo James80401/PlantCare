@@ -7,7 +7,7 @@ export default function Privacy() {
       <div className="mx-auto max-w-2xl px-4 py-10 sm:py-14">
         <p className="text-sm text-emerald-800">
           <Link to="/" className="font-medium hover:underline">
-            ← Plant Care
+            ← Dr. Plant
           </Link>
         </p>
         <h1 className="mt-4 font-display text-3xl font-bold text-emerald-950">Privacy Policy</h1>
@@ -15,7 +15,7 @@ export default function Privacy() {
 
         <div className="prose prose-emerald mt-8 max-w-none space-y-4 text-sm leading-relaxed">
           <p>
-            Plant Care (&quot;we&quot;, &quot;the app&quot;) helps you track plant care tasks, journal
+            Dr. Plant (&quot;we&quot;, &quot;the app&quot;) helps you track plant care tasks, journal
             notes, and optional health diagnosis. This policy describes what we collect and how we
             use it.
           </p>

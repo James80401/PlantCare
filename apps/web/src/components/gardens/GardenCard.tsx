@@ -60,7 +60,7 @@ export function GardenCard({ garden }: { garden: GardenSummaryCard }) {
 
       <div className="mt-4 flex flex-wrap gap-2 border-t border-emerald-50 pt-3 text-sm">
         <QuickLink to={`${gardenPath(garden.id)}/tasks`} label="Tasks" />
-        <QuickLink to={`${gardenPath(garden.id)}/care`} label="Plant Care" />
+        <QuickLink to={`${gardenPath(garden.id)}/care`} label="Dr. Plant" />
         <QuickLink to={`${gardenPath(garden.id)}/plants`} label="Plants" />
         {!garden.isOwner ? (
           <span className="ml-auto inline-flex items-center rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">

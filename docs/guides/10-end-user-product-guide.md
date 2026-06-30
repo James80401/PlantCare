@@ -2,7 +2,7 @@
 
 > **Navigation:** [Guides INDEX](INDEX.md) · [User guide INDEX](../user-guide/INDEX.md)
 
-This guide explains **how to use Plant Care** as a gardener. For click-by-click tutorials, see [11 — Tutorials](11-tutorials-and-walkthroughs.md).
+This guide explains **how to use Dr. Plant** as a gardener. For click-by-click tutorials, see [11 — Tutorials](11-tutorials-and-walkthroughs.md).
 
 ---
 

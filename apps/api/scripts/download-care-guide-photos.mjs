@@ -18,7 +18,7 @@ const manifestPath = join(
 );
 
 const MIN_BYTES = 10_000;
-const UA = 'PlantCare/1.0 (care guide assets)';
+const UA = 'DrPlant/1.0 (care guide assets)';
 
 mkdirSync(root, { recursive: true });
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));

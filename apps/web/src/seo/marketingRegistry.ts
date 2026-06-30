@@ -234,7 +234,7 @@ export const speciesGuides: SpeciesGuide[] = [
     slug: 'snake-plant',
     commonName: 'Snake plant',
     scientificName: 'Dracaena trifasciata',
-    title: 'Snake Plant Care for Beginners',
+    title: 'Snake Plant Guide for Beginners',
     description: 'Keep a snake plant healthy with low-water routines and simple light checks.',
     light: 'Snake plants tolerate low light but stay sturdier in medium to bright indirect light.',
     watering: 'Let soil dry deeply before watering again; this plant is more forgiving of dry soil than wet soil.',
@@ -266,7 +266,7 @@ export const speciesGuides: SpeciesGuide[] = [
     slug: 'spider-plant',
     commonName: 'Spider plant',
     scientificName: 'Chlorophytum comosum',
-    title: 'Spider Plant Care for Beginners',
+    title: 'Spider Plant Guide for Beginners',
     description: 'A simple beginner guide to spider plant watering, pups, brown tips, and light.',
     light: 'Bright indirect light supports fuller growth and more plantlets.',
     watering: 'Keep moisture steady but never soggy; let the surface dry before watering again.',
@@ -330,7 +330,7 @@ export const speciesGuides: SpeciesGuide[] = [
     slug: 'zz-plant',
     commonName: 'ZZ plant',
     scientificName: 'Zamioculcas zamiifolia',
-    title: 'ZZ Plant Care for Beginners',
+    title: 'ZZ Plant Guide for Beginners',
     description: 'Low-maintenance ZZ plant care for watering, light, yellow stems, and slow growth.',
     light: 'ZZ plants tolerate low light, but medium indirect light supports stronger growth.',
     watering: 'Water only after the soil dries deeply; rhizomes store water and dislike soggy conditions.',
@@ -414,7 +414,7 @@ const coreRoutes: MarketingRouteMeta[] = [
   },
   {
     path: '/plant-care-app',
-    title: 'Plant Care App for Houseplant Beginners',
+    title: 'Dr. Plant App for Houseplant Beginners',
     description:
       'Track plants, care tasks, health notes, and beginner-friendly guidance in one private plant care app.',
     h1: 'A calmer plant care app for beginners',
@@ -482,7 +482,7 @@ const coreRoutes: MarketingRouteMeta[] = [
   },
   {
     path: '/plant-care-guides',
-    title: 'Beginner Plant Care Guides by Species',
+    title: 'Beginner Houseplant Guides by Species',
     description:
       'Browse beginner care guides for pothos, monstera, snake plant, peace lily, spider plant, philodendron, and more.',
     h1: 'Plant care guides by species',

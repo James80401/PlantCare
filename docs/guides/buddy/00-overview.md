@@ -2,9 +2,9 @@
 
 ## What Is Plant Buddy?
 
-Plant Buddy is a companion gamification layer built on top of the PlantCare app. It is inspired by the self-care app Finch, but reimagined entirely around plant care instead of personal wellness. The user adopts a small animated plant character, cares for it by completing real plant-care tasks, earns XP and currency, customizes their buddy, sends it on adventures, and connects with friends.
+Plant Buddy is a companion gamification layer built on top of Dr. Plant. It is inspired by the self-care app Finch, but reimagined entirely around plant care instead of personal wellness. The user adopts a small animated plant character, cares for it by completing real plant-care tasks, earns XP and currency, customizes their buddy, sends it on adventures, and connects with friends.
 
-Plant Buddy is **not** a replacement for the existing plant tracker. It is an additive layer that sits on top of the existing task, journal, diagnosis, weather, and billing systems already built into PlantCare.
+Plant Buddy is **not** a replacement for the existing plant tracker. It is an additive layer that sits on top of the existing task, journal, diagnosis, weather, and billing systems already built into Dr. Plant.
 
 ---
 

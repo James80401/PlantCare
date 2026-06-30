@@ -102,7 +102,7 @@ export function SharePlantCard({
               </div>
             ) : null}
           </dl>
-          <p className="mt-4 text-xs font-medium text-emerald-100/90">Plant Care</p>
+          <p className="mt-4 text-xs font-medium text-emerald-100/90">Dr. Plant</p>
         </article>
 
         <pre className="mt-4 max-h-32 overflow-auto rounded-2xl bg-gray-50 p-3 text-xs text-gray-700 whitespace-pre-wrap">

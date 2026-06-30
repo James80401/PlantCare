@@ -4,7 +4,7 @@
 
 ## Product vision
 
-Plant Care aims to be a **daily companion** for plant owners: proactive schedules, understandable instructions, and help when something goes wrong — with optional social layers (household + community).
+Dr. Plant aims to be a **daily companion** for plant owners: proactive schedules, understandable instructions, and help when something goes wrong — with optional social layers (household + community).
 
 ---
 

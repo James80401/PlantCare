@@ -2,7 +2,7 @@
 
 > **Navigation:** [Meta INDEX](INDEX.md) · [Master INDEX](../INDEX.md)
 
-Every documentation file in the Plant Care repository. **Bold** entries are INDEX hubs.
+Every documentation file in the Dr. Plant repository. **Bold** entries are INDEX hubs.
 
 ---
 

@@ -1,4 +1,4 @@
-# Complete guides — every aspect of Plant Care
+# Complete guides — every aspect of Dr. Plant
 
 > **Navigation:** [Master INDEX](../INDEX.md) · [Documentation map](../meta/documentation-map.md) · [Glossary](../meta/glossary.md)
 

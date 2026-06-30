@@ -293,7 +293,7 @@ export default function Dashboard() {
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-emerald-50/90">
                 {dash?.greeting.statusLine ??
-                  'Start your garden by adding a plant and Plant Care will build your daily routine.'}
+                  'Start your garden by adding a plant and Dr. Plant will build your daily routine.'}
               </p>
             </div>
             <Link
@@ -671,7 +671,7 @@ export default function Dashboard() {
             body={
               plantScope === 'shared'
                 ? 'Accept a household invite to see plants others share with you.'
-                : 'Add a plant and Plant Care will create a schedule, care guide, and profile you can track over time.'
+                : 'Add a plant and Dr. Plant will create a schedule, care guide, and profile you can track over time.'
             }
             actionLabel={plantScope === 'shared' ? 'Household settings' : 'Add your first plant'}
             actionTo={plantScope === 'shared' ? '/garden/household' : '/garden/plants/new'}

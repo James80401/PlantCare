@@ -2,7 +2,7 @@
 
 > **Navigation:** [Architecture INDEX](INDEX.md) · [API: gardens](../api/gardens.md) · [ADR-0007](decisions/0007-garden-centric-model.md) · [Auth & security](auth-and-security.md)
 
-PlantCare is **garden-centered**: a Garden is the primary container and shared workspace
+Dr. Plant is **garden-centered**: a Garden is the primary container and shared workspace
 for plants. Every plant lives in a home Garden, care tasks roll up to the Garden, and
 sharing happens by inviting people to the Garden. This replaced an earlier plant-centered
 model where plants were a flat per-user list and gardens were only a sharing overlay.

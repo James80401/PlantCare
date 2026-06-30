@@ -2,7 +2,7 @@
 
 > **Navigation:** [Guides INDEX](../INDEX.md) · [Product recommendations](../../product/improvement-recommendations.md)
 
-Plant Buddy is the secondary engagement lane for Plant Care: a companion, shop, quests, journeys, and Garden Town social features. Use these docs when changing buddy-specific behavior without crowding the core care loop.
+Plant Buddy is the secondary engagement lane for Dr. Plant: a companion, shop, quests, journeys, and Garden Town social features. Use these docs when changing buddy-specific behavior without crowding the core care loop.
 
 ## Guide Map
 

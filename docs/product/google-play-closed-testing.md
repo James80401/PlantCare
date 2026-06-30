@@ -60,7 +60,7 @@ Neither track lists the app in public Play search.
 
 ## Play Console workflow
 
-1. **Create app** → name “Plant Care”, default language, package `com.plantcare.app`.
+1. **Create app** → name “Dr. Plant”, default language, package `com.plantcare.app`.
 2. **App content** → Privacy policy URL, ads (No), content rating, target audience.
 3. **Data safety** → use [play-store-listing.md](play-store-listing.md) draft table; adjust for your deployment.
 4. **Main store listing** → short/full description, icon, screenshots.

@@ -8,7 +8,7 @@ Paste and customize before **Closed testing** or **Production**. Replace `yourdo
 
 | Field | Value |
 |-------|--------|
-| App name | Plant Care |
+| App name | Dr. Plant |
 | Package | `com.plantcare.app` |
 | Category | House & home (or Lifestyle) |
 | Privacy policy | `https://yourdomain.com/privacy` |
@@ -22,7 +22,7 @@ Smart plant care reminders, journals, and Dr. Plant health tips for your garden.
 ## Full description
 
 ```
-Plant Care helps you keep houseplants and garden plants thriving without guesswork.
+Dr. Plant helps you keep houseplants and garden plants thriving without guesswork.
 
 • Care schedule — watering, fertilizing, pruning, pest checks, and more
 • Today’s tasks — see what’s due, overdue, or done at a glance
@@ -33,7 +33,7 @@ Plant Care helps you keep houseplants and garden plants thriving without guesswo
 • Plant Buddy — light gamification to build a gentle care rhythm (optional)
 • Community — share tips with other gardeners (optional)
 
-Plant Care is in beta. All premium features may be enabled during testing. Feedback welcome.
+Dr. Plant is in beta. All premium features may be enabled during testing. Feedback welcome.
 
 Requires an account. Internet connection required for sync and diagnosis features.
 ```
@@ -83,7 +83,7 @@ Capture screenshots from a **release** build pointed at production API so conten
 ## Tester email blurb
 
 ```
-You're invited to test Plant Care on Android (closed beta).
+You're invited to test Dr. Plant on Android (closed beta).
 
 1. Open this link on your Android phone (signed into Google): [Play opt-in URL from Console]
 2. Accept the invite and install from the Play Store.

@@ -87,7 +87,7 @@ describe('engagement utilities', () => {
     });
 
     expect(text).toContain('Kitchen Basil');
-    expect(text).toContain('Plant Care');
+    expect(text).toContain('Dr. Plant');
   });
 
   it('measures oldest plant age in days', () => {

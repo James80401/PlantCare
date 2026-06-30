@@ -29,7 +29,7 @@ export const PLANT_MILESTONE_DEFS: PlantMilestoneDefinition[] = [
   {
     id: 'first_plant',
     title: 'First plant',
-    description: 'You started a living garden in Plant Care.',
+    description: 'You started a living garden in Dr. Plant.',
     emoji: '🌱',
     isUnlocked: (ctx) => ctx.plantCount >= 1,
   },

@@ -1,10 +1,10 @@
-# PlantCare — Complete Application Overview
+# Dr. Plant — Complete Application Overview
 
 > **Navigation:** [Master INDEX](INDEX.md) · [System overview](architecture/system-overview.md) · [Documentation map](meta/documentation-map.md)
 
 ## What it is
 
-**PlantCare** is a full-stack **personal plant garden manager**. Users register, add plants from a catalog of 240+ species, receive auto-generated care schedules (watering, pruning, and premium tasks like fertilizing/misting), complete tasks with step-by-step care instructions, keep a growth journal, and use **Dr. Plant** for AI-powered health diagnosis and chat.
+**Dr. Plant** is a full-stack **personal plant garden manager**. Users register, add plants from a catalog of 240+ species, receive auto-generated care schedules (watering, pruning, and premium tasks like fertilizing/misting), complete tasks with step-by-step care instructions, keep a growth journal, and use **Dr. Plant** for AI-powered health diagnosis and chat.
 
 It is positioned as an **MVP / SaaS-ready** product with optional paid tier (Stripe), extensive internal documentation (~100+ markdown files under [docs/](INDEX.md)), and graceful degradation when third-party API keys are missing (mocks/fallbacks).
 
@@ -295,6 +295,6 @@ Quick links: [tutorials](tutorials/INDEX.md) · [user guide](user-guide/INDEX.md
 
 ## Summary
 
-PlantCare is a **medium-complexity TypeScript SaaS MVP** for plant care management. Its differentiators are not simple reminders but **species-aware scheduling**, **rich care guides**, **weather logic**, and **AI diagnosis**. The codebase separates concerns cleanly (SPA + API + shared types + root Prisma), degrades gracefully without API keys, and includes production paths (Postgres, S3, Stripe, Docker) alongside frictionless SQLite local dev.
+Dr. Plant is a **medium-complexity TypeScript SaaS MVP** for plant care management. Its differentiators are not simple reminders but **species-aware scheduling**, **rich care guides**, **weather logic**, and **AI diagnosis**. The codebase separates concerns cleanly (SPA + API + shared types + root Prisma), degrades gracefully without API keys, and includes production paths (Postgres, S3, Stripe, Docker) alongside frictionless SQLite local dev.
 
 **Notable caveat for contributors:** premium tier and plan limits are implemented in schema/shared constants but **overridden to PREMIUM** in JWT validation during current MVP — re-enable real gating before shipping paid features.

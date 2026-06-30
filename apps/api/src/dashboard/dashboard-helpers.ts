@@ -247,7 +247,7 @@ export function getStatusLine(
   overdue: number,
 ): string {
   if (plantCount === 0) {
-    return 'Add a plant and Plant Care will build your daily routine.';
+    return 'Add a plant and Dr. Plant will build your daily routine.';
   }
   if (overdue > 0) {
     return `${overdue} overdue · ${dueToday} due today · ${plantCount} plant${plantCount === 1 ? '' : 's'}`;

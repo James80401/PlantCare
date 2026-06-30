@@ -1,10 +1,10 @@
-# Plant Care improvement recommendations
+# Dr. Plant improvement recommendations
 
 > **Status:** researched backlog (last updated 2026-05-26)  
 > **Canonical roadmap:** [roadmap.md](roadmap.md)
 > **Navigation:** [Product INDEX](INDEX.md) · [Improvement checklist](improvement-checklist.md) · [Feature availability](../reference/feature-availability.md)
 
-This document captures **research-backed recommendations** for improving Plant Care: user value, content quality, reliability, and release readiness. It complements the living [improvement-checklist.md](improvement-checklist.md), which remains the implementation queue with acceptance checks.
+This document captures **research-backed recommendations** for improving Dr. Plant: user value, content quality, reliability, and release readiness. It complements the living [improvement-checklist.md](improvement-checklist.md), which remains the implementation queue with acceptance checks.
 
 For current priority and status, use [roadmap.md](roadmap.md). This file is a
 research archive and theme index; some older theme text may describe items that
@@ -14,7 +14,7 @@ the roadmap now treats as shipped or superseded.
 
 ## Product north star
 
-Plant Care should feel like a **personalized daily plant assistant**: it tells users what matters today, explains why each action matters, adapts to their plants and environment, and makes progress visible over time.
+Dr. Plant should feel like a **personalized daily plant assistant**: it tells users what matters today, explains why each action matters, adapts to their plants and environment, and makes progress visible over time.
 
 Recommendations below are **additive** — they assume the foundation already shipped (mobile shell, dashboard, structured care overview, Dr. Plant per plant, task feedback, schedule suggestions, weather advice, buddy, community, demo seed, Playwright UAT).
 

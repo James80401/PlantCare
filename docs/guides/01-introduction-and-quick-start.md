@@ -2,9 +2,9 @@
 
 > **Navigation:** [Guides INDEX](INDEX.md) · [Getting started](../getting-started/INDEX.md)
 
-## What Plant Care is
+## What Dr. Plant is
 
-Plant Care helps people keep plants healthy with:
+Dr. Plant helps people keep plants healthy with:
 
 - **Automated care schedules** — watering, fertilizing, repotting, pest checks, and more, generated from species data and the plant’s environment (indoor/outdoor, light, pot size).
 - **Actionable tasks** — a today-first dashboard and calendar, with instructions, skip feedback, snooze, and schedule explanations.

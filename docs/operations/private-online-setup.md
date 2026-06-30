@@ -4,7 +4,7 @@
 
 Work through **Phase A → Phase G** in order. Check each box, then tell your assistant (or teammate): **“Done with Phase X”** and paste any errors if something failed.
 
-**Goal:** Plant Care is online with HTTPS, **not public** — outsiders cannot use it without your gate (password or allowlist).
+**Goal:** Dr. Plant is online with HTTPS, **not public** — outsiders cannot use it without your gate (password or allowlist).
 
 ---
 
@@ -109,7 +109,7 @@ sudo apt install -y git
 
 ---
 
-## Phase D — Deploy Plant Care (Docker)
+## Phase D — Deploy Dr. Plant (Docker)
 
 On the VPS:
 
@@ -217,7 +217,7 @@ sudo systemctl status caddy
 - [ ] **E4.** From your PC browser, open:
 
   - `https://api.yourdomain.com/api/v1/health` → should show `{"status":"ok",...}`
-  - `https://yourdomain.com` → should load Plant Care
+  - `https://yourdomain.com` → should load Dr. Plant
 
 **Done when:** HTTPS works for web + API (no lock yet).
 
@@ -269,7 +269,7 @@ SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=2525
 SMTP_USER=apikey
 SMTP_PASS=SG.your_twilio_sendgrid_api_key
-EMAIL_FROM="Plant Care <you@gmail.com>"
+EMAIL_FROM="Dr. Plant <you@gmail.com>"
 
 REGISTRATION_REQUIRES_ADMIN_APPROVAL=true
 ADMIN_EMAILS=you@gmail.com
@@ -290,7 +290,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=you@gmail.com
 SMTP_PASS=your-16-char-app-password
-EMAIL_FROM="Plant Care <you@gmail.com>"
+EMAIL_FROM="Dr. Plant <you@gmail.com>"
 ```
 
 `ADMIN_EMAILS` must include **your** login email (comma-separated for multiple admins).

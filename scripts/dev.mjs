@@ -22,7 +22,7 @@ function run(name, script) {
   return child;
 }
 
-console.log('Starting Plant Care dev servers…');
+console.log('Starting Dr. Plant dev servers…');
 console.log('  API  → http://localhost:3001/api/v1');
 console.log('  Web  → http://localhost:5173');
 console.log('  Demo → demo@plantcare.local / DemoPlant1! (after db:seed)\n');

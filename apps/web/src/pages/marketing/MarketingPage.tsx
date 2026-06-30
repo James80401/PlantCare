@@ -140,7 +140,7 @@ function MarketingFooter() {
   return (
     <footer className="border-t border-emerald-950/10 bg-white/70">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-[#18362b]/70 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <p>Dr. Plant by Plant Care. Private until launch.</p>
+        <p>Dr. Plant. Private until launch.</p>
         <nav className="flex flex-wrap gap-4">
           <Link to="/privacy" className="font-semibold hover:text-[#1f4d3a]">
             Privacy

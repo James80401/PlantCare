@@ -1,4 +1,4 @@
-# Plant Care improvement checklist
+# Dr. Plant improvement checklist
 
 > Status: living implementation plan. Check items off as code, data, tests, and
 > documentation land in the repository.
@@ -9,7 +9,7 @@
 
 ## Product north star
 
-Plant Care should feel like a personalized daily plant assistant: it should tell
+Dr. Plant should feel like a personalized daily plant assistant: it should tell
 users what matters today, explain why each action matters, adapt to their
 plants and environment, and make progress visible over time.
 

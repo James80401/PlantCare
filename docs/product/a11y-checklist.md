@@ -2,7 +2,7 @@
 
 > **Navigation:** [improvement-recommendations.md](improvement-recommendations.md) · [uat-checklist.md](uat-checklist.md)
 
-Patterns used across Plant Care web. Re-run this list when adding major UI.
+Patterns used across Dr. Plant web. Re-run this list when adding major UI.
 
 ## Global shell
 

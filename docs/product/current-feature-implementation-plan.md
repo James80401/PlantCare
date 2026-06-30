@@ -9,7 +9,7 @@ new-feature program.
 
 ## Product direction
 
-Plant Care already has the major product surfaces live: dashboard, care tasks,
+Dr. Plant already has the major product surfaces live: dashboard, care tasks,
 plant profile, Dr. Plant, journal, species browsing, community, mobile/release
 tooling, and Plant Buddy. The current work should make those surfaces faster,
 clearer, more trustworthy, and better verified.

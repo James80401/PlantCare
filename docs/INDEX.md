@@ -1,8 +1,8 @@
-# Plant Care — Master Index (Tutorial & Instructions)
+# Dr. Plant — Master Index (Tutorial & Instructions)
 
 > **Navigation:** [README](../README.md) · [Application overview](application-overview.md) · [Documentation map](meta/documentation-map.md) · [For AI agents](meta/for-ai-agents.md) · [Glossary](meta/glossary.md)
 
-This document is the **primary tutorial and instructions hub** for Plant Care. Use the tables below to jump to any layer; each linked folder has its own **INDEX.md** with deeper links.
+This document is the **primary tutorial and instructions hub** for Dr. Plant. Use the tables below to jump to any layer; each linked folder has its own **INDEX.md** with deeper links.
 
 **For deep, end-to-end coverage of every aspect:** start at **[guides/INDEX.md](guides/INDEX.md)** (14 complete guides).
 
