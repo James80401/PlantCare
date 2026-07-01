@@ -166,6 +166,24 @@ export class BuddyShopService {
     const usesBloom = item.bloomTokenCost > 0;
 
     const updated = await this.prisma.$transaction(async (tx) => {
+      // Atomic conditional spend: the balance check and decrement happen as a single
+      // UPDATE ... WHERE balance >= cost, so two concurrent purchases can't both spend
+      // off the same stale balance read (the getPurchaseLockReason check above is only
+      // a fast-path rejection for the common case, not the authoritative guard).
+      const spent = await tx.buddy.updateMany({
+        where: usesBloom
+          ? { id: buddy.id, bloomTokens: { gte: item.bloomTokenCost } }
+          : { id: buddy.id, dewdrops: { gte: item.cost } },
+        data: usesBloom
+          ? { bloomTokens: { decrement: item.bloomTokenCost } }
+          : { dewdrops: { decrement: item.cost } },
+      });
+      if (spent.count === 0) {
+        throw new BadRequestException(
+          purchaseDenialMessage('funds', item),
+        );
+      }
+
       await tx.buddyInventory.create({
         data: {
           buddyId: buddy.id,
@@ -173,12 +191,8 @@ export class BuddyShopService {
           acquireMethod: usesBloom ? 'bloom_token' : 'purchase',
         },
       });
-      return tx.buddy.update({
-        where: { id: buddy.id },
-        data: usesBloom
-          ? { bloomTokens: { decrement: item.bloomTokenCost } }
-          : { dewdrops: { decrement: item.cost } },
-      });
+
+      return tx.buddy.findUniqueOrThrow({ where: { id: buddy.id } });
     });
 
     return {
