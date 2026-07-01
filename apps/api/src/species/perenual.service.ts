@@ -47,6 +47,10 @@ export class PerenualService {
     this.speciesByIdCache.clear();
   }
 
+  invalidateCacheForMutation(): void {
+    this.invalidateSpeciesCache();
+  }
+
   private nameContains(text: string) {
     return speciesNameContains(this.config.get<string>('DATABASE_URL') ?? '', text);
   }

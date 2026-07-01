@@ -27,6 +27,20 @@ interface Species {
   defaultImageUrl?: string;
 }
 
+interface ExternalSpeciesMatch {
+  provider: 'plantnet' | 'demo';
+  providerMatchId?: string;
+  commonName: string;
+  scientificName?: string;
+  confidence?: number;
+  integrationStatus: 'requires_confirmation';
+  careArchetype?: {
+    id: string;
+    label: string;
+    description: string;
+  };
+}
+
 type Step = 'photo' | 'confirm' | 'search' | 'details';
 
 const PLANT_LIFE_STAGE_OPTIONS = [
@@ -96,6 +110,7 @@ export default function AddPlantWizard() {
   const [speciesList, setSpeciesList] = useState<Species[]>([]);
   const [speciesId, setSpeciesId] = useState('');
   const [selectedSpecies, setSelectedSpecies] = useState<Species | null>(null);
+  const [externalMatch, setExternalMatch] = useState<ExternalSpeciesMatch | null>(null);
   const [identifyConfidence, setIdentifyConfidence] = useState<number | null>(null);
 
   const [nickname, setNickname] = useState('');
@@ -114,6 +129,7 @@ export default function AddPlantWizard() {
   const [limitError, setLimitError] = useState<{ message: string; code: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [identifying, setIdentifying] = useState(false);
+  const [confirmingExternal, setConfirmingExternal] = useState(false);
   const [activeFilters, setActiveFilters] =
     useState<Record<SpeciesDiscoveryFilterKey, boolean>>(defaultSpeciesDiscoveryFilters);
 
@@ -173,6 +189,7 @@ export default function AddPlantWizard() {
   const selectSpecies = (species: Species) => {
     setSpeciesId(species.id);
     setSelectedSpecies(species);
+    setExternalMatch(null);
     setQuery(species.commonName);
     setSpeciesList([]);
     setStep('details');
@@ -212,13 +229,24 @@ export default function AddPlantWizard() {
     setLimitError(null);
     try {
       const { data } = await plantsApi.identify(file);
-      const species = data.species as Species;
-      setSpeciesId(species.id);
-      setSelectedSpecies(species);
-      setQuery(species.commonName);
       setIdentifyConfidence(
         typeof data.confidence === 'number' ? Math.round(data.confidence * 100) : null,
       );
+      if (data.species) {
+        const species = data.species as Species;
+        setSpeciesId(species.id);
+        setSelectedSpecies(species);
+        setExternalMatch(null);
+        setQuery(species.commonName);
+      } else if (data.externalMatch) {
+        const match = data.externalMatch as ExternalSpeciesMatch;
+        setSpeciesId('');
+        setSelectedSpecies(null);
+        setExternalMatch(match);
+        setQuery(match.commonName);
+      } else {
+        throw new Error('No identification match returned');
+      }
       setStep('confirm');
     } catch (err: unknown) {
       const data = (err as { response?: { data?: { message?: string; code?: string } } })?.response?.data;
@@ -229,6 +257,32 @@ export default function AddPlantWizard() {
       setError(msg || 'Could not identify plant. Try search or browse instead.');
     } finally {
       setIdentifying(false);
+    }
+  };
+
+  const confirmExternalMatch = async () => {
+    if (!externalMatch) return;
+    setConfirmingExternal(true);
+    setError('');
+    try {
+      const { data } = await plantsApi.confirmExternalSpecies({
+        provider: externalMatch.provider,
+        providerMatchId: externalMatch.providerMatchId,
+        commonName: externalMatch.commonName,
+        scientificName: externalMatch.scientificName,
+        confidence: externalMatch.confidence,
+      });
+      const species = data.species as Species;
+      setSpeciesId(species.id);
+      setSelectedSpecies(species);
+      setExternalMatch(null);
+      setQuery(species.commonName);
+      setStep('details');
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      setError(data?.message || 'Could not confirm this plant. Try search instead.');
+    } finally {
+      setConfirmingExternal(false);
     }
   };
 
@@ -358,6 +412,8 @@ export default function AddPlantWizard() {
   }
 
   const selectedGarden = gardens.find((g) => g.id === selectedGardenId);
+  const identifiedMatch = selectedSpecies ?? externalMatch;
+  const isExternalConfirmation = !selectedSpecies && Boolean(externalMatch);
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
@@ -442,11 +498,11 @@ export default function AddPlantWizard() {
         </Card>
       )}
 
-      {step === 'confirm' && selectedSpecies && (
+      {step === 'confirm' && identifiedMatch && (
         <Card className="space-y-4">
           <div className="flex gap-4">
             <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-emerald-50">
-              {selectedSpecies.defaultImageUrl ? (
+              {selectedSpecies?.defaultImageUrl ? (
                 <img
                   src={resolveApiAssetUrl(selectedSpecies.defaultImageUrl) ?? undefined}
                   alt=""
@@ -459,11 +515,25 @@ export default function AddPlantWizard() {
               )}
             </div>
             <div className="min-w-0">
+              {isExternalConfirmation ? (
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                  External match - confirm before adding
+                </p>
+              ) : null}
               <p className="font-display text-xl font-bold text-emerald-950">
-                {selectedSpecies.commonName}
+                {identifiedMatch.commonName}
               </p>
-              {selectedSpecies.scientificName ? (
-                <p className="text-sm italic text-gray-500">{selectedSpecies.scientificName}</p>
+              {identifiedMatch.scientificName ? (
+                <p className="text-sm italic text-gray-500">{identifiedMatch.scientificName}</p>
+              ) : null}
+              {externalMatch?.careArchetype ? (
+                <p className="mt-2 text-xs text-gray-600">
+                  Dr. Plant will start with{' '}
+                  <span className="font-semibold text-emerald-900">
+                    {externalMatch.careArchetype.label}
+                  </span>{' '}
+                  care until species-specific notes are reviewed.
+                </p>
               ) : null}
               {identifyConfidence != null ? (
                 <div className="mt-3">
@@ -481,8 +551,21 @@ export default function AddPlantWizard() {
               ) : null}
             </div>
           </div>
-          <Button fullWidth onClick={() => setStep('details')}>
-            Yes, add this plant
+          {isExternalConfirmation ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+              Confirming creates a Dr. Plant species record for this match and keeps the provider confidence attached for review.
+            </div>
+          ) : null}
+          <Button
+            fullWidth
+            onClick={isExternalConfirmation ? confirmExternalMatch : () => setStep('details')}
+            disabled={confirmingExternal}
+          >
+            {confirmingExternal
+              ? 'Confirming...'
+              : isExternalConfirmation
+                ? 'Confirm and add to Dr. Plant'
+                : 'Yes, add this plant'}
           </Button>
           <Button variant="secondary" fullWidth onClick={() => setStep('search')}>
             Not quite — search manually
@@ -502,6 +585,7 @@ export default function AddPlantWizard() {
               setQuery(e.target.value);
               setSpeciesId('');
               setSelectedSpecies(null);
+              setExternalMatch(null);
             }}
             placeholder="e.g. Monstera, Basil, Snake plant"
           />

@@ -7,6 +7,8 @@ export interface IdentifyResult {
   commonName: string;
   scientificName: string;
   confidence: number;
+  provider: 'plantnet' | 'demo';
+  providerMatchId: string;
 }
 
 const DEFAULT_MIN_CONFIDENCE = 0.1;
@@ -31,6 +33,8 @@ export class PlantNetService {
         commonName: 'Unknown (demo)',
         scientificName: 'Species unknown',
         confidence: 0.5,
+        provider: 'demo',
+        providerMatchId: 'demo-species-unknown',
       };
     }
 
@@ -65,6 +69,8 @@ export class PlantNetService {
         commonName: species.commonNames?.[0] || species.scientificNameWithoutAuthor,
         scientificName: species.scientificNameWithoutAuthor,
         confidence: score,
+        provider: 'plantnet',
+        providerMatchId: species.scientificNameWithoutAuthor,
       };
     } catch (err) {
       this.logger.warn(`PlantNet identify failed: ${err}`);

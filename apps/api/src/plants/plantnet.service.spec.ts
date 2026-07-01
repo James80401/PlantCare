@@ -49,6 +49,7 @@ describe('PlantNetService confidence threshold', () => {
     expect(result).not.toBeNull();
     expect(result!.confidence).toBe(0.42);
     expect(result!.scientificName).toBe('Monstera deliciosa');
+    expect(result!.provider).toBe('plantnet');
   });
 
   it('rejects (returns null) when PlantNet returns a score below the default threshold', async () => {
@@ -89,6 +90,7 @@ describe('PlantNetService confidence threshold', () => {
     const svc = makeService({ PLANTNET_API_KEY: undefined });
     const result = await svc.identify(makeFile());
     expect(result?.commonName).toBe('Unknown (demo)');
+    expect(result?.provider).toBe('demo');
     expect(mockedAxios.post).not.toHaveBeenCalled();
   });
 });

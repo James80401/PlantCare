@@ -145,6 +145,13 @@ export const plantsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  confirmExternalSpecies: (data: {
+    provider: 'plantnet' | 'demo';
+    commonName: string;
+    scientificName?: string;
+    confidence?: number;
+    providerMatchId?: string;
+  }) => api.post('/plants/identify/confirm-external', data),
   upload: (file: File) => {
     const form = new FormData();
     form.append('image', file);

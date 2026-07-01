@@ -17,6 +17,7 @@ import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decor
 import { imageUploadOptions } from '../common/upload-options';
 import { PlantsService } from './plants.service';
 import { CreatePlantDto } from './dto/create-plant.dto';
+import { ConfirmExternalSpeciesDto } from './dto/confirm-external-species.dto';
 import { UpdatePlantDto } from './dto/update-plant.dto';
 
 @ApiTags('plants')
@@ -39,6 +40,14 @@ export class PlantsController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.plantsService.identify(user.sub, user.planTier as import('@prisma/client').PlanTier, file);
+  }
+
+  @Post('identify/confirm-external')
+  confirmExternalSpecies(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ConfirmExternalSpeciesDto,
+  ) {
+    return this.plantsService.confirmExternalSpecies(user.sub, dto);
   }
 
   @Post('upload')

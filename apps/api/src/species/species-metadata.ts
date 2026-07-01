@@ -15,6 +15,14 @@ export interface SpeciesMetadata {
   soilType?: string;
   pollinatorFriendly?: boolean;
   bloomsIndoors?: boolean;
+  externalSource?: {
+    provider: string;
+    providerMatchId?: string;
+    confidence?: number;
+    confirmedAt?: string;
+    confirmedBy?: 'user';
+    status: 'user_confirmed';
+  };
 }
 
 export type SpeciesMetadataInput = Pick<

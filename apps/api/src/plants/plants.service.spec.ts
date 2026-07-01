@@ -58,7 +58,10 @@ describe('PlantsService', () => {
       scheduler as never,
       upload as never,
       { identify: jest.fn() } as never,
-      { getOrFetchById: jest.fn().mockResolvedValue({}) } as never,
+      {
+        getOrFetchById: jest.fn().mockResolvedValue({}),
+        invalidateCacheForMutation: jest.fn(),
+      } as never,
       {} as never,
       { get: jest.fn() } as never,
       { assertImageAllowed: jest.fn().mockResolvedValue(null) } as never,
@@ -226,6 +229,71 @@ describe('PlantsService', () => {
     expect(prisma.user.update).toHaveBeenLastCalledWith({
       where: { id: 'user-1' },
       data: { identifyCountThisMonth: 1 },
+    });
+  });
+
+  it('returns provisional external matches without creating catalog rows', async () => {
+    const { service, prisma } = createService();
+    const plantNet = (service as unknown as { plantNet: { identify: jest.Mock } }).plantNet;
+    plantNet.identify.mockResolvedValue({
+      commonName: 'Rare Prayer Plant',
+      scientificName: 'Maranta rarea',
+      confidence: 0.84,
+      provider: 'plantnet',
+      providerMatchId: 'Maranta rarea',
+    });
+    prisma.plantSpecies.findFirst.mockResolvedValue(null);
+
+    const result = await service.identify('user-1', PlanTier.FREE, {} as never);
+
+    expect(prisma.plantSpecies.create).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      matchType: 'external',
+      species: null,
+      externalMatch: {
+        provider: 'plantnet',
+        commonName: 'Rare Prayer Plant',
+        scientificName: 'Maranta rarea',
+        integrationStatus: 'requires_confirmation',
+      },
+    });
+    expect(result.externalMatch?.careArchetype.id).toBe('high_humidity');
+  });
+
+  it('creates a first-class species row when the user confirms an external match', async () => {
+    const { service, prisma } = createService();
+    const perenual = (service as unknown as {
+      perenual: { invalidateCacheForMutation: jest.Mock };
+    }).perenual;
+    prisma.plantSpecies.findFirst.mockResolvedValue(null);
+    prisma.plantSpecies.create.mockResolvedValue({
+      id: 'new-species',
+      commonName: 'Rare Prayer Plant',
+      scientificName: 'Maranta rarea',
+      wateringFreqDays: 7,
+    });
+
+    const result = await service.confirmExternalSpecies('user-1', {
+      provider: 'plantnet',
+      commonName: 'Rare Prayer Plant',
+      scientificName: 'Maranta rarea',
+      confidence: 0.84,
+      providerMatchId: 'Maranta rarea',
+    });
+
+    expect(prisma.plantSpecies.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        commonName: 'Rare Prayer Plant',
+        scientificName: 'Maranta rarea',
+        wateringFreqDays: 7,
+        metadataJson: expect.stringContaining('"externalSource"'),
+      }),
+    });
+    expect(perenual.invalidateCacheForMutation).toHaveBeenCalled();
+    expect(result).toMatchObject({
+      created: true,
+      matchType: 'external_confirmed',
+      species: { id: 'new-species' },
     });
   });
 });

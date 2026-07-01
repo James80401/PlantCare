@@ -18,6 +18,7 @@ provider gates instead of pretending the local catalog already covers everything
 | Task types | 12 shipped care task types |
 | Diagnosis storage | `Diagnosis.detailJson` stores forward-compatible structured data |
 | Dr. Plant context | Uses care baseline, tasks, diagnoses, journal, weather, and feedback context |
+| Hybrid identification | External photo ID results stay provisional until user confirmation creates a first-class `PlantSpecies` row with source metadata |
 | Store release | Parked until full launch; PWA install is okay during private hosting |
 
 ## Progress legend
@@ -41,7 +42,7 @@ provider gates instead of pretending the local catalog already covers everything
 | 4. Recovery task upgrade | `[x]` | Create schedule-ready recovery suggestions from treatment-plan steps first. | Recovery suggestions include treatment-plan steps plus priority/section metadata while preserving existing API keys. |
 | 5. Diagnosis UX upgrade | `[x]` | Show treatment plan, urgency, ordered steps, matched problems, and recovery window. | Diagnosis cards render the plan and still support older diagnoses without treatment plans. |
 | 6. Catalog expansion sprint 1 | `[x]` | Expand curated high-value inventory beyond the original 321 species. | Added a verified high-demand batch across houseplants, succulents, edibles, fruit, orchids, carnivorous plants, and outdoor ornamentals. |
-| 7. Hybrid long-tail identification | `[ ]` | Let users identify plants beyond the local catalog without polluting curated data. | Provider-gated ID/enrichment path records source/confidence and maps to nearest care archetype. |
+| 7. Hybrid long-tail identification | `[x]` | Let users identify plants beyond the local catalog without polluting curated data. | Provider-gated ID/enrichment path records source/confidence, maps to nearest care archetype, and promotes to `PlantSpecies` only after user confirmation. |
 | 8. Guide intelligence upgrade | `[x]` | Make care guides richer and more rescue-oriented. | Guides include common mistakes, diagnosis prompts, recovery links, and species-specific caveats. |
 
 ## Shipped in the first implementation pass
@@ -77,20 +78,26 @@ provider gates instead of pretending the local catalog already covers everything
 - Added a `Troubleshooting` card to plant profile Care overviews with stabilization guidance, Dr. Plant prompt context, and safety escalation language.
 - Extended `scripts/verify-care-guides.mjs` so sampled species guides must retain the rescue and Dr. Plant intelligence layers.
 
+## Shipped in hybrid long-tail identification
+
+- Changed photo identification so unknown external provider results are provisional and do not silently create catalog rows.
+- Added explicit user confirmation for external matches; confirmation creates a normal `PlantSpecies` row and stores provider, match id, confidence, confirmation time, and user-confirmed status in `metadataJson.externalSource`.
+- Added a safe care-archetype fallback for provisional matches so Dr. Plant can explain the starting care model before species-specific notes are reviewed.
+- Updated the Add Plant wizard to show external-match status, confidence, archetype guidance, and a confirmation action before plant details.
+
 ## Next implementation batch
 
-1. Hybrid long-tail identification:
-   - Add an env-gated provider interface for external ID/enrichment.
-   - Store provider, confidence, canonical candidate, and fallback care archetype.
-   - Keep curated catalog rows separate from unverified provider guesses.
-
-2. Remaining photo cleanup:
+1. Remaining photo cleanup:
    - Fetch, license-check, and seed images for the new catalog rows.
    - Re-run `npm run species:photos:verify` after DB seed reflects the new catalog.
 
-3. Guide UX polish:
+2. Guide UX polish:
    - Add contextual cross-links from problem/treatment plan cards into relevant guide sections.
    - Consider compact "Ask Dr. Plant about this" actions in guide cards after product review.
+
+3. Hybrid ID review tooling:
+   - Add an admin/listing view for externally confirmed species so catalog review can improve care notes/photos over time.
+   - Consider promotion states such as `user_confirmed`, `reviewed`, and `curated` if review volume grows.
 
 ## Product guardrails
 

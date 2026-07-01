@@ -18,7 +18,10 @@ import { PlantNetService } from './plantnet.service';
 import { PerenualService } from '../species/perenual.service';
 import { WeatherService } from '../weather/weather.service';
 import { freePlanLimits, IDENTIFY_WINDOW_DAYS } from '../billing/billing-limits';
+import { resolveCareArchetype } from '../plant-intelligence/care-archetypes';
+import { buildMetadataForSpecies, serializeSpeciesMetadata } from '../species/species-metadata';
 import { CreatePlantDto } from './dto/create-plant.dto';
+import { ConfirmExternalSpeciesDto } from './dto/confirm-external-species.dto';
 import { UpdatePlantDto } from './dto/update-plant.dto';
 import { buildPlantTimeline } from './plant-timeline.builder';
 
@@ -244,26 +247,117 @@ export class PlantsService {
       data: { identifyCountThisMonth: identifyCount + 1 },
     });
 
-    let species = await this.prisma.plantSpecies.findFirst({
-      where: {
-        OR: [
-          { scientificName: result.scientificName },
-          { commonName: result.commonName },
-        ],
+    const species = await this.findCatalogSpeciesMatch(result);
+
+    if (species) {
+      return {
+        ...result,
+        matchType: 'catalog',
+        species,
+        externalMatch: null,
+      };
+    }
+
+    const candidate = {
+      commonName: result.commonName,
+      scientificName: result.scientificName,
+      sunlight: 'Bright indirect light',
+      wateringFreqDays: 7,
+      toxicity: 'Unknown toxicity - verify before placing near pets or children',
+      careNotes:
+        'External identification pending user confirmation. Dr. Plant will use a safe care archetype until more specific care is verified.',
+    };
+
+    return {
+      ...result,
+      matchType: 'external',
+      species: null,
+      externalMatch: {
+        provider: result.provider,
+        providerMatchId: result.providerMatchId,
+        commonName: result.commonName,
+        scientificName: result.scientificName,
+        confidence: result.confidence,
+        careArchetype: resolveCareArchetype(candidate),
+        integrationStatus: 'requires_confirmation',
+      },
+    };
+  }
+
+  async confirmExternalSpecies(userId: string, dto: ConfirmExternalSpeciesDto) {
+    const commonName = dto.commonName.trim();
+    const scientificName = dto.scientificName?.trim() || null;
+    if (!commonName) {
+      throw new HttpException('Species common name is required', HttpStatus.BAD_REQUEST);
+    }
+
+    const existing = await this.findCatalogSpeciesMatch({
+      commonName,
+      scientificName: scientificName ?? commonName,
+    });
+    if (existing) {
+      return {
+        species: existing,
+        created: false,
+        matchType: 'catalog',
+      };
+    }
+
+    const baseSpecies = {
+      commonName,
+      scientificName,
+      sunlight: 'Bright indirect light',
+      wateringFreqDays: 7,
+      toxicity: 'Unknown toxicity - verify before placing near pets or children',
+      phMin: 6,
+      phMax: 7,
+      careNotes:
+        'User-confirmed external identification. Care starts from a safe archetype until Dr. Plant or a future catalog review adds species-specific notes.',
+    };
+    const metadata = {
+      ...buildMetadataForSpecies(baseSpecies),
+      externalSource: {
+        provider: dto.provider,
+        providerMatchId: dto.providerMatchId?.trim() || scientificName || commonName,
+        confidence: dto.confidence,
+        confirmedAt: new Date().toISOString(),
+        confirmedBy: 'user' as const,
+        status: 'user_confirmed' as const,
+      },
+    };
+
+    const species = await this.prisma.plantSpecies.create({
+      data: {
+        ...baseSpecies,
+        metadataJson: serializeSpeciesMetadata(metadata),
       },
     });
 
-    if (!species) {
-      species = await this.prisma.plantSpecies.create({
-        data: {
-          commonName: result.commonName,
-          scientificName: result.scientificName,
-          wateringFreqDays: 7,
-        },
-      });
-    }
+    this.perenual.invalidateCacheForMutation();
 
-    return { ...result, species };
+    return {
+      species,
+      created: true,
+      matchType: 'external_confirmed',
+      careArchetype: resolveCareArchetype(baseSpecies),
+    };
+  }
+
+  private async findCatalogSpeciesMatch(result: {
+    commonName: string;
+    scientificName: string;
+  }) {
+    const scientificName = result.scientificName?.trim();
+    const commonName = result.commonName?.trim();
+    if (!scientificName && !commonName) return null;
+    return this.prisma.plantSpecies.findFirst({
+      where: {
+        OR: [
+          ...(scientificName ? [{ scientificName }] : []),
+          ...(commonName ? [{ commonName }] : []),
+        ],
+      },
+    });
   }
 
   async uploadImage(userId: string, file: Express.Multer.File) {
