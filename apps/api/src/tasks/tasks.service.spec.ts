@@ -41,6 +41,9 @@ describe('TasksService', () => {
       task: {
         findFirst: jest.fn().mockResolvedValue(taskResult),
       },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({ timezone: 'UTC' }),
+      },
       $transaction: jest.fn((callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
     };
 
@@ -184,6 +187,7 @@ describe('TasksService', () => {
     };
     const prisma = {
       task: { findFirst: jest.fn().mockResolvedValue(taskWithPlant) },
+      user: { findUnique: jest.fn().mockResolvedValue({ timezone: 'UTC' }) },
       $transaction: jest.fn((callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
     };
     const scheduler = { onTaskCompleted: jest.fn() };
@@ -205,6 +209,44 @@ describe('TasksService', () => {
         }),
       });
       expect(scheduler.onTaskCompleted).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('snoozes to the user local calendar day, not the server local day', async () => {
+    const tx = {
+      task: {
+        update: jest.fn().mockResolvedValue({
+          ...task,
+          dueDate: new Date('2026-05-18T05:00:00.000Z'),
+          plant: { species: { commonName: 'Monstera' } },
+        }),
+      },
+      taskFeedback: { create: jest.fn().mockResolvedValue({ id: 'feedback-snooze' }) },
+    };
+    const prisma = {
+      task: { findFirst: jest.fn().mockResolvedValue(taskWithPlant) },
+      user: { findUnique: jest.fn().mockResolvedValue({ timezone: 'America/New_York' }) },
+      $transaction: jest.fn((callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
+    };
+    const scheduler = { onTaskCompleted: jest.fn() };
+    const service = new TasksService(prisma as never, scheduler as never, {} as never, {
+      emit: jest.fn(),
+    } as never);
+
+    jest.useFakeTimers();
+    // 2026-05-17T23:30Z is already 2026-05-17T19:30 local (America/New_York, EDT/UTC-4),
+    // so "snooze 1 day" should land on local May 18th, not UTC May 18th.
+    jest.setSystemTime(new Date('2026-05-17T23:30:00.000Z'));
+
+    try {
+      await service.snooze('user-1', 'task-1', { days: 1 });
+
+      const dueDate: Date = tx.task.update.mock.calls[0][0].data.dueDate;
+      expect(dueDate.toISOString().slice(0, 10)).toBe('2026-05-18');
+      // America/New_York is UTC-4 in May (EDT), so local midnight on the 18th is 04:00 UTC.
+      expect(dueDate.toISOString()).toBe('2026-05-18T04:00:00.000Z');
     } finally {
       jest.useRealTimers();
     }

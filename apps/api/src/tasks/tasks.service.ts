@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TaskStatus } from '@prisma/client';
-import { addDays, startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { CareGuidesService } from '../care-guides/care-guides.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
 import { sharedPlantInclude, userCanCompletePlantTask, userCanViewPlantTasks } from '../gardens/task-access';
+import { getLocalDayStart } from '../weather/weather-cache.util';
 import { SkipTaskDto } from './dto/skip-task.dto';
 import { SnoozeTaskDto } from './dto/snooze-task.dto';
 import { type CompleteTaskFeedbackDto } from './dto/complete-task-feedback.dto';
@@ -153,7 +153,11 @@ export class TasksService {
       throw new BadRequestException('Only pending tasks can be snoozed');
     }
 
-    const newDueDate = addDays(startOfDay(new Date()), dto.days);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { timezone: true },
+    });
+    const newDueDate = getLocalDayStart(user?.timezone || 'UTC', dto.days);
 
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.task.update({
