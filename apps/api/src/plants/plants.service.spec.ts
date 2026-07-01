@@ -26,6 +26,7 @@ describe('PlantsService', () => {
           identifyCountResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         }),
         update: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       plant: {
         count: jest.fn().mockResolvedValue(0),
@@ -199,8 +200,45 @@ describe('PlantsService', () => {
       identifyCountThisMonth: 3,
       identifyCountResetAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
+    // Simulates the DB rejecting the conditional increment because the row is already
+    // at the limit (`identifyCountThisMonth < 3` matches 0 rows).
+    prisma.user.updateMany.mockResolvedValue({ count: 0 });
 
     await expect(service.identify('user-1', PlanTier.FREE, {} as never)).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'IDENTIFY_LIMIT_REACHED' }),
+    });
+    const plantNet = (service as unknown as { plantNet: { identify: jest.Mock } }).plantNet;
+    expect(plantNet.identify).not.toHaveBeenCalled();
+  });
+
+  it('never lets two concurrent identifications both slip under the cap', async () => {
+    // The real DB serializes concurrent `UPDATE ... WHERE count < limit` statements against
+    // the same row; this simulates that by having only the first conditional update match.
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      planTier: PlanTier.FREE,
+      identifyCountThisMonth: 2,
+      identifyCountResetAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+    prisma.user.updateMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 });
+    const plantNet = (service as unknown as { plantNet: { identify: jest.Mock } }).plantNet;
+    plantNet.identify.mockResolvedValue({
+      commonName: 'Pothos',
+      scientificName: 'Epipremnum aureum',
+      confidence: 0.9,
+    });
+
+    const [first, second] = await Promise.allSettled([
+      service.identify('user-1', PlanTier.FREE, {} as never),
+      service.identify('user-1', PlanTier.FREE, {} as never),
+    ]);
+
+    expect(first.status).toBe('fulfilled');
+    expect(second.status).toBe('rejected');
+    expect((second as PromiseRejectedResult).reason).toMatchObject({
       response: expect.objectContaining({ code: 'IDENTIFY_LIMIT_REACHED' }),
     });
   });
@@ -213,23 +251,65 @@ describe('PlantsService', () => {
       scientificName: 'Epipremnum aureum',
       confidence: 0.9,
     });
+    const staleResetAt = new Date(Date.now() - 1000);
     prisma.user.findUnique.mockResolvedValue({
       id: 'user-1',
       planTier: PlanTier.FREE,
       identifyCountThisMonth: 3,
-      identifyCountResetAt: new Date(Date.now() - 1000),
+      identifyCountResetAt: staleResetAt,
     });
 
     await service.identify('user-1', PlanTier.FREE, {} as never);
 
-    expect(prisma.user.update).toHaveBeenCalledWith({
-      where: { id: 'user-1' },
-      data: expect.objectContaining({ identifyCountThisMonth: 0 }),
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { id: 'user-1', identifyCountResetAt: staleResetAt },
+      data: { identifyCountThisMonth: 0, identifyCountResetAt: expect.any(Date) },
     });
-    expect(prisma.user.update).toHaveBeenLastCalledWith({
-      where: { id: 'user-1' },
-      data: { identifyCountThisMonth: 1 },
+    expect(prisma.user.updateMany).toHaveBeenLastCalledWith({
+      where: { id: 'user-1', identifyCountThisMonth: { lt: 3 } },
+      data: { identifyCountThisMonth: { increment: 1 } },
     });
+  });
+
+  it('releases the claimed slot when the identification attempt fails', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      planTier: PlanTier.FREE,
+      identifyCountThisMonth: 0,
+      identifyCountResetAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+    const plantNet = (service as unknown as { plantNet: { identify: jest.Mock } }).plantNet;
+    plantNet.identify.mockResolvedValue(null);
+
+    await expect(
+      service.identify('user-1', PlanTier.FREE, {} as never),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    expect(prisma.user.updateMany).toHaveBeenLastCalledWith({
+      where: { id: 'user-1', identifyCountThisMonth: { gt: 0 } },
+      data: { identifyCountThisMonth: { decrement: 1 } },
+    });
+  });
+
+  it('does not touch the quota for premium users', async () => {
+    const { service, prisma } = createService();
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      planTier: PlanTier.PREMIUM,
+      identifyCountThisMonth: 999,
+      identifyCountResetAt: new Date(Date.now() - 1000),
+    });
+    const plantNet = (service as unknown as { plantNet: { identify: jest.Mock } }).plantNet;
+    plantNet.identify.mockResolvedValue({
+      commonName: 'Pothos',
+      scientificName: 'Epipremnum aureum',
+      confidence: 0.9,
+    });
+
+    await service.identify('user-1', PlanTier.PREMIUM, {} as never);
+
+    expect(prisma.user.updateMany).not.toHaveBeenCalled();
   });
 
   it('returns provisional external matches without creating catalog rows', async () => {

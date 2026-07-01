@@ -232,20 +232,20 @@ export class PlantsService {
   async identify(userId: string, _planTier: PlanTier, file: Express.Multer.File) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException();
-    const identifyCount = await this.assertCanIdentify(userId, user.planTier, {
+    const claimed = await this.claimIdentifySlot(userId, user.planTier, {
       identifyCountThisMonth: user.identifyCountThisMonth,
       identifyCountResetAt: user.identifyCountResetAt,
     });
 
-    await this.imageModeration.assertImageAllowed(file, { feature: 'identify', userId });
-
-    const result = await this.plantNet.identify(file);
-    if (!result) throw new NotFoundException('Could not identify plant');
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { identifyCountThisMonth: identifyCount + 1 },
-    });
+    let result;
+    try {
+      await this.imageModeration.assertImageAllowed(file, { feature: 'identify', userId });
+      result = await this.plantNet.identify(file);
+      if (!result) throw new NotFoundException('Could not identify plant');
+    } catch (err) {
+      if (claimed) await this.releaseIdentifySlot(userId);
+      throw err;
+    }
 
     const species = await this.findCatalogSpeciesMatch(result);
 
@@ -382,37 +382,61 @@ export class PlantsService {
     }
   }
 
-  private async assertCanIdentify(
+  /**
+   * Atomically reserves one identify slot for the current window, returning whether a
+   * slot was claimed (false only for premium users, who are unlimited). The limit check
+   * and the increment happen as a single conditional UPDATE so two concurrent requests
+   * can't both read the same pre-increment count and both slip under the cap.
+   */
+  private async claimIdentifySlot(
     userId: string,
     planTier: PlanTier,
     usage: { identifyCountThisMonth: number; identifyCountResetAt: Date },
-  ) {
-    if (this.isPremium(planTier)) return usage.identifyCountThisMonth;
+  ): Promise<boolean> {
+    if (this.isPremium(planTier)) return false;
+
     const now = new Date();
-    const resetAt =
-      usage.identifyCountResetAt <= now
-        ? new Date(now.getTime() + IDENTIFY_WINDOW_DAYS * 24 * 60 * 60 * 1000)
-        : usage.identifyCountResetAt;
-    const current = usage.identifyCountResetAt <= now ? 0 : usage.identifyCountThisMonth;
     if (usage.identifyCountResetAt <= now) {
-      await this.prisma.user.update({
-        where: { id: userId },
+      const resetAt = new Date(now.getTime() + IDENTIFY_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+      // Guarded by the stale resetAt so a concurrent racer that already reset doesn't
+      // stomp the count again.
+      await this.prisma.user.updateMany({
+        where: { id: userId, identifyCountResetAt: usage.identifyCountResetAt },
         data: { identifyCountThisMonth: 0, identifyCountResetAt: resetAt },
       });
     }
+
     const limit = freePlanLimits().identificationsPerWindow;
-    if (current >= limit) {
+    const claimed = await this.prisma.user.updateMany({
+      where: { id: userId, identifyCountThisMonth: { lt: limit } },
+      data: { identifyCountThisMonth: { increment: 1 } },
+    });
+
+    if (claimed.count === 0) {
+      const resetAt =
+        usage.identifyCountResetAt <= now
+          ? new Date(now.getTime() + IDENTIFY_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+          : usage.identifyCountResetAt;
       throw new HttpException({
         code: 'IDENTIFY_LIMIT_REACHED',
         message: `Free accounts include ${limit} plant identifications every ${IDENTIFY_WINDOW_DAYS} days. Upgrade to Premium for more.`,
         limit,
-        current,
+        current: limit,
         planTier,
         resetAt,
         upgradePath: '/garden/subscription',
       }, HttpStatus.PAYMENT_REQUIRED);
     }
-    return current;
+    return true;
+  }
+
+  /** Releases a claimed identify slot when the identification attempt fails, so failed
+   *  attempts don't count against the user's monthly quota. */
+  private async releaseIdentifySlot(userId: string) {
+    await this.prisma.user.updateMany({
+      where: { id: userId, identifyCountThisMonth: { gt: 0 } },
+      data: { identifyCountThisMonth: { decrement: 1 } },
+    });
   }
 
   private isPremium(planTier: PlanTier) {
