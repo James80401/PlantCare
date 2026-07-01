@@ -99,7 +99,7 @@ export default function FilteredTasks() {
             <TaskRow
               key={task.id}
               task={task}
-              animating={animating[task.id] ?? null}
+              animState={animating[task.id] ?? null}
               onComplete={showActions ? onComplete : () => {}}
               onSkip={showActions ? handleSkip : () => {}}
               onSnooze={showActions ? handleSnooze : undefined}

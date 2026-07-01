@@ -24,4 +24,14 @@ describe('TasksController', () => {
 
     expect(tasksService.bulkComplete).toHaveBeenCalledWith('user-1', ['task-1', 'task-2']);
   });
+
+  it('passes snooze days to the task service', () => {
+    const tasksService = { snooze: jest.fn() };
+    const controller = new TasksController(tasksService as never);
+    const dto = { days: 3 as const };
+
+    controller.snooze({ sub: 'user-1', email: 'test@example.com', planTier: 'PREMIUM' }, 'task-1', dto);
+
+    expect(tasksService.snooze).toHaveBeenCalledWith('user-1', 'task-1', dto);
+  });
 });

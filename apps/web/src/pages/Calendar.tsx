@@ -231,7 +231,7 @@ export default function Calendar() {
               <TaskRow
                 key={task.id}
                 task={task}
-                animating={animating[task.id] ?? null}
+                animState={animating[task.id] ?? null}
                 onComplete={handleComplete}
                 onSkip={handleSkip}
                 onSnooze={handleSnooze}

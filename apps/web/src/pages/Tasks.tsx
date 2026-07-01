@@ -12,11 +12,12 @@ import {
 } from '../utils/taskGroups';
 import { taskTypeLabel } from '../utils/tasks';
 import { resolveApiThumbnailUrl } from '../utils/apiAssets';
+import { SNOOZE_OPTIONS, type SnoozeDays } from '../utils/taskSnooze';
 
 export default function Tasks() {
   const [searchParams] = useSearchParams();
   const selectedGardenId = searchParams.get('garden');
-  const { loading, tasks, animating, handleBulkComplete } = useTasksInRange({
+  const { loading, tasks, animating, handleBulkComplete, handleSnooze } = useTasksInRange({
     pastDays: 3650,
     futureDays: 45,
   });
@@ -69,6 +70,12 @@ export default function Tasks() {
   const completeGroup = async (key: string, ids: string[]) => {
     setBusyGroup(key);
     await handleBulkComplete(ids);
+    setBusyGroup(null);
+  };
+
+  const snoozeGroup = async (key: string, ids: string[], days: SnoozeDays) => {
+    setBusyGroup(key);
+    await Promise.all(ids.map((id) => handleSnooze(id, days)));
     setBusyGroup(null);
   };
 
@@ -183,12 +190,20 @@ export default function Tasks() {
                           item={item}
                           busy={
                             item.tasks.some((task) => Boolean(animating[task.id])) ||
-                            busyGroup === `${key}:${item.plant.id}`
+                            busyGroup === `${key}:${item.plant.id}` ||
+                            busyGroup === `${key}:${item.plant.id}:snooze`
                           }
                           onComplete={() =>
                             void completeGroup(
                               `${key}:${item.plant.id}`,
                               item.tasks.map((task) => task.id),
+                            )
+                          }
+                          onSnooze={(days) =>
+                            void snoozeGroup(
+                              `${key}:${item.plant.id}:snooze`,
+                              item.tasks.map((task) => task.id),
+                              days,
                             )
                           }
                         />
@@ -248,18 +263,21 @@ function CarePlantRow({
   item,
   busy,
   onComplete,
+  onSnooze,
 }: {
   item: PlantCareRoundItem;
   busy: boolean;
   onComplete: () => void;
+  onSnooze: (days: SnoozeDays) => void;
 }) {
+  const [snoozeOpen, setSnoozeOpen] = useState(false);
   const label = item.plant.nickname || item.plant.species.commonName;
   const imageUrl = resolveApiThumbnailUrl(item.plant.imageUrl, 96);
   const overdueCount = countOverdue(item);
   const taskSummary = describePlantStop(item);
 
   return (
-    <li className="flex items-center gap-3 px-4 py-3">
+    <li className="flex flex-wrap items-center gap-3 px-4 py-3">
       {imageUrl ? (
         <img
           src={imageUrl}
@@ -287,15 +305,46 @@ function CarePlantRow({
           </p>
         ) : null}
       </div>
-      <button
-        type="button"
-        onClick={onComplete}
-        disabled={busy}
-        className="flex min-h-11 shrink-0 items-center justify-center rounded-full border-2 border-emerald-400 bg-white px-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-        aria-label={`Mark care for ${label} done`}
-      >
-        Done
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setSnoozeOpen((open) => !open)}
+          disabled={busy}
+          className="flex min-h-11 items-center justify-center rounded-full border border-sky-200 bg-sky-50 px-3 text-sm font-bold text-sky-800 transition hover:bg-sky-100 disabled:opacity-50"
+          aria-label={`Snooze care for ${label}`}
+          aria-expanded={snoozeOpen}
+        >
+          Snooze
+        </button>
+        <button
+          type="button"
+          onClick={onComplete}
+          disabled={busy}
+          className="flex min-h-11 items-center justify-center rounded-full border-2 border-emerald-400 bg-white px-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+          aria-label={`Mark care for ${label} done`}
+        >
+          Done
+        </button>
+      </div>
+      {snoozeOpen ? (
+        <div className="basis-full pl-14 sm:pl-14">
+          <div className="flex flex-wrap gap-2 rounded-2xl border border-sky-100 bg-sky-50/70 p-2">
+            {SNOOZE_OPTIONS.map((option) => (
+              <button
+                key={option.days}
+                type="button"
+                onClick={() => {
+                  onSnooze(option.days);
+                  setSnoozeOpen(false);
+                }}
+                className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-sky-900 ring-1 ring-sky-100 hover:bg-sky-100"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </li>
   );
 }

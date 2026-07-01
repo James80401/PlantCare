@@ -334,7 +334,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .task-row--completing,
   .task-row--done,
-  .task-row--skipping {
+  .task-row--skipping,
+  .task-row--snoozing {
     animation: none;
   }
 
@@ -389,6 +390,10 @@ body {
   transform: scale(0.98);
 }
 
+.task-row--snoozing {
+  animation: task-row-snooze 0.28s ease-out;
+}
+
 .task-check--filled {
   animation: task-check-pop 0.35s ease-out;
 }
@@ -404,6 +409,18 @@ body {
   }
   to {
     opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes task-row-snooze {
+  from {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(2px);
+  }
+  to {
     transform: translateY(0);
   }
 }

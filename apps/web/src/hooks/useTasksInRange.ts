@@ -6,8 +6,9 @@ import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedba
 import { groupTasksByDay, type TaskItem } from '../utils/taskGroups';
 
 const COMPLETE_ANIM_MS = 650;
+const SNOOZE_ANIM_MS = 300;
 
-export type TaskAnimMap = Record<string, 'completing' | 'skipping'>;
+export type TaskAnimMap = Record<string, 'completing' | 'skipping' | 'snoozing'>;
 
 export interface UseTasksInRangeOptions {
   pastDays?: number;
@@ -109,11 +110,19 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
   };
 
   const handleSnooze = async (id: string, days: 1 | 3 | 7) => {
+    setAnimating((a) => ({ ...a, [id]: 'snoozing' }));
     try {
       const { data } = await tasksApi.snooze(id, days);
+      await new Promise((r) => setTimeout(r, SNOOZE_ANIM_MS));
       patchTask(id, { dueDate: data.dueDate });
     } catch {
-      load();
+      await load();
+    } finally {
+      setAnimating((a) => {
+        const next = { ...a };
+        delete next[id];
+        return next;
+      });
     }
   };
 
@@ -129,5 +138,6 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
     handleSkip,
     handleSnooze,
     COMPLETE_ANIM_MS,
+    SNOOZE_ANIM_MS,
   };
 }

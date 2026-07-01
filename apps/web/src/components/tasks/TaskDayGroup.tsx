@@ -4,7 +4,7 @@ import { groupTasksByType, TASK_TYPE_ICONS, type DayGroup } from '../../utils/ta
 import { taskTypeLabel } from '../../utils/tasks';
 import TaskRow from './TaskRow';
 
-type AnimMap = Record<string, 'completing' | 'skipping'>;
+type AnimMap = Record<string, 'completing' | 'skipping' | 'snoozing'>;
 
 interface TaskDayGroupProps {
   group: DayGroup;

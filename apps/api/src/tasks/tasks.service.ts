@@ -148,10 +148,7 @@ export class TasksService {
   }
 
   async snooze(userId: string, taskId: string, dto: SnoozeTaskDto) {
-    const task = await this.prisma.task.findFirst({
-      where: { id: taskId, plant: { userId } },
-    });
-    if (!task) throw new NotFoundException('Task not found');
+    const task = await this.loadTaskForUser(userId, taskId, 'complete');
     if (task.status !== TaskStatus.PENDING) {
       throw new BadRequestException('Only pending tasks can be snoozed');
     }

@@ -15,7 +15,7 @@ import { taskTypeLabel } from '../../utils/tasks';
 import { SNOOZE_OPTIONS } from '../../utils/taskSnooze';
 import { TASK_TYPE_ICONS, type TaskItem } from '../../utils/taskGroups';
 
-type AnimState = 'completing' | 'skipping' | null;
+type AnimState = 'completing' | 'skipping' | 'snoozing' | null;
 
 interface TaskRowProps {
   task: TaskItem;
@@ -63,6 +63,7 @@ export default function TaskRow({
     'task-row group relative flex gap-3 rounded-2xl border px-3 py-3.5 transition-all duration-300 sm:px-4',
     animState === 'completing' && 'task-row--completing',
     animState === 'skipping' && 'task-row--skipping',
+    animState === 'snoozing' && 'task-row--snoozing border-sky-200 bg-sky-50/70',
     isDone && 'task-row--done border-emerald-200/80 bg-emerald-50/50',
     isSkipped && 'task-row--skipped border-gray-200 bg-gray-50/80',
     isPending && !overdue && 'border-emerald-100/80 bg-white hover:border-emerald-200 hover:shadow-sm',
@@ -156,6 +157,10 @@ export default function TaskRow({
         )}
 
         {isSkipped && <p className="mt-0.5 text-xs text-gray-500">Skipped</p>}
+
+        {animState === 'snoozing' && (
+          <p className="mt-0.5 text-xs font-semibold text-sky-700">Snoozing...</p>
+        )}
 
         {overdue && isPending && (
           <p className="mt-0.5 text-xs font-semibold text-red-700">

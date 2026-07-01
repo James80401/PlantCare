@@ -183,7 +183,7 @@ describe('TasksService', () => {
       },
     };
     const prisma = {
-      task: { findFirst: jest.fn().mockResolvedValue(task) },
+      task: { findFirst: jest.fn().mockResolvedValue(taskWithPlant) },
       $transaction: jest.fn((callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
     };
     const scheduler = { onTaskCompleted: jest.fn() };
@@ -194,18 +194,41 @@ describe('TasksService', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-05-17T15:00:00.000Z'));
 
-    const result = await service.snooze('user-1', 'task-1', { days: 3 });
+    try {
+      const result = await service.snooze('user-1', 'task-1', { days: 3 });
 
-    expect(result.dueDate).toEqual(new Date('2026-05-20'));
-    expect(tx.taskFeedback.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        action: 'SNOOZE',
-        reason: 'SNOOZE_3D',
+      expect(result.dueDate).toEqual(new Date('2026-05-20'));
+      expect(tx.taskFeedback.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          action: 'SNOOZE',
+          reason: 'SNOOZE_3D',
+        }),
+      });
+      expect(scheduler.onTaskCompleted).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('allows a shared garden caretaker to snooze a pending task', async () => {
+    const sharedTask = {
+      ...taskWithPlant,
+      plant: {
+        userId: 'owner-1',
+        garden: { members: [{ userId: 'caregiver-1', role: 'CAREGIVER' }] },
+        shares: [],
+      },
+    };
+    const { service, tx } = createService(sharedTask);
+
+    await service.snooze('caregiver-1', 'task-1', { days: 1 });
+
+    expect(tx.task.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'task-1' },
+        data: { dueDate: expect.any(Date) },
       }),
-    });
-    expect(scheduler.onTaskCompleted).not.toHaveBeenCalled();
-
-    jest.useRealTimers();
+    );
   });
 
   it('rejects skipping a task owned by another user', async () => {
@@ -215,7 +238,7 @@ describe('TasksService', () => {
   });
 
   it('rejects snoozing a task that is not pending', async () => {
-    const { service } = createService({ ...task, status: TaskStatus.DONE });
+    const { service } = createService({ ...taskWithPlant, status: TaskStatus.DONE });
 
     await expect(service.snooze('user-1', 'task-1', { days: 3 })).rejects.toBeInstanceOf(
       BadRequestException,
