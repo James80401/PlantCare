@@ -6,7 +6,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { mapCommunityPostsForViewer } from './community.mapper';
 
 const postInclude = (viewerId?: string) => ({
-  author: { select: { id: true, name: true, email: true } },
+  author: { select: { id: true, name: true } },
   species: { select: { id: true, commonName: true } },
   _count: { select: { comments: true, likes: true } },
   ...(viewerId
@@ -58,7 +58,7 @@ export class CommunityService {
         imageUrl: dto.imageUrl?.trim() || null,
       },
       include: {
-        author: { select: { id: true, name: true, email: true } },
+        author: { select: { id: true, name: true } },
         species: { select: { id: true, commonName: true } },
       },
     });
@@ -81,7 +81,7 @@ export class CommunityService {
       where: { postId },
       orderBy: { createdAt: 'asc' },
       include: {
-        author: { select: { id: true, name: true, email: true } },
+        author: { select: { id: true, name: true } },
       },
     });
   }
@@ -96,7 +96,7 @@ export class CommunityService {
         body: dto.body.trim(),
       },
       include: {
-        author: { select: { id: true, name: true, email: true } },
+        author: { select: { id: true, name: true } },
       },
     });
   }

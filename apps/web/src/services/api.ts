@@ -580,7 +580,7 @@ export interface CommunityPostSummary {
   body: string;
   imageUrl?: string | null;
   createdAt: string;
-  author?: { id: string; name?: string | null; email?: string };
+  author?: { id: string; name?: string | null };
   species?: { id: string; commonName: string } | null;
   _count?: { comments: number; likes: number };
   likedByMe?: boolean;
@@ -591,7 +591,7 @@ export interface CommunityCommentSummary {
   body: string;
   createdAt: string;
   postId: string;
-  author?: { id: string; name?: string | null; email?: string };
+  author?: { id: string; name?: string | null };
 }
 
 export interface GardenInviteSummary {
