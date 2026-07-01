@@ -226,6 +226,7 @@ function DiagnosisPhotoField({
           <img
             src={previewUrl}
             alt="Symptom photo preview"
+            loading="lazy"
             className="max-h-48 w-full rounded-2xl border border-emerald-100 object-cover"
           />
           <button

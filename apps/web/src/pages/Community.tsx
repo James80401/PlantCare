@@ -316,6 +316,7 @@ export default function Community() {
                 <img
                   src={imagePreview}
                   alt="Post preview"
+                  loading="lazy"
                   className="max-h-56 w-full rounded-2xl border border-emerald-100 object-cover"
                 />
                 <button

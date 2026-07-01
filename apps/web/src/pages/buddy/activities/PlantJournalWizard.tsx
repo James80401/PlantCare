@@ -131,7 +131,12 @@ export default function PlantJournalWizard() {
           />
         </label>
         {preview && (
-          <img src={preview} alt="Preview" className="max-h-40 w-full rounded-2xl object-cover" />
+          <img
+            src={preview}
+            alt="Preview"
+            loading="lazy"
+            className="max-h-40 w-full rounded-2xl object-cover"
+          />
         )}
 
         {message && <p className="text-sm text-emerald-800">{message}</p>}

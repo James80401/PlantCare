@@ -506,10 +506,16 @@ export default function AddPlantWizard() {
                 <img
                   src={resolveApiAssetUrl(selectedSpecies.defaultImageUrl) ?? undefined}
                   alt=""
+                  loading="lazy"
                   className="h-full w-full object-cover"
                 />
               ) : identifyPreview ? (
-                <img src={identifyPreview} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={identifyPreview}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <div className="flex h-full items-center justify-center text-3xl">🌿</div>
               )}

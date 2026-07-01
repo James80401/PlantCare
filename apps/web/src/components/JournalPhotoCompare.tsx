@@ -51,12 +51,18 @@ export default function JournalPhotoCompare({
       {mode === 'slider' ? (
         <>
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gray-900">
-            <img src={resolvedAfterUrl} alt={afterLabel} className="absolute inset-0 h-full w-full object-cover" />
+            <img
+              src={resolvedAfterUrl}
+              alt={afterLabel}
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+            />
             <img
               src={resolvedBeforeUrl}
               alt={beforeLabel}
               className="absolute inset-0 h-full w-full object-cover"
               style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
+              loading="lazy"
             />
             <div
               className="absolute inset-y-0 z-10 w-0.5 bg-white shadow"

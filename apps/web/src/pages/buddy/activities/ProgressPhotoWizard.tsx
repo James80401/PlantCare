@@ -98,7 +98,12 @@ export default function ProgressPhotoWizard() {
         </label>
 
         {preview && (
-          <img src={preview} alt="Preview" className="max-h-48 w-full rounded-2xl object-cover" />
+          <img
+            src={preview}
+            alt="Preview"
+            loading="lazy"
+            className="max-h-48 w-full rounded-2xl object-cover"
+          />
         )}
 
         <label className="block text-sm">

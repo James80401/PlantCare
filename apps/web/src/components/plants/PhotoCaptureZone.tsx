@@ -54,7 +54,12 @@ export function PhotoCaptureZone({
         )}
       >
         {resolvedPreviewUrl ? (
-          <img src={resolvedPreviewUrl} alt="" className="aspect-[4/3] w-full object-cover" />
+          <img
+            src={resolvedPreviewUrl}
+            alt=""
+            loading="lazy"
+            className="aspect-[4/3] w-full object-cover"
+          />
         ) : (
           <div className="flex aspect-[4/3] flex-col items-center justify-center gap-2 px-6 text-center">
             <span className="text-4xl" aria-hidden>
