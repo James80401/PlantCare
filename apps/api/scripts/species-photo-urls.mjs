@@ -1,5 +1,39 @@
 export const UA = 'DrPlant/1.0 (species catalog; educational use)';
 export const FILE_MIN_BYTES = 6_000;
+export const LOCAL_PHOTO_MIN_BYTES = 1_000;
+export const REUSABLE_LICENSE_PATTERNS = [
+  /^cc0\b/i,
+  /^cc[- ]?by\b/i,
+  /^cc[- ]?by[- ]?sa\b/i,
+  /\bpublic domain\b/i,
+  /^pd\b/i,
+  /\bgfdl\b/i,
+  /\bfree art license\b/i,
+];
+export const RESTRICTED_LICENSE_PATTERNS = [
+  /\ball rights reserved\b/i,
+  /\bnon[- ]?commercial\b/i,
+  /\bcc[- ]?by[- ]?nc\b/i,
+  /\bcc[- ]?by[- ]?nd\b/i,
+  /\bno derivatives?\b/i,
+  /\bfair use\b/i,
+  /\bcopyrighted\b/i,
+  /\bunknown\b/i,
+  /\bsee (inaturalist|wikipedia|commons)\b/i,
+];
+
+export function normalizeLicense(license) {
+  return String(license || '').trim();
+}
+
+export function isReusablePhotoLicense(license) {
+  const normalized = normalizeLicense(license);
+  if (!normalized) return false;
+  if (RESTRICTED_LICENSE_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    return false;
+  }
+  return REUSABLE_LICENSE_PATTERNS.some((pattern) => pattern.test(normalized));
+}
 
 export function photoIdFromMeta(meta) {
   if (meta.inatPhotoId) return String(meta.inatPhotoId);

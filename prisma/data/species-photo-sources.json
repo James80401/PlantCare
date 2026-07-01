@@ -3195,5 +3195,1215 @@
     "attribution": "Succu",
     "sourcePage": "https://commons.wikimedia.org/wiki/File%3ASuccu%20Gymnocalycium%20mihanovichii%2001.JPG",
     "score": 40
+  },
+  "seed-cannabis-cannabis-sativa": {
+    "commonName": "Cannabis",
+    "scientificName": "Cannabis sativa",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Cannabis_sativa_plant_%284%29.JPG",
+    "license": "CC BY 3.0",
+    "attribution": "Chmee2",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3ACannabis%20sativa%20plant%20(4).JPG",
+    "score": 55
+  },
+  "seed-philodendron-birkin-philodendron-birkin": {
+    "commonName": "Philodendron Birkin",
+    "scientificName": "Philodendron birkin",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c6/Philodendron_birkin-1-RM_Nagar-bangalore-India.jpg",
+    "license": "CC BY-SA 4.0",
+    "attribution": "Yercaud-elango",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3APhilodendron%20birkin-1-RM%20Nagar-bangalore-India.jpg",
+    "score": 55
+  },
+  "seed-philodendron-white-wizard-philodendron-erubescens": {
+    "commonName": "Philodendron White Wizard",
+    "scientificName": "Philodendron erubescens",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/18/Philodendron_erubescens_Bot._Mag._84._5071._1858.jpg",
+    "license": "Public domain",
+    "attribution": "Hooker",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3APhilodendron%20erubescens%20Bot.%20Mag.%2084.%205071.%201858.jpg",
+    "score": 55
+  },
+  "seed-philodendron-prince-of-orange-philodendron-erubescens": {
+    "commonName": "Philodendron Prince of Orange",
+    "scientificName": "Philodendron erubescens",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/18/Philodendron_erubescens_Bot._Mag._84._5071._1858.jpg",
+    "license": "Public domain",
+    "attribution": "Hooker",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3APhilodendron%20erubescens%20Bot.%20Mag.%2084.%205071.%201858.jpg",
+    "score": 55
+  },
+  "seed-philodendron-rojo-congo-philodendron-tatei": {
+    "commonName": "Philodendron Rojo Congo",
+    "scientificName": "Philodendron tatei",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/81/Starr_080103-1386_Philodendron_sp..jpg",
+    "license": "CC BY 3.0",
+    "attribution": "Forest &amp; Kim Starr",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AStarr%20080103-1386%20Philodendron%20sp..jpg",
+    "score": 55
+  },
+  "seed-philodendron-gloriosum-philodendron-gloriosum": {
+    "commonName": "Philodendron Gloriosum",
+    "scientificName": "Philodendron gloriosum",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e1/Philodendron_gloriosum_%2829587099650%29.jpg",
+    "license": "CC BY 2.0",
+    "attribution": "Dick Culbert from Gibsons, B.C., Canada",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3APhilodendron%20gloriosum%20(29587099650).jpg",
+    "score": 55
+  },
+  "seed-philodendron-verrucosum-philodendron-verrucosum": {
+    "commonName": "Philodendron Verrucosum",
+    "scientificName": "Philodendron verrucosum",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Philodendron_verrucosum_L._Mathieu_ex_Schott_%28codiferous%29.jpg",
+    "license": "CC BY 2.0",
+    "attribution": "Cody H.",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3APhilodendron%20verrucosum%20L.%20Mathieu%20ex%20Schott%20(codiferous).jpg",
+    "score": 55
+  },
+  "seed-philodendron-florida-green-philodendron-pedatum": {
+    "commonName": "Philodendron Florida Green",
+    "scientificName": "Philodendron pedatum",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Philodendron_pedatum_%28Hook.%29_Kunth_-_Flickr_-_Alex_Popovkin%2C_Bahia%2C_Brazil_%282%29.jpg",
+    "license": "CC BY 2.0",
+    "attribution": "Alex Popovkin, Bahia, Brazil from Brazil",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3APhilodendron%20pedatum%20(Hook.)%20Kunth%20-%20Flickr%20-%20Alex%20Popovkin%2C%20Bahia%2C%20Brazil%20(2).jpg",
+    "score": 55
+  },
+  "seed-philodendron-silver-sword-philodendron-hastatum": {
+    "commonName": "Philodendron Silver Sword",
+    "scientificName": "Philodendron hastatum",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Philodendron_hastatum_kz2.jpg",
+    "license": "CC BY-SA 4.0",
+    "attribution": "Krzysztof Ziarnek, Kenraiz",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3APhilodendron%20hastatum%20kz2.jpg",
+    "score": 55
+  },
+  "seed-philodendron-xanadu-thaumatophyllum-xanadu": {
+    "commonName": "Philodendron Xanadu",
+    "scientificName": "Thaumatophyllum xanadu",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Starr_080117-1608_Philodendron_sp..jpg",
+    "license": "CC BY 3.0",
+    "attribution": "Forest &amp; Kim Starr",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AStarr%20080117-1608%20Philodendron%20sp..jpg",
+    "score": 30
+  },
+  "seed-monstera-thai-constellation-monstera-deliciosa": {
+    "commonName": "Monstera Thai Constellation",
+    "scientificName": "Monstera deliciosa",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Monstera_deliciosa2.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "Wikimedia Commons",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AMonstera%20deliciosa2.jpg",
+    "score": 55
+  },
+  "seed-monstera-albo-monstera-deliciosa": {
+    "commonName": "Monstera Albo",
+    "scientificName": "Monstera deliciosa",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Monstera_deliciosa2.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "Wikimedia Commons",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AMonstera%20deliciosa2.jpg",
+    "score": 55
+  },
+  "seed-monstera-siltepecana-monstera-siltepecana": {
+    "commonName": "Monstera Siltepecana",
+    "scientificName": "Monstera siltepecana",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/506103/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Daniel Pineda Vera, some rights reserved (CC BY), uploaded by Daniel Pineda Vera",
+    "sourcePage": "https://www.inaturalist.org/taxa/283768",
+    "score": 100
+  },
+  "seed-anthurium-clarinervium-anthurium-clarinervium": {
+    "commonName": "Anthurium Clarinervium",
+    "scientificName": "Anthurium clarinervium",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/173605683/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Nadiatalent, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/276466",
+    "score": 100
+  },
+  "seed-friendship-plant-pilea-involucrata": {
+    "commonName": "Friendship Plant",
+    "scientificName": "Pilea involucrata",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/585103667/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Mokkie, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/426421",
+    "score": 100
+  },
+  "seed-raven-zz-plant-zamioculcas-zamiifolia": {
+    "commonName": "Raven ZZ Plant",
+    "scientificName": "Zamioculcas zamiifolia",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Zamioculcas_zamiifolia_1.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "User:WeFt",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AZamioculcas%20zamiifolia%201.jpg",
+    "score": 40
+  },
+  "seed-lemon-button-fern-nephrolepis-cordifolia": {
+    "commonName": "Lemon Button Fern",
+    "scientificName": "Nephrolepis cordifolia",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/135235963/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) \nPhoto by David J. Stang, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/1060383",
+    "score": 85
+  },
+  "seed-button-fern-pellaea-rotundifolia": {
+    "commonName": "Button Fern",
+    "scientificName": "Pellaea rotundifolia",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/51870038/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Ian Armitage, some rights reserved (CC BY), uploaded by Ian Armitage",
+    "sourcePage": "https://www.inaturalist.org/taxa/198915",
+    "score": 100
+  },
+  "seed-holly-fern-cyrtomium-falcatum": {
+    "commonName": "Holly Fern",
+    "scientificName": "Cyrtomium falcatum",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/1505408/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) harum.koh, いくつかの権利を保有 (CC BY-SA), harum.koh によって投稿されました",
+    "sourcePage": "https://www.inaturalist.org/taxa/1557252",
+    "score": 85
+  },
+  "seed-watch-chain-crassula-muscosa": {
+    "commonName": "Watch Chain",
+    "scientificName": "Crassula muscosa",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/15363830/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Tony Rebelo, some rights reserved (CC BY-SA), uploaded by Tony Rebelo",
+    "sourcePage": "https://www.inaturalist.org/taxa/120259",
+    "score": 85
+  },
+  "seed-string-of-buttons-crassula-perforata": {
+    "commonName": "String of Buttons",
+    "scientificName": "Crassula perforata",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/15819431/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Tony Rebelo, some rights reserved (CC BY-SA), uploaded by Tony Rebelo",
+    "sourcePage": "https://www.inaturalist.org/taxa/524336",
+    "score": 100
+  },
+  "seed-elephant-bush-portulacaria-afra": {
+    "commonName": "Elephant Bush",
+    "scientificName": "Portulacaria afra",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/15505436/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Shaun Swanepoel, some rights reserved (CC BY), uploaded by Shaun Swanepoel",
+    "sourcePage": "https://www.inaturalist.org/taxa/326086",
+    "score": 100
+  },
+  "seed-red-pagoda-crassula-capitella": {
+    "commonName": "Red Pagoda",
+    "scientificName": "Crassula capitella",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/46796766/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) magriet b, some rights reserved (CC BY-SA), uploaded by magriet b",
+    "sourcePage": "https://www.inaturalist.org/taxa/532040",
+    "score": 55
+  },
+  "seed-ice-plant-delosperma-cooperi": {
+    "commonName": "Ice Plant",
+    "scientificName": "Delosperma cooperi",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/518517/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) dr.scott.mills, some rights reserved (CC BY-SA), uploaded by dr.scott.mills",
+    "sourcePage": "https://www.inaturalist.org/taxa/333757",
+    "score": 55
+  },
+  "seed-carrion-flower-stapelia-gigantea": {
+    "commonName": "Carrion Flower",
+    "scientificName": "Stapelia gigantea",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/176650800/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Antoinette Eyssell Knox, some rights reserved (CC BY-SA), uploaded by Antoinette Eyssell Knox",
+    "sourcePage": "https://www.inaturalist.org/taxa/590814",
+    "score": 55
+  },
+  "seed-queen-of-the-night-epiphyllum-oxypetalum": {
+    "commonName": "Queen of the Night",
+    "scientificName": "Epiphyllum oxypetalum",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Epiphyllum_oxypetalum_flower.JPG",
+    "license": "CC BY-SA 3.0",
+    "attribution": "take by MAK, Wing Kuen. Photo taken in Hong Kong.",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AEpiphyllum%20oxypetalum%20flower.JPG",
+    "score": 40
+  },
+  "seed-bunny-ear-cactus-opuntia-microdasys": {
+    "commonName": "Bunny Ear Cactus",
+    "scientificName": "Opuntia microdasys",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/11888385/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Frank Sengpiel, some rights reserved (CC BY), uploaded by Frank Sengpiel",
+    "sourcePage": "https://www.inaturalist.org/taxa/78267",
+    "score": 100
+  },
+  "seed-blue-torch-cactus-pilosocereus-pachycladus": {
+    "commonName": "Blue Torch Cactus",
+    "scientificName": "Pilosocereus pachycladus",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/66803533/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) PierreBraun, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/442108",
+    "score": 100
+  },
+  "seed-desert-rose-adenium-obesum": {
+    "commonName": "Desert Rose",
+    "scientificName": "Adenium obesum",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/15363641/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Tony Rebelo, some rights reserved (CC BY-SA), uploaded by Tony Rebelo",
+    "sourcePage": "https://www.inaturalist.org/taxa/587309",
+    "score": 55
+  },
+  "seed-sarracenia-pitcher-plant-sarracenia": {
+    "commonName": "Sarracenia Pitcher Plant",
+    "scientificName": "Sarracenia",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/1325418/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) U.S. Fish and Wildlife Service Southeast Region, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/taxa/355633",
+    "score": 85
+  },
+  "seed-butterwort-pinguicula": {
+    "commonName": "Butterwort",
+    "scientificName": "Pinguicula",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/251258134/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Alex Abair, some rights reserved (CC BY), uploaded by Alex Abair",
+    "sourcePage": "https://www.inaturalist.org/taxa/166889",
+    "score": 85
+  },
+  "seed-cymbidium-orchid-cymbidium": {
+    "commonName": "Cymbidium Orchid",
+    "scientificName": "Cymbidium",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/56573400/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Orchi, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/493638",
+    "score": 85
+  },
+  "seed-jewel-orchid-ludisia-discolor": {
+    "commonName": "Jewel Orchid",
+    "scientificName": "Ludisia discolor",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/31407008/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Rejoice Gassah, some rights reserved (CC BY), uploaded by Rejoice Gassah",
+    "sourcePage": "https://www.inaturalist.org/taxa/790290",
+    "score": 55
+  },
+  "seed-vanilla-orchid-vanilla-planifolia": {
+    "commonName": "Vanilla Orchid",
+    "scientificName": "Vanilla planifolia",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Vanilla_planifolia_1.jpg",
+    "license": "Public domain",
+    "attribution": "Everglades National Park",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AVanilla%20planifolia%201.jpg",
+    "score": 55
+  },
+  "seed-microgreens-brassica-oleracea": {
+    "commonName": "Microgreens",
+    "scientificName": "Brassica oleracea",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/497000036/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl",
+    "sourcePage": "https://www.inaturalist.org/taxa/75869",
+    "score": 45
+  },
+  "seed-turmeric-curcuma-longa": {
+    "commonName": "Turmeric",
+    "scientificName": "Curcuma longa",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/38818687/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Dinesh Valke, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/139940",
+    "score": 55
+  },
+  "seed-endive-cichorium-endivia": {
+    "commonName": "Endive",
+    "scientificName": "Cichorium endivia",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/311893515/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Young Jun Lee, some rights reserved (CC BY), uploaded by Young Jun Lee",
+    "sourcePage": "https://www.inaturalist.org/taxa/1020161",
+    "score": 55
+  },
+  "seed-elderberry-sambucus-canadensis": {
+    "commonName": "Elderberry",
+    "scientificName": "Sambucus canadensis",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/104695913/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Rison Thumboor, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/84300",
+    "score": 100
+  },
+  "seed-currant-ribes-rubrum": {
+    "commonName": "Currant",
+    "scientificName": "Ribes rubrum",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/130495402/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Nina Filippova, some rights reserved (CC BY), uploaded by Nina Filippova",
+    "sourcePage": "https://www.inaturalist.org/taxa/54430",
+    "score": 55
+  },
+  "seed-gooseberry-ribes-uva-crispa": {
+    "commonName": "Gooseberry",
+    "scientificName": "Ribes uva-crispa",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/1871143/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Ken-ichi Ueda, some rights reserved (CC BY), uploaded by Ken-ichi Ueda",
+    "sourcePage": "https://www.inaturalist.org/taxa/84803",
+    "score": 55
+  },
+  "seed-nectarine-tree-prunus-persica": {
+    "commonName": "Nectarine Tree",
+    "scientificName": "Prunus persica",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/93586249/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Forest and Kim Starr, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/taxa/135421",
+    "score": 85
+  },
+  "seed-plum-tree-prunus-domestica": {
+    "commonName": "Plum Tree",
+    "scientificName": "Prunus domestica",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/340356965/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Ввласенко, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/63735",
+    "score": 100
+  },
+  "seed-apricot-tree-prunus-armeniaca": {
+    "commonName": "Apricot Tree",
+    "scientificName": "Prunus armeniaca",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/340357219/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) PROPOLI87, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/135331",
+    "score": 100
+  },
+  "seed-serviceberry-amelanchier-alnifolia": {
+    "commonName": "Serviceberry",
+    "scientificName": "Amelanchier alnifolia",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/3900407/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Ken-ichi Ueda, some rights reserved (CC BY), uploaded by Ken-ichi Ueda",
+    "sourcePage": "https://www.inaturalist.org/taxa/361086",
+    "score": 55
+  },
+  "seed-honeysuckle-vine-lonicera-sempervirens": {
+    "commonName": "Honeysuckle Vine",
+    "scientificName": "Lonicera sempervirens",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/27651979/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Raffi Kojian, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/170852",
+    "score": 45
+  },
+  "seed-trumpet-vine-campsis-radicans": {
+    "commonName": "Trumpet Vine",
+    "scientificName": "Campsis radicans",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/3448937/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Forest and Kim Starr, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/taxa/543859",
+    "score": 55
+  },
+  "seed-coral-bells-heuchera": {
+    "commonName": "Coral Bells",
+    "scientificName": "Heuchera",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/200583/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Stan Shebs, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/77408",
+    "score": 85
+  },
+  "seed-astilbe-astilbe": {
+    "commonName": "Astilbe",
+    "scientificName": "Astilbe",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Astilbe_arendsii1.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "Wikimedia Commons",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AAstilbe%20arendsii1.jpg",
+    "score": 55
+  },
+  "seed-bleeding-heart-lamprocapnos-spectabilis": {
+    "commonName": "Bleeding Heart",
+    "scientificName": "Lamprocapnos spectabilis",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/204339346/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Rupert Lees, some rights reserved (CC BY), uploaded by Rupert Lees",
+    "sourcePage": "https://www.inaturalist.org/taxa/468257",
+    "score": 55
+  },
+  "seed-delphinium-delphinium": {
+    "commonName": "Delphinium",
+    "scientificName": "Delphinium",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/276209/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Radio Tonreg, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/taxa/1445438",
+    "score": 85
+  },
+  "seed-hellebore-helleborus": {
+    "commonName": "Hellebore",
+    "scientificName": "Helleborus",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/357527342/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Schnobby, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/126550",
+    "score": 85
+  },
+  "seed-dusty-miller-jacobaea-maritima": {
+    "commonName": "Dusty Miller",
+    "scientificName": "Jacobaea maritima",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/153641253/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Jim Evans, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/357682",
+    "score": 100
+  },
+  "seed-verbena-verbena-hybrida": {
+    "commonName": "Verbena",
+    "scientificName": "Verbena hybrida",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/117389013/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Jim Morefield, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/taxa/50164",
+    "score": 55
+  },
+  "seed-nemesia-nemesia-strumosa": {
+    "commonName": "Nemesia",
+    "scientificName": "Nemesia strumosa",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/15973323/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Tony Rebelo, some rights reserved (CC BY-SA), uploaded by Tony Rebelo",
+    "sourcePage": "https://www.inaturalist.org/taxa/431366",
+    "score": 55
+  },
+  "seed-sweet-pea-lathyrus-odoratus": {
+    "commonName": "Sweet Pea",
+    "scientificName": "Lathyrus odoratus",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/522746705/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) John Brew, some rights reserved (CC BY), uploaded by John Brew",
+    "sourcePage": "https://www.inaturalist.org/taxa/61009",
+    "score": 55
+  },
+  "seed-stock-flower-matthiola-incana": {
+    "commonName": "Stock Flower",
+    "scientificName": "Matthiola incana",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6a/Matthiola_incana1.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "Wikimedia Commons",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AMatthiola%20incana1.jpg",
+    "score": 40
+  },
+  "seed-monstera-standleyana-monstera-standleyana": {
+    "commonName": "Monstera Standleyana",
+    "scientificName": "Monstera standleyana",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/357440649/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Eric Knight, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/202395014",
+    "score": 100
+  },
+  "seed-alocasia-black-velvet-alocasia-reginula": {
+    "commonName": "Alocasia Black Velvet",
+    "scientificName": "Alocasia reginula",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Starr_080117-1732_Alocasia_reginula.jpg",
+    "license": "CC BY 3.0",
+    "attribution": "Forest &amp; Kim Starr",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AStarr%20080117-1732%20Alocasia%20reginula.jpg",
+    "score": 55
+  },
+  "seed-alocasia-silver-dragon-alocasia-baginda": {
+    "commonName": "Alocasia Silver Dragon",
+    "scientificName": "Alocasia baginda",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Alocasia_baginda_-3-NRI_Layout-bengaluru-India.jpg",
+    "license": "CC BY 4.0",
+    "attribution": "Yercaud-elango",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AAlocasia%20baginda%20-3-NRI%20Layout-bengaluru-India.jpg",
+    "score": 55
+  },
+  "seed-alocasia-frydek-alocasia-micholitziana": {
+    "commonName": "Alocasia Frydek",
+    "scientificName": "Alocasia micholitziana",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/661885864/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Raúl A. Ruiz M., some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/362640503",
+    "score": 100
+  },
+  "seed-alocasia-zebrina-alocasia-zebrina": {
+    "commonName": "Alocasia Zebrina",
+    "scientificName": "Alocasia zebrina",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/54045964/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Greg III Espera, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/34348119",
+    "score": 100
+  },
+  "seed-alocasia-wentii-alocasia-wentii": {
+    "commonName": "Alocasia Wentii",
+    "scientificName": "Alocasia wentii",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b1/Alocasia_wentii_kz2.jpg",
+    "license": "CC BY-SA 4.0",
+    "attribution": "Krzysztof Ziarnek, Kenraiz",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AAlocasia%20wentii%20kz2.jpg",
+    "score": 55
+  },
+  "seed-alocasia-regal-shield-alocasia-odora": {
+    "commonName": "Alocasia Regal Shield",
+    "scientificName": "Alocasia odora",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/688363852/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) portioid, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/376483604",
+    "score": 100
+  },
+  "seed-anthurium-crystallinum-anthurium-crystallinum": {
+    "commonName": "Anthurium Crystallinum",
+    "scientificName": "Anthurium crystallinum",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/61/Alismatales_-_Anthurium_crystallinum_2.jpg",
+    "license": "CC BY-SA 4.0",
+    "attribution": "Emőke Dénes",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AAlismatales%20-%20Anthurium%20crystallinum%202.jpg",
+    "score": 55
+  },
+  "seed-anthurium-veitchii-anthurium-veitchii": {
+    "commonName": "Anthurium Veitchii",
+    "scientificName": "Anthurium veitchii",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Fata_Morgana_Prague_11_Anthurium_veitchii.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "Txecoloco",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AFata%20Morgana%20Prague%2011%20Anthurium%20veitchii.jpg",
+    "score": 55
+  },
+  "seed-calathea-musaica-goeppertia-kegeljanii": {
+    "commonName": "Calathea Musaica",
+    "scientificName": "Goeppertia kegeljanii",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Calathea_bella_%28Calathea_musaica%29_-_United_States_Botanic_Garden_-_DSC09593.JPG",
+    "license": "CC0",
+    "attribution": "Daderot",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3ACalathea%20bella%20(Calathea%20musaica)%20-%20United%20States%20Botanic%20Garden%20-%20DSC09593.JPG",
+    "score": 30
+  },
+  "seed-calathea-white-fusion-goeppertia-lietzei": {
+    "commonName": "Calathea White Fusion",
+    "scientificName": "Goeppertia lietzei",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/659852057/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Marcio Santos Ferreira, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/361558023",
+    "score": 100
+  },
+  "seed-calathea-roseopicta-goeppertia-roseopicta": {
+    "commonName": "Calathea Roseopicta",
+    "scientificName": "Goeppertia roseopicta",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/470562108/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Anders Hastings, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/261880356",
+    "score": 100
+  },
+  "seed-maranta-lemon-lime-maranta-leuconeura": {
+    "commonName": "Maranta Lemon Lime",
+    "scientificName": "Maranta leuconeura",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/674072476/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Óscar Sampedro, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/369057628",
+    "score": 100
+  },
+  "seed-ctenanthe-setosa-ctenanthe-setosa": {
+    "commonName": "Ctenanthe Setosa",
+    "scientificName": "Ctenanthe setosa",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Ctenanthe_setosa.jpg",
+    "license": "CC BY-SA 3.0",
+    "attribution": "Tequila",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3ACtenanthe%20setosa.jpg",
+    "score": 55
+  },
+  "seed-stromanthe-magic-star-stromanthe-thalia": {
+    "commonName": "Stromanthe Magic Star",
+    "scientificName": "Stromanthe thalia",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/649833401/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) filipeprates, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/356347731",
+    "score": 100
+  },
+  "seed-dischidia-oiantha-dischidia-oiantha": {
+    "commonName": "Dischidia Oiantha",
+    "scientificName": "Dischidia oiantha",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/7/74/Dischidia_oiantha_in_the_Philippines.jpg",
+    "license": "CC BY 4.0",
+    "attribution": "greg3ph",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3ADischidia%20oiantha%20in%20the%20Philippines.jpg",
+    "score": 55
+  },
+  "seed-string-of-nickels-dischidia-nummularia": {
+    "commonName": "String of Nickels",
+    "scientificName": "Dischidia nummularia",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/688283675/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Matt B, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/376442360",
+    "score": 100
+  },
+  "seed-hoya-pubicalyx-hoya-pubicalyx": {
+    "commonName": "Hoya Pubicalyx",
+    "scientificName": "Hoya pubicalyx",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Hoya_pubicalyx1AthenesEyes.jpg",
+    "license": "CC BY 2.0",
+    "attribution": "Athene Rafie from Penang, Malaysia",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AHoya%20pubicalyx1AthenesEyes.jpg",
+    "score": 55
+  },
+  "seed-hoya-obovata-hoya-obovata": {
+    "commonName": "Hoya Obovata",
+    "scientificName": "Hoya obovata",
+    "provider": "Wikimedia Commons",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/f/f0/Hoya_obovata.jpg",
+    "license": "CC BY 2.0",
+    "attribution": "Scott Zona from Miami, Florida, USA",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File%3AHoya%20obovata.jpg",
+    "score": 55
+  },
+  "seed-hoya-australis-hoya-australis": {
+    "commonName": "Hoya Australis",
+    "scientificName": "Hoya australis",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/687727891/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Lucas Christofides, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/376155047",
+    "score": 100
+  },
+  "seed-peperomia-rosso-peperomia-caperata": {
+    "commonName": "Peperomia Rosso",
+    "scientificName": "Peperomia caperata",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/580901057/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Thibaud Aronson, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/321220889",
+    "score": 100
+  },
+  "seed-ripple-peperomia-peperomia-caperata": {
+    "commonName": "Ripple Peperomia",
+    "scientificName": "Peperomia caperata",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/580901057/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Thibaud Aronson, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/321220889",
+    "score": 100
+  },
+  "seed-string-of-turtles-peperomia-prostrata": {
+    "commonName": "String of Turtles",
+    "scientificName": "Peperomia prostrata",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/666049179/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Raúl A. Ruiz M., some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/364845656",
+    "score": 100
+  },
+  "seed-aluminum-plant-pilea-cadierei": {
+    "commonName": "Aluminum Plant",
+    "scientificName": "Pilea cadierei",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/665224080/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) ashleyrsteel, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/364399052",
+    "score": 100
+  },
+  "seed-ficus-tineke-ficus-elastica": {
+    "commonName": "Ficus Tineke",
+    "scientificName": "Ficus elastica",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/667926106/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Josiah Londerée, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/365827536",
+    "score": 100
+  },
+  "seed-ficus-ruby-ficus-elastica": {
+    "commonName": "Ficus Ruby",
+    "scientificName": "Ficus elastica",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/667926106/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Josiah Londerée, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/365827536",
+    "score": 100
+  },
+  "seed-creeping-fig-ficus-pumila": {
+    "commonName": "Creeping Fig",
+    "scientificName": "Ficus pumila",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/688364349/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) portioid, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/376483772",
+    "score": 100
+  },
+  "seed-ficus-alii-ficus-maclellandii": {
+    "commonName": "Ficus Alii",
+    "scientificName": "Ficus maclellandii",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/663589233/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) 曾昱承 Yu-Cheng Zeng, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/363526582",
+    "score": 100
+  },
+  "seed-dracaena-lemon-lime-dracaena-fragrans": {
+    "commonName": "Dracaena Lemon Lime",
+    "scientificName": "Dracaena fragrans",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/665290111/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) ashleyrsteel, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/364434226",
+    "score": 100
+  },
+  "seed-dracaena-janet-craig-dracaena-fragrans": {
+    "commonName": "Dracaena Janet Craig",
+    "scientificName": "Dracaena fragrans",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/665290111/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) ashleyrsteel, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/364434226",
+    "score": 100
+  },
+  "seed-song-of-india-dracaena-reflexa": {
+    "commonName": "Song of India",
+    "scientificName": "Dracaena reflexa",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/652842221/original.jpg",
+    "license": "cc0",
+    "attribution": "no rights reserved",
+    "sourcePage": "https://www.inaturalist.org/observations/357906819",
+    "score": 100
+  },
+  "seed-aglaonema-silver-bay-aglaonema-commutatum": {
+    "commonName": "Aglaonema Silver Bay",
+    "scientificName": "Aglaonema commutatum",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/631704141/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Damien Wallace, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/346536860",
+    "score": 100
+  },
+  "seed-aglaonema-maria-aglaonema-commutatum": {
+    "commonName": "Aglaonema Maria",
+    "scientificName": "Aglaonema commutatum",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/631704141/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Damien Wallace, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/346536860",
+    "score": 100
+  },
+  "seed-aglaonema-siam-aurora-aglaonema-commutatum": {
+    "commonName": "Aglaonema Siam Aurora",
+    "scientificName": "Aglaonema commutatum",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/631704141/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Damien Wallace, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/346536860",
+    "score": 100
+  },
+  "seed-snake-plant-moonshine-sansevieria-trifasciata": {
+    "commonName": "Snake Plant Moonshine",
+    "scientificName": "Sansevieria trifasciata",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/668260483/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Shedron Mukhumo, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/365991424",
+    "score": 100
+  },
+  "seed-birds-nest-snake-plant-sansevieria-hahnii": {
+    "commonName": "Birds Nest Snake Plant",
+    "scientificName": "Sansevieria hahnii",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/668260483/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Shedron Mukhumo, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/365991424",
+    "score": 50
+  },
+  "seed-blue-star-fern-phlebodium-aureum": {
+    "commonName": "Blue Star Fern",
+    "scientificName": "Phlebodium aureum",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/685252892/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Ruth Palsson, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/374876102",
+    "score": 100
+  },
+  "seed-kangaroo-paw-fern-microsorum-diversifolium": {
+    "commonName": "Kangaroo Paw Fern",
+    "scientificName": "Microsorum diversifolium",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/687682091/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Mel Whiting, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/376127729",
+    "score": 50
+  },
+  "seed-autumn-fern-dryopteris-erythrosora": {
+    "commonName": "Autumn Fern",
+    "scientificName": "Dryopteris erythrosora",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/683084997/original.jpg",
+    "license": "cc0",
+    "attribution": "no rights reserved",
+    "sourcePage": "https://www.inaturalist.org/observations/373758185",
+    "score": 100
+  },
+  "seed-silver-lace-fern-pteris-ensiformis": {
+    "commonName": "Silver Lace Fern",
+    "scientificName": "Pteris ensiformis",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/652707375/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Steve Fitzgerald, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/357835789",
+    "score": 100
+  },
+  "seed-string-of-bananas-curio-radicans": {
+    "commonName": "String of Bananas",
+    "scientificName": "Curio radicans",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/555186787/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Tony Rebelo, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/307783888",
+    "score": 100
+  },
+  "seed-bear-paw-succulent-cotyledon-tomentosa": {
+    "commonName": "Bear Paw Succulent",
+    "scientificName": "Cotyledon tomentosa",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/652814094/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Dave U, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/357891790",
+    "score": 100
+  },
+  "seed-orchid-cactus-epiphyllum": {
+    "commonName": "Orchid Cactus",
+    "scientificName": "Epiphyllum",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/684702986/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Siddarth Machado, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/374596227",
+    "score": 90
+  },
+  "seed-fairy-castle-cactus-acanthocereus-tetragonus": {
+    "commonName": "Fairy Castle Cactus",
+    "scientificName": "Acanthocereus tetragonus",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/689151739/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Pablo F. Domínguez, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/376892224",
+    "score": 100
+  },
+  "seed-star-cactus-astrophytum-asterias": {
+    "commonName": "Star Cactus",
+    "scientificName": "Astrophytum asterias",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/549608087/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Turner Brockman, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/304852743",
+    "score": 100
+  },
+  "seed-mammillaria-cactus-mammillaria": {
+    "commonName": "Mammillaria Cactus",
+    "scientificName": "Mammillaria",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/688159376/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Ulises Pinedo, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/376380171",
+    "score": 90
+  },
+  "seed-peanut-cactus-echinopsis-chamaecereus": {
+    "commonName": "Peanut Cactus",
+    "scientificName": "Echinopsis chamaecereus",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/540776088/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Ljaž, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/300146696",
+    "score": 60
+  },
+  "seed-cobra-lily-darlingtonia-californica": {
+    "commonName": "Cobra Lily",
+    "scientificName": "Darlingtonia californica",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/689412033/original.jpg",
+    "license": "cc0",
+    "attribution": "no rights reserved",
+    "sourcePage": "https://www.inaturalist.org/observations/376722199",
+    "score": 100
+  },
+  "seed-dendrobium-orchid-dendrobium": {
+    "commonName": "Dendrobium Orchid",
+    "scientificName": "Dendrobium",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/688905256/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Greg Tasney, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/376779171",
+    "score": 90
+  },
+  "seed-cattleya-orchid-cattleya": {
+    "commonName": "Cattleya Orchid",
+    "scientificName": "Cattleya",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/664151077/original.jpg",
+    "license": "cc0",
+    "attribution": "no rights reserved",
+    "sourcePage": "https://www.inaturalist.org/observations/363822676",
+    "score": 90
+  },
+  "seed-oncidium-orchid-oncidium": {
+    "commonName": "Oncidium Orchid",
+    "scientificName": "Oncidium",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/684704210/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Siddarth Machado, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/374596297",
+    "score": 90
+  },
+  "seed-wheatgrass-triticum-aestivum": {
+    "commonName": "Wheatgrass",
+    "scientificName": "Triticum aestivum",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/689182677/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Марина Давлетшина, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/376908256",
+    "score": 100
+  },
+  "seed-ginger-zingiber-officinale": {
+    "commonName": "Ginger",
+    "scientificName": "Zingiber officinale",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/601335438/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Diogo Luiz, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/331475509",
+    "score": 100
+  },
+  "seed-wasabi-arugula-diplotaxis-erucoides": {
+    "commonName": "Wasabi Arugula",
+    "scientificName": "Diplotaxis erucoides",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/685908796/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Philippe Hornus, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/375217937",
+    "score": 100
+  },
+  "seed-mache-valerianella-locusta": {
+    "commonName": "Mache",
+    "scientificName": "Valerianella locusta",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/684673697/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Philippe Hornus, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/374576858",
+    "score": 100
+  },
+  "seed-radicchio-cichorium-intybus": {
+    "commonName": "Radicchio",
+    "scientificName": "Cichorium intybus",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/689528899/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Tatiana Strus, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/377085403",
+    "score": 100
+  },
+  "seed-sunchoke-helianthus-tuberosus": {
+    "commonName": "Sunchoke",
+    "scientificName": "Helianthus tuberosus",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/687817287/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) TOURDERA, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/376204609",
+    "score": 100
+  },
+  "seed-goji-berry-lycium-barbarum": {
+    "commonName": "Goji Berry",
+    "scientificName": "Lycium barbarum",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/684027776/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) nevwright, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/374245342",
+    "score": 100
+  },
+  "seed-kiwi-vine-actinidia-deliciosa": {
+    "commonName": "Kiwi Vine",
+    "scientificName": "Actinidia deliciosa",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/616157823/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Andrea Mologni, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/338779931",
+    "score": 50
+  },
+  "seed-passion-fruit-passiflora-edulis": {
+    "commonName": "Passion Fruit",
+    "scientificName": "Passiflora edulis",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/685236963/original.jpg",
+    "license": "cc-by-sa",
+    "attribution": "(c) Greg Tasney, some rights reserved (CC BY-SA)",
+    "sourcePage": "https://www.inaturalist.org/observations/374868153",
+    "score": 100
+  },
+  "seed-mango-tree-mangifera-indica": {
+    "commonName": "Mango Tree",
+    "scientificName": "Mangifera indica",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/689490341/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Kyle Elshoff, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/377064236",
+    "score": 100
+  },
+  "seed-dwarf-pomegranate-punica-granatum-var-nana": {
+    "commonName": "Dwarf Pomegranate",
+    "scientificName": "Punica granatum var. nana",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/689268989/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Anastasiia Samokhvalova, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/376953567",
+    "score": 100
+  },
+  "seed-foxglove-digitalis-purpurea": {
+    "commonName": "Foxglove",
+    "scientificName": "Digitalis purpurea",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/689568475/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) bogsuckers, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/377106406",
+    "score": 100
+  },
+  "seed-alyssum-carpet-of-snow-lobularia-maritima": {
+    "commonName": "Alyssum Carpet of Snow",
+    "scientificName": "Lobularia maritima",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/688175384/original.jpg",
+    "license": "cc-by",
+    "attribution": "(c) Tom Field, some rights reserved (CC BY)",
+    "sourcePage": "https://www.inaturalist.org/observations/376391676",
+    "score": 100
+  },
+  "seed-nicotiana-nicotiana-alata": {
+    "commonName": "Nicotiana",
+    "scientificName": "Nicotiana alata",
+    "provider": "iNaturalist",
+    "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/631672179/original.jpg",
+    "license": "cc0",
+    "attribution": "no rights reserved",
+    "sourcePage": "https://www.inaturalist.org/observations/346521942",
+    "score": 100
   }
 }

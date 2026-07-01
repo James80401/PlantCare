@@ -9,7 +9,12 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { FILE_MIN_BYTES, validatePhotoHit } from './species-photo-urls.mjs';
+import {
+  FILE_MIN_BYTES,
+  LOCAL_PHOTO_MIN_BYTES,
+  isReusablePhotoLicense,
+  validatePhotoHit,
+} from './species-photo-urls.mjs';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const manifestPath = join(repoRoot, 'prisma', 'data', 'species-photo-sources.json');
@@ -28,6 +33,7 @@ const COMMONS_DELAY_MS = 3500;
 
 const args = process.argv.slice(2);
 const onlyMissing = args.includes('--only-missing');
+const allowRestrictedLicenses = args.includes('--allow-restricted-licenses');
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -129,6 +135,9 @@ async function findINaturalistPhoto(scientificName, commonName, { rankSpecies = 
         sourcePage: `https://www.inaturalist.org/taxa/${taxon.id}`,
         score,
       };
+      if (!allowRestrictedLicenses && !isReusablePhotoLicense(candidate.license)) {
+        continue;
+      }
       if (!best || candidate.score > best.score) best = candidate;
     }
 
@@ -142,6 +151,56 @@ async function findINaturalistPhoto(scientificName, commonName, { rankSpecies = 
     return findINaturalistPhoto(scientificName, commonName, { rankSpecies: false });
   }
   return null;
+}
+
+async function findINaturalistObservationPhoto(scientificName, commonName) {
+  const queries = [
+    scientificName,
+    scientificName.replace(/\s+var\.\s+.*$/i, '').trim(),
+  ];
+  let best = null;
+
+  for (const query of [...new Set(queries)]) {
+    const url = new URL('https://api.inaturalist.org/v1/observations');
+    url.searchParams.set('taxon_name', query);
+    url.searchParams.set('photos', 'true');
+    url.searchParams.set('photo_license', 'CC0,CC-BY,CC-BY-SA');
+    url.searchParams.set('quality_grade', 'research');
+    url.searchParams.set('per_page', '20');
+
+    let data;
+    try {
+      data = await fetchJson(url.toString());
+    } catch {
+      continue;
+    }
+
+    for (const observation of data.results || []) {
+      const score = scoreTaxonMatch(observation.taxon || {}, scientificName, commonName);
+      if (score < 45) continue;
+
+      for (const photo of observation.photos || []) {
+        const candidate = {
+          provider: 'iNaturalist',
+          inatPhotoId: photo.id,
+          url: inaturalistLargeUrl(photo),
+          license: photo.license_code || 'see iNaturalist',
+          attribution: photo.attribution || 'iNaturalist community',
+          sourcePage: `https://www.inaturalist.org/observations/${observation.id}`,
+          score: Math.min(score + 5, 100),
+        };
+        if (!allowRestrictedLicenses && !isReusablePhotoLicense(candidate.license)) {
+          continue;
+        }
+        if (!best || candidate.score > best.score) best = candidate;
+      }
+    }
+
+    if (best?.score >= 85) return best;
+    await sleep(500);
+  }
+
+  return best;
 }
 
 function licenseFromMeta(extmetadata = {}) {
@@ -208,6 +267,9 @@ async function findCommonsPhoto(scientificName, commonName) {
         score,
         ...licenseFromMeta(info.extmetadata),
       };
+      if (!allowRestrictedLicenses && !isReusablePhotoLicense(candidate.license)) {
+        continue;
+      }
       if (!best || candidate.score > best.score) best = candidate;
     }
     if (best?.score >= 35) return best;
@@ -247,6 +309,13 @@ async function findPhoto(commonName, scientificName) {
     if (ok) return ok;
   }
 
+  await sleep(INAT_DELAY_MS);
+  const inatObservation = await findINaturalistObservationPhoto(scientificName, commonName);
+  if (inatObservation) {
+    const ok = await validatePhotoHit(inatObservation);
+    if (ok) return ok;
+  }
+
   await sleep(COMMONS_DELAY_MS);
   try {
     const commons = await findCommonsPhoto(scientificName, commonName);
@@ -258,6 +327,10 @@ async function findPhoto(commonName, scientificName) {
     console.warn('  Commons:', e.message);
   }
 
+  if (!allowRestrictedLicenses) {
+    return null;
+  }
+
   const wikiTitles = [
     scientificName,
     scientificName.replace(/\s+var\.\s+.*$/i, '').trim(),
@@ -266,7 +339,7 @@ async function findPhoto(commonName, scientificName) {
   for (const title of [...new Set(wikiTitles)]) {
     await sleep(800);
     const wiki = await findWikipediaPhoto(title);
-    if (wiki) {
+    if (wiki && (allowRestrictedLicenses || isReusablePhotoLicense(wiki.license))) {
       const ok = await validatePhotoHit(wiki);
       if (ok) return ok;
     }
@@ -292,7 +365,7 @@ async function main() {
       if (
         manifest[key]?.url &&
         existsSync(file) &&
-        readFileSync(file).length >= FILE_MIN_BYTES
+        readFileSync(file).length >= LOCAL_PHOTO_MIN_BYTES
       ) {
         skipped++;
         continue;
@@ -300,7 +373,7 @@ async function main() {
       delete manifest[key];
     }
 
-    process.stdout.write(`[${i + 1}/${catalog.length}] ${species.commonName} … `);
+    process.stdout.write(`[${i + 1}/${catalog.length}] ${species.commonName} ... `);
     const hit = await findPhoto(species.commonName, species.scientificName);
 
     if (hit) {

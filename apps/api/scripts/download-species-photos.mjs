@@ -10,6 +10,8 @@ import { fileURLToPath } from 'url';
 import {
   candidateUrls,
   FILE_MIN_BYTES as MIN_BYTES,
+  LOCAL_PHOTO_MIN_BYTES,
+  isReusablePhotoLicense,
   UA,
 } from './species-photo-urls.mjs';
 
@@ -37,7 +39,14 @@ async function downloadToFile(meta, dest) {
           redirect: 'follow',
           headers: { 'User-Agent': UA, Referer: 'https://www.inaturalist.org/' },
         });
-        if (res.status === 429 || res.status === 403) {
+        if (res.status === 429) {
+          const wait = 15_000 + attempt * 10_000;
+          lastError = `HTTP ${res.status} ${url}`;
+          console.warn(`rate limited, waiting ${wait}ms`);
+          await sleep(wait);
+          continue;
+        }
+        if (res.status === 403) {
           lastError = `HTTP ${res.status} ${url}`;
           break;
         }
@@ -72,15 +81,21 @@ async function main() {
   let ok = 0;
   let skip = 0;
   let fail = 0;
+  let restrictedSkip = 0;
   const attribution = [
     '# Species catalog photo attributions',
     '',
-    'Per-species reference images from Wikimedia Commons (see manifest for license).',
+    'Per-species reference images from Wikimedia Commons and iNaturalist (see manifest for license).',
     '',
   ];
 
   for (const [key, meta] of Object.entries(manifest)) {
     if (!meta?.url) continue;
+    if (!isReusablePhotoLicense(meta.license)) {
+      restrictedSkip++;
+      continue;
+    }
+
     const dest = join(destRoot, `${key}.jpg`);
     attribution.push(`## ${meta.commonName || key}`);
     attribution.push(`- Scientific: *${meta.scientificName || 'n/a'}*`);
@@ -89,7 +104,7 @@ async function main() {
     attribution.push(`- ${meta.sourcePage || meta.url}`);
     attribution.push('');
 
-    if (existsSync(dest) && readFileSync(dest).length >= MIN_BYTES) {
+    if (existsSync(dest) && readFileSync(dest).length >= LOCAL_PHOTO_MIN_BYTES) {
       skip++;
       continue;
     }
@@ -105,7 +120,9 @@ async function main() {
   }
 
   writeFileSync(join(destRoot, 'ATTRIBUTION.md'), attribution.join('\n'));
-  console.log(`\nDownloaded: ${ok}, skipped: ${skip}, failed: ${fail}`);
+  console.log(
+    `\nDownloaded: ${ok}, skipped: ${skip}, restricted license skipped: ${restrictedSkip}, failed: ${fail}`,
+  );
   console.log('Directory:', destRoot);
   if (fail > 0) process.exit(1);
 }

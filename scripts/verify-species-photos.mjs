@@ -1,13 +1,12 @@
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { PrismaClient } from '@prisma/client';
+import { LOCAL_PHOTO_MIN_BYTES } from '../apps/api/scripts/species-photo-urls.mjs';
 
 const prisma = new PrismaClient();
 const repoRoot = process.cwd();
 const photosDir = join(repoRoot, 'apps', 'api', 'src', 'care-guides', 'photos', 'species');
 const manifestPath = join(repoRoot, 'prisma', 'data', 'species-photo-sources.json');
-
-const MIN_BYTES = 6_000;
 
 async function main() {
   const total = await prisma.plantSpecies.count();
@@ -24,7 +23,7 @@ async function main() {
     for (const s of species) {
       const fromUrl = s.defaultImageUrl?.match(/\/([^/]+\.jpg)$/)?.[1];
       const file = join(photosDir, fromUrl ?? `${s.id}.jpg`);
-      if (existsSync(file) && readFileSync(file).length >= MIN_BYTES) {
+      if (existsSync(file) && readFileSync(file).length >= LOCAL_PHOTO_MIN_BYTES) {
         filesOk++;
       } else if (s.defaultImageUrl) {
         console.log(`✗ Missing file for ${s.commonName} (${s.id})`);

@@ -5,11 +5,11 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { spawnSync } from 'child_process';
+import { LOCAL_PHOTO_MIN_BYTES } from './species-photo-urls.mjs';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const manifestPath = join(repoRoot, 'prisma', 'data', 'species-photo-sources.json');
 const photosDir = join(repoRoot, 'apps', 'api', 'src', 'care-guides', 'photos', 'species');
-const MIN_BYTES = 6_000;
 
 function slugId(commonName, scientificName) {
   const slug = (s) =>
@@ -34,7 +34,7 @@ function missingKeys() {
     .map((s) => slugId(s.commonName, s.scientificName))
     .filter((key) => {
       const file = join(photosDir, `${key}.jpg`);
-      return !existsSync(file) || readFileSync(file).length < MIN_BYTES;
+      return !existsSync(file) || readFileSync(file).length < LOCAL_PHOTO_MIN_BYTES;
     });
 }
 
