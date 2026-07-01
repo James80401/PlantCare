@@ -47,4 +47,45 @@ describe('UploadService', () => {
 
     expect(url).toMatch(/^https:\/\/cdn\.example\.com\/plants\/.+\.png$/);
   });
+
+  describe('deleteByUrl', () => {
+    function makeService() {
+      const config = {
+        get: jest.fn((key: string, fallback?: string | number) => {
+          if (key === 'UPLOAD_DIR') return '/srv/plantcare/uploads';
+          return fallback;
+        }),
+      } as unknown as ConfigService;
+      return new UploadService(config);
+    }
+
+    it('deletes a file that lives inside the upload dir', async () => {
+      const service = makeService();
+      const fs = jest.requireMock('fs') as { unlinkSync: jest.Mock };
+
+      await service.deleteByUrl('/uploads/leaf-abc123.jpg');
+
+      expect(fs.unlinkSync).toHaveBeenCalledWith('/srv/plantcare/uploads/leaf-abc123.jpg');
+    });
+
+    it('refuses to delete when the last path segment is a traversal escape', async () => {
+      const service = makeService();
+      const fs = jest.requireMock('fs') as { unlinkSync: jest.Mock };
+
+      // '/uploads/..' splits to a final segment of '..', which would resolve outside
+      // the upload dir if joined naively.
+      await service.deleteByUrl('/uploads/..');
+
+      expect(fs.unlinkSync).not.toHaveBeenCalled();
+    });
+
+    it('does nothing for an empty url', async () => {
+      const service = makeService();
+      const fs = jest.requireMock('fs') as { unlinkSync: jest.Mock };
+
+      await service.deleteByUrl('');
+
+      expect(fs.unlinkSync).not.toHaveBeenCalled();
+    });
+  });
 });

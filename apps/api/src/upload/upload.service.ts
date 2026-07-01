@@ -42,8 +42,23 @@ export class UploadService {
   async deleteByUrl(url: string): Promise<void> {
     const filename = url.split('/').pop();
     if (!filename) return;
-    const filepath = path.join(this.uploadDir, filename);
+    const filepath = this.resolveWithinRoot(this.uploadDir, filename);
+    if (!filepath) return;
     if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+  }
+
+  /**
+   * Joins `relativePath` onto `root` and verifies the resolved path is actually inside
+   * `root`, rejecting anything (e.g. a trailing `..` segment) that would otherwise
+   * escape it. Returns null instead of throwing so callers can treat it as "not found".
+   */
+  private resolveWithinRoot(root: string, relativePath: string): string | null {
+    const resolvedRoot = path.resolve(root);
+    const resolved = path.resolve(resolvedRoot, relativePath);
+    if (resolved !== resolvedRoot && !resolved.startsWith(resolvedRoot + path.sep)) {
+      return null;
+    }
+    return resolved;
   }
 
   getUploadDir(): string {
