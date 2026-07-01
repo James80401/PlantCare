@@ -41,10 +41,20 @@ async function bootstrap() {
     legacyHeaders: false,
     message: { message: 'Too many password reset requests, please try again later.' },
   });
+  // Garden codes are only 4 chars from a 32-char alphabet (~1M combinations); without
+  // this, addFriend() is a free oracle for brute-forcing every user's code.
+  const friendAddLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many friend requests, please try again later.' },
+  });
   app.use('/api/v1/auth/login', authLimiter);
   app.use('/api/v1/auth/register', authLimiter);
   app.use('/api/v1/auth/forgot-password', passwordResetLimiter);
   app.use('/api/v1/auth/resend-verification', passwordResetLimiter);
+  app.use('/api/v1/buddy/social/friends/add', friendAddLimiter);
   const uploadService = app.get(UploadService);
   app.useStaticAssets(uploadService.getUploadDir(), { prefix: '/uploads/' });
   const resolveCarePath = (subdir: string) => {
