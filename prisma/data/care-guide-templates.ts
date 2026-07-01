@@ -553,39 +553,295 @@ function healthCheckSections(speciesId: string): CareGuideSection[] {
   ];
 }
 
+type RescueCopy = {
+  mistakes: string[];
+  warningSigns: string[];
+  prompt: string;
+};
+
+function rescueCopyForTask(taskType: TaskType): RescueCopy {
+  switch (taskType) {
+    case TaskType.WATER:
+      return {
+        mistakes: [
+          'Watering on a rigid calendar without checking soil first.',
+          'Leaving runoff in the saucer because the plant "might drink it later."',
+        ],
+        warningSigns: [
+          'Yellow lower leaves with wet soil, a sour smell, or fungus gnats.',
+          'Crispy edges, limp leaves that perk after watering, or soil pulling from the pot.',
+        ],
+        prompt:
+          'My {speciesName} has [symptom] and the soil feels [dry/wet] 1-2 inches down. Should I change watering or check roots first?',
+      };
+    case TaskType.PRUNE:
+      return {
+        mistakes: [
+          'Removing too much healthy foliage in one session.',
+          'Cutting hard while the plant is already wilted, recently moved, or recovering.',
+        ],
+        warningSigns: [
+          'Cut sites blacken, ooze, or collapse instead of drying cleanly.',
+          'Sudden wilt or leaf drop within a few days after pruning.',
+        ],
+        prompt:
+          'I pruned my {speciesName} and now see [symptom] near the cuts. Is this normal recovery or should I trim again?',
+      };
+    case TaskType.FERTILIZE:
+      return {
+        mistakes: [
+          'Feeding a dry, wilted, freshly repotted, or low-light plant.',
+          'Increasing dose when yellowing might be water, pH, or root stress instead.',
+        ],
+        warningSigns: [
+          'White crust on soil, burnt tips, sudden leaf drop, or stalled new growth.',
+          'Yellow leaves that continue after feeding, especially if soil is staying wet.',
+        ],
+        prompt:
+          'My {speciesName} has [leaf color/tip burn] after feeding at [dose]. Should I flush, pause fertilizer, or test pH?',
+      };
+    case TaskType.MIST:
+      return {
+        mistakes: [
+          'Using misting as a substitute for correct root watering or room humidity.',
+          'Misting late in cool rooms where leaves stay wet overnight.',
+        ],
+        warningSigns: [
+          'New fungal spots, mildew, or leaf marks after frequent misting.',
+          'Brown tips that keep spreading even though leaves are being misted.',
+        ],
+        prompt:
+          'My {speciesName} has [brown tips/spots] and I mist [frequency]. Is humidity, watering, or fungus more likely?',
+      };
+    case TaskType.PH_TEST:
+      return {
+        mistakes: [
+          'Chasing pH before ruling out watering, light, and fertilizer burn.',
+          'Making a second correction before the first one has had time to settle.',
+        ],
+        warningSigns: [
+          'Interveinal yellowing, poor flowering, or stunted tips despite steady care.',
+          'pH readings that vary widely between surface soil and the root zone.',
+        ],
+        prompt:
+          'My {speciesName} tested at pH [reading] and shows [symptom]. What should I rule out before adjusting pH?',
+      };
+    case TaskType.PEST_CONTROL:
+    case TaskType.INSPECT_PESTS:
+      return {
+        mistakes: [
+          'Treating before identifying the pest and where it is hiding.',
+          'Stopping after one treatment when eggs or crawlers may still hatch.',
+        ],
+        warningSigns: [
+          'Fine webbing, sticky residue, cottony clusters, stippled leaves, or moving specks.',
+          'Symptoms spreading to nearby plants after the first treatment.',
+        ],
+        prompt:
+          'I found [webbing/sticky residue/cottony clusters] on my {speciesName}. What pest is most likely and what should I do first?',
+      };
+    case TaskType.REPOT:
+      return {
+        mistakes: [
+          'Moving into a much larger pot that stays wet around a small root ball.',
+          'Burying the stem deeper than before or fertilizing immediately after repotting.',
+        ],
+        warningSigns: [
+          'Wilt that does not improve after 1-2 weeks, sour soil, or black mushy roots.',
+          'Water running straight through because dry mix is repelling moisture.',
+        ],
+        prompt:
+          'I repotted my {speciesName} [time ago] and now see [symptom]. Should I stabilize care, check roots, or repot again?',
+      };
+    case TaskType.ROTATE:
+      return {
+        mistakes: [
+          'Making a dramatic light move when the plant only needed gradual rotation.',
+          'Rotating so often that you miss which side is reaching for light.',
+        ],
+        warningSigns: [
+          'Long gaps between leaves, pale new growth, or stems leaning strongly toward light.',
+          'Scorched patches after moving closer to direct sun too quickly.',
+        ],
+        prompt:
+          'My {speciesName} is leaning/stretching toward [window/light]. Should I rotate, move it, or add a grow light?',
+      };
+    case TaskType.CLEAN_LEAVES:
+      return {
+        mistakes: [
+          'Using leaf shine, oils, or harsh soap that leaves residue on foliage.',
+          'Scrubbing delicate, fuzzy, or succulent leaves instead of using a gentler method.',
+        ],
+        warningSigns: [
+          'Sticky residue, dull patches, torn leaves, or spots after cleaning.',
+          'Pests discovered while wiping leaf undersides or stem joints.',
+        ],
+        prompt:
+          'After cleaning my {speciesName}, I noticed [spots/sticky residue/pests]. Should I rinse, isolate, or treat?',
+      };
+    case TaskType.CHECK_MOISTURE:
+      return {
+        mistakes: [
+          'Judging only by the dry-looking surface while the root zone is still wet.',
+          'Using one moisture reading without comparing leaf symptoms and pot weight.',
+        ],
+        warningSigns: [
+          'Leaves wilt while soil is wet, or leaves crisp while the root zone is bone dry.',
+          'Moisture readings that stay high for many days after watering.',
+        ],
+        prompt:
+          'My {speciesName} moisture check says [dry/wet] but the leaves show [symptom]. What should I trust?',
+      };
+    case TaskType.HEALTH_CHECK:
+      return {
+        mistakes: [
+          'Changing water, light, fertilizer, and potting mix all at once.',
+          'Expecting damaged leaves to heal instead of watching whether decline stops.',
+        ],
+        warningSigns: [
+          'Symptoms spreading to new leaves, stems, roots, or neighboring plants.',
+          'No improvement after two weeks of stable care and documented checks.',
+        ],
+        prompt:
+          'My {speciesName} has [symptoms] for [duration]. Soil is [wet/dry], light is {sunlight}, and recent changes are [changes]. What should I stabilize first?',
+      };
+    default:
+      return {
+        mistakes: ['Changing multiple care variables before you know which one caused the stress.'],
+        warningSigns: ['Symptoms spreading, rapid wilt, mushy stems, or pests on nearby plants.'],
+        prompt:
+          'My {speciesName} has [symptoms] for [duration]. What should I check first before changing care?',
+      };
+  }
+}
+
+function categoryCaveat(cat: PlantCategory): string {
+  switch (cat) {
+    case 'succulent':
+    case 'cactus':
+      return 'Succulent and cactus roots decline fastest when cool, wet soil lingers; when uncertain, stabilize drainage and wait before adding more water.';
+    case 'fern':
+    case 'moisture':
+    case 'orchid':
+    case 'aroid':
+      return 'Humidity-loving plants still need air around roots; aim for steady moisture without soggy soil or wet leaves overnight.';
+    case 'herb':
+    case 'vegetable':
+    case 'fruit':
+    case 'citrus':
+      return 'For edible or fruiting plants, follow product labels carefully and avoid treatments that are not approved for food crops.';
+    case 'palm':
+      return 'Palms recover slowly from over-pruning and drafts; trim only fully brown fronds and make gradual environment changes.';
+    case 'flowering':
+      return 'Bloom drop can be normal after stress or seasonal change; avoid overcorrecting unless leaves, stems, or roots are also declining.';
+    case 'vine':
+      return 'Trailing plants often show stress at nodes and new tips first; compare oldest and newest growth before deciding what changed.';
+    default:
+      return 'Make one change at a time, then watch new growth and soil behavior for 7-14 days before adjusting again.';
+  }
+}
+
+function appendGuideIntelligence(
+  taskType: TaskType,
+  cat: PlantCategory,
+  sections: CareGuideSection[],
+): CareGuideSection[] {
+  const copy = rescueCopyForTask(taskType);
+  return [
+    ...sections,
+    structuredSection({
+      heading: 'Rescue playbook',
+      whyItMatters:
+        'Beginner rescue moments are easier when you know what not to change, what to watch, and when to slow down.',
+      beginnerBody: [
+        '**Common mistakes:**',
+        ...copy.mistakes.map((item) => `- ${item}`),
+        '',
+        '**Warning signs:**',
+        ...copy.warningSigns.map((item) => `- ${item}`),
+        '',
+        categoryCaveat(cat),
+      ].join('\n'),
+      advancedBody: [
+        '**Triage order:** confirm soil moisture, inspect leaves and stems, check recent changes, then decide whether this task is still the right next step.',
+        '',
+        '**Common mistakes:**',
+        ...copy.mistakes.map((item) => `- ${item}`),
+        '',
+        '**Warning signs:**',
+        ...copy.warningSigns.map((item) => `- ${item}`),
+        '',
+        categoryCaveat(cat),
+      ].join('\n'),
+      warnings: ['If decline is rapid, isolate the plant and ask Dr. Plant before changing multiple care variables.'],
+    }),
+    structuredSection({
+      heading: 'Ask Dr. Plant with context',
+      whyItMatters:
+        'A clear photo plus recent care notes helps Dr. Plant separate likely causes from look-alike symptoms.',
+      beginnerBody: [
+        'When symptoms are confusing, take one clear photo in natural light and include soil feel, recent watering, light changes, and how long the symptom has been present.',
+        '',
+        `Try this prompt: "${copy.prompt}"`,
+      ].join('\n\n'),
+      advancedBody: [
+        'Best diagnostic context: whole plant photo, close-up of affected leaf or stem, soil moisture, pot drainage, recent repot/feed/treatment history, and whether symptoms are on old or new growth.',
+        '',
+        `Prompt starter: "${copy.prompt}"`,
+        '',
+        'Use the answer to choose a user-confirmed follow-up task, then log what changed so the recovery timeline is visible.',
+      ].join('\n\n'),
+    }),
+  ];
+}
+
 export function buildTemplateSections(
   taskType: TaskType,
   cat: PlantCategory,
   speciesId: string,
 ): CareGuideSection[] {
+  let sections: CareGuideSection[];
   switch (taskType) {
     case TaskType.WATER:
-      return waterSections(cat, speciesId);
+      sections = waterSections(cat, speciesId);
+      break;
     case TaskType.PRUNE:
-      return pruneSections(cat, speciesId);
+      sections = pruneSections(cat, speciesId);
+      break;
     case TaskType.FERTILIZE:
-      return fertilizeSections(cat, speciesId);
+      sections = fertilizeSections(cat, speciesId);
+      break;
     case TaskType.MIST:
-      return mistSections(cat, speciesId);
+      sections = mistSections(cat, speciesId);
+      break;
     case TaskType.PH_TEST:
-      return phSections(speciesId);
+      sections = phSections(speciesId);
+      break;
     case TaskType.PEST_CONTROL:
-      return pestSections(cat, speciesId);
+      sections = pestSections(cat, speciesId);
+      break;
     case TaskType.REPOT:
-      return repotSections(cat, speciesId);
+      sections = repotSections(cat, speciesId);
+      break;
     case TaskType.ROTATE:
-      return rotateSections(speciesId);
+      sections = rotateSections(speciesId);
+      break;
     case TaskType.CLEAN_LEAVES:
-      return cleanLeavesSections(speciesId);
+      sections = cleanLeavesSections(speciesId);
+      break;
     case TaskType.INSPECT_PESTS:
-      return inspectPestsSections(cat, speciesId);
+      sections = inspectPestsSections(cat, speciesId);
+      break;
     case TaskType.CHECK_MOISTURE:
-      return checkMoistureSections(speciesId);
+      sections = checkMoistureSections(speciesId);
+      break;
     case TaskType.HEALTH_CHECK:
-      return healthCheckSections(speciesId);
+      sections = healthCheckSections(speciesId);
+      break;
     default:
       return [];
   }
+  return appendGuideIntelligence(taskType, cat, sections);
 }
 
 /** Generic fallback guides (no speciesId) */

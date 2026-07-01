@@ -14,7 +14,7 @@ provider gates instead of pretending the local catalog already covers everything
 | Area | Baseline |
 |------|----------|
 | Local species catalog | 447 species |
-| Species photos | 320 local species photos; new sprint-1 rows still need photo sourcing |
+| Species photos | 444 local species photos; 3 catalog rows still need photo sourcing/review |
 | Task types | 12 shipped care task types |
 | Diagnosis storage | `Diagnosis.detailJson` stores forward-compatible structured data |
 | Dr. Plant context | Uses care baseline, tasks, diagnoses, journal, weather, and feedback context |
@@ -42,7 +42,7 @@ provider gates instead of pretending the local catalog already covers everything
 | 5. Diagnosis UX upgrade | `[x]` | Show treatment plan, urgency, ordered steps, matched problems, and recovery window. | Diagnosis cards render the plan and still support older diagnoses without treatment plans. |
 | 6. Catalog expansion sprint 1 | `[x]` | Expand curated high-value inventory beyond the original 321 species. | Added a verified high-demand batch across houseplants, succulents, edibles, fruit, orchids, carnivorous plants, and outdoor ornamentals. |
 | 7. Hybrid long-tail identification | `[ ]` | Let users identify plants beyond the local catalog without polluting curated data. | Provider-gated ID/enrichment path records source/confidence and maps to nearest care archetype. |
-| 8. Guide intelligence upgrade | `[ ]` | Make care guides richer and more rescue-oriented. | Guides include common mistakes, diagnosis prompts, recovery links, and species-specific caveats. |
+| 8. Guide intelligence upgrade | `[x]` | Make care guides richer and more rescue-oriented. | Guides include common mistakes, diagnosis prompts, recovery links, and species-specific caveats. |
 
 ## Shipped in the first implementation pass
 
@@ -70,20 +70,27 @@ provider gates instead of pretending the local catalog already covers everything
   - `bloomsIndoors`: 32
 - Photo sourcing remains open for the new sprint-1 rows; do not run a production photo-coverage gate until those assets are fetched, reviewed, and seeded.
 
+## Shipped in guide intelligence upgrade
+
+- Added generated `Rescue playbook` sections across structured task guides with common mistakes, warning signs, and category-specific caveats.
+- Added generated `Ask Dr. Plant with context` sections so each guide has a task-specific diagnostic prompt starter.
+- Added a `Troubleshooting` card to plant profile Care overviews with stabilization guidance, Dr. Plant prompt context, and safety escalation language.
+- Extended `scripts/verify-care-guides.mjs` so sampled species guides must retain the rescue and Dr. Plant intelligence layers.
+
 ## Next implementation batch
 
-1. Guide intelligence upgrade:
-   - Add guide sections for common mistakes, rescue signs, and Dr. Plant prompt starters.
-   - Prioritize top beginner plants and top problem categories before broad coverage.
-
-2. Sprint-1 photo sourcing:
-   - Fetch, license-check, and seed images for the new catalog rows.
-   - Re-run `npm run species:photos:verify` after DB seed reflects the new catalog.
-
-3. Hybrid long-tail identification:
+1. Hybrid long-tail identification:
    - Add an env-gated provider interface for external ID/enrichment.
    - Store provider, confidence, canonical candidate, and fallback care archetype.
    - Keep curated catalog rows separate from unverified provider guesses.
+
+2. Remaining photo cleanup:
+   - Fetch, license-check, and seed images for the new catalog rows.
+   - Re-run `npm run species:photos:verify` after DB seed reflects the new catalog.
+
+3. Guide UX polish:
+   - Add contextual cross-links from problem/treatment plan cards into relevant guide sections.
+   - Consider compact "Ask Dr. Plant about this" actions in guide cards after product review.
 
 ## Product guardrails
 

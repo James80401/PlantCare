@@ -14,6 +14,7 @@ export type PlantCareTopicId =
   | 'repotting'
   | 'propagation'
   | 'pests'
+  | 'troubleshooting'
   | 'toxicity'
   | 'notes';
 

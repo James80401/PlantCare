@@ -39,6 +39,7 @@ describe('plant-care-overview.builder', () => {
       'repotting',
       'propagation',
       'pests',
+      'troubleshooting',
       'toxicity',
       'notes',
     ]);
@@ -77,6 +78,18 @@ describe('plant-care-overview.builder', () => {
     const season = buildStructuredPlantCareSections(ctx).find((s) => s.id === 'season');
     expect(season?.heading).toBe('Season & weather');
     expect(season?.beginnerBody).toContain('Kitchen Pothos');
+  });
+
+  it('includes troubleshooting guidance with Dr. Plant context', () => {
+    const ctx = buildOverviewContext('Kitchen Pothos', species, PotSize.MEDIUM);
+    const troubleshooting = buildStructuredPlantCareSections(ctx).find(
+      (s) => s.id === 'troubleshooting',
+    );
+
+    expect(troubleshooting?.beginnerBody).toContain('Dr. Plant');
+    expect(troubleshooting?.advancedBody).toContain('stabilize');
+    expect(troubleshooting?.advancedBody).toContain('Prompt starter');
+    expect(troubleshooting?.warnings.length).toBeGreaterThan(0);
   });
 
   it('includes weather hint when advice is provided', () => {

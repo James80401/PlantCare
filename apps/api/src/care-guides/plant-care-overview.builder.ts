@@ -31,6 +31,7 @@ export type PlantCareTopicId =
   | 'repotting'
   | 'propagation'
   | 'pests'
+  | 'troubleshooting'
   | 'toxicity'
   | 'notes';
 
@@ -86,6 +87,7 @@ export function buildStructuredPlantCareSections(
     buildRepottingSection(ctx),
     buildPropagationSection(ctx),
     buildPestsSection(ctx),
+    buildTroubleshootingSection(ctx),
     buildToxicitySection(ctx),
   ];
 
@@ -429,6 +431,59 @@ function buildPestsSection(ctx: PlantCareOverviewContext): StructuredCareSection
     ].join('\n\n'),
     warnings: [
       'Systemic pesticides may be toxic to pets — read labels and isolate treated plants.',
+    ],
+  };
+}
+
+function troubleshootingCaveat(ctx: PlantCareOverviewContext): string {
+  switch (ctx.category) {
+    case 'succulent':
+    case 'cactus':
+      return 'For succulents and cacti, assume lingering wet soil is dangerous until proven otherwise; stabilize drainage and avoid extra water while checking.';
+    case 'fern':
+    case 'moisture':
+    case 'aroid':
+    case 'orchid':
+      return 'For humidity-loving plants, separate dry-air stress from soggy-root stress: crisp edges can mean low humidity, but yellow lower leaves with wet soil point elsewhere.';
+    case 'herb':
+    case 'vegetable':
+    case 'fruit':
+    case 'citrus':
+      return 'For edible or fruiting plants, verify any pest or fertilizer product is labeled for food crops before using it.';
+    case 'palm':
+      return 'For palms, avoid heavy pruning while diagnosing. Remove only fully brown fronds and look for drafts, dry air, and chronic overwatering.';
+    case 'flowering':
+      return 'For flowering plants, bloom drop can be normal after stress or season change. Treat it as urgent only when leaves, stems, or roots also decline.';
+    default:
+      return 'For most houseplants, change one variable at a time and watch new growth for the clearest recovery signal.';
+  }
+}
+
+function buildTroubleshootingSection(ctx: PlantCareOverviewContext): StructuredCareSection {
+  const prompt = `My ${ctx.speciesName} has [symptoms] for [duration]. Soil is [wet/dry], light is ${ctx.sunlight}, and recent changes are [changes]. What should I stabilize first?`;
+  return {
+    id: 'troubleshooting',
+    heading: 'Troubleshooting',
+    whyItMatters:
+      'Fast rescue depends on slowing down, spotting the right signal, and asking Dr. Plant with enough context to avoid guesswork.',
+    beginnerBody: [
+      `Look for changed leaves, soil that stays wet or bone dry, pests, sudden droop, or symptoms spreading on **${ctx.plantName}**.`,
+      '',
+      'Take one clear photo, note what changed in watering, light, location, feeding, or repotting, and ask Dr. Plant before changing everything at once.',
+      '',
+      troubleshootingCaveat(ctx),
+    ].join('\n\n'),
+    advancedBody: [
+      'Compare oldest leaves vs newest growth, inspect leaf undersides and stem joints, then check roots only if decline continues or soil smells sour.',
+      '',
+      `Prompt starter: "${prompt}"`,
+      '',
+      'Use diagnosis or treatment tasks as user-confirmed follow-through after the likely cause is clearer.',
+      '',
+      `Catalog note: ${ctx.careNotes}`,
+    ].join('\n\n'),
+    warnings: [
+      'If decline is rapid, suspected poisoning/toxicity is involved, or product labels are unclear, ask a local expert, vet, or extension office.',
     ],
   };
 }

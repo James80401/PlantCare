@@ -80,6 +80,18 @@ function missingStructuredFields(sections) {
   return sections.filter((sec) => !sec.whyItMatters || !sec.beginnerBody || !sec.advancedBody);
 }
 
+function hasGuideIntelligence(sections) {
+  const headings = new Set(sections.map((sec) => sec.heading));
+  const allText = JSON.stringify(sections);
+  return (
+    headings.has('Rescue playbook') &&
+    headings.has('Ask Dr. Plant with context') &&
+    allText.includes('Common mistakes') &&
+    allText.includes('Warning signs') &&
+    allText.includes('Prompt starter')
+  );
+}
+
 function assertStructuredGuide(label, sectionsJson) {
   const sections = JSON.parse(sectionsJson);
   const missing = missingStructuredFields(sections);
@@ -163,6 +175,7 @@ async function main() {
   });
 
   let shallow = 0;
+  let missingIntelligence = 0;
   let minSections = 99;
   let maxSections = 0;
   for (const g of sample) {
@@ -173,9 +186,18 @@ async function main() {
     const minSec = MIN_SECTIONS_BY_TASK[g.taskType] ?? 4;
     const minContent = STRUCTURED_TASK_TYPES.includes(g.taskType) ? 500 : 200;
     if (sections.length < minSec || contentLen < minContent) shallow++;
+    if (STRUCTURED_TASK_TYPES.includes(g.taskType) && !hasGuideIntelligence(sections)) {
+      missingIntelligence++;
+    }
   }
   if (shallow === 0) pass(`Depth OK (sample ${sample.length} guides)`);
   else fail(`${shallow} shallow guides in sample of ${sample.length}`);
+
+  if (missingIntelligence === 0) {
+    pass(`Guide intelligence OK (sample ${sample.length} species guides)`);
+  } else {
+    fail(`${missingIntelligence} sampled guide(s) missing rescue/Dr. Plant intelligence`);
+  }
 
   pass(`Sections per guide (seeded): ${minSections}–${maxSections} (+ "Your plant right now" at API)`);
 

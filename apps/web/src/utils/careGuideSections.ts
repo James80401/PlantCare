@@ -15,6 +15,7 @@ export type PlantCareTopicId =
   | 'repotting'
   | 'propagation'
   | 'pests'
+  | 'troubleshooting'
   | 'toxicity'
   | 'notes';
 
@@ -72,6 +73,11 @@ const TOPIC_META: Record<PlantCareTopicId, CareSectionMeta> = {
   pests: {
     label: 'Pests',
     intent: 'Spot problems early before they spread.',
+    tone: 'warning',
+  },
+  troubleshooting: {
+    label: 'Troubleshoot',
+    intent: 'Stabilize symptoms and ask Dr. Plant with context.',
     tone: 'warning',
   },
   toxicity: {
