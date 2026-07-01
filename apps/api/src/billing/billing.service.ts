@@ -155,6 +155,29 @@ export class BillingService {
     ) {
       await this.applySubscription(event.data.object as Stripe.Subscription);
     }
+
+    if (event.type === 'invoice.payment_failed') {
+      await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
+    }
+  }
+
+  /**
+   * A failed renewal invoice doesn't always arrive with a corresponding
+   * customer.subscription.updated event in the same instant (Stripe's dunning/retry
+   * settings can delay the subscription's own status transition), so re-fetch and
+   * reapply the subscription here too rather than assuming another event will cover it.
+   */
+  private async handlePaymentFailed(invoice: Stripe.Invoice) {
+    const subscriptionId =
+      typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
+    if (!subscriptionId || !this.stripe) return;
+
+    this.logger.warn(
+      `Stripe invoice payment failed for subscription ${subscriptionId} (invoice ${invoice.id})`,
+    );
+
+    const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+    await this.applySubscription(subscription);
   }
 
   private async applySubscription(subscription: Stripe.Subscription) {

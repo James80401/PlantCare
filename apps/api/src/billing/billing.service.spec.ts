@@ -145,4 +145,82 @@ describe('BillingService', () => {
       data: { planTier: PlanTier.FREE },
     });
   });
+
+  it('re-syncs plan tier from Stripe when a renewal invoice payment fails', async () => {
+    const stripe = {
+      subscriptions: {
+        retrieve: jest.fn().mockResolvedValue({
+          id: 'sub_123',
+          status: 'past_due',
+          metadata: { userId: 'user-1' },
+          ended_at: null,
+        }),
+      },
+    };
+    const { service, prisma } = createService(stripe);
+
+    await (
+      service as unknown as {
+        handlePaymentFailed: (invoice: unknown) => Promise<void>;
+      }
+    ).handlePaymentFailed({ id: 'in_1', subscription: 'sub_123' });
+
+    expect(stripe.subscriptions.retrieve).toHaveBeenCalledWith('sub_123');
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { planTier: PlanTier.FREE },
+    });
+    expect(prisma.subscription.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        stripeId: 'sub_123',
+        status: SubscriptionStatus.PAST_DUE,
+      }),
+    });
+  });
+
+  it('routes invoice.payment_failed webhook events to the payment-failed handler', async () => {
+    const invoice = { id: 'in_1', subscription: 'sub_123' };
+    const stripe = {
+      webhooks: {
+        constructEvent: jest.fn().mockReturnValue({
+          type: 'invoice.payment_failed',
+          data: { object: invoice },
+        }),
+      },
+      subscriptions: {
+        retrieve: jest.fn().mockResolvedValue({
+          id: 'sub_123',
+          status: 'past_due',
+          metadata: { userId: 'user-1' },
+          ended_at: null,
+        }),
+      },
+    };
+    const { service, prisma, config } = createService(stripe);
+    config.get.mockImplementation(
+      (key: string, fallback?: string) =>
+        (key === 'STRIPE_WEBHOOK_SECRET' ? 'whsec_test' : fallback) as string,
+    );
+
+    await service.handleWebhook(Buffer.from('{}'), 'sig_test');
+
+    expect(stripe.subscriptions.retrieve).toHaveBeenCalledWith('sub_123');
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { planTier: PlanTier.FREE },
+    });
+  });
+
+  it('does nothing when a payment-failed invoice has no subscription', async () => {
+    const stripe = { subscriptions: { retrieve: jest.fn() } };
+    const { service } = createService(stripe);
+
+    await (
+      service as unknown as {
+        handlePaymentFailed: (invoice: unknown) => Promise<void>;
+      }
+    ).handlePaymentFailed({ id: 'in_1', subscription: null });
+
+    expect(stripe.subscriptions.retrieve).not.toHaveBeenCalled();
+  });
 });
