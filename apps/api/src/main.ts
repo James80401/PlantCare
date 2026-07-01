@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { assertProductionSecrets } from './assert-production-secrets';
 import { getCorsOrigins } from './cors-origins';
 import { UploadService } from './upload/upload.service';
 import { initSentry } from './observability/sentry';
@@ -14,7 +15,10 @@ import { requestIdMiddleware } from './observability/request-id.middleware';
 import { accessLogMiddleware } from './observability/access-log.middleware';
 import { AllExceptionsFilter } from './observability/all-exceptions.filter';
 
+const logger = new Logger('Bootstrap');
+
 async function bootstrap() {
+  assertProductionSecrets();
   await initSentry();
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
   app.set('trust proxy', 1);
@@ -56,7 +60,7 @@ async function bootstrap() {
     ];
     const resolved = candidates.find((p) => existsSync(p));
     if (!resolved) {
-      console.warn(`Care guide assets not found (${subdir}); static files may 404`);
+      logger.warn(`Care guide assets not found (${subdir}); static files may 404`);
     }
     return resolved ?? candidates[1];
   };
@@ -87,6 +91,6 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
-  console.log(`API running on http://localhost:${port}`);
+  logger.log(`API running on http://localhost:${port}`);
 }
 bootstrap();
