@@ -22,6 +22,9 @@ describe('BillingService', () => {
         update: jest.fn().mockResolvedValue({}),
       },
     };
+    (prisma as { $transaction?: unknown }).$transaction = jest.fn((callback: (tx: typeof prisma) => Promise<unknown>) =>
+      callback(prisma),
+    );
     const config = {
       get: jest.fn((key: string, fallback?: string) => {
         const values: Record<string, string> = {

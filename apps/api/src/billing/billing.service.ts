@@ -187,26 +187,28 @@ export class BillingService {
     const active = subscription.status === 'active' || subscription.status === 'trialing';
     const status = this.mapSubscriptionStatus(subscription.status);
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { planTier: active ? PlanTier.PREMIUM : PlanTier.FREE },
-    });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { planTier: active ? PlanTier.PREMIUM : PlanTier.FREE },
+      });
 
-    const existing = await this.prisma.subscription.findFirst({
-      where: { stripeId: subscription.id },
+      const existing = await tx.subscription.findFirst({
+        where: { stripeId: subscription.id },
+      });
+      const data = {
+        userId,
+        planName: 'premium',
+        status,
+        stripeId: subscription.id,
+        endDate: subscription.ended_at ? new Date(subscription.ended_at * 1000) : null,
+      };
+      if (existing) {
+        await tx.subscription.update({ where: { id: existing.id }, data });
+      } else {
+        await tx.subscription.create({ data });
+      }
     });
-    const data = {
-      userId,
-      planName: 'premium',
-      status,
-      stripeId: subscription.id,
-      endDate: subscription.ended_at ? new Date(subscription.ended_at * 1000) : null,
-    };
-    if (existing) {
-      await this.prisma.subscription.update({ where: { id: existing.id }, data });
-    } else {
-      await this.prisma.subscription.create({ data });
-    }
   }
 
   private mapSubscriptionStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
