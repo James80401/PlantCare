@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { GrowthMeasurementsPanel } from '../../components/journal/GrowthMeasurementsPanel';
 import JournalPhotoCompare from '../../components/JournalPhotoCompare';
+import { plantProgressApi } from '../../services/api';
 import { resolveApiAssetUrl } from '../../utils/apiAssets';
 import {
   extractMeasurementPoints,
@@ -25,6 +26,10 @@ export default function PlantJournalTab() {
   const measurementPoints = useMemo(
     () => extractMeasurementPoints(ctx.journalEntries),
     [ctx.journalEntries],
+  );
+  const progressEntries = useMemo(
+    () => ((ctx.plant.progressEntries as PlantRecord[] | undefined) || []),
+    [ctx.plant],
   );
   const latestJournalEntry = useMemo(() => pickLatestEntry(ctx.journalEntries), [ctx.journalEntries]);
   const [compareBeforeId, setCompareBeforeId] = useState('');
@@ -58,6 +63,8 @@ export default function PlantJournalTab() {
         latestEntry={latestJournalEntry}
       />
 
+      <ProgressCheckInPanel progressEntries={progressEntries} />
+
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <JournalForm />
 
@@ -80,6 +87,307 @@ export default function PlantJournalTab() {
         />
       </div>
     </ProfileSection>
+  );
+}
+
+function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecord[] }) {
+  const ctx = usePlantProfile();
+  const [overallHealth, setOverallHealth] = useState('STABLE');
+  const [growthChange, setGrowthChange] = useState('');
+  const [leafCondition, setLeafCondition] = useState('');
+  const [soilMoisture, setSoilMoisture] = useState('');
+  const [pestSigns, setPestSigns] = useState('');
+  const [recentCare, setRecentCare] = useState('');
+  const [notes, setNotes] = useState('');
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoInputKey, setPhotoInputKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [latestResult, setLatestResult] = useState<PlantRecord | null>(null);
+
+  const pendingRoutineCheck = ctx.pending.find(
+    (task) => task.taskType === 'HEALTH_CHECK' && !task.sourceDiagnosisId,
+  );
+  const latestProgress = progressEntries[0];
+
+  const setProgressPhoto = (file: File | null) => {
+    setPhoto(file);
+    setPhotoPreview((current) => {
+      if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+      return file ? URL.createObjectURL(file) : null;
+    });
+  };
+
+  const clearPhoto = () => {
+    setProgressPhoto(null);
+    setPhotoInputKey((key) => key + 1);
+  };
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError('');
+    setSaving(true);
+    try {
+      const { data } = await plantProgressApi.create(
+        ctx.id,
+        {
+          overallHealth,
+          growthChange: growthChange || undefined,
+          leafCondition: leafCondition || undefined,
+          soilMoisture: soilMoisture || undefined,
+          pestSigns: pestSigns || undefined,
+          recentCare: recentCare || undefined,
+          notes: notes.trim() || undefined,
+          taskId: pendingRoutineCheck?.id as string | undefined,
+        },
+        photo ?? undefined,
+      );
+      setLatestResult(data);
+      setOverallHealth('STABLE');
+      setGrowthChange('');
+      setLeafCondition('');
+      setSoilMoisture('');
+      setPestSigns('');
+      setRecentCare('');
+      setNotes('');
+      clearPhoto();
+      await ctx.load();
+    } catch {
+      setError('Could not save this progress check-in.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="mt-5 rounded-2xl border border-lime-100 bg-lime-50/40 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">
+            Plant progress
+          </p>
+          <h3 className="mt-1 font-semibold text-emerald-950">
+            Check in on {ctx.plantLabel}
+          </h3>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+            Log a quick health snapshot. Dr. Plant compares it with previous check-ins and saves
+            the story to this plant's history.
+          </p>
+        </div>
+        <div className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-lime-900 ring-1 ring-lime-100">
+          {progressEntries.length} check-in{progressEntries.length === 1 ? '' : 's'}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)]">
+        <form onSubmit={submit} className="space-y-4 rounded-2xl bg-white/75 p-4 ring-1 ring-lime-100">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ProgressSelect
+              label="Overall health"
+              value={overallHealth}
+              onChange={setOverallHealth}
+              options={OVERALL_HEALTH_OPTIONS}
+              required
+            />
+            <ProgressSelect
+              label="Growth change"
+              value={growthChange}
+              onChange={setGrowthChange}
+              options={GROWTH_CHANGE_OPTIONS}
+            />
+            <ProgressSelect
+              label="Leaves"
+              value={leafCondition}
+              onChange={setLeafCondition}
+              options={LEAF_CONDITION_OPTIONS}
+            />
+            <ProgressSelect
+              label="Soil"
+              value={soilMoisture}
+              onChange={setSoilMoisture}
+              options={SOIL_MOISTURE_OPTIONS}
+            />
+            <ProgressSelect
+              label="Pests"
+              value={pestSigns}
+              onChange={setPestSigns}
+              options={PEST_SIGNS_OPTIONS}
+            />
+            <ProgressSelect
+              label="Recent care"
+              value={recentCare}
+              onChange={setRecentCare}
+              options={RECENT_CARE_OPTIONS}
+            />
+          </div>
+
+          <label className="block">
+            <span className="text-sm font-medium text-gray-700">Extra notes</span>
+            <textarea
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              rows={3}
+              placeholder="What changed since the last check-in?"
+              className="mt-2 w-full rounded-2xl border border-lime-100 px-4 py-3 text-sm focus:border-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-100"
+            />
+          </label>
+
+          <label className="block rounded-2xl border border-lime-100 bg-white p-3">
+            <span className="text-sm font-semibold text-emerald-950">Optional check-in photo</span>
+            <input
+              key={photoInputKey}
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) setProgressPhoto(file);
+              }}
+              className="mt-2 block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-lime-700 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+            />
+            {photoPreview ? (
+              <div className="mt-3 space-y-2">
+                <img
+                  src={photoPreview}
+                  alt="Progress check-in preview"
+                  className="max-h-48 w-full rounded-2xl border border-lime-100 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={clearPhoto}
+                  className="text-xs font-semibold text-rose-700 hover:underline"
+                >
+                  Remove photo
+                </button>
+              </div>
+            ) : null}
+          </label>
+
+          {pendingRoutineCheck ? (
+            <p className="rounded-2xl bg-emerald-50 px-3 py-2 text-xs text-emerald-800 ring-1 ring-emerald-100">
+              Submitting this will complete the pending health check task due{' '}
+              {format(new Date(pendingRoutineCheck.dueDate as string), 'MMM d')}.
+            </p>
+          ) : null}
+
+          {error ? (
+            <p className="text-sm text-rose-600" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-lime-700 px-5 py-2 text-sm font-semibold text-white hover:bg-lime-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {saving ? 'Checking in...' : 'Save progress check-in'}
+          </button>
+        </form>
+
+        <div className="space-y-3">
+          <ProgressSummaryCard entry={latestResult || latestProgress} />
+          <ProgressHistoryList entries={progressEntries.slice(0, 3)} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProgressSelect({
+  label,
+  value,
+  onChange,
+  options,
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  required?: boolean;
+}) {
+  return (
+    <label className="block text-sm">
+      <span className="font-medium text-gray-700">{label}</span>
+      <select
+        required={required}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 w-full rounded-xl border border-lime-100 bg-white px-3 py-2 text-sm"
+      >
+        {!required ? <option value="">Select...</option> : null}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ProgressSummaryCard({ entry }: { entry?: PlantRecord | null }) {
+  if (!entry) {
+    return (
+      <div className="rounded-2xl border border-dashed border-lime-200 bg-white/70 p-4">
+        <p className="font-semibold text-emerald-950">No progress check-ins yet</p>
+        <p className="mt-1 text-sm leading-6 text-gray-600">
+          The first one becomes the baseline Dr. Plant uses for future plant-life summaries.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-lime-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">Latest story</p>
+      <h4 className="mt-1 font-semibold text-emerald-950">
+        {progressHealthLabel(entry.overallHealth as string)}
+      </h4>
+      {entry.analysisSummary ? (
+        <p className="mt-2 text-sm leading-6 text-gray-700">{entry.analysisSummary as string}</p>
+      ) : null}
+      {entry.adviceText ? (
+        <p className="mt-3 rounded-2xl bg-lime-50 px-3 py-2 text-sm leading-6 text-lime-950 ring-1 ring-lime-100">
+          {entry.adviceText as string}
+        </p>
+      ) : null}
+      {entry.photoUrl ? (
+        <img
+          src={resolveApiAssetUrl(entry.photoUrl as string) ?? undefined}
+          alt="Latest plant progress"
+          className="mt-3 max-h-48 w-full rounded-2xl object-cover"
+          loading="lazy"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ProgressHistoryList({ entries }: { entries: PlantRecord[] }) {
+  if (!entries.length) return null;
+  return (
+    <div className="rounded-2xl border border-lime-100 bg-white p-4">
+      <p className="text-sm font-semibold text-emerald-950">Recent progress</p>
+      <div className="mt-3 space-y-3">
+        {entries.map((entry) => (
+          <div key={entry.id as string} className="border-t border-lime-50 pt-3 first:border-t-0 first:pt-0">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-gray-800">
+                {progressHealthLabel(entry.overallHealth as string)}
+              </p>
+              <time className="text-xs text-gray-400">
+                {format(new Date(entry.createdAt as string), 'MMM d')}
+              </time>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-gray-600">
+              {summarizeProgressEntry(entry)}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -499,6 +807,88 @@ function JournalSidebar({
       )}
     </div>
   );
+}
+
+const OVERALL_HEALTH_OPTIONS = [
+  { value: 'THRIVING', label: 'Thriving' },
+  { value: 'STABLE', label: 'Stable' },
+  { value: 'CONCERNED', label: 'Some concerns' },
+  { value: 'DECLINING', label: 'Declining' },
+];
+
+const GROWTH_CHANGE_OPTIONS = [
+  { value: 'NEW_GROWTH', label: 'New growth' },
+  { value: 'SAME', label: 'About the same' },
+  { value: 'LEAF_LOSS', label: 'Leaf loss' },
+  { value: 'STRETCHING', label: 'Stretching or legginess' },
+  { value: 'FLOWERING', label: 'Flowering' },
+  { value: 'NOT_SURE', label: 'Not sure' },
+];
+
+const LEAF_CONDITION_OPTIONS = [
+  { value: 'HEALTHY', label: 'Healthy leaves' },
+  { value: 'YELLOWING', label: 'Yellowing' },
+  { value: 'BROWN_TIPS', label: 'Brown tips' },
+  { value: 'SPOTS', label: 'Spots' },
+  { value: 'DROOPING', label: 'Drooping' },
+  { value: 'WILTING', label: 'Wilting' },
+  { value: 'PEST_DAMAGE', label: 'Pest damage' },
+  { value: 'NOT_SURE', label: 'Not sure' },
+];
+
+const SOIL_MOISTURE_OPTIONS = [
+  { value: 'DRY', label: 'Dry' },
+  { value: 'SLIGHTLY_DRY', label: 'Slightly dry' },
+  { value: 'MOIST', label: 'Moist' },
+  { value: 'WET', label: 'Wet' },
+  { value: 'NOT_CHECKED', label: 'Not checked' },
+];
+
+const PEST_SIGNS_OPTIONS = [
+  { value: 'NONE', label: 'No pest signs' },
+  { value: 'POSSIBLE', label: 'Possible signs' },
+  { value: 'VISIBLE_PESTS', label: 'Visible pests' },
+  { value: 'WEBBING', label: 'Webbing' },
+  { value: 'STICKY_RESIDUE', label: 'Sticky residue' },
+  { value: 'NOT_CHECKED', label: 'Not checked' },
+];
+
+const RECENT_CARE_OPTIONS = [
+  { value: 'WATERED', label: 'Watered' },
+  { value: 'FERTILIZED', label: 'Fertilized' },
+  { value: 'REPOTTED', label: 'Repotted' },
+  { value: 'PRUNED', label: 'Pruned' },
+  { value: 'MOVED_LIGHT', label: 'Moved light' },
+  { value: 'PEST_TREATED', label: 'Pest treated' },
+  { value: 'NO_CHANGE', label: 'No change' },
+  { value: 'MULTIPLE', label: 'Multiple changes' },
+];
+
+const PROGRESS_VALUE_LABELS = new Map(
+  [
+    ...OVERALL_HEALTH_OPTIONS,
+    ...GROWTH_CHANGE_OPTIONS,
+    ...LEAF_CONDITION_OPTIONS,
+    ...SOIL_MOISTURE_OPTIONS,
+    ...PEST_SIGNS_OPTIONS,
+    ...RECENT_CARE_OPTIONS,
+  ].map((item) => [item.value, item.label]),
+);
+
+function progressHealthLabel(value?: string) {
+  return value ? PROGRESS_VALUE_LABELS.get(value) || value : 'Progress check-in';
+}
+
+function summarizeProgressEntry(entry: PlantRecord) {
+  const parts = [
+    entry.growthChange ? PROGRESS_VALUE_LABELS.get(entry.growthChange as string) : null,
+    entry.leafCondition ? PROGRESS_VALUE_LABELS.get(entry.leafCondition as string) : null,
+    entry.soilMoisture ? `${PROGRESS_VALUE_LABELS.get(entry.soilMoisture as string)} soil` : null,
+    entry.pestSigns ? PROGRESS_VALUE_LABELS.get(entry.pestSigns as string) : null,
+  ].filter(Boolean);
+  if (parts.length) return parts.join(' - ');
+  if (entry.notes) return String(entry.notes).slice(0, 90);
+  return 'Check-in saved';
 }
 
 function pickLatestEntry(entries: PlantRecord[]): PlantRecord | null {

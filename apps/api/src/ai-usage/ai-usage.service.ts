@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { effectivePlanTier } from '../config/premium-policy';
 import { DIAGNOSIS_WINDOW_DAYS, freePlanLimits } from '../billing/billing-limits';
 
-export type AiUsageFeature = 'diagnosis' | 'diagnosis_chat';
+export type AiUsageFeature = 'diagnosis' | 'diagnosis_chat' | 'progress_check';
 
 export interface AiUsageContext {
   feature: AiUsageFeature;

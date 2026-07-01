@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import type { Diagnosis, JournalEntry, Task, TaskFeedback } from '@prisma/client';
+import type { Diagnosis, JournalEntry, PlantProgressEntry, Task, TaskFeedback } from '@prisma/client';
 import { taskTypeLabel } from '../notifications/task-reminder-copy';
 import type { PlantTimelineEventDto, PlantTimelineResponseDto } from './plant-timeline.types';
 
@@ -34,6 +34,7 @@ export function buildPlantTimeline(
   journalEntries: JournalEntry[],
   tasks: TaskWithFeedback[],
   diagnoses: Diagnosis[],
+  progressEntries: PlantProgressEntry[] = [],
 ): PlantTimelineResponseDto {
   const journalEvents: PlantTimelineEventDto[] = journalEntries.map((entry) => {
     const parts: string[] = [];
@@ -120,7 +121,20 @@ export function buildPlantTimeline(
     imageUrl: diagnosis.imageUrl,
   }));
 
-  const events = [...journalEvents, ...taskEvents, ...diagnosisEvents].sort(
+  const progressEvents: PlantTimelineEventDto[] = progressEntries.map((entry) => ({
+    id: `progress-${entry.id}`,
+    date: entry.createdAt.toISOString(),
+    type: 'progress',
+    title: progressTitle(entry.overallHealth),
+    description:
+      entry.analysisSummary?.trim() ||
+      entry.notes?.trim() ||
+      'Progress check-in saved for this plant.',
+    meta: progressMeta(entry),
+    imageUrl: entry.photoUrl,
+  }));
+
+  const events = [...journalEvents, ...taskEvents, ...diagnosisEvents, ...progressEvents].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
@@ -130,7 +144,56 @@ export function buildPlantTimeline(
       journal: journalEvents.length,
       care: taskEvents.length,
       diagnosis: diagnosisEvents.length,
+      progress: progressEvents.length,
       total: events.length,
     },
   };
+}
+
+function progressTitle(overallHealth: string) {
+  const labels: Record<string, string> = {
+    THRIVING: 'Progress check-in: thriving',
+    STABLE: 'Progress check-in: stable',
+    CONCERNED: 'Progress check-in: needs watching',
+    DECLINING: 'Progress check-in: declining',
+  };
+  return labels[overallHealth] ?? 'Progress check-in';
+}
+
+function progressMeta(entry: PlantProgressEntry) {
+  const parts = [
+    label(entry.growthChange),
+    label(entry.leafCondition),
+    label(entry.soilMoisture ? `${entry.soilMoisture}_SOIL` : null),
+    label(entry.pestSigns ? `${entry.pestSigns}_PESTS` : null),
+  ].filter(Boolean);
+  return parts.length ? parts.join(' Â· ') : undefined;
+}
+
+function label(value?: string | null) {
+  if (!value) return null;
+  const labels: Record<string, string> = {
+    NEW_GROWTH: 'New growth',
+    SAME: 'Same growth',
+    LEAF_LOSS: 'Leaf loss',
+    STRETCHING: 'Stretching',
+    FLOWERING: 'Flowering',
+    HEALTHY: 'Healthy leaves',
+    YELLOWING: 'Yellowing',
+    BROWN_TIPS: 'Brown tips',
+    SPOTS: 'Spots',
+    DROOPING: 'Drooping',
+    WILTING: 'Wilting',
+    PEST_DAMAGE: 'Pest damage',
+    DRY_SOIL: 'Dry soil',
+    SLIGHTLY_DRY_SOIL: 'Slightly dry soil',
+    MOIST_SOIL: 'Moist soil',
+    WET_SOIL: 'Wet soil',
+    NONE_PESTS: 'No pests',
+    POSSIBLE_PESTS: 'Possible pests',
+    VISIBLE_PESTS_PESTS: 'Visible pests',
+    WEBBING_PESTS: 'Webbing',
+    STICKY_RESIDUE_PESTS: 'Sticky residue',
+  };
+  return labels[value] ?? null;
 }

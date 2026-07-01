@@ -54,7 +54,46 @@ describe('buildPlantTimeline', () => {
     expect(result.events[0].type).toBe('care');
     expect(result.events[0].title).toContain('Water');
     expect(result.events.find((e) => e.type === 'journal')?.meta).toContain('30 cm');
-    expect(result.counts).toEqual({ journal: 1, care: 1, diagnosis: 1, total: 3 });
+    expect(result.counts).toEqual({ journal: 1, care: 1, diagnosis: 1, progress: 0, total: 3 });
+  });
+
+  it('adds plant progress check-ins to the timeline', () => {
+    const result = buildPlantTimeline(
+      [],
+      [],
+      [],
+      [
+        {
+          id: 'pce1',
+          plantId: 'p1',
+          userId: 'user-1',
+          taskId: 'task-1',
+          photoUrl: '/uploads/progress.jpg',
+          overallHealth: 'CONCERNED',
+          growthChange: 'LEAF_LOSS',
+          leafCondition: 'YELLOWING',
+          soilMoisture: 'WET',
+          pestSigns: 'NONE',
+          recentCare: 'WATERED',
+          notes: 'Lower leaves yellowed this week.',
+          analysisSummary: 'This plant needs watching after new yellowing and wet soil.',
+          adviceText: 'Let the mix dry before watering again.',
+          storyJson: null,
+          createdAt: baseDate,
+          updatedAt: baseDate,
+        },
+      ],
+    );
+
+    expect(result.events[0]).toMatchObject({
+      type: 'progress',
+      title: 'Progress check-in: needs watching',
+      description: 'This plant needs watching after new yellowing and wet soil.',
+      imageUrl: '/uploads/progress.jpg',
+    });
+    expect(result.events[0].meta).toContain('Leaf loss');
+    expect(result.events[0].meta).toContain('Wet soil');
+    expect(result.counts).toEqual({ journal: 0, care: 0, diagnosis: 0, progress: 1, total: 1 });
   });
 
   it('includes skip reason in care event description', () => {

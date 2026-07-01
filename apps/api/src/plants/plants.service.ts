@@ -90,6 +90,7 @@ export class PlantsService {
           },
         },
         journalEntries: { orderBy: { createdAt: 'desc' }, take: 10 },
+        progressEntries: { orderBy: { createdAt: 'desc' }, take: 10 },
         diagnoses: { orderBy: { createdAt: 'desc' }, take: 5 },
         ...sharedPlantInclude,
       },
@@ -113,7 +114,7 @@ export class PlantsService {
       throw new NotFoundException('Plant not found');
     }
 
-    const [journalEntries, tasks, diagnoses] = await Promise.all([
+    const [journalEntries, tasks, diagnoses, progressEntries] = await Promise.all([
       this.prisma.journalEntry.findMany({
         where: { plantId: id },
         orderBy: { createdAt: 'desc' },
@@ -136,9 +137,14 @@ export class PlantsService {
         orderBy: { createdAt: 'desc' },
         take: 20,
       }),
+      this.prisma.plantProgressEntry.findMany({
+        where: { plantId: id },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
     ]);
 
-    return buildPlantTimeline(journalEntries, tasks, diagnoses);
+    return buildPlantTimeline(journalEntries, tasks, diagnoses, progressEntries);
   }
 
   async create(userId: string, planTier: PlanTier, dto: CreatePlantDto) {

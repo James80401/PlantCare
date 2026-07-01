@@ -114,6 +114,7 @@ model User {
   plantMilestones       PlantMilestone[]
   refreshTokens         RefreshToken[]
   aiUsageEvents         AiUsageEvent[]
+  plantProgressEntries  PlantProgressEntry[]
   adminAuditLogs        AdminAuditLog[] @relation("AdminAuditActor")
 }
 
@@ -270,6 +271,7 @@ model Plant {
   updatedAt   DateTime     @updatedAt
   tasks       Task[]
   journalEntries JournalEntry[]
+  progressEntries      PlantProgressEntry[]
   diagnoses              Diagnosis[]
   diagnosisConversations DiagnosisConversation[]
   shares                 PlantShare[]
@@ -345,6 +347,32 @@ model JournalEntry {
   updatedAt DateTime @default(now()) @updatedAt
 
   @@index([plantId])
+}
+
+model PlantProgressEntry {
+  id              String   @id @default(cuid())
+  plantId          String
+  plant            Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId           String?
+  photoUrl         String?
+  overallHealth    String
+  growthChange     String?
+  leafCondition    String?
+  soilMoisture     String?
+  pestSigns        String?
+  recentCare       String?
+  notes            String?
+  analysisSummary  String?
+  adviceText       String?
+  storyJson        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([plantId, createdAt])
+  @@index([userId, createdAt])
+  @@index([taskId])
 }
 
 model Diagnosis {

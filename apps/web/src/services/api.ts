@@ -288,6 +288,34 @@ export const journalApi = {
     api.delete(`/plants/${plantId}/journal/${entryId}`),
 };
 
+export type PlantProgressPayload = {
+  overallHealth: string;
+  growthChange?: string;
+  leafCondition?: string;
+  soilMoisture?: string;
+  pestSigns?: string;
+  recentCare?: string;
+  notes?: string;
+  taskId?: string;
+};
+
+export const plantProgressApi = {
+  list: (plantId: string) => api.get(`/plants/${plantId}/progress`),
+  create: (plantId: string, payload: PlantProgressPayload, photo?: File) => {
+    const form = new FormData();
+    form.append('overallHealth', payload.overallHealth);
+    if (payload.growthChange) form.append('growthChange', payload.growthChange);
+    if (payload.leafCondition) form.append('leafCondition', payload.leafCondition);
+    if (payload.soilMoisture) form.append('soilMoisture', payload.soilMoisture);
+    if (payload.pestSigns) form.append('pestSigns', payload.pestSigns);
+    if (payload.recentCare) form.append('recentCare', payload.recentCare);
+    if (payload.notes) form.append('notes', payload.notes);
+    if (payload.taskId) form.append('taskId', payload.taskId);
+    if (photo) form.append('photo', photo);
+    return api.post(`/plants/${plantId}/progress`, form);
+  },
+};
+
 export const diagnosisApi = {
   submit: (
     plantId: string,

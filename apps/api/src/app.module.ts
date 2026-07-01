@@ -24,6 +24,7 @@ import { BuddyModule } from './buddy/buddy.module';
 import { AdminModule } from './admin/admin.module';
 import { ImageModerationModule } from './common/image-moderation.module';
 import { AiUsageModule } from './ai-usage/ai-usage.module';
+import { PlantProgressModule } from './progress/plant-progress.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -40,6 +41,7 @@ import { HealthController } from './health.controller';
     PrismaModule,
     ImageModerationModule,
     AiUsageModule,
+    PlantProgressModule,
     EmailModule,
     AuthModule,
     UsersModule,

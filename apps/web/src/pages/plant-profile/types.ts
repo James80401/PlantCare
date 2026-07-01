@@ -38,7 +38,7 @@ export interface CareOverview {
 export interface TimelineEvent {
   id: string;
   date: Date;
-  type: 'journal' | 'care' | 'diagnosis';
+  type: 'journal' | 'care' | 'diagnosis' | 'progress';
   title: string;
   description: string;
   meta?: string;

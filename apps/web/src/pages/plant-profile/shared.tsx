@@ -16,6 +16,7 @@ import type { CareDetailLevel, CareOverviewSection, PlantRecord, TimelineEvent }
 const TIMELINE_FILTERS: Array<{ key: TimelineFilter; label: string }> = [
   { key: 'all', label: 'All' },
   { key: 'journal', label: 'Journal' },
+  { key: 'progress', label: 'Progress' },
   { key: 'care', label: 'Care' },
   { key: 'diagnosis', label: 'Health' },
 ];
@@ -149,7 +150,10 @@ export function PlantTimeline({
   const visible = useMemo(() => filterTimelineEvents(events, filter), [events, filter]);
 
   const distinctTypes =
-    (counts.journal > 0 ? 1 : 0) + (counts.care > 0 ? 1 : 0) + (counts.diagnosis > 0 ? 1 : 0);
+    (counts.journal > 0 ? 1 : 0) +
+    (counts.progress > 0 ? 1 : 0) +
+    (counts.care > 0 ? 1 : 0) +
+    (counts.diagnosis > 0 ? 1 : 0);
   // Only offer filters once the timeline is long enough to be worth narrowing
   // and actually mixes types.
   const showFilters = events.length >= 6 && distinctTypes >= 2;
@@ -394,18 +398,21 @@ export function appendJournalPrompt(
 
 function timelineTypeLabel(type: TimelineEvent['type']) {
   if (type === 'care') return 'Care action';
+  if (type === 'progress') return 'Progress';
   if (type === 'diagnosis') return 'Diagnosis';
   return 'Journal';
 }
 
 function timelineIcon(type: TimelineEvent['type']) {
   if (type === 'care') return '✓';
+  if (type === 'progress') return '+';
   if (type === 'diagnosis') return '!';
   return '•';
 }
 
 function timelineDotClass(type: TimelineEvent['type']) {
   if (type === 'care') return 'bg-emerald-700 text-white';
+  if (type === 'progress') return 'bg-lime-600 text-white';
   if (type === 'diagnosis') return 'bg-amber-500 text-white';
   return 'bg-sky-600 text-white';
 }

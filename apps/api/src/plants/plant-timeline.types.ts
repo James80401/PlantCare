@@ -1,4 +1,4 @@
-export type PlantTimelineEventType = 'journal' | 'care' | 'diagnosis';
+export type PlantTimelineEventType = 'journal' | 'care' | 'diagnosis' | 'progress';
 
 export interface PlantTimelineEventDto {
   id: string;
@@ -17,6 +17,7 @@ export interface PlantTimelineResponseDto {
     journal: number;
     care: number;
     diagnosis: number;
+    progress: number;
     total: number;
   };
 }

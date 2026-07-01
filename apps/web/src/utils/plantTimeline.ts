@@ -3,7 +3,7 @@ import type { TimelineEvent } from '../pages/plant-profile/types';
 export type PlantTimelineEventApi = {
   id: string;
   date: string;
-  type: 'journal' | 'care' | 'diagnosis';
+  type: 'journal' | 'care' | 'diagnosis' | 'progress';
   title: string;
   description: string;
   meta?: string;
@@ -17,6 +17,7 @@ export type PlantTimelineApiResponse = {
     journal: number;
     care: number;
     diagnosis: number;
+    progress: number;
     total: number;
   };
 };
@@ -41,6 +42,7 @@ export interface TimelineTypeCounts {
   journal: number;
   care: number;
   diagnosis: number;
+  progress: number;
 }
 
 export function countTimelineByType(events: TimelineEvent[]): TimelineTypeCounts {
@@ -50,7 +52,7 @@ export function countTimelineByType(events: TimelineEvent[]): TimelineTypeCounts
       counts[event.type] += 1;
       return counts;
     },
-    { all: 0, journal: 0, care: 0, diagnosis: 0 },
+    { all: 0, journal: 0, care: 0, diagnosis: 0, progress: 0 },
   );
 }
 
