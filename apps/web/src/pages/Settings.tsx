@@ -14,6 +14,7 @@ import {
   writeBuddyCompanionMode,
 } from '../hooks/buddy/displayMode';
 import type { BuddyCompanionMode } from '../hooks/buddy/types';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 interface LocationOption {
   latitude: number;
@@ -124,8 +125,8 @@ export default function Settings() {
       await refreshUser();
       setCarePrefsSaved(true);
       setTimeout(() => setCarePrefsSaved(false), 2000);
-    } catch {
-      setError('Could not save care preferences.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not save care preferences.'));
     }
   };
 

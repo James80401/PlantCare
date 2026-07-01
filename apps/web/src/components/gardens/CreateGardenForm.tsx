@@ -2,6 +2,7 @@ import { FormEvent, useState } from 'react';
 import { Button, Input } from '../ui';
 import { FormError } from '../a11y/FormError';
 import { gardensApi, type GardenSummary } from '../../services/api';
+import { formatApiErrorMessage } from '../../utils/apiError';
 
 type GardenEnvironment = 'Indoor' | 'Outdoor';
 
@@ -34,8 +35,8 @@ export function CreateGardenForm({
       onCreated(data);
       setName('');
       setEnvironment('Indoor');
-    } catch {
-      setError('Could not create the garden. Please try again.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not create the garden. Please try again.'));
     } finally {
       setSaving(false);
     }

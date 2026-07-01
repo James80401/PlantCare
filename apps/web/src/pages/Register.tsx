@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 import { trackEvent } from '../utils/analytics';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 export default function Register() {
   const { register } = useAuth();
@@ -43,8 +44,7 @@ export default function Register() {
       });
       navigate('/garden');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Could not create account. Email may already be in use.');
+      setError(formatApiErrorMessage(err, 'Could not create account. Email may already be in use.'));
     } finally {
       setLoading(false);
     }

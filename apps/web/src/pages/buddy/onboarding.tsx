@@ -6,6 +6,7 @@ import { Card } from '../../components/ui/Card';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { buddyApi } from '../../services/api';
 import type { BuddyTrait } from '../../hooks/buddy/types';
+import { formatApiErrorMessage } from '../../utils/apiError';
 
 export default function BuddyOnboarding() {
   const navigate = useNavigate();
@@ -23,8 +24,8 @@ export default function BuddyOnboarding() {
     try {
       await buddyApi.create({ name: name.trim(), speciesId, trait });
       navigate('/garden/buddy', { replace: true });
-    } catch {
-      setError('Could not create your buddy. You may already have one.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not create your buddy. You may already have one.'));
     } finally {
       setBusy(false);
     }

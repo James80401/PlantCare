@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { billingApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 type BillingStatus = {
   planTier: 'FREE' | 'PREMIUM';
@@ -34,7 +35,7 @@ export default function Subscription() {
     billingApi
       .status()
       .then(({ data }) => setStatus(data))
-      .catch(() => setError('Could not load subscription status.'));
+      .catch((err) => setError(formatApiErrorMessage(err, 'Could not load subscription status.')));
     void refreshUser();
   }, [refreshUser]);
 
@@ -44,8 +45,8 @@ export default function Subscription() {
     try {
       const { data } = await billingApi.checkout();
       window.location.href = data.url;
-    } catch {
-      setError('Could not start checkout. Try again in a moment.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not start checkout. Try again in a moment.'));
       setBusy(null);
     }
   };
@@ -56,8 +57,8 @@ export default function Subscription() {
     try {
       const { data } = await billingApi.portal();
       window.location.href = data.url;
-    } catch {
-      setError('Could not open subscription management.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not open subscription management.'));
       setBusy(null);
     }
   };

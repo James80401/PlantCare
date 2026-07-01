@@ -5,6 +5,7 @@ import { FormError } from '../../components/a11y/FormError';
 import { GardenCard } from '../../components/gardens/GardenCard';
 import { CreateGardenForm } from '../../components/gardens/CreateGardenForm';
 import { gardensApi, type GardenSummaryCard } from '../../services/api';
+import { formatApiErrorMessage } from '../../utils/apiError';
 
 export default function MyGardens() {
   const navigate = useNavigate();
@@ -19,8 +20,8 @@ export default function MyGardens() {
     try {
       const { data } = await gardensApi.summaries();
       setGardens(data);
-    } catch {
-      setError('Could not load your gardens.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not load your gardens.'));
     } finally {
       setLoading(false);
     }

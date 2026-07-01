@@ -13,6 +13,7 @@ import {
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { resolveApiAssetUrl } from '../utils/apiAssets';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 function PostComments({
   postId,
@@ -36,8 +37,8 @@ function PostComments({
     try {
       const { data } = await communityApi.listComments(postId);
       setComments(data);
-    } catch {
-      setError('Could not load comments.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not load comments.'));
     } finally {
       setLoading(false);
     }
@@ -55,8 +56,8 @@ function PostComments({
       await communityApi.createComment(postId, body.trim());
       setBody('');
       await load();
-    } catch {
-      setError('Could not post comment.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not post comment.'));
     } finally {
       setPosting(false);
     }
@@ -67,8 +68,8 @@ function PostComments({
     try {
       await communityApi.deleteComment(commentId);
       await load();
-    } catch {
-      setError('Could not delete comment.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not delete comment.'));
     }
   };
 
@@ -166,9 +167,12 @@ export default function Community() {
       setPosts((current) => (loadingMorePage ? [...current, ...data.posts] : data.posts));
       setNextCursor(data.nextCursor);
       setHasMore(data.hasMore);
-    } catch {
+    } catch (err) {
       setError(
-        loadingMorePage ? 'Could not load more posts.' : 'Could not load community posts.',
+        formatApiErrorMessage(
+          err,
+          loadingMorePage ? 'Could not load more posts.' : 'Could not load community posts.',
+        ),
       );
     } finally {
       if (loadingMorePage) setLoadingMore(false);
@@ -218,8 +222,8 @@ export default function Community() {
       setSpeciesId('');
       setSpeciesQuery('');
       await load();
-    } catch {
-      setError('Could not publish your post.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not publish your post.'));
     } finally {
       setPosting(false);
     }
@@ -230,8 +234,8 @@ export default function Community() {
     try {
       await communityApi.deletePost(postId);
       await load();
-    } catch {
-      setError('Could not delete post.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not delete post.'));
     }
   };
 
@@ -239,8 +243,8 @@ export default function Community() {
     try {
       await communityApi.toggleLike(postId);
       await load();
-    } catch {
-      setError('Could not update like.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not update like.'));
     }
   };
 

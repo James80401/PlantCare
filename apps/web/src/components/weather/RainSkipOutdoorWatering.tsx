@@ -3,6 +3,7 @@ import { addDays, isToday, isTomorrow, parseISO, startOfDay } from 'date-fns';
 import { plantsApi, tasksApi } from '../../services/api';
 import { isRainExposedLocation } from '../../utils/plantLocation';
 import type { TaskItem } from '../../utils/taskGroups';
+import { formatApiErrorMessage } from '../../utils/apiError';
 
 interface RainSkipOutdoorWateringProps {
   hasRainAlert: boolean;
@@ -48,8 +49,8 @@ export function RainSkipOutdoorWatering({ hasRainAlert }: RainSkipOutdoorWaterin
       } else {
         setShowConfirm(true);
       }
-    } catch {
-      setError('Could not load tasks to skip.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not load tasks to skip.'));
     } finally {
       setLoading(false);
     }
@@ -70,8 +71,8 @@ export function RainSkipOutdoorWatering({ hasRainAlert }: RainSkipOutdoorWaterin
       );
       setShowConfirm(false);
       setCandidates([]);
-    } catch {
-      setError('Could not skip all tasks. Refresh and try again.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not skip all tasks. Refresh and try again.'));
     } finally {
       setLoading(false);
     }

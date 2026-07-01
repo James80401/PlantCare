@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { usersApi } from '../../services/api';
 import { formatTemperatureRange, type TemperatureUnit } from '../../utils/temperature';
+import { formatApiErrorMessage } from '../../utils/apiError';
 import { RainSkipOutdoorWatering } from './RainSkipOutdoorWatering';
 
 interface WeatherAdvicePayload {
@@ -67,7 +68,7 @@ export function WeatherAdvicePanel() {
           setExpanded(true);
         }
       })
-      .catch(() => setError('Could not load weather status.'))
+      .catch((err) => setError(formatApiErrorMessage(err, 'Could not load weather status.')))
       .finally(() => setLoadingStatus(false));
   };
 

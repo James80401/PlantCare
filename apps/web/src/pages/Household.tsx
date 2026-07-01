@@ -7,6 +7,7 @@ import { gardensApi, plantsApi, type ActivityEventSummary, type GardenSummary } 
 import { useAuth } from '../context/AuthContext';
 import { formatActivityLabel } from '../utils/household';
 import { CreateGardenForm } from '../components/gardens/CreateGardenForm';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 export default function Household() {
   const { user } = useAuth();
@@ -33,8 +34,8 @@ export default function Household() {
       const [gardenRes, plantRes] = await Promise.all([gardensApi.mine(), plantsApi.list()]);
       setGardens(gardenRes.data);
       setMyPlants(plantRes.data);
-    } catch {
-      setError('Could not load households.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not load households.'));
     } finally {
       setLoading(false);
     }
@@ -69,8 +70,8 @@ export default function Household() {
             : 'Invite created — share the link or token below.',
       );
       await load();
-    } catch {
-      setMessage('Could not create invite.');
+    } catch (err) {
+      setMessage(formatApiErrorMessage(err, 'Could not create invite.'));
     }
   };
 
@@ -83,8 +84,8 @@ export default function Household() {
       setSharePlantId('');
       setMessage('Plant shared with household.');
       await load();
-    } catch {
-      setMessage('Could not share plant.');
+    } catch (err) {
+      setMessage(formatApiErrorMessage(err, 'Could not share plant.'));
     }
   };
 
@@ -97,8 +98,8 @@ export default function Household() {
       setAcceptToken('');
       setMessage('Invite accepted — welcome to the household.');
       await load();
-    } catch {
-      setMessage('Could not accept invite. Check the token and expiry.');
+    } catch (err) {
+      setMessage(formatApiErrorMessage(err, 'Could not accept invite. Check the token and expiry.'));
     }
   };
 

@@ -12,6 +12,7 @@ import { SkeletonGrid } from '../components/ui/Skeleton';
 import { Button } from '../components/ui/Button';
 import { speciesApi } from '../services/api';
 import { resolveApiThumbnailUrl } from '../utils/apiAssets';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 interface SpeciesItem {
   id: string;
@@ -124,9 +125,9 @@ export default function BrowsePlants() {
       .then((r) => {
         if (!cancelled) setResult(r.data);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
-          setError('Could not load plants. Try again in a moment.');
+          setError(formatApiErrorMessage(err, 'Could not load plants. Try again in a moment.'));
           setResult(null);
         }
       })

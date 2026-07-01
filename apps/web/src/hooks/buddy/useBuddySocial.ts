@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { FriendCardData } from '../../components/buddy/FriendCard';
 import { buddyApi } from '../../services/api';
+import { formatApiErrorMessage } from '../../utils/apiError';
 
 export function useBuddySocial() {
   const [friends, setFriends] = useState<FriendCardData[]>([]);
@@ -19,8 +20,8 @@ export function useBuddySocial() {
       ]);
       setFriends(f.data);
       setFeed(feedRes.data);
-    } catch {
-      setError('Could not load Garden Town');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not load Garden Town'));
     } finally {
       setLoading(false);
     }

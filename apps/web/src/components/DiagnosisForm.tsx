@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Textarea } from './ui/Input';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 interface DiagnosisFormProps {
   plantName: string;
@@ -67,8 +68,8 @@ export default function DiagnosisForm({ plantName, onSubmit }: DiagnosisFormProp
       setRecentCareChange('NONE');
       setPestsVisible(false);
       clearPhoto();
-    } catch {
-      setError('Could not run diagnosis. Try again in a moment.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not run diagnosis. Try again in a moment.'));
     } finally {
       setSubmitting(false);
     }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { tasksApi } from '../services/api';
 import { taskTypeLabel } from '../utils/tasks';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 export interface TaskScheduleExplanationModalProps {
   taskId: string;
@@ -30,7 +31,7 @@ export default function TaskScheduleExplanationModal({
     tasksApi
       .explanation(taskId)
       .then((r) => setExplanation(r.data))
-      .catch(() => setError('Could not load schedule explanation.'))
+      .catch((err) => setError(formatApiErrorMessage(err, 'Could not load schedule explanation.')))
       .finally(() => setLoading(false));
   }, [taskId]);
 

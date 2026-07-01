@@ -3,6 +3,7 @@ import { dashboardApi } from '../services/api';
 import type { DashboardPlant } from '../utils/dashboard';
 import type { SharedPlantView } from '../utils/household';
 import type { TaskItem } from '../utils/taskGroups';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 export interface DashboardAttention {
   plantId: string;
@@ -161,7 +162,7 @@ export function useDashboard() {
     return dashboardApi
       .get()
       .then((r) => setData(r.data))
-      .catch(() => setError('Could not load your dashboard.'))
+      .catch((err) => setError(formatApiErrorMessage(err, 'Could not load your dashboard.')))
       .finally(() => setLoading(false));
   }, []);
 

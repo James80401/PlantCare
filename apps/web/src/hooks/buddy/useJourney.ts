@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { buddyApi } from '../../services/api';
 import type { JourneyResponse, JourneyState } from './types';
+import { formatApiErrorMessage } from '../../utils/apiError';
 
 export function useJourney(enabled: boolean) {
   const [data, setData] = useState<JourneyResponse | null>(null);
@@ -13,8 +14,8 @@ export function useJourney(enabled: boolean) {
     try {
       const res = await buddyApi.getJourney();
       setData(res.data);
-    } catch {
-      setError('Could not load journey status.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not load journey status.'));
     } finally {
       setLoading(false);
     }

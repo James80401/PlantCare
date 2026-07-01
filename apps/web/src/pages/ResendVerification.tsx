@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { authApi } from '../services/api';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 export default function ResendVerification() {
   const [email, setEmail] = useState('');
@@ -17,8 +18,7 @@ export default function ResendVerification() {
       const { data } = await authApi.resendVerification(email);
       setMessage(data.message);
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || 'Could not send verification email.');
+      setError(formatApiErrorMessage(err, 'Could not send verification email.'));
     } finally {
       setLoading(false);
     }

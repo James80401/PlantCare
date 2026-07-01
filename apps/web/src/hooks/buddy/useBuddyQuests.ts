@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { buddyApi } from '../../services/api';
 import type { QuestCardData } from '../../components/buddy/QuestCard';
+import { formatApiErrorMessage } from '../../utils/apiError';
 
 export interface MonthlyChallengeView {
   challengeId: string;
@@ -32,8 +33,8 @@ export function useBuddyQuests() {
     try {
       const { data: res } = await buddyApi.getQuests();
       setData(res);
-    } catch {
-      setError('Failed to load quests');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Failed to load quests'));
     } finally {
       setLoading(false);
     }

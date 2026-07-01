@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { gardensApi, type GardenDetail } from '../services/api';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 /** Shared loader for the Garden Dashboard and its subsection pages. */
 export function useGardenDetail(gardenId: string | undefined) {
@@ -14,8 +15,8 @@ export function useGardenDetail(gardenId: string | undefined) {
     try {
       const { data } = await gardensApi.detail(gardenId);
       setGarden(data);
-    } catch {
-      setError('Could not load this garden.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not load this garden.'));
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { diagnosisApi } from '../services/api';
 import { taskTypeLabel } from '../utils/tasks';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 export type RecoverySuggestion = {
   key: string;
@@ -46,8 +47,8 @@ export default function RecoveryTasksPanel({
         data.filter((s) => !s.alreadyScheduled).map((s) => s.key),
       );
       setSelected(defaults);
-    } catch {
-      setError('Could not load recovery task suggestions.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not load recovery task suggestions.'));
       setSuggestions([]);
     } finally {
       setLoading(false);
@@ -84,8 +85,8 @@ export default function RecoveryTasksPanel({
       );
       await load();
       onApplied?.(data.length);
-    } catch {
-      setError('Could not add recovery tasks. They may already be scheduled.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not add recovery tasks. They may already be scheduled.'));
     } finally {
       setApplying(false);
     }

@@ -6,6 +6,7 @@ import { useDialogA11y } from '../hooks/useDialogA11y';
 import { StructuredCareSectionCard } from './care/StructuredCareSectionCard';
 import { tasksApi } from '../services/api';
 import { taskTypeLabel } from '../utils/tasks';
+import { formatApiErrorMessage } from '../utils/apiError';
 import type { CareDetailLevel } from '../pages/plant-profile/types';
 
 export interface TaskInstructionsModalProps {
@@ -71,7 +72,7 @@ export default function TaskInstructionsModal({
     tasksApi
       .instructions(taskId)
       .then((r) => setGuide(r.data))
-      .catch(() => setError('Could not load care instructions.'))
+      .catch((err) => setError(formatApiErrorMessage(err, 'Could not load care instructions.')))
       .finally(() => setLoading(false));
   }, [taskId]);
 

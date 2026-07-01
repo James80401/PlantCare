@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/Button';
 import { adminApi, usersApi } from '../../services/api';
 import type { BuddyState } from '../../hooks/buddy/types';
 import type { ShopItem, ShopItemCategory } from '../../hooks/buddy/shopTypes';
+import { formatApiErrorMessage } from '../../utils/apiError';
 
 type ManagedUser = {
   id: string;
@@ -256,9 +257,9 @@ export default function AdminRegistrations() {
   }, []);
 
   useEffect(() => {
-    load().catch(() => {
+    load().catch((err) => {
       setIsAdmin(false);
-      setError('Could not load admin data.');
+      setError(formatApiErrorMessage(err, 'Could not load admin data.'));
     });
   }, [load]);
 
@@ -268,8 +269,8 @@ export default function AdminRegistrations() {
     try {
       await adminApi.approve(userId);
       await load();
-    } catch {
-      setError('Approve failed.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Approve failed.'));
     } finally {
       setBusyId(null);
     }
@@ -281,8 +282,8 @@ export default function AdminRegistrations() {
     try {
       await adminApi.reject(userId);
       await load();
-    } catch {
-      setError('Reject failed.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Reject failed.'));
     } finally {
       setBusyId(null);
     }
@@ -294,8 +295,8 @@ export default function AdminRegistrations() {
     try {
       await adminApi.disable(userId);
       await load();
-    } catch {
-      setError('Disable failed.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Disable failed.'));
     } finally {
       setBusyId(null);
     }
@@ -307,8 +308,8 @@ export default function AdminRegistrations() {
     try {
       await adminApi.unpauseAi(userId);
       await load();
-    } catch {
-      setError('AI unpause failed.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'AI unpause failed.'));
     } finally {
       setBusyId(null);
     }
@@ -324,8 +325,8 @@ export default function AdminRegistrations() {
       await adminApi.setBuddyLevel(buddyId, level);
       setBuddyLevelDrafts((drafts) => ({ ...drafts, [buddyId]: String(level) }));
       await load();
-    } catch {
-      setError('Buddy level update failed.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Buddy level update failed.'));
     } finally {
       setBusyId(null);
     }
@@ -338,8 +339,10 @@ export default function AdminRegistrations() {
       if (owned) await adminApi.lockBuddyItem(buddyId, itemId);
       else await adminApi.unlockBuddyItem(buddyId, itemId);
       await load();
-    } catch {
-      setError(owned ? 'Buddy item lock failed.' : 'Buddy item unlock failed.');
+    } catch (err) {
+      setError(
+        formatApiErrorMessage(err, owned ? 'Buddy item lock failed.' : 'Buddy item unlock failed.'),
+      );
     } finally {
       setBusyId(null);
     }
@@ -351,8 +354,8 @@ export default function AdminRegistrations() {
     try {
       await adminApi.reviewExternalSpecies(speciesId, status);
       await load();
-    } catch {
-      setError('External species review update failed.');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'External species review update failed.'));
     } finally {
       setBusyId(null);
     }

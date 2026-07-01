@@ -7,6 +7,7 @@ import {
 } from '../components/species/SpeciesMetadataPanel';
 import { speciesApi } from '../services/api';
 import { resolveApiAssetUrl } from '../utils/apiAssets';
+import { formatApiErrorMessage } from '../utils/apiError';
 
 interface SpeciesDetail {
   id: string;
@@ -39,8 +40,8 @@ export default function SpeciesBrowseDetail() {
       .then(({ data }) => {
         if (!cancelled) setSpecies(data);
       })
-      .catch(() => {
-        if (!cancelled) setError('Could not load this species.');
+      .catch((err) => {
+        if (!cancelled) setError(formatApiErrorMessage(err, 'Could not load this species.'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
