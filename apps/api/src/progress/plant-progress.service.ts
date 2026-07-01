@@ -9,6 +9,7 @@ import { sharedPlantInclude, userCanJournalPlant, userCanViewPlantTasks } from '
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { CreatePlantProgressDto } from './dto/create-plant-progress.dto';
+import { UpdatePlantProgressDto } from './dto/update-plant-progress.dto';
 
 type ProgressAnalysis = {
   summary: string;
@@ -17,6 +18,16 @@ type ProgressAnalysis = {
   trend: 'improving' | 'stable' | 'watch' | 'declining';
   nextCheckInDays: number;
   flags: string[];
+};
+
+type ProgressCheckInInput = {
+  overallHealth: string;
+  growthChange?: string | null;
+  leafCondition?: string | null;
+  soilMoisture?: string | null;
+  pestSigns?: string | null;
+  recentCare?: string | null;
+  notes?: string | null;
 };
 
 const PROGRESS_CHECK_INTERVAL_DAYS = 14;
@@ -152,6 +163,86 @@ export class PlantProgressService {
     return entry;
   }
 
+  async update(
+    userId: string,
+    plantId: string,
+    entryId: string,
+    dto: UpdatePlantProgressDto,
+    file?: Express.Multer.File,
+  ) {
+    const plant = await this.assertPlant(userId, plantId, { write: true });
+    const entry = await this.prisma.plantProgressEntry.findFirst({
+      where: { id: entryId, plantId, userId },
+    });
+    if (!entry) throw new NotFoundException('Progress check-in not found');
+
+    if (file) {
+      await this.imageModeration.assertImageAllowed(file, {
+        feature: 'plant_progress_update',
+        userId,
+      });
+    }
+
+    const nextDto = this.mergeProgressUpdate(entry, dto);
+    const contentChanged = this.progressContentChanged(entry, nextDto);
+    const photoChanged = Boolean(file || dto.removePhoto);
+    let photoUrl = entry.photoUrl;
+    let analysis: ProgressAnalysis | null = null;
+
+    if (dto.removePhoto) photoUrl = null;
+    if (file) photoUrl = await this.upload.saveFile(file);
+
+    if (contentChanged || photoChanged) {
+      const previousEntries = await this.prisma.plantProgressEntry.findMany({
+        where: { plantId, id: { not: entryId } },
+        orderBy: { createdAt: 'desc' },
+        take: 8,
+      });
+      analysis = await this.analyzeProgress({
+        userId,
+        plantId,
+        plant,
+        dto: nextDto,
+        previousEntries,
+        imageBase64: file?.buffer.toString('base64'),
+        imageMimeType: file?.mimetype,
+      });
+    }
+
+    return this.prisma.plantProgressEntry.update({
+      where: { id: entryId },
+      data: {
+        overallHealth: nextDto.overallHealth,
+        growthChange: nextDto.growthChange || null,
+        leafCondition: nextDto.leafCondition || null,
+        soilMoisture: nextDto.soilMoisture || null,
+        pestSigns: nextDto.pestSigns || null,
+        recentCare: nextDto.recentCare || null,
+        notes: nextDto.notes?.trim() || null,
+        photoUrl,
+        ...(analysis
+          ? {
+              analysisSummary: analysis.summary,
+              adviceText: analysis.advice,
+              storyJson: JSON.stringify(analysis),
+            }
+          : {}),
+      },
+    });
+  }
+
+  async remove(userId: string, plantId: string, entryId: string) {
+    await this.assertPlant(userId, plantId, { write: true });
+    const entry = await this.prisma.plantProgressEntry.findFirst({
+      where: { id: entryId, plantId, userId },
+      select: { id: true },
+    });
+    if (!entry) throw new NotFoundException('Progress check-in not found');
+
+    await this.prisma.plantProgressEntry.delete({ where: { id: entryId } });
+    return { deleted: true };
+  }
+
   private async assertPlant(userId: string, plantId: string, opts: { write: boolean }) {
     const plant = await this.prisma.plant.findFirst({
       where: { id: plantId },
@@ -167,7 +258,7 @@ export class PlantProgressService {
     userId: string;
     plantId: string;
     plant: Awaited<ReturnType<PlantProgressService['assertPlant']>>;
-    dto: CreatePlantProgressDto;
+    dto: ProgressCheckInInput;
     previousEntries: Array<{
       createdAt: Date;
       overallHealth: string;
@@ -238,7 +329,7 @@ export class PlantProgressService {
 
   private buildProgressPrompt(
     plant: Awaited<ReturnType<PlantProgressService['assertPlant']>>,
-    dto: CreatePlantProgressDto,
+    dto: ProgressCheckInInput,
     previousEntries: Array<{
       createdAt: Date;
       overallHealth: string;
@@ -330,7 +421,7 @@ export class PlantProgressService {
   }
 
   private fallbackAnalysis(
-    dto: CreatePlantProgressDto,
+    dto: ProgressCheckInInput,
     previousEntries: Array<{ overallHealth: string; createdAt: Date }>,
   ): ProgressAnalysis {
     const latest = this.label(dto.overallHealth).toLowerCase();
@@ -424,5 +515,32 @@ export class PlantProgressService {
   private label(value?: string | null) {
     if (!value) return '';
     return FIELD_LABELS[value] ?? value.replace(/_/g, ' ').toLowerCase();
+  }
+
+  private mergeProgressUpdate(
+    entry: ProgressCheckInInput,
+    dto: UpdatePlantProgressDto,
+  ): ProgressCheckInInput {
+    return {
+      overallHealth: dto.overallHealth ?? entry.overallHealth,
+      growthChange: dto.growthChange !== undefined ? dto.growthChange : entry.growthChange,
+      leafCondition: dto.leafCondition !== undefined ? dto.leafCondition : entry.leafCondition,
+      soilMoisture: dto.soilMoisture !== undefined ? dto.soilMoisture : entry.soilMoisture,
+      pestSigns: dto.pestSigns !== undefined ? dto.pestSigns : entry.pestSigns,
+      recentCare: dto.recentCare !== undefined ? dto.recentCare : entry.recentCare,
+      notes: dto.notes !== undefined ? dto.notes.trim() || null : entry.notes,
+    };
+  }
+
+  private progressContentChanged(entry: ProgressCheckInInput, next: ProgressCheckInInput) {
+    return (
+      entry.overallHealth !== next.overallHealth ||
+      (entry.growthChange || null) !== (next.growthChange || null) ||
+      (entry.leafCondition || null) !== (next.leafCondition || null) ||
+      (entry.soilMoisture || null) !== (next.soilMoisture || null) ||
+      (entry.pestSigns || null) !== (next.pestSigns || null) ||
+      (entry.recentCare || null) !== (next.recentCare || null) ||
+      (entry.notes?.trim() || null) !== (next.notes?.trim() || null)
+    );
   }
 }

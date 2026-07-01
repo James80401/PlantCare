@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
   UploadedFile,
   UseGuards,
@@ -14,6 +16,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { imageUploadOptions } from '../common/upload-options';
 import { CreatePlantProgressDto } from './dto/create-plant-progress.dto';
+import { UpdatePlantProgressDto } from './dto/update-plant-progress.dto';
 import { PlantProgressService } from './plant-progress.service';
 
 @ApiTags('plant-progress')
@@ -37,5 +40,26 @@ export class PlantProgressController {
     @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.progress.create(user.sub, plantId, dto, file);
+  }
+
+  @Patch(':entryId')
+  @UseInterceptors(FileInterceptor('photo', imageUploadOptions))
+  update(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('entryId') entryId: string,
+    @Body() dto: UpdatePlantProgressDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.progress.update(user.sub, plantId, entryId, dto, file);
+  }
+
+  @Delete(':entryId')
+  remove(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('entryId') entryId: string,
+  ) {
+    return this.progress.remove(user.sub, plantId, entryId);
   }
 }

@@ -290,13 +290,17 @@ export const journalApi = {
 
 export type PlantProgressPayload = {
   overallHealth: string;
-  growthChange?: string;
-  leafCondition?: string;
-  soilMoisture?: string;
-  pestSigns?: string;
-  recentCare?: string;
-  notes?: string;
+  growthChange?: string | null;
+  leafCondition?: string | null;
+  soilMoisture?: string | null;
+  pestSigns?: string | null;
+  recentCare?: string | null;
+  notes?: string | null;
   taskId?: string;
+};
+
+export type PlantProgressUpdatePayload = Omit<PlantProgressPayload, 'taskId'> & {
+  removePhoto?: boolean;
 };
 
 export const plantProgressApi = {
@@ -314,6 +318,26 @@ export const plantProgressApi = {
     if (photo) form.append('photo', photo);
     return api.post(`/plants/${plantId}/progress`, form);
   },
+  update: (
+    plantId: string,
+    entryId: string,
+    payload: PlantProgressUpdatePayload,
+    photo?: File,
+  ) => {
+    const form = new FormData();
+    form.append('overallHealth', payload.overallHealth);
+    form.append('growthChange', payload.growthChange ?? '');
+    form.append('leafCondition', payload.leafCondition ?? '');
+    form.append('soilMoisture', payload.soilMoisture ?? '');
+    form.append('pestSigns', payload.pestSigns ?? '');
+    form.append('recentCare', payload.recentCare ?? '');
+    if (payload.notes !== undefined) form.append('notes', payload.notes ?? '');
+    if (payload.removePhoto) form.append('removePhoto', 'true');
+    if (photo) form.append('photo', photo);
+    return api.patch(`/plants/${plantId}/progress/${entryId}`, form);
+  },
+  remove: (plantId: string, entryId: string) =>
+    api.delete(`/plants/${plantId}/progress/${entryId}`),
 };
 
 export const diagnosisApi = {

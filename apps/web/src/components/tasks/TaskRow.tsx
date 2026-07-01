@@ -58,6 +58,9 @@ export default function TaskRow({
   const skipPanelId = `skip-panel-${task.id}`;
   const snoozePanelId = `snooze-panel-${task.id}`;
   const completePanelId = `complete-panel-${task.id}`;
+  const progressCheckInPath = `/garden/plants/${task.plant.id}/journal?progressTask=${encodeURIComponent(
+    task.id,
+  )}#progress-check-in`;
 
   const rowClass = [
     'task-row group relative flex gap-3 rounded-2xl border px-3 py-3.5 transition-all duration-300 sm:px-4',
@@ -186,6 +189,14 @@ export default function TaskRow({
                 taskType={task.taskType}
                 plantLabel={plantLabel}
               />
+              {task.taskType === 'HEALTH_CHECK' ? (
+                <Link
+                  to={progressCheckInPath}
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-lime-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-lime-800"
+                >
+                  Record progress
+                </Link>
+              ) : null}
               <button
                 type="button"
                 onClick={() => setCompleteFeedbackOpen((open) => !open)}

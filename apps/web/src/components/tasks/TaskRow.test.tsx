@@ -67,6 +67,15 @@ describe('TaskRow', () => {
     expect(onSnooze).toHaveBeenCalledWith('task-1', 7);
   });
 
+  it('links health checks to the plant progress check-in form', () => {
+    renderRow({ task: makeTask({ taskType: 'HEALTH_CHECK' }) });
+
+    expect(screen.getByRole('link', { name: 'Record progress' })).toHaveAttribute(
+      'href',
+      '/garden/plants/plant-1/journal?progressTask=task-1#progress-check-in',
+    );
+  });
+
   it('renders terminal states without action buttons', () => {
     const { rerender } = render(
       <MemoryRouter>

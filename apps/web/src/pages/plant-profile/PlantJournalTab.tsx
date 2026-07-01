@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
+import { useLocation } from 'react-router-dom';
 import { GrowthMeasurementsPanel } from '../../components/journal/GrowthMeasurementsPanel';
 import JournalPhotoCompare from '../../components/JournalPhotoCompare';
-import { plantProgressApi } from '../../services/api';
+import { plantProgressApi, type PlantProgressPayload } from '../../services/api';
 import { resolveApiAssetUrl } from '../../utils/apiAssets';
 import {
   extractMeasurementPoints,
@@ -92,6 +93,8 @@ export default function PlantJournalTab() {
 
 function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecord[] }) {
   const ctx = usePlantProfile();
+  const location = useLocation();
+  const formRef = useRef<HTMLFormElement | null>(null);
   const [overallHealth, setOverallHealth] = useState('STABLE');
   const [growthChange, setGrowthChange] = useState('');
   const [leafCondition, setLeafCondition] = useState('');
@@ -102,17 +105,38 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoInputKey, setPhotoInputKey] = useState(0);
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [busyEntryId, setBusyEntryId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [latestResult, setLatestResult] = useState<PlantRecord | null>(null);
 
-  const pendingRoutineCheck = ctx.pending.find(
-    (task) => task.taskType === 'HEALTH_CHECK' && !task.sourceDiagnosisId,
+  const progressTaskId = useMemo(
+    () => new URLSearchParams(location.search).get('progressTask') || '',
+    [location.search],
   );
+  const pendingHealthChecks = ctx.pending.filter((task) => task.taskType === 'HEALTH_CHECK');
+  const pendingRoutineCheck =
+    pendingHealthChecks.find((task) => task.id === progressTaskId) ||
+    pendingHealthChecks.find((task) => !task.sourceDiagnosisId);
   const latestProgress = progressEntries[0];
+  const isEditing = Boolean(editingEntryId);
+  const previewUrl = photoPreview || (existingPhotoUrl ? resolveApiAssetUrl(existingPhotoUrl) : null);
+  const progressMilestones = useMemo(() => progressBadges(progressEntries), [progressEntries]);
+
+  useEffect(() => {
+    if (location.hash !== '#progress-check-in') return;
+    window.setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      formRef.current?.querySelector('select')?.focus();
+    }, 50);
+  }, [location.hash, location.search]);
 
   const setProgressPhoto = (file: File | null) => {
     setPhoto(file);
+    if (file) setRemovePhoto(false);
     setPhotoPreview((current) => {
       if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
       return file ? URL.createObjectURL(file) : null;
@@ -120,52 +144,114 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
   };
 
   const clearPhoto = () => {
-    setProgressPhoto(null);
+    setPhoto(null);
+    setPhotoPreview((current) => {
+      if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+      return null;
+    });
+    setExistingPhotoUrl(null);
+    setRemovePhoto(true);
     setPhotoInputKey((key) => key + 1);
   };
+
+  const resetForm = () => {
+    setOverallHealth('STABLE');
+    setGrowthChange('');
+    setLeafCondition('');
+    setSoilMoisture('');
+    setPestSigns('');
+    setRecentCare('');
+    setNotes('');
+    setEditingEntryId(null);
+    setExistingPhotoUrl(null);
+    setRemovePhoto(false);
+    setPhoto(null);
+    setPhotoPreview((current) => {
+      if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+      return null;
+    });
+    setPhotoInputKey((key) => key + 1);
+  };
+
+  const startEdit = (entry: PlantRecord) => {
+    setEditingEntryId(entry.id as string);
+    setOverallHealth((entry.overallHealth as string) || 'STABLE');
+    setGrowthChange((entry.growthChange as string) || '');
+    setLeafCondition((entry.leafCondition as string) || '');
+    setSoilMoisture((entry.soilMoisture as string) || '');
+    setPestSigns((entry.pestSigns as string) || '');
+    setRecentCare((entry.recentCare as string) || '');
+    setNotes((entry.notes as string) || '');
+    setPhoto(null);
+    setPhotoPreview((current) => {
+      if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+      return null;
+    });
+    setExistingPhotoUrl((entry.photoUrl as string | null) || null);
+    setRemovePhoto(false);
+    setPhotoInputKey((key) => key + 1);
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const progressPayload = (): PlantProgressPayload => ({
+    overallHealth,
+    growthChange: growthChange || null,
+    leafCondition: leafCondition || null,
+    soilMoisture: soilMoisture || null,
+    pestSigns: pestSigns || null,
+    recentCare: recentCare || null,
+    notes: notes.trim() || null,
+  });
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
     setSaving(true);
     try {
-      const { data } = await plantProgressApi.create(
-        ctx.id,
-        {
-          overallHealth,
-          growthChange: growthChange || undefined,
-          leafCondition: leafCondition || undefined,
-          soilMoisture: soilMoisture || undefined,
-          pestSigns: pestSigns || undefined,
-          recentCare: recentCare || undefined,
-          notes: notes.trim() || undefined,
-          taskId: pendingRoutineCheck?.id as string | undefined,
-        },
-        photo ?? undefined,
-      );
+      const payload = progressPayload();
+      const { data } = editingEntryId
+        ? await plantProgressApi.update(
+            ctx.id,
+            editingEntryId,
+            { ...payload, removePhoto },
+            photo ?? undefined,
+          )
+        : await plantProgressApi.create(
+            ctx.id,
+            { ...payload, taskId: pendingRoutineCheck?.id as string | undefined },
+            photo ?? undefined,
+          );
       setLatestResult(data);
-      setOverallHealth('STABLE');
-      setGrowthChange('');
-      setLeafCondition('');
-      setSoilMoisture('');
-      setPestSigns('');
-      setRecentCare('');
-      setNotes('');
-      clearPhoto();
+      resetForm();
       await ctx.load();
     } catch {
-      setError('Could not save this progress check-in.');
+      setError(isEditing ? 'Could not update this progress check-in.' : 'Could not save this progress check-in.');
     } finally {
       setSaving(false);
     }
   };
 
+  const deleteEntry = async (entryId: string) => {
+    if (!window.confirm('Delete this progress check-in? This cannot be undone.')) return;
+    setBusyEntryId(entryId);
+    setError('');
+    try {
+      await plantProgressApi.remove(ctx.id, entryId);
+      if (editingEntryId === entryId) resetForm();
+      await ctx.load();
+    } catch {
+      setError('Could not delete this progress check-in.');
+    } finally {
+      setBusyEntryId(null);
+    }
+  };
+
   return (
-    <section className="mt-5 rounded-2xl border border-lime-100 bg-lime-50/40 p-4">
+    <section id="progress-check-in" className="mt-5 rounded-2xl border border-lime-100 bg-lime-50/40 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">
-            Plant progress
+            Plant Life
           </p>
           <h3 className="mt-1 font-semibold text-emerald-950">
             Check in on {ctx.plantLabel}
@@ -181,7 +267,25 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)]">
-        <form onSubmit={submit} className="space-y-4 rounded-2xl bg-white/75 p-4 ring-1 ring-lime-100">
+        <form
+          ref={formRef}
+          onSubmit={submit}
+          className="space-y-4 rounded-2xl bg-white/75 p-4 ring-1 ring-lime-100"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-emerald-950">
+              {isEditing ? 'Edit progress check-in' : 'New progress check-in'}
+            </p>
+            {isEditing ? (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-lime-50"
+              >
+                Cancel edit
+              </button>
+            ) : null}
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <ProgressSelect
               label="Overall health"
@@ -245,10 +349,10 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
               }}
               className="mt-2 block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-lime-700 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
             />
-            {photoPreview ? (
+            {previewUrl ? (
               <div className="mt-3 space-y-2">
                 <img
-                  src={photoPreview}
+                  src={previewUrl}
                   alt="Progress check-in preview"
                   className="max-h-48 w-full rounded-2xl border border-lime-100 object-cover"
                 />
@@ -281,13 +385,20 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
             disabled={saving}
             className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-lime-700 px-5 py-2 text-sm font-semibold text-white hover:bg-lime-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {saving ? 'Checking in...' : 'Save progress check-in'}
+            {saving ? 'Checking in...' : isEditing ? 'Update progress check-in' : 'Save progress check-in'}
           </button>
         </form>
 
         <div className="space-y-3">
           <ProgressSummaryCard entry={latestResult || latestProgress} />
-          <ProgressHistoryList entries={progressEntries.slice(0, 3)} />
+          <ProgressTrendStrip entries={progressEntries} />
+          <ProgressMilestones badges={progressMilestones} />
+          <ProgressHistoryList
+            entries={progressEntries}
+            busyEntryId={busyEntryId}
+            onEdit={startEdit}
+            onDelete={deleteEntry}
+          />
         </div>
       </div>
     </section>
@@ -339,12 +450,27 @@ function ProgressSummaryCard({ entry }: { entry?: PlantRecord | null }) {
     );
   }
 
+  const story = parseProgressStory(entry.storyJson);
+  const createdAt = entry.createdAt ? new Date(entry.createdAt as string) : null;
+
   return (
     <div className="rounded-2xl border border-lime-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
       <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">Latest story</p>
-      <h4 className="mt-1 font-semibold text-emerald-950">
-        {progressHealthLabel(entry.overallHealth as string)}
-      </h4>
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        <h4 className="font-semibold text-emerald-950">
+          {progressHealthLabel(entry.overallHealth as string)}
+        </h4>
+        {story.trend ? (
+          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${trendClass(story.trend)}`}>
+            {trendLabel(story.trend)}
+          </span>
+        ) : null}
+      </div>
+      {createdAt ? (
+        <p className="mt-1 text-xs text-gray-500">
+          Logged {formatDistanceToNow(createdAt, { addSuffix: true })}
+        </p>
+      ) : null}
       {entry.analysisSummary ? (
         <p className="mt-2 text-sm leading-6 text-gray-700">{entry.analysisSummary as string}</p>
       ) : null}
@@ -352,6 +478,18 @@ function ProgressSummaryCard({ entry }: { entry?: PlantRecord | null }) {
         <p className="mt-3 rounded-2xl bg-lime-50 px-3 py-2 text-sm leading-6 text-lime-950 ring-1 ring-lime-100">
           {entry.adviceText as string}
         </p>
+      ) : null}
+      {story.flags.length ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {story.flags.map((flag) => (
+            <span
+              key={flag}
+              className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-100"
+            >
+              {flag}
+            </span>
+          ))}
+        </div>
       ) : null}
       {entry.photoUrl ? (
         <img
@@ -365,25 +503,123 @@ function ProgressSummaryCard({ entry }: { entry?: PlantRecord | null }) {
   );
 }
 
-function ProgressHistoryList({ entries }: { entries: PlantRecord[] }) {
+function ProgressTrendStrip({ entries }: { entries: PlantRecord[] }) {
+  if (!entries.length) return null;
+  const ordered = [...entries]
+    .sort((a, b) => new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime())
+    .slice(-8);
+
+  return (
+    <div className="rounded-2xl border border-lime-100 bg-white p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-emerald-950">Health trend</p>
+        <p className="text-xs text-gray-500">Last {ordered.length}</p>
+      </div>
+      <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${ordered.length}, minmax(0, 1fr))` }}>
+        {ordered.map((entry) => {
+          const score = healthScore(entry.overallHealth as string);
+          return (
+            <div key={entry.id as string} className="flex flex-col items-center gap-1">
+              <div className="flex h-16 w-full items-end rounded-xl bg-lime-50 px-1 pb-1">
+                <div
+                  className={`w-full rounded-lg ${healthBarClass(entry.overallHealth as string)}`}
+                  style={{ height: `${score}%` }}
+                  title={progressHealthLabel(entry.overallHealth as string)}
+                />
+              </div>
+              <time className="text-[0.65rem] font-medium text-gray-500">
+                {format(new Date(entry.createdAt as string), 'M/d')}
+              </time>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ProgressMilestones({ badges }: { badges: string[] }) {
+  if (!badges.length) return null;
+  return (
+    <div className="rounded-2xl border border-lime-100 bg-white p-4">
+      <p className="text-sm font-semibold text-emerald-950">Progress markers</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {badges.map((badge) => (
+          <span
+            key={badge}
+            className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100"
+          >
+            {badge}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProgressHistoryList({
+  entries,
+  busyEntryId,
+  onEdit,
+  onDelete,
+}: {
+  entries: PlantRecord[];
+  busyEntryId: string | null;
+  onEdit: (entry: PlantRecord) => void;
+  onDelete: (entryId: string) => void;
+}) {
   if (!entries.length) return null;
   return (
     <div className="rounded-2xl border border-lime-100 bg-white p-4">
-      <p className="text-sm font-semibold text-emerald-950">Recent progress</p>
+      <p className="text-sm font-semibold text-emerald-950">Plant Life history</p>
       <div className="mt-3 space-y-3">
         {entries.map((entry) => (
           <div key={entry.id as string} className="border-t border-lime-50 pt-3 first:border-t-0 first:pt-0">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-gray-800">
-                {progressHealthLabel(entry.overallHealth as string)}
-              </p>
-              <time className="text-xs text-gray-400">
-                {format(new Date(entry.createdAt as string), 'MMM d')}
-              </time>
+            <div className="flex gap-3">
+              {entry.photoUrl ? (
+                <img
+                  src={resolveApiAssetUrl(entry.photoUrl as string) ?? undefined}
+                  alt="Progress check-in"
+                  className="h-14 w-14 rounded-xl object-cover"
+                  loading="lazy"
+                />
+              ) : null}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-gray-800">
+                    {progressHealthLabel(entry.overallHealth as string)}
+                  </p>
+                  <time className="shrink-0 text-xs text-gray-400">
+                    {format(new Date(entry.createdAt as string), 'MMM d')}
+                  </time>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-gray-600">
+                  {summarizeProgressEntry(entry)}
+                </p>
+                {entry.analysisSummary ? (
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-gray-500">
+                    {entry.analysisSummary as string}
+                  </p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(entry)}
+                    className="rounded-full bg-lime-50 px-3 py-1 text-xs font-semibold text-lime-800 hover:bg-lime-100"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busyEntryId === entry.id}
+                    onClick={() => onDelete(entry.id as string)}
+                    className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                  >
+                    {busyEntryId === entry.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
             </div>
-            <p className="mt-1 text-xs leading-5 text-gray-600">
-              {summarizeProgressEntry(entry)}
-            </p>
           </div>
         ))}
       </div>
@@ -889,6 +1125,89 @@ function summarizeProgressEntry(entry: PlantRecord) {
   if (parts.length) return parts.join(' - ');
   if (entry.notes) return String(entry.notes).slice(0, 90);
   return 'Check-in saved';
+}
+
+function parseProgressStory(value: unknown): {
+  trend?: 'improving' | 'stable' | 'watch' | 'declining';
+  flags: string[];
+} {
+  if (typeof value !== 'string' || !value.trim()) return { flags: [] };
+  try {
+    const parsed = JSON.parse(value) as { trend?: string; flags?: unknown };
+    const trend = ['improving', 'stable', 'watch', 'declining'].includes(parsed.trend || '')
+      ? (parsed.trend as 'improving' | 'stable' | 'watch' | 'declining')
+      : undefined;
+    const flags = Array.isArray(parsed.flags)
+      ? parsed.flags.filter((flag): flag is string => typeof flag === 'string').slice(0, 4)
+      : [];
+    return { trend, flags };
+  } catch {
+    return { flags: [] };
+  }
+}
+
+function trendLabel(trend: string) {
+  return (
+    {
+      improving: 'Improving',
+      stable: 'Stable',
+      watch: 'Watch',
+      declining: 'Declining',
+    }[trend] || 'Trend'
+  );
+}
+
+function trendClass(trend: string) {
+  if (trend === 'improving') return 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100';
+  if (trend === 'declining') return 'bg-rose-50 text-rose-800 ring-1 ring-rose-100';
+  if (trend === 'watch') return 'bg-amber-50 text-amber-900 ring-1 ring-amber-100';
+  return 'bg-lime-50 text-lime-900 ring-1 ring-lime-100';
+}
+
+function healthScore(value?: string) {
+  return (
+    {
+      THRIVING: 100,
+      STABLE: 72,
+      CONCERNED: 44,
+      DECLINING: 22,
+    }[value || ''] || 50
+  );
+}
+
+function healthBarClass(value?: string) {
+  if (value === 'THRIVING') return 'bg-emerald-500';
+  if (value === 'STABLE') return 'bg-lime-500';
+  if (value === 'CONCERNED') return 'bg-amber-400';
+  if (value === 'DECLINING') return 'bg-rose-400';
+  return 'bg-gray-300';
+}
+
+function progressBadges(entries: PlantRecord[]) {
+  const badges: string[] = [];
+  if (entries.length >= 1) badges.push('Baseline saved');
+  if (entries.length >= 3) badges.push('Three check-ins');
+  if (entries.some((entry) => entry.photoUrl)) badges.push('Photo record');
+  if (entries.some((entry) => entry.growthChange === 'NEW_GROWTH')) badges.push('New growth noted');
+  if (entries.slice(0, 3).every((entry) => ['THRIVING', 'STABLE'].includes(entry.overallHealth as string))) {
+    badges.push('Stable streak');
+  }
+  if (hasRecoveryMoment(entries)) badges.push('Recovery signal');
+  return badges.slice(0, 6);
+}
+
+function hasRecoveryMoment(entries: PlantRecord[]) {
+  const ordered = [...entries].sort(
+    (a, b) => new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime(),
+  );
+  return ordered.some((entry, index) => {
+    if (index === 0) return false;
+    const previous = ordered[index - 1];
+    return (
+      ['CONCERNED', 'DECLINING'].includes(previous.overallHealth as string) &&
+      ['STABLE', 'THRIVING'].includes(entry.overallHealth as string)
+    );
+  });
 }
 
 function pickLatestEntry(entries: PlantRecord[]): PlantRecord | null {
