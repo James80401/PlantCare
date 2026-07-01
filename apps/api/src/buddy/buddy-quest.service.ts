@@ -75,12 +75,19 @@ export class BuddyQuestService {
       throw new BadRequestException('Reward already claimed');
     }
 
-    await this.prisma.$transaction([
-      this.prisma.buddyQuestProgress.update({
-        where: { id: progress.id },
+    const fresh = await this.prisma.$transaction(async (tx) => {
+      // Atomic conditional claim: only proceeds if the reward hasn't already been
+      // claimed at write time, so two concurrent claims can't both award the payout
+      // off the same stale pre-transaction read.
+      const claimed = await tx.buddyQuestProgress.updateMany({
+        where: { id: progress.id, rewardClaimed: false },
         data: { rewardClaimed: true },
-      }),
-      this.prisma.buddy.update({
+      });
+      if (claimed.count === 0) {
+        throw new BadRequestException('Reward already claimed');
+      }
+
+      return tx.buddy.update({
         where: { id: buddy.id },
         data: {
           dewdrops: { increment: progress.quest.rewardDewdrops },
@@ -88,16 +95,15 @@ export class BuddyQuestService {
             increment: BUDDY_XP_REWARDS.QUEST_CLAIM_BASE + progress.quest.rewardDewdrops,
           },
         },
-      }),
-    ]);
+      });
+    });
 
-    const fresh = await this.prisma.buddy.findUnique({ where: { id: buddy.id } });
     return {
       questId,
       dewdropsAwarded: progress.quest.rewardDewdrops,
       experienceAwarded: BUDDY_XP_REWARDS.QUEST_CLAIM_BASE + progress.quest.rewardDewdrops,
-      dewdrops: fresh?.dewdrops ?? buddy.dewdrops,
-      levelProgress: fresh ? buddyLevelProgress(fresh.experiencePoints) : undefined,
+      dewdrops: fresh.dewdrops,
+      levelProgress: buddyLevelProgress(fresh.experiencePoints),
     };
   }
 
