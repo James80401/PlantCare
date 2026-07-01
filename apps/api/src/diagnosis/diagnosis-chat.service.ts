@@ -11,6 +11,7 @@ import { UploadService } from '../upload/upload.service';
 import { WeatherService } from '../weather/weather.service';
 import { ImageModerationService } from '../common/image-moderation.service';
 import { AiUsageService } from '../ai-usage/ai-usage.service';
+import { sharedPlantInclude, userCanCompletePlantTask } from '../gardens/task-access';
 import { LlmDiagnosisService, type ChatTurn, type PlantContext } from './llm-diagnosis.service';
 import { OpenAiRequestError } from './openai-errors';
 import {
@@ -56,10 +57,12 @@ export class DiagnosisChatService {
 
   private async getPlantForUser(userId: string, plantId: string) {
     const plant = await this.prisma.plant.findFirst({
-      where: { id: plantId, userId },
-      include: { species: true },
+      where: { id: plantId },
+      include: { species: true, ...sharedPlantInclude },
     });
-    if (!plant) throw new NotFoundException('Plant not found');
+    if (!plant || !userCanCompletePlantTask(userId, plant)) {
+      throw new NotFoundException('Plant not found');
+    }
     return plant;
   }
 

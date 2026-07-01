@@ -13,6 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { ImageModerationService } from '../common/image-moderation.service';
 import { AiUsageService } from '../ai-usage/ai-usage.service';
+import { sharedPlantInclude, userCanCompletePlantTask } from '../gardens/task-access';
 import { formatLabel, getAdvice } from './diagnosis-advice';
 import { ApplyRecoveryTasksDto } from './dto/apply-recovery-tasks.dto';
 import { FollowUpTaskDto } from './dto/follow-up-task.dto';
@@ -71,10 +72,12 @@ export class DiagnosisService {
     intake?: DiagnosisIntake,
   ) {
     const plant = await this.prisma.plant.findFirst({
-      where: { id: plantId, userId },
-      include: { species: true },
+      where: { id: plantId },
+      include: { species: true, ...sharedPlantInclude },
     });
-    if (!plant) throw new NotFoundException('Plant not found');
+    if (!plant || !userCanCompletePlantTask(userId, plant)) {
+      throw new NotFoundException('Plant not found');
+    }
 
     await this.aiUsage.assertPlantIntentOrThrow({
       feature: 'diagnosis',
@@ -385,9 +388,12 @@ export class DiagnosisService {
 
   private async assertDiagnosis(userId: string, plantId: string, diagnosisId: string) {
     const diagnosis = await this.prisma.diagnosis.findFirst({
-      where: { id: diagnosisId, plantId, plant: { userId } },
+      where: { id: diagnosisId, plantId },
+      include: { plant: { include: sharedPlantInclude } },
     });
-    if (!diagnosis) throw new NotFoundException('Diagnosis not found');
+    if (!diagnosis || !userCanCompletePlantTask(userId, diagnosis.plant)) {
+      throw new NotFoundException('Diagnosis not found');
+    }
     return diagnosis;
   }
 

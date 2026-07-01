@@ -1,8 +1,12 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DiagnosisService } from './diagnosis.service';
 
+const OWNED_PLANT = { userId: 'user-1', garden: null, shares: [] };
+
 describe('DiagnosisService', () => {
-  function createService(diagnosis: unknown = { id: 'diagnosis-1' }) {
+  function createService(
+    diagnosis: unknown = { id: 'diagnosis-1', plant: OWNED_PLANT },
+  ) {
     const prisma = {
       diagnosis: {
         findFirst: jest.fn().mockResolvedValue(diagnosis),
@@ -50,7 +54,8 @@ describe('DiagnosisService', () => {
 
     expect(result.resolved).toBe(true);
     expect(prisma.diagnosis.findFirst).toHaveBeenCalledWith({
-      where: { id: 'diagnosis-1', plantId: 'plant-1', plant: { userId: 'user-1' } },
+      where: { id: 'diagnosis-1', plantId: 'plant-1' },
+      include: { plant: { include: expect.any(Object) } },
     });
     expect(prisma.diagnosis.update).toHaveBeenCalledWith({
       where: { id: 'diagnosis-1' },
@@ -73,6 +78,7 @@ describe('DiagnosisService', () => {
         immediateActions: ['Water lightly', 'Inspect for pests'],
       }),
       adviceText: null,
+      plant: OWNED_PLANT,
     });
 
     const suggestions = await service.getRecoverySuggestions(
@@ -94,6 +100,7 @@ describe('DiagnosisService', () => {
       id: 'diagnosis-1',
       detailJson,
       adviceText: null,
+      plant: OWNED_PLANT,
     });
 
     const suggestions = await service.getRecoverySuggestions(
@@ -154,6 +161,67 @@ describe('DiagnosisService', () => {
         notes: 'Health check follow-up in 3 days: Check lower leaves',
       },
     });
+  });
+});
+
+describe('DiagnosisService.diagnose shared-plant access', () => {
+  function makeService(plant: unknown) {
+    const prisma = {
+      plant: { findFirst: jest.fn().mockResolvedValue(plant) },
+      diagnosis: { create: jest.fn().mockResolvedValue({ id: 'd-1' }) },
+    };
+    const service = new DiagnosisService(
+      prisma as never,
+      { saveFile: jest.fn() } as never,
+      { get: jest.fn() } as never,
+      { isAvailable: jest.fn().mockReturnValue(false) } as never,
+      { assertImageAllowed: jest.fn().mockResolvedValue(null) } as never,
+      {
+        assertPlantIntentOrThrow: jest.fn().mockResolvedValue(undefined),
+        reserveCall: jest.fn().mockResolvedValue(undefined),
+      } as never,
+    );
+    return { service, prisma };
+  }
+
+  it('lets a garden caregiver diagnose a plant shared with completion rights', async () => {
+    const { service } = makeService({
+      id: 'plant-1',
+      userId: 'owner',
+      garden: null,
+      species: { commonName: 'Pothos', scientificName: 'Epipremnum aureum', wateringFreqDays: 7 },
+      shares: [
+        {
+          canComplete: true,
+          canJournal: false,
+          garden: { members: [{ userId: 'caregiver-1', role: 'CAREGIVER' }] },
+        },
+      ],
+    });
+
+    await expect(
+      service.diagnose('caregiver-1', 'plant-1', undefined, 'yellow leaves'),
+    ).resolves.toBeDefined();
+  });
+
+  it('blocks a garden viewer from diagnosing a shared plant', async () => {
+    const { service } = makeService({
+      id: 'plant-1',
+      userId: 'owner',
+      garden: null,
+      species: { commonName: 'Pothos', scientificName: 'Epipremnum aureum', wateringFreqDays: 7 },
+      shares: [
+        {
+          canComplete: true,
+          canJournal: false,
+          garden: { members: [{ userId: 'viewer-1', role: 'VIEWER' }] },
+        },
+      ],
+    });
+
+    await expect(
+      service.diagnose('viewer-1', 'plant-1', undefined, 'yellow leaves'),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
 

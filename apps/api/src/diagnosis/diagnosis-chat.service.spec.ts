@@ -2,15 +2,21 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DiagnosisChatService } from './diagnosis-chat.service';
 
 describe('DiagnosisChatService actions', () => {
-  function createService(messages: unknown[] = [{ id: 'msg-1', role: 'assistant', content: 'Check soil moisture.' }]) {
+  function createService(
+    messages: unknown[] = [{ id: 'msg-1', role: 'assistant', content: 'Check soil moisture.' }],
+    plantOverrides: Record<string, unknown> = {},
+  ) {
     const prisma = {
       plant: {
         findFirst: jest.fn().mockResolvedValue({
           id: 'plant-1',
           userId: 'user-1',
+          garden: null,
+          shares: [],
           location: 'Living room',
           potSize: 'MEDIUM',
           species: { commonName: 'Snake Plant', wateringFreqDays: 14 },
+          ...plantOverrides,
         }),
         findUnique: jest.fn().mockResolvedValue({ gardenId: 'garden-1' }),
       },
@@ -221,5 +227,37 @@ describe('DiagnosisChatService actions', () => {
         }),
       }),
     );
+  });
+
+  describe('shared-garden plant access', () => {
+    it('lets a caregiver with completion rights on a shared plant use Dr. Plant', async () => {
+      const { service } = createService(undefined, {
+        userId: 'owner',
+        garden: null,
+        shares: [
+          {
+            canComplete: true,
+            canJournal: false,
+            garden: { members: [{ userId: 'caregiver-1', role: 'CAREGIVER' }] },
+          },
+        ],
+      });
+
+      await expect(
+        service.getGuidedContextQuestions('caregiver-1', 'plant-1', 'conv-1'),
+      ).resolves.toBeDefined();
+    });
+
+    it('rejects a user with no relationship to the plant', async () => {
+      const { service } = createService(undefined, {
+        userId: 'owner',
+        garden: null,
+        shares: [],
+      });
+
+      await expect(
+        service.getGuidedContextQuestions('stranger', 'plant-1', 'conv-1'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
   });
 });
