@@ -53,7 +53,7 @@ export class AuthService implements OnModuleInit {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already registered');
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const passwordHash = await bcrypt.hash(dto.password, 12);
     const smtpEnabled = this.email.isConfigured();
     const approvalRequired = requiresAdminApproval(this.config);
     const autoApprove = !approvalRequired || isAdminEmail(this.config, dto.email);
@@ -228,7 +228,7 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Invalid or expired reset link');
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const passwordHash = await bcrypt.hash(newPassword, 12);
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
