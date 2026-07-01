@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { ImageModerationService } from '../common/image-moderation.service';
+import { sharedPlantInclude, userCanJournalPlant, userCanViewPlantTasks } from '../gardens/task-access';
 import { CreateJournalDto } from './dto/create-journal.dto';
 import { UpdateJournalDto } from './dto/update-journal.dto';
 
@@ -14,7 +15,7 @@ export class JournalService {
   ) {}
 
   async findAll(userId: string, plantId: string) {
-    await this.assertPlant(userId, plantId);
+    await this.assertPlant(userId, plantId, { write: false });
     return this.prisma.journalEntry.findMany({
       where: { plantId },
       orderBy: { createdAt: 'desc' },
@@ -27,7 +28,7 @@ export class JournalService {
     dto: CreateJournalDto,
     file?: Express.Multer.File,
   ) {
-    await this.assertPlant(userId, plantId);
+    await this.assertPlant(userId, plantId, { write: true });
     if (!file && !dto.notes?.trim()) {
       throw new BadRequestException('Add a note or photo.');
     }
@@ -59,7 +60,7 @@ export class JournalService {
     dto: UpdateJournalDto,
     file?: Express.Multer.File,
   ) {
-    await this.assertPlant(userId, plantId);
+    await this.assertPlant(userId, plantId, { write: true });
     const entry = await this.prisma.journalEntry.findFirst({
       where: { id: entryId, plantId },
     });
@@ -93,7 +94,7 @@ export class JournalService {
   }
 
   async remove(userId: string, plantId: string, entryId: string) {
-    await this.assertPlant(userId, plantId);
+    await this.assertPlant(userId, plantId, { write: true });
     const entry = await this.prisma.journalEntry.findFirst({
       where: { id: entryId, plantId },
     });
@@ -103,8 +104,13 @@ export class JournalService {
     return { deleted: true };
   }
 
-  private async assertPlant(userId: string, plantId: string) {
-    const plant = await this.prisma.plant.findFirst({ where: { id: plantId, userId } });
-    if (!plant) throw new NotFoundException('Plant not found');
+  private async assertPlant(userId: string, plantId: string, opts: { write: boolean }) {
+    const plant = await this.prisma.plant.findFirst({
+      where: { id: plantId },
+      include: sharedPlantInclude,
+    });
+    const allowed =
+      plant && (opts.write ? userCanJournalPlant(userId, plant) : userCanViewPlantTasks(userId, plant));
+    if (!allowed) throw new NotFoundException('Plant not found');
   }
 }

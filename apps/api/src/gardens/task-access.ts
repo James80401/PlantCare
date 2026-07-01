@@ -1,6 +1,7 @@
 import {
   canCompleteSharedTask,
   canEditGarden,
+  canJournalSharedPlant,
   canViewGarden,
   parseGardenRole,
 } from './garden-authz';
@@ -14,6 +15,7 @@ type SharedPlant = {
   garden?: GardenMembers | null;
   shares: Array<{
     canComplete: boolean;
+    canJournal: boolean;
     garden: GardenMembers;
   }>;
 };
@@ -45,6 +47,19 @@ export function userCanCompletePlantTask(userId: string, plant: SharedPlant) {
   for (const share of plant.shares) {
     const role = memberRole(share.garden, userId);
     if (role && canCompleteSharedTask(role, share)) return true;
+  }
+  return false;
+}
+
+export function userCanJournalPlant(userId: string, plant: SharedPlant) {
+  if (plant.userId === userId) return true;
+  // Home-garden owners/caretakers can journal.
+  const homeRole = memberRole(plant.garden, userId);
+  if (homeRole && canEditGarden(homeRole)) return true;
+  // Shared-into-garden members per their share permissions.
+  for (const share of plant.shares) {
+    const role = memberRole(share.garden, userId);
+    if (role && canJournalSharedPlant(role, share)) return true;
   }
   return false;
 }
