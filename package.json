@@ -28,6 +28,7 @@
     "species:photos:verify": "node scripts/verify-species-photos.mjs",
     "species:photos:audit-licenses": "node scripts/audit-species-photo-licenses.mjs",
     "species:photos:optimize": "node scripts/optimize-species-photos.mjs",
+    "species:photos:prepare-downloads": "node scripts/prepare-species-photo-downloads.mjs",
     "species:photos:list-missing": "node scripts/list-missing-species-photos.mjs",
     "build": "npm run build -w @plant-care/shared && npm run build -w @plant-care/api && npm run build -w @plant-care/web",
     "mobile:copy": "npm run mobile:copy -w @plant-care/web",

@@ -5,7 +5,12 @@ import {
   serializeSpeciesMetadata,
 } from '../apps/api/src/species/species-metadata';
 import { speciesCatalog, speciesSeedId } from './data/species-catalog';
-import { legacySpeciesSeedId, resolveSpeciesPhotoFileKey, speciesPhotoUrl } from './data/species-photo-utils';
+import {
+  legacySpeciesSeedId,
+  loadSpeciesPhotoManifest,
+  resolveSpeciesPhotoFileKey,
+  speciesPhotoUrl,
+} from './data/species-photo-utils';
 import { seedCareGuides } from './seed-care-guides';
 import { seedBuddyShop } from './seed-buddy-shop';
 import { seedBuddyQuests } from './seed-buddy-quests';
@@ -22,6 +27,7 @@ const speciesPhotosDir = join(
   'photos',
   'species',
 );
+const speciesPhotoManifest = loadSpeciesPhotoManifest();
 
 
 async function main() {
@@ -44,11 +50,12 @@ async function main() {
     const targetId = legacyInUse > 0 && legacyId !== id ? legacyId : id;
     const existing = await prisma.plantSpecies.findUnique({ where: { id: targetId } });
 
-    const speciesData = { ...s } as typeof s & { defaultImageUrl?: string; metadataJson?: string };
-    const photoKey = resolveSpeciesPhotoFileKey(targetId, s, speciesPhotosDir);
-    if (photoKey) {
-      speciesData.defaultImageUrl = speciesPhotoUrl(photoKey);
-    }
+    const speciesData = { ...s } as typeof s & {
+      defaultImageUrl?: string | null;
+      metadataJson?: string;
+    };
+    const photoKey = resolveSpeciesPhotoFileKey(targetId, s, speciesPhotosDir, speciesPhotoManifest);
+    speciesData.defaultImageUrl = photoKey ? speciesPhotoUrl(photoKey) : null;
     speciesData.metadataJson = serializeSpeciesMetadata(buildMetadataForSpecies(s));
 
     await prisma.plantSpecies.upsert({

@@ -1515,3 +1515,1158 @@ Photo by David J. Stang, some rights reserved (CC BY-SA)
 - License: cc0
 - no rights reserved
 - https://www.inaturalist.org/observations/346521942
+
+## Pothos
+- Scientific: *Epipremnum aureum*
+- License: cc-by
+- (c) Lisa Bennett, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/371834258
+
+## Golden Pothos
+- Scientific: *Epipremnum aureum*
+- License: cc-by
+- (c) Lisa Bennett, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/371834258
+
+## Marble Queen Pothos
+- Scientific: *Epipremnum aureum*
+- License: cc-by
+- (c) Lisa Bennett, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/371834258
+
+## Fiddle Leaf Fig
+- Scientific: *Ficus lyrata*
+- License: cc-by
+- (c) Ong Jyh Seng, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/331369803
+
+## ZZ Plant
+- Scientific: *Zamioculcas zamiifolia*
+- License: cc-by-sa
+- (c) Tony Rebelo, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/observations/366813209
+
+## Rubber Plant
+- Scientific: *Ficus elastica*
+- License: cc-by
+- (c) Josiah Londerée, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/365827536
+
+## Pink Princess Philodendron
+- Scientific: *Philodendron erubescens*
+- License: cc-by
+- (c) Anders Hastings, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/339916778
+
+## Split-Leaf Philodendron
+- Scientific: *Thaumatophyllum bipinnatifidum*
+- License: cc-by
+- (c) Marcello Mastroianni Albuquerque Araújo, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/372992056
+
+## Chinese Evergreen
+- Scientific: *Aglaonema*
+- License: cc-by-sa
+- (c) KENPEI, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/425335
+
+## Dieffenbachia
+- Scientific: *Dieffenbachia seguine*
+- License: cc-by
+- (c) Abdul Hanif Arromy, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/374535762
+
+## Bird of Paradise
+- Scientific: *Strelitzia reginae*
+- License: cc-by-sa
+- (c) Mokkie, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/163641
+
+## String of Hearts
+- Scientific: *Ceropegia woodii*
+- License: cc-by
+- (c) katuchka, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/331458955
+
+## Croton
+- Scientific: *Codiaeum variegatum*
+- License: cc0
+- no rights reserved, uploaded by Ingo Renner
+- https://www.inaturalist.org/taxa/76484
+
+## Cast Iron Plant
+- Scientific: *Aspidistra elatior*
+- License: cc-by
+- (c) Cheng-Tao Lin, some rights reserved (CC BY), uploaded by Cheng-Tao Lin
+- https://www.inaturalist.org/taxa/1268000
+
+## Parlor Palm
+- Scientific: *Chamaedorea elegans*
+- License: cc-by
+- (c) Daniel Acosta, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/354842961
+
+## Majesty Palm
+- Scientific: *Ravenea rivularis*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/33974016
+
+## Corn Plant
+- Scientific: *Dracaena fragrans*
+- License: cc-by
+- (c) ashleyrsteel, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/364434226
+
+## Lucky Bamboo
+- Scientific: *Dracaena sanderiana*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/343740787
+
+## Jade Plant
+- Scientific: *Crassula ovata*
+- License: cc-by-sa
+- (c) Tony Rebelo, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/observations/376350841
+
+## Money Tree
+- Scientific: *Pachira aquatica*
+- License: cc-by
+- (c) birdzilla, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/375581375
+
+## Orchid Phalaenopsis
+- Scientific: *Phalaenopsis*
+- License: cc-by-sa
+- (c) 
+Orchi, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/524950
+
+## Bromeliad
+- Scientific: *Guzmania*
+- License: cc-by
+- (c) Yuri Sofronov, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376757882
+
+## Air Plant
+- Scientific: *Tillandsia*
+- License: cc-by
+- (c) Trish Hartmann, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/169768
+
+## Oxalis
+- Scientific: *Oxalis triangularis*
+- License: cc-by-sa
+- (c) jacinta lluch valero, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/53168
+
+## Nerve Plant
+- Scientific: *Fittonia albivenis*
+- License: cc-by
+- (c) Elizabeth Axley, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/333655270
+
+## Watermelon Peperomia
+- Scientific: *Peperomia argyreia*
+- License: CC BY-SA 4.0
+- Jerzy Opioła
+- https://commons.wikimedia.org/wiki/File%3APeperomia%20argyreia%201-OB9.jpg
+
+## Pilea Peperomioides
+- Scientific: *Pilea peperomioides*
+- License: CC BY-SA 3.0
+- Michael Wolf
+- https://commons.wikimedia.org/wiki/File%3APilea%20peperomioides%2002.jpg
+
+## Tradescantia
+- Scientific: *Tradescantia zebrina*
+- License: cc-by
+- (c) Jason Hollinger, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/169880
+
+## Arrowhead Plant
+- Scientific: *Syngonium podophyllum*
+- License: cc-by
+- (c) portioid, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/368766287
+
+## Boston Fern
+- Scientific: *Nephrolepis exaltata*
+- License: cc-by
+- (c) Kevin Faccenda, some rights reserved (CC BY), uploaded by Kevin Faccenda
+- https://www.inaturalist.org/taxa/448563
+
+## Maidenhair Fern
+- Scientific: *Adiantum*
+- License: cc-by
+- (c) Franco Folini, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/56032
+
+## Birds Nest Fern
+- Scientific: *Asplenium nidus*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/366532197
+
+## Echeveria
+- Scientific: *Echeveria elegans*
+- License: cc0
+- no rights reserved, uploaded by Jon Ferreira
+- https://www.inaturalist.org/taxa/282763
+
+## Burros Tail
+- Scientific: *Sedum morganianum*
+- License: CC0
+- Paradoxurus
+- https://commons.wikimedia.org/wiki/File%3ASedum%20morganianum%20(donkey's%20tail).jpg
+
+## Christmas Cactus
+- Scientific: *Schlumbergera*
+- License: pd
+- Wayne Ray, no known copyright restrictions (public domain)
+- https://www.inaturalist.org/taxa/51224
+
+## Thanksgiving Cactus
+- Scientific: *Schlumbergera truncata*
+- License: cc-by
+- (c) Pablo Cauã da Silva Toledo, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/367265824
+
+## Prickly Pear
+- Scientific: *Opuntia*
+- License: cc-by
+- (c) Russell Pfau, some rights reserved (CC BY), uploaded by Russell Pfau
+- https://www.inaturalist.org/taxa/78264
+
+## Lithops
+- Scientific: *Lithops*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/358870616
+
+## Graptopetalum
+- Scientific: *Graptopetalum paraguayense*
+- License: cc-by-sa
+- (c) Salicyna, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/157227
+
+## Sempervivum
+- Scientific: *Sempervivum tectorum*
+- License: cc-by
+- (c) chrisdt, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/375941353
+
+## Agave
+- Scientific: *Agave americana*
+- License: cc-by
+- (c) Sterling Sheehy, some rights reserved (CC BY), uploaded by Sterling Sheehy
+- https://www.inaturalist.org/taxa/50821
+
+## Basil
+- Scientific: *Ocimum basilicum*
+- License: cc-by
+- (c) Nick Tobler (Cowturtle), some rights reserved (CC BY), uploaded by Nick Tobler (Cowturtle)
+- https://www.inaturalist.org/taxa/33118
+
+## Sweet Basil
+- Scientific: *Ocimum basilicum*
+- License: cc-by
+- (c) Guillaume Delaitre, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/352648668
+
+## Rosemary
+- Scientific: *Salvia rosmarinus*
+- License: cc-by
+- (c) Jerry Kirkhart, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/63364
+
+## Thyme
+- Scientific: *Thymus vulgaris*
+- License: cc-by
+- (c) Frank Sengpiel, some rights reserved (CC BY), uploaded by Frank Sengpiel
+- https://www.inaturalist.org/taxa/128544
+
+## Magic Carpet Thyme
+- Scientific: *Thymus praecox*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/376454226
+
+## Sage
+- Scientific: *Salvia officinalis*
+- License: cc-by
+- (c) NatureShutterbug, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/53357
+
+## Parsley
+- Scientific: *Petroselinum crispum*
+- License: cc-by-sa
+- (c) Douglas Goldman, some rights reserved (CC BY-SA), uploaded by Douglas Goldman
+- https://www.inaturalist.org/taxa/133918
+
+## Chives
+- Scientific: *Allium schoenoprasum*
+- License: cc-by
+- (c) Oleg Kosterin, some rights reserved (CC BY), uploaded by Oleg Kosterin
+- https://www.inaturalist.org/taxa/708885
+
+## Lavender
+- Scientific: *Lavandula angustifolia*
+- License: cc-by
+- (c) Andrey Zharkikh, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/413974
+
+## Chamomile
+- Scientific: *Matricaria chamomilla*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/376943162
+
+## Lemongrass
+- Scientific: *Cymbopogon citratus*
+- License: cc0
+- no rights reserved, uploaded by Peter de Lange
+- https://www.inaturalist.org/taxa/343297
+
+## Bay Laurel
+- Scientific: *Laurus nobilis*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/376537459
+
+## Fennel
+- Scientific: *Foeniculum vulgare*
+- License: cc-by
+- (c) Daniel Heras González, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/377106425
+
+## Stevia
+- Scientific: *Stevia rebaudiana*
+- License: CC BY-SA 3.0
+- Sten Porse
+- https://commons.wikimedia.org/wiki/File%3AStevia-rebaudiana-total.JPG
+
+## Thai Basil
+- Scientific: *Ocimum basilicum var. thyrsiflora*
+- License: cc-by
+- (c) Guillaume Delaitre, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/352648668
+
+## Genovese Basil
+- Scientific: *Ocimum basilicum*
+- License: cc-by
+- (c) Guillaume Delaitre, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/352648668
+
+## Flat-Leaf Parsley
+- Scientific: *Petroselinum crispum*
+- License: cc-by
+- (c) Petr Harant, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/361507573
+
+## Curly Parsley
+- Scientific: *Petroselinum crispum*
+- License: cc-by
+- (c) Petr Harant, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/361507573
+
+## Winter Savory
+- Scientific: *Satureja montana*
+- License: cc-by-sa
+- (c) Emanuele Santarelli, some rights reserved (CC BY-SA), uploaded by Emanuele Santarelli
+- https://www.inaturalist.org/taxa/521349
+
+## Borage
+- Scientific: *Borago officinalis*
+- License: cc-by
+- (c) Jamie O'Neill, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376826810
+
+## Shiso
+- Scientific: *Perilla frutescens*
+- License: cc-by
+- (c) Anne Parker, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376512273
+
+## Culantro
+- Scientific: *Eryngium foetidum*
+- License: cc-by
+- (c) Arturo Benavides Mendoza, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/347422317
+
+## Garlic Chives
+- Scientific: *Allium tuberosum*
+- License: cc-by
+- (c) Becca, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/345783160
+
+## Green Onion
+- Scientific: *Allium fistulosum*
+- License: cc-by
+- (c) Алёна Осипова, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/357618323
+
+## Leek
+- Scientific: *Allium ampeloprasum*
+- License: cc-by-sa
+- (c) Douglas Goldman, some rights reserved (CC BY-SA), uploaded by Douglas Goldman
+- https://www.inaturalist.org/taxa/1457593
+
+## Shallot
+- Scientific: *Allium cepa*
+- License: cc-by-sa
+- (c) AnnLazaro, some rights reserved (CC BY-SA), uploaded by AnnLazaro
+- https://www.inaturalist.org/taxa/239137
+
+## Horseradish
+- Scientific: *Armoracia rusticana*
+- License: cc-by
+- (c) jamie-aa, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376965961
+
+## Calendula
+- Scientific: *Calendula officinalis*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/374823927
+
+## Tomato
+- Scientific: *Solanum lycopersicum*
+- License: cc-by-sa
+- (c) TOURDERA, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/observations/376204618
+
+## Cherry Tomato
+- Scientific: *Solanum lycopersicum*
+- License: cc-by-sa
+- (c) TOURDERA, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/observations/376204618
+
+## Zucchini
+- Scientific: *Cucurbita pepo*
+- License: pd
+- George Chernilevsky, no known copyright restrictions (public domain)
+- https://www.inaturalist.org/taxa/1599236
+
+## Lettuce
+- Scientific: *Lactuca sativa*
+- License: cc-by-sa
+- (c) George F Mayfield, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/53107
+
+## Spinach
+- Scientific: *Spinacia oleracea*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/302812611
+
+## Kale
+- Scientific: *Brassica oleracea*
+- License: cc-by
+- (c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl
+- https://www.inaturalist.org/taxa/75869
+
+## Broccoli
+- Scientific: *Brassica oleracea*
+- License: cc-by
+- (c) zemlya, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/374520420
+
+## Cauliflower
+- Scientific: *Brassica oleracea*
+- License: cc-by
+- (c) Ryan McMinds, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/109875
+
+## Beet
+- Scientific: *Beta vulgaris*
+- License: pd
+- Francisco Welter-Schultes, no known copyright restrictions (public domain)
+- https://www.inaturalist.org/taxa/48484
+
+## Onion
+- Scientific: *Allium cepa*
+- License: cc-by
+- (c) Jason Sturner, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/75371
+
+## Garlic
+- Scientific: *Allium sativum*
+- License: cc-by
+- (c) Jason Sturner, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/75371
+
+## Eggplant
+- Scientific: *Solanum melongena*
+- License: cc-by
+- (c) skitterbug, some rights reserved (CC BY), uploaded by skitterbug
+- https://www.inaturalist.org/taxa/472014
+
+## Green Bean
+- Scientific: *Phaseolus vulgaris*
+- License: cc-by
+- (c) Lyrae, some rights reserved (CC BY), uploaded by Lyrae
+- https://www.inaturalist.org/taxa/122849
+
+## Pea
+- Scientific: *Pisum sativum*
+- License: cc-by
+- (c) S. Rae, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/207977
+
+## Corn
+- Scientific: *Zea mays*
+- License: cc-by-sa
+- (c) Andreas Rockstein, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/47435
+
+## Asparagus
+- Scientific: *Asparagus officinalis*
+- License: cc-by-sa
+- (c) Valérie, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/244101
+
+## Pumpkin
+- Scientific: *Cucurbita pepo*
+- License: pd
+- George Chernilevsky, no known copyright restrictions (public domain)
+- https://www.inaturalist.org/taxa/1599236
+
+## Butternut Squash
+- Scientific: *Cucurbita moschata*
+- License: cc-by
+- (c) chiuluan, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/371168870
+
+## Swiss Chard
+- Scientific: *Beta vulgaris*
+- License: cc-by-sa
+- (c) 
+Jerzy Opioła, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/381536
+
+## Bok Choy
+- Scientific: *Brassica rapa*
+- License: cc-by
+- (c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl
+- https://www.inaturalist.org/taxa/75869
+
+## Brussels Sprouts
+- Scientific: *Brassica oleracea*
+- License: cc-by
+- (c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl
+- https://www.inaturalist.org/taxa/75869
+
+## Cabbage
+- Scientific: *Brassica oleracea*
+- License: cc-by
+- (c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl
+- https://www.inaturalist.org/taxa/75869
+
+## Napa Cabbage
+- Scientific: *Brassica rapa*
+- License: cc-by
+- (c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl
+- https://www.inaturalist.org/taxa/75869
+
+## Kohlrabi
+- Scientific: *Brassica oleracea*
+- License: cc-by
+- (c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl
+- https://www.inaturalist.org/taxa/75869
+
+## Turnip
+- Scientific: *Brassica rapa*
+- License: cc-by
+- (c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl
+- https://www.inaturalist.org/taxa/75869
+
+## Collard Greens
+- Scientific: *Brassica oleracea*
+- License: cc-by
+- (c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl
+- https://www.inaturalist.org/taxa/75869
+
+## Mustard Greens
+- Scientific: *Brassica juncea*
+- License: cc-by
+- (c) Maxim K., some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/370733978
+
+## Mizuna
+- Scientific: *Brassica rapa*
+- License: cc-by
+- (c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl
+- https://www.inaturalist.org/taxa/75869
+
+## Tatsoi
+- Scientific: *Brassica rapa*
+- License: cc-by
+- (c) Pavel Kacl, some rights reserved (CC BY), uploaded by Pavel Kacl
+- https://www.inaturalist.org/taxa/75869
+
+## Okra
+- Scientific: *Abelmoschus esculentus*
+- License: cc-by-sa
+- (c) Giovanna Roque de Castro, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/observations/350623509
+
+## Watermelon
+- Scientific: *Citrullus lanatus*
+- License: cc-by-sa
+- (c) Andrew Hankey, some rights reserved (CC BY-SA), uploaded by Andrew Hankey
+- https://www.inaturalist.org/taxa/659467
+
+## Cantaloupe
+- Scientific: *Cucumis melo*
+- License: pd
+- Lombroso, no known copyright restrictions (public domain)
+- https://www.inaturalist.org/taxa/542061
+
+## Honeydew Melon
+- Scientific: *Cucumis melo*
+- License: pd
+- Lombroso, no known copyright restrictions (public domain)
+- https://www.inaturalist.org/taxa/542061
+
+## Rhubarb
+- Scientific: *Rheum rhabarbarum*
+- License: cc-by-sa
+- (c) Udo Schmidt, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/168227
+
+## Sugar Snap Pea
+- Scientific: *Pisum sativum*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/366010945
+
+## Snow Pea
+- Scientific: *Pisum sativum*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/366010945
+
+## Fava Bean
+- Scientific: *Vicia faba*
+- License: cc-by
+- (c) guywallbanks, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/368257723
+
+## Delicata Squash
+- Scientific: *Cucurbita pepo*
+- License: pd
+- George Chernilevsky, no known copyright restrictions (public domain)
+- https://www.inaturalist.org/taxa/1599236
+
+## Spaghetti Squash
+- Scientific: *Cucurbita pepo*
+- License: pd
+- George Chernilevsky, no known copyright restrictions (public domain)
+- https://www.inaturalist.org/taxa/1599236
+
+## Acorn Squash
+- Scientific: *Cucurbita pepo*
+- License: pd
+- George Chernilevsky, no known copyright restrictions (public domain)
+- https://www.inaturalist.org/taxa/1599236
+
+## Nasturtium
+- Scientific: *Tropaeolum majus*
+- License: cc-by-sa
+- (c) Tony Rebelo, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/observations/376338634
+
+## Blueberry
+- Scientific: *Vaccinium corymbosum*
+- License: cc-by-sa
+- (c) Douglas Goldman, some rights reserved (CC BY-SA), uploaded by Douglas Goldman
+- https://www.inaturalist.org/taxa/84270
+
+## Blackberry
+- Scientific: *Rubus fruticosus*
+- License: cc-by-sa
+- (c) Rhonda Ridley, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/observations/362466504
+
+## Fig Tree
+- Scientific: *Ficus carica*
+- License: cc-by
+- (c) Daniel Cahen, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376838212
+
+## Avocado
+- Scientific: *Persea americana*
+- License: cc-by
+- (c) Angus Campbell, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/374549870
+
+## Banana Plant
+- Scientific: *Musa*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/375904416
+
+## Dwarf Apple
+- Scientific: *Malus domestica*
+- License: cc-by
+- (c) Peter Quakenbush, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376602795
+
+## Cherry Tree
+- Scientific: *Prunus avium*
+- License: cc-by
+- (c) Timur Kalininsky, some rights reserved (CC BY), uploaded by Timur Kalininsky
+- https://www.inaturalist.org/taxa/637759
+
+## Hydrangea
+- Scientific: *Hydrangea macrophylla*
+- License: cc-by
+- (c) Kim, Hyun-tae, some rights reserved (CC BY), uploaded by Kim, Hyun-tae
+- https://www.inaturalist.org/taxa/884816
+
+## Lilac
+- Scientific: *Syringa vulgaris*
+- License: cc-by
+- (c) Maja Dumat, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/47732
+
+## Peony
+- Scientific: *Paeonia lactiflora*
+- License: cc-by-sa
+- (c) Joe Decruyenaere, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/58223
+
+## Tulip
+- Scientific: *Tulipa*
+- License: cc-by
+- (c) Katja Schulz, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/83090
+
+## Daffodil
+- Scientific: *Narcissus*
+- License: CC BY-SA 3.0
+- Uberprutser
+- https://commons.wikimedia.org/wiki/File%3ANarcissus%20flowers.jpg
+
+## Sunflower
+- Scientific: *Helianthus annuus*
+- License: cc-by
+- (c) Cricket Raspet, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376739958
+
+## Geranium
+- Scientific: *Pelargonium*
+- License: cc-by-sa
+- (c) jeanetteclarke, some rights reserved (CC BY-SA), uploaded by jeanetteclarke
+- https://www.inaturalist.org/taxa/515950
+
+## Dahlia
+- Scientific: *Dahlia*
+- License: cc-by
+- (c) Neptalí Ramírez Marcial, some rights reserved (CC BY), uploaded by Neptalí Ramírez Marcial
+- https://www.inaturalist.org/taxa/288936
+
+## Camellia
+- Scientific: *Camellia japonica*
+- License: cc-by
+- (c) Saryu Mae 前 朝琉, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/370219344
+
+## Hibiscus
+- Scientific: *Hibiscus rosa-sinensis*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/taxa/163767
+
+## Lantana
+- Scientific: *Lantana camara*
+- License: cc-by-sa
+- (c) Greg Tasney, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/observations/377091951
+
+## Begonia Wax
+- Scientific: *Begonia semperflorens*
+- License: cc-by
+- (c) Michael and Antoni Hinczewski, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/371775138
+
+## Lavender Cotton
+- Scientific: *Santolina chamaecyparissus*
+- License: cc-by
+- (c) Drepanostoma, some rights reserved (CC BY), uploaded by Drepanostoma
+- https://www.inaturalist.org/taxa/522597
+
+## Boxwood
+- Scientific: *Buxus sempervirens*
+- License: cc-by
+- (c) J.M.Garg, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/464613
+
+## Daylily
+- Scientific: *Hemerocallis*
+- License: cc-by
+- (c) shinkimmm, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/500908
+
+## Coneflower
+- Scientific: *Echinacea purpurea*
+- License: cc-by
+- (c) Michael A. Thaibinh, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376689725
+
+## Sedum Autumn Joy
+- Scientific: *Hylotelephium spectabile*
+- License: cc-by
+- (c) W Rao, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/338814322
+
+## Wisteria
+- Scientific: *Wisteria sinensis*
+- License: cc-by
+- (c) Karen, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/51267
+
+## Bougainvillea
+- Scientific: *Bougainvillea*
+- License: cc-by
+- (c) Marcio Santos Ferreira, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/374331331
+
+## Garden Heliotrope
+- Scientific: *Heliotropium arborescens*
+- License: cc-by
+- (c) GREGORY ANTHONY PAUCA TANCO, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/351366437
+
+## Mexican Bush Sage
+- Scientific: *Salvia leucantha*
+- License: cc-by
+- (c) amantedarmanin, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/364441678
+
+## Autumn Sage
+- Scientific: *Salvia greggii*
+- License: cc-by
+- (c) Rodolfo Maximiliano Gutiérrez-Sánchez, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/375568745
+
+## Pineapple Sage
+- Scientific: *Salvia elegans*
+- License: cc-by
+- (c) Erick Vélez Sánchez, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/372482914
+
+## Cleveland Sage
+- Scientific: *Salvia clevelandii*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/367875866
+
+## Russian Sage
+- Scientific: *Salvia yangii*
+- License: cc-by
+- (c) Brandon Corder, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/326182417
+
+## Bee Balm
+- Scientific: *Monarda fistulosa*
+- License: cc-by
+- (c) Will Kuhn, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376969530
+
+## Common Milkweed
+- Scientific: *Asclepias syriaca*
+- License: cc-by
+- (c) Wynand Uys, some rights reserved (CC BY), uploaded by Wynand Uys
+- https://www.inaturalist.org/taxa/599485
+
+## Blanket Flower
+- Scientific: *Gaillardia pulchella*
+- License: cc-by
+- (c) Lydia Dexter, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376933424
+
+## Tickseed
+- Scientific: *Coreopsis verticillata*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/376019528
+
+## New England Aster
+- Scientific: *Symphyotrichum novae-angliae*
+- License: cc-by
+- (c) Bob Schwartz, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/374507980
+
+## Goldenrod
+- Scientific: *Solidago canadensis*
+- License: cc-by
+- (c) 
+Wildreturn, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/216649
+
+## Garden Phlox
+- Scientific: *Phlox paniculata*
+- License: cc-by
+- (c) Ken Clark, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/375095549
+
+## Verbena Bonariensis
+- Scientific: *Verbena bonariensis*
+- License: cc-by
+- (c) Melanie Stanton, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376613802
+
+## Cosmos
+- Scientific: *Cosmos bipinnatus*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/375074348
+
+## Bachelor Button
+- Scientific: *Centaurea cyanus*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/377037289
+
+## Yarrow
+- Scientific: *Achillea millefolium*
+- License: cc-by-sa
+- (c) Krzysztof Ziarnek, Kenraiz, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/603959
+
+## Hollyhock
+- Scientific: *Alcea rosea*
+- License: cc-by
+- (c) Justin Paulin, some rights reserved (CC BY), uploaded by Justin Paulin
+- https://www.inaturalist.org/taxa/343592
+
+## Sweet Alyssum
+- Scientific: *Lobularia maritima*
+- License: cc-by
+- (c) Tom Field, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376391676
+
+## Cardinal Flower
+- Scientific: *Lobelia cardinalis*
+- License: cc-by
+- (c) Skyler Principe, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/377010776
+
+## Crimson Clover
+- Scientific: *Trifolium incarnatum*
+- License: cc-by
+- (c) Kostas Zontanos, some rights reserved (CC BY), uploaded by Kostas Zontanos
+- https://www.inaturalist.org/taxa/371840
+
+## Pitcher Plant
+- Scientific: *Nepenthes*
+- License: cc-by-sa
+- (c) James & Jana Hans, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/441210
+
+## Sundew
+- Scientific: *Drosera*
+- License: cc-by
+- (c) Aubin NORMAND, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/377113245
+
+## Lucky Clover
+- Scientific: *Oxalis regnellii*
+- License: cc-by-sa
+- (c) Alejandro  Bayer Tamayo, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/291533
+
+## Lichen
+- Scientific: *Cladonia*
+- License: cc-by-sa
+- (c) Björn Sothmann, some rights reserved (CC BY-SA), uploaded by Björn Sothmann
+- https://www.inaturalist.org/taxa/632126
+
+## Rosemary Tree
+- Scientific: *Salvia rosmarinus*
+- License: cc-by
+- (c) Daniel Cahen, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376838208
+
+## Dwarf Citrus
+- Scientific: *Citrus*
+- License: cc-by
+- (c) caligula1995, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/765426
+
+## Juniper Bonsai
+- Scientific: *Juniperus*
+- License: cc-by
+- (c) Michael J. Papay, some rights reserved (CC BY), uploaded by Michael J. Papay
+- https://www.inaturalist.org/taxa/77600
+
+## Lilac Bush
+- Scientific: *Syringa vulgaris*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/376552032
+
+## Burning Bush
+- Scientific: *Euonymus alatus*
+- License: cc-by
+- (c) K. Zyskowski & Y. Bereshpolova, some rights reserved (CC BY), uploaded by K. Zyskowski & Y. Bereshpolova
+- https://www.inaturalist.org/taxa/496923
+
+## Holly
+- Scientific: *Ilex*
+- License: cc-by
+- (c) Laura Clark, some rights reserved (CC BY), uploaded by Laura Clark
+- https://www.inaturalist.org/taxa/119955
+
+## Magnolia
+- Scientific: *Magnolia grandiflora*
+- License: cc-by
+- (c) Andrew C, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/145235
+
+## Redbud
+- Scientific: *Cercis canadensis*
+- License: cc-by-sa
+- (c) William Herron, some rights reserved (CC BY-SA)
+- https://www.inaturalist.org/taxa/48499
+
+## Chinese Money Plant
+- Scientific: *Pilea peperomioides*
+- License: CC0
+- Husky
+- https://commons.wikimedia.org/wiki/File%3APilea%20peperomioides%20Chinese%20money%20plant.jpg
+
+## Rubber Tree Burgundy
+- Scientific: *Ficus elastica*
+- License: cc-by
+- (c) Josiah Londerée, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/365827536
+
+## White Bird of Paradise
+- Scientific: *Strelitzia nicolai*
+- License: cc-by
+- (c) Shaun Swanepoel, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/376179962
+
+## Dumb Cane
+- Scientific: *Dieffenbachia*
+- License: cc-by
+- (c) Abdul Hanif Arromy, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/374535762
+
+## Red Aglaonema
+- Scientific: *Aglaonema*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/361125406
+
+## Ctenanthe
+- Scientific: *Ctenanthe burle-marxii*
+- License: CC BY-SA 2.5
+- Mark Pellegrini
+- https://commons.wikimedia.org/wiki/File%3ACtenanthe%20burle-marxii%201.jpg
+
+## Rhaphidophora Tetrasperma
+- Scientific: *Rhaphidophora tetrasperma*
+- License: CC BY-SA 4.0
+- Theoperatingsystem
+- https://commons.wikimedia.org/wiki/File%3ARhaphidophora%20tetrasperma.jpg
+
+## Syngonium Pink
+- Scientific: *Syngonium podophyllum*
+- License: cc-by
+- (c) portioid, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/368766287
+
+## Alocasia Dragon Scale
+- Scientific: *Alocasia baginda*
+- License: CC BY 4.0
+- Yercaud-elango
+- https://commons.wikimedia.org/wiki/File%3AAlocasia%20baginda%20-3-NRI%20Layout-bengaluru-India.jpg
+
+## Pilea Moon Valley
+- Scientific: *Pilea mollis*
+- License: cc-by
+- (c) Kevin Faccenda, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/258314247
+
+## Dischidia
+- Scientific: *Dischidia nummularia*
+- License: cc0
+- no rights reserved, uploaded by Richard Fuller
+- https://www.inaturalist.org/taxa/430951
+
+## Hoya Linearis
+- Scientific: *Hoya linearis*
+- License: CC BY-SA 3.0
+- Wikimedia Commons
+- https://commons.wikimedia.org/wiki/File%3AHoya%20linearis%20BotGardBln1105Inflorescence.JPG
+
+## Hoya Kerrii
+- Scientific: *Hoya kerrii*
+- License: CC BY-SA 3.0
+- Hobbykafe
+- https://commons.wikimedia.org/wiki/File%3AHoya-kerrii%20flowers%20op.jpg
+
+## Peperomia Frost
+- Scientific: *Peperomia*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/376894863
+
+## Crown of Thorns
+- Scientific: *Euphorbia milii*
+- License: cc-by
+- (c) Dick Culbert, some rights reserved (CC BY)
+- https://www.inaturalist.org/taxa/47845
+
+## Living Stone
+- Scientific: *Lithops*
+- License: cc0
+- no rights reserved
+- https://www.inaturalist.org/observations/358870616
+
+## Pencil Cactus
+- Scientific: *Euphorbia tirucalli*
+- License: cc-by
+- (c) Graham Cleaver, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/373164247
+
+## Fishbone Cactus
+- Scientific: *Selenicereus anthonyanus*
+- License: cc-by
+- (c) 謝麗霦, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/346768170
+
+## Rat Tail Cactus
+- Scientific: *Aporocactus flagelliformis*
+- License: cc-by
+- (c) Peter Quakenbush, some rights reserved (CC BY)
+- https://www.inaturalist.org/observations/335727992
+
+## Old Man Cactus
+- Scientific: *Cephalocereus senilis*
+- License: CC BY 3.0
+- Peter A. Mansfeld
+- https://commons.wikimedia.org/wiki/File%3ACephalocereus%20senelis.jpg
+
+## Hoya Compacta
+- Scientific: *Hoya carnosa compacta*
+- License: CC BY-SA 3.0
+- Kor!An (Корзун Андрей)
+- https://commons.wikimedia.org/wiki/File%3AHoya%20compacta%2001.jpg
+
+## Whale Fin Snake Plant
+- Scientific: *Sansevieria masoniana*
+- License: CC BY-SA 3.0
+- Mokkie
+- https://commons.wikimedia.org/wiki/File%3AMason's%20Congo%20Sansevieria%20(Sansevieria%20masoniana)%202.jpg
+
+## Crocodile Fern
+- Scientific: *Microsorum musifolium*
+- License: CC BY 3.0
+- Forest &amp; Kim Starr
+- https://commons.wikimedia.org/wiki/File%3AStarr%20080117-2229%20Microsorum%20musifolium.jpg

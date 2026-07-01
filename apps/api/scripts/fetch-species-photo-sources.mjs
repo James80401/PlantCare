@@ -5,6 +5,7 @@
  * Usage:
  *   node apps/api/scripts/fetch-species-photo-sources.mjs
  *   node apps/api/scripts/fetch-species-photo-sources.mjs --only-missing
+ *   node apps/api/scripts/fetch-species-photo-sources.mjs --replace-restricted-licenses
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { dirname, join } from 'path';
@@ -33,6 +34,7 @@ const COMMONS_DELAY_MS = 3500;
 
 const args = process.argv.slice(2);
 const onlyMissing = args.includes('--only-missing');
+const replaceRestrictedLicenses = args.includes('--replace-restricted-licenses');
 const allowRestrictedLicenses = args.includes('--allow-restricted-licenses');
 
 function sleep(ms) {
@@ -360,13 +362,24 @@ async function main() {
   for (let i = 0; i < catalog.length; i++) {
     const species = catalog[i];
     const key = slugId(species.commonName, species.scientificName);
-    if (onlyMissing) {
+    if (onlyMissing || replaceRestrictedLicenses) {
       const file = join(photosDir, `${key}.jpg`);
-      if (
+      const hasReusableManifest =
+        manifest[key]?.url && isReusablePhotoLicense(manifest[key]?.license);
+      const hasUsableFile =
+        existsSync(file) && readFileSync(file).length >= LOCAL_PHOTO_MIN_BYTES;
+      const shouldSkip =
+        onlyMissing &&
         manifest[key]?.url &&
-        existsSync(file) &&
-        readFileSync(file).length >= LOCAL_PHOTO_MIN_BYTES
-      ) {
+        hasUsableFile;
+      const shouldReplaceRestricted =
+        replaceRestrictedLicenses && manifest[key]?.url && !hasReusableManifest;
+
+      if (!shouldReplaceRestricted && shouldSkip) {
+        skipped++;
+        continue;
+      }
+      if (replaceRestrictedLicenses && hasReusableManifest && hasUsableFile) {
         skipped++;
         continue;
       }

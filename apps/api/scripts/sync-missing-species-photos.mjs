@@ -1,11 +1,11 @@
 /**
  * Re-fetch and download photos for catalog species missing a local JPEG.
  */
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { spawnSync } from 'child_process';
-import { LOCAL_PHOTO_MIN_BYTES } from './species-photo-urls.mjs';
+import { LOCAL_PHOTO_MIN_BYTES, isReusablePhotoLicense } from './species-photo-urls.mjs';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const manifestPath = join(repoRoot, 'prisma', 'data', 'species-photo-sources.json');
@@ -30,11 +30,18 @@ function loadCatalog() {
 }
 
 function missingKeys() {
+  const manifest = existsSync(manifestPath)
+    ? JSON.parse(readFileSync(manifestPath, 'utf8'))
+    : {};
+
   return loadCatalog()
     .map((s) => slugId(s.commonName, s.scientificName))
     .filter((key) => {
       const file = join(photosDir, `${key}.jpg`);
-      return !existsSync(file) || readFileSync(file).length < LOCAL_PHOTO_MIN_BYTES;
+      const meta = manifest[key];
+      const hasReusableManifest = meta?.url && isReusablePhotoLicense(meta.license);
+      const hasLocalFile = existsSync(file) && readFileSync(file).length >= LOCAL_PHOTO_MIN_BYTES;
+      return !hasReusableManifest || !hasLocalFile;
     });
 }
 
