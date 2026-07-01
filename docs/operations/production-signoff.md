@@ -44,9 +44,29 @@ npm run production:signoff -- --live-only
 | API `/health` | Public API responds `{ status: "ok" }` |
 | CORS | Browser origin for your web app is allowed |
 | Web reachable | `FRONTEND_URL` returns HTML |
+| Delivery headers | HTML/crawler files stay fresh; hashed assets and static guide assets are cacheable |
 | `verify` | Auth, plants, tasks, species, dashboard, devices API smoke |
 | `smoke:buddy` | Buddy scheduler dev routes disabled; core buddy paths respond |
 | `uat:e2e` (optional) | Playwright mobile + garden flows against production web |
+
+## Performance delivery spot-checks
+
+Run these before and after Cloudflare proxy/cache changes:
+
+```powershell
+$web = Invoke-WebRequest https://drplant.app -UseBasicParsing
+$asset = [regex]::Match($web.Content, 'src="([^"]*index-[^"]+\.js)"').Groups[1].Value
+Invoke-WebRequest ("https://drplant.app" + $asset) -Method Head -UseBasicParsing
+Invoke-WebRequest https://drplant.app/robots.txt -Method Head -UseBasicParsing
+Invoke-WebRequest https://api.drplant.app/care-guides/photos/species/seed-pothos-epipremnum-aureum.jpg -Method Head -UseBasicParsing
+```
+
+Expected:
+
+- App HTML and crawler files: `Cache-Control: no-cache`.
+- Hashed Vite assets: `Cache-Control: public, max-age=31536000, immutable`.
+- API-served care-guide images/photos: cacheable static response.
+- Private-mode SEO remains noindex/empty-sitemap.
 
 ## Required `.env.production` values
 

@@ -152,6 +152,8 @@ type AdminBuddyRow = {
 };
 
 type ExternalSourceStatus = 'user_confirmed' | 'reviewed' | 'curated';
+type ExternalSpeciesFilter = 'all' | ExternalSourceStatus;
+type PhotoReviewStatus = 'unreviewed' | 'approved' | 'needs_better_image';
 
 type AdminExternalSpeciesReview = {
   generatedAt: string;
@@ -186,7 +188,22 @@ type AdminExternalSpeciesRow = {
     reviewedAt?: string;
     curatedAt?: string;
     reviewNote?: string;
+    sourceNote?: string;
+    photoReviewStatus?: PhotoReviewStatus;
+    photoReviewNote?: string;
   };
+};
+
+type ExternalSpeciesDraft = {
+  sunlight: string;
+  wateringFreqDays: string;
+  toxicity: string;
+  careNotes: string;
+  defaultImageUrl: string;
+  reviewNote: string;
+  sourceNote: string;
+  photoReviewStatus: PhotoReviewStatus;
+  photoReviewNote: string;
 };
 
 const SHOP_CATEGORY_ORDER: ShopItemCategory[] = [
@@ -213,6 +230,8 @@ export default function AdminRegistrations() {
   const [auditSummary, setAuditSummary] = useState<AdminAuditSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
   const [buddyLevelDrafts, setBuddyLevelDrafts] = useState<Record<string, string>>({});
+  const [externalSpeciesDrafts, setExternalSpeciesDrafts] = useState<Record<string, ExternalSpeciesDraft>>({});
+  const [externalSpeciesFilter, setExternalSpeciesFilter] = useState<ExternalSpeciesFilter>('all');
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -228,6 +247,11 @@ export default function AdminRegistrations() {
     () => users.filter((u) => isAiPaused(u.aiPausedUntil)),
     [users],
   );
+  const visibleExternalSpecies = useMemo(() => {
+    const items = externalSpecies?.items ?? [];
+    if (externalSpeciesFilter === 'all') return items;
+    return items.filter((species) => species.externalSource.status === externalSpeciesFilter);
+  }, [externalSpecies, externalSpeciesFilter]);
 
   const load = useCallback(async () => {
     const { data: me } = await usersApi.me();
@@ -247,6 +271,13 @@ export default function AdminRegistrations() {
     setObservability(observabilityRes.data);
     setBuddyOverview(buddyRes.data);
     setExternalSpecies(speciesRes.data);
+    setExternalSpeciesDrafts((current) => {
+      const next = { ...current };
+      for (const species of speciesRes.data.items as AdminExternalSpeciesRow[]) {
+        if (!next[species.id]) next[species.id] = externalSpeciesDraftFromRow(species);
+      }
+      return next;
+    });
     setBuddyLevelDrafts((current) => {
       const next = { ...current };
       for (const row of buddyRes.data.buddies) {
@@ -352,10 +383,52 @@ export default function AdminRegistrations() {
     setBusyId(`species-${status}-${speciesId}`);
     setError('');
     try {
-      await adminApi.reviewExternalSpecies(speciesId, status);
+      await adminApi.reviewExternalSpecies(speciesId, {
+        status,
+        reviewNote: externalSpeciesDrafts[speciesId]?.reviewNote.trim() || undefined,
+      });
       await load();
     } catch (err) {
       setError(formatApiErrorMessage(err, 'External species review update failed.'));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const updateExternalSpeciesDraft = (
+    speciesId: string,
+    patch: Partial<ExternalSpeciesDraft>,
+  ) => {
+    setExternalSpeciesDrafts((drafts) => ({
+      ...drafts,
+      [speciesId]: {
+        ...(drafts[speciesId] ?? emptyExternalSpeciesDraft()),
+        ...patch,
+      },
+    }));
+  };
+
+  const saveExternalSpeciesDraft = async (speciesId: string) => {
+    const draft = externalSpeciesDrafts[speciesId];
+    if (!draft) return;
+    const wateringFreqDays = Number(draft.wateringFreqDays);
+    setBusyId(`species-save-${speciesId}`);
+    setError('');
+    try {
+      await adminApi.reviewExternalSpecies(speciesId, {
+        sunlight: textOrUndefined(draft.sunlight),
+        wateringFreqDays: Number.isFinite(wateringFreqDays) ? Math.round(wateringFreqDays) : undefined,
+        toxicity: textOrUndefined(draft.toxicity),
+        careNotes: textOrUndefined(draft.careNotes),
+        defaultImageUrl: textOrUndefined(draft.defaultImageUrl),
+        reviewNote: textOrUndefined(draft.reviewNote),
+        sourceNote: textOrUndefined(draft.sourceNote),
+        photoReviewStatus: draft.photoReviewStatus,
+        photoReviewNote: textOrUndefined(draft.photoReviewNote),
+      });
+      await load();
+    } catch {
+      setError('External species edits failed.');
     } finally {
       setBusyId(null);
     }
@@ -622,13 +695,36 @@ export default function AdminRegistrations() {
             <p className="mt-3 text-xs text-gray-500">
               Snapshot generated {new Date(externalSpecies.generatedAt).toLocaleString()}.
             </p>
+            <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filter external species review">
+              {(['all', 'user_confirmed', 'reviewed', 'curated'] as ExternalSpeciesFilter[]).map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setExternalSpeciesFilter(filter)}
+                  aria-pressed={externalSpeciesFilter === filter}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                    externalSpeciesFilter === filter
+                      ? 'bg-emerald-800 text-white'
+                      : 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100'
+                  }`}
+                >
+                  {filter === 'all' ? 'All' : externalSpeciesStatusLabel(filter)}
+                </button>
+              ))}
+            </div>
             {externalSpecies.items.length === 0 ? (
               <p className="mt-4 rounded-2xl bg-emerald-50 p-6 text-gray-600">
                 No externally confirmed species are waiting in the catalog.
               </p>
+            ) : visibleExternalSpecies.length === 0 ? (
+              <p className="mt-4 rounded-2xl bg-emerald-50 p-6 text-gray-600">
+                No external species match this review filter.
+              </p>
             ) : (
               <div className="mt-4 space-y-3">
-                {externalSpecies.items.map((species) => (
+                {visibleExternalSpecies.map((species) => {
+                  const draft = externalSpeciesDrafts[species.id] ?? externalSpeciesDraftFromRow(species);
+                  return (
                   <article key={species.id} className="rounded-2xl border border-gray-100 bg-white p-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0">
@@ -650,6 +746,9 @@ export default function AdminRegistrations() {
                           </span>
                           <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
                             Water every {species.wateringFreqDays} days
+                          </span>
+                          <span className={`rounded-full px-2 py-1 font-semibold ${photoReviewStatusClass(species.externalSource.photoReviewStatus)}`}>
+                            {photoReviewStatusLabel(species.externalSource.photoReviewStatus)}
                           </span>
                         </div>
                         <p className="mt-3 text-sm text-gray-700">
@@ -678,8 +777,124 @@ export default function AdminRegistrations() {
                         </Button>
                       </div>
                     </div>
+                    <div className="mt-4 grid gap-3 border-t border-gray-100 pt-4 lg:grid-cols-2">
+                      <label className="block text-sm">
+                        <span className="font-semibold text-gray-700">Light baseline</span>
+                        <input
+                          type="text"
+                          value={draft.sunlight}
+                          maxLength={160}
+                          onChange={(event) => updateExternalSpeciesDraft(species.id, { sunlight: event.target.value })}
+                          className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                        />
+                      </label>
+                      <label className="block text-sm">
+                        <span className="font-semibold text-gray-700">Watering cadence days</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={60}
+                          value={draft.wateringFreqDays}
+                          onChange={(event) => updateExternalSpeciesDraft(species.id, { wateringFreqDays: event.target.value })}
+                          className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                        />
+                      </label>
+                      <label className="block text-sm">
+                        <span className="font-semibold text-gray-700">Toxicity / safety note</span>
+                        <input
+                          type="text"
+                          value={draft.toxicity}
+                          maxLength={220}
+                          onChange={(event) => updateExternalSpeciesDraft(species.id, { toxicity: event.target.value })}
+                          className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                        />
+                      </label>
+                      <label className="block text-sm">
+                        <span className="font-semibold text-gray-700">Default image URL</span>
+                        <input
+                          type="url"
+                          value={draft.defaultImageUrl}
+                          maxLength={500}
+                          onChange={(event) => updateExternalSpeciesDraft(species.id, { defaultImageUrl: event.target.value })}
+                          className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                          placeholder="https://..."
+                        />
+                      </label>
+                      <label className="block text-sm lg:col-span-2">
+                        <span className="font-semibold text-gray-700">Care notes</span>
+                        <textarea
+                          value={draft.careNotes}
+                          maxLength={1200}
+                          rows={3}
+                          onChange={(event) => updateExternalSpeciesDraft(species.id, { careNotes: event.target.value })}
+                          className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                        />
+                      </label>
+                      <label className="block text-sm">
+                        <span className="font-semibold text-gray-700">Review note</span>
+                        <textarea
+                          value={draft.reviewNote}
+                          maxLength={500}
+                          rows={3}
+                          onChange={(event) => updateExternalSpeciesDraft(species.id, { reviewNote: event.target.value })}
+                          className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                          placeholder="Decision notes for reviewed or curated status"
+                        />
+                      </label>
+                      <label className="block text-sm">
+                        <span className="font-semibold text-gray-700">Source notes</span>
+                        <textarea
+                          value={draft.sourceNote}
+                          maxLength={500}
+                          rows={3}
+                          onChange={(event) => updateExternalSpeciesDraft(species.id, { sourceNote: event.target.value })}
+                          className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                          placeholder="What was checked before review?"
+                        />
+                      </label>
+                      <div className="grid gap-3 sm:grid-cols-[12rem_1fr]">
+                        <label className="block text-sm">
+                          <span className="font-semibold text-gray-700">Photo review</span>
+                          <select
+                            value={draft.photoReviewStatus}
+                            onChange={(event) =>
+                              updateExternalSpeciesDraft(species.id, {
+                                photoReviewStatus: event.target.value as PhotoReviewStatus,
+                              })
+                            }
+                            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                          >
+                            <option value="unreviewed">Unreviewed</option>
+                            <option value="approved">Approved</option>
+                            <option value="needs_better_image">Needs better image</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm">
+                          <span className="font-semibold text-gray-700">Photo/license note</span>
+                          <textarea
+                            value={draft.photoReviewNote}
+                            maxLength={500}
+                            rows={3}
+                            onChange={(event) => updateExternalSpeciesDraft(species.id, { photoReviewNote: event.target.value })}
+                            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                            placeholder="License, attribution, or replacement note"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={busyId === `species-save-${species.id}`}
+                        onClick={() => saveExternalSpeciesDraft(species.id)}
+                      >
+                        Save review edits
+                      </Button>
+                    </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -1144,6 +1359,51 @@ function externalSpeciesStatusClass(status: ExternalSourceStatus) {
   if (status === 'curated') return 'bg-emerald-100 text-emerald-900';
   if (status === 'reviewed') return 'bg-blue-100 text-blue-900';
   return 'bg-amber-100 text-amber-900';
+}
+
+function photoReviewStatusLabel(status?: PhotoReviewStatus) {
+  if (status === 'approved') return 'Photo approved';
+  if (status === 'needs_better_image') return 'Needs better image';
+  return 'Photo unreviewed';
+}
+
+function photoReviewStatusClass(status?: PhotoReviewStatus) {
+  if (status === 'approved') return 'bg-emerald-100 text-emerald-900';
+  if (status === 'needs_better_image') return 'bg-amber-100 text-amber-900';
+  return 'bg-gray-100 text-gray-700';
+}
+
+function emptyExternalSpeciesDraft(): ExternalSpeciesDraft {
+  return {
+    sunlight: '',
+    wateringFreqDays: '7',
+    toxicity: '',
+    careNotes: '',
+    defaultImageUrl: '',
+    reviewNote: '',
+    sourceNote: '',
+    photoReviewStatus: 'unreviewed',
+    photoReviewNote: '',
+  };
+}
+
+function externalSpeciesDraftFromRow(species: AdminExternalSpeciesRow): ExternalSpeciesDraft {
+  return {
+    sunlight: species.sunlight ?? '',
+    wateringFreqDays: String(species.wateringFreqDays ?? 7),
+    toxicity: species.toxicity ?? '',
+    careNotes: species.careNotes ?? '',
+    defaultImageUrl: species.defaultImageUrl ?? '',
+    reviewNote: species.externalSource.reviewNote ?? '',
+    sourceNote: species.externalSource.sourceNote ?? '',
+    photoReviewStatus: species.externalSource.photoReviewStatus ?? 'unreviewed',
+    photoReviewNote: species.externalSource.photoReviewNote ?? '',
+  };
+}
+
+function textOrUndefined(value: string) {
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
 }
 
 function formatConfidence(value?: number) {

@@ -64,8 +64,16 @@ async function bootstrap() {
     }
     return resolved ?? candidates[1];
   };
-  app.useStaticAssets(resolveCarePath('images'), { prefix: '/care-guides/images/' });
-  app.useStaticAssets(resolveCarePath('photos'), { prefix: '/care-guides/photos/' });
+  app.useStaticAssets(resolveCarePath('images'), {
+    prefix: '/care-guides/images/',
+    maxAge: '30d',
+    immutable: true,
+  });
+  app.useStaticAssets(resolveCarePath('photos'), {
+    prefix: '/care-guides/photos/',
+    maxAge: '30d',
+    immutable: true,
+  });
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
     new ValidationPipe({

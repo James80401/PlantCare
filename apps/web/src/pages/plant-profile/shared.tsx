@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
+import { Link } from 'react-router-dom';
 import { StructuredCareSectionCard } from '../../components/care/StructuredCareSectionCard';
 import { careSectionToneClasses, getCareSectionMeta } from '../../utils/careGuideSections';
 import { skipReasonLabel } from '../../utils/taskFeedback';
@@ -101,20 +102,32 @@ export function SummaryTile({
 export function CareGuideCard({
   section,
   defaultDetailLevel = 'beginner',
+  drPlantPath,
 }: {
   section: CareOverviewSection;
   defaultDetailLevel?: CareDetailLevel;
+  drPlantPath?: string;
 }) {
   return (
-    <StructuredCareSectionCard
-      id={section.id}
-      heading={section.heading}
-      whyItMatters={section.whyItMatters}
-      beginnerBody={section.beginnerBody}
-      advancedBody={section.advancedBody}
-      warnings={section.warnings}
-      defaultDetailLevel={defaultDetailLevel}
-    />
+    <div className="space-y-2">
+      <StructuredCareSectionCard
+        id={section.id}
+        heading={section.heading}
+        whyItMatters={section.whyItMatters}
+        beginnerBody={section.beginnerBody}
+        advancedBody={section.advancedBody}
+        warnings={section.warnings}
+        defaultDetailLevel={defaultDetailLevel}
+      />
+      {drPlantPath ? (
+        <Link
+          to={drPlantPath}
+          className="inline-flex min-h-9 items-center justify-center rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100"
+        >
+          Ask Dr. Plant about this
+        </Link>
+      ) : null}
+    </div>
   );
 }
 

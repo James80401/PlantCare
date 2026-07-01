@@ -15,6 +15,9 @@ type ExternalSource = {
   reviewedAt?: string;
   curatedAt?: string;
   reviewNote?: string;
+  sourceNote?: string;
+  photoReviewStatus?: 'unreviewed' | 'approved' | 'needs_better_image';
+  photoReviewNote?: string;
 };
 
 type SpeciesMetadataObject = Record<string, unknown> & {
@@ -76,26 +79,48 @@ export class AdminSpeciesService {
     }
 
     const now = new Date().toISOString();
-    const reviewNote = dto.reviewNote?.trim();
+    const reviewNote = cleanOptionalString(dto.reviewNote);
+    const sourceNote = cleanOptionalString(dto.sourceNote);
+    const photoReviewNote = cleanOptionalString(dto.photoReviewNote);
+    const nextStatus = dto.status ?? metadata.externalSource.status;
     const externalSource: ExternalSource = {
       ...metadata.externalSource,
-      status: dto.status,
-      reviewedAt: now,
+      status: nextStatus,
+      ...(dto.status ? { reviewedAt: now } : {}),
       ...(dto.status === 'curated' ? { curatedAt: now } : {}),
       ...(reviewNote ? { reviewNote } : {}),
+      ...(sourceNote ? { sourceNote } : {}),
+      ...(dto.photoReviewStatus ? { photoReviewStatus: dto.photoReviewStatus } : {}),
+      ...(photoReviewNote ? { photoReviewNote } : {}),
     };
+
+    const data: Partial<PlantSpecies> & { metadataJson: string } = {
+      metadataJson: JSON.stringify({ ...metadata, externalSource }),
+    };
+    const sunlight = cleanOptionalString(dto.sunlight);
+    const toxicity = cleanOptionalString(dto.toxicity);
+    const careNotes = cleanOptionalString(dto.careNotes);
+    const defaultImageUrl = cleanOptionalString(dto.defaultImageUrl);
+    if (sunlight !== undefined) data.sunlight = sunlight;
+    if (dto.wateringFreqDays !== undefined) data.wateringFreqDays = dto.wateringFreqDays;
+    if (toxicity !== undefined) data.toxicity = toxicity;
+    if (careNotes !== undefined) data.careNotes = careNotes;
+    if (defaultImageUrl !== undefined) data.defaultImageUrl = defaultImageUrl;
 
     const updated = await this.prisma.plantSpecies.update({
       where: { id: speciesId },
-      data: {
-        metadataJson: JSON.stringify({ ...metadata, externalSource }),
-      },
+      data,
     });
 
     return {
       species: formatExternalSpecies(updated, externalSource),
     };
   }
+}
+
+function cleanOptionalString(value?: string): string | undefined {
+  if (value === undefined) return undefined;
+  return value.trim();
 }
 
 function parseSpeciesMetadata(value?: string | null): SpeciesMetadataObject {

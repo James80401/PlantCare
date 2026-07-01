@@ -2,6 +2,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePlantProfile } from './PlantProfileContext';
 import type { CareDetailLevel } from './types';
 import { CareGuideCard, ProfileSection, SectionEmptyState } from './shared';
+import { plantDrPlantPath } from './constants';
 
 function defaultCareDetailLevel(experienceLevel?: string | null): CareDetailLevel {
   if (experienceLevel === 'advanced' || experienceLevel === 'expert') {
@@ -28,6 +29,7 @@ export default function PlantCareTab() {
               key={section.id}
               section={section}
               defaultDetailLevel={defaultDetailLevel}
+              drPlantPath={plantDrPlantPath(ctx.id)}
             />
           ))}
         </div>

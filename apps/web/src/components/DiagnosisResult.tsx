@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { resolveApiAssetUrl } from '../utils/apiAssets';
 
 interface StructuredDetail {
@@ -67,6 +68,7 @@ interface DiagnosisResultProps {
   followUpCreating?: boolean;
   hasFollowUpTask?: boolean;
   updating?: boolean;
+  plantCarePath?: string;
 }
 
 function parseDetail(json?: string | null): StructuredDetail | null {
@@ -157,6 +159,24 @@ function dueLabel(days: number): string {
   return `In ${days} days`;
 }
 
+const PROBLEM_GUIDE_PATHS: Record<string, string> = {
+  'overwatering-root-risk': '/plant-problems/root-rot',
+  'underwatering-dry-stress': '/plant-problems/drooping-leaves',
+  'nutrient-light-yellowing': '/plant-problems/yellow-leaves',
+  'fungal-leaf-spot': '/plant-problems',
+  'pest-pressure': '/plant-problems',
+  'environmental-shock': '/plant-problems/drooping-leaves',
+};
+
+function guideLinksForTreatmentPlan(treatmentPlan?: StructuredDetail['treatmentPlan']) {
+  const links = new Map<string, string>();
+  for (const problem of treatmentPlan?.matchedProblems ?? []) {
+    const path = PROBLEM_GUIDE_PATHS[problem.id];
+    if (path) links.set(problem.label, path);
+  }
+  return [...links.entries()].map(([label, path]) => ({ label, path }));
+}
+
 export default function DiagnosisResult({
   diagnosis,
   onResolvedChange,
@@ -164,6 +184,7 @@ export default function DiagnosisResult({
   followUpCreating = false,
   hasFollowUpTask = false,
   updating = false,
+  plantCarePath,
 }: DiagnosisResultProps) {
   const [followUpNote, setFollowUpNote] = useState('');
   const detail = parseDetail(diagnosis.detailJson);
@@ -174,6 +195,7 @@ export default function DiagnosisResult({
       detail.longTermCare?.length);
   const intakeDetails = intakeLabel(detail);
   const treatmentPlan = detail?.treatmentPlan;
+  const treatmentGuideLinks = guideLinksForTreatmentPlan(treatmentPlan);
 
   return (
     <div
@@ -313,13 +335,41 @@ export default function DiagnosisResult({
           {treatmentPlan.matchedProblems?.length ? (
             <div className="flex flex-wrap gap-1.5">
               {treatmentPlan.matchedProblems.map((problem) => (
-                <span
+                <Link
                   key={problem.id}
+                  to={PROBLEM_GUIDE_PATHS[problem.id] ?? '/plant-problems'}
                   className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-emerald-100"
                 >
                   {problem.label}
-                </span>
+                </Link>
               ))}
+            </div>
+          ) : null}
+
+          {treatmentGuideLinks.length || plantCarePath ? (
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                Helpful next reads
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {treatmentGuideLinks.map((link) => (
+                  <Link
+                    key={`${link.path}-${link.label}`}
+                    to={link.path}
+                    className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                {plantCarePath ? (
+                  <Link
+                    to={plantCarePath}
+                    className="rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900"
+                  >
+                    Open this plant's care guide
+                  </Link>
+                ) : null}
+              </div>
             </div>
           ) : null}
 

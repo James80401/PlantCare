@@ -27,8 +27,11 @@ Use this pass before a mobile web release, Play closed testing build, or any cha
 - [ ] Plant profile hero image, action buttons, summary tiles, and sticky tabs remain usable with long plant names.
 - [ ] Plant profile tabs scroll horizontally and do not hide under the sticky header.
 - [ ] Health tab Dr. Plant shortcut clears the global bottom nav and jumps to the chat block.
+- [ ] Health tab treatment-plan guide links wrap cleanly and do not crowd recovery-task actions.
+- [ ] Care tab "Ask Dr. Plant about this" links stay paired with their guide cards without creating horizontal scroll.
 - [ ] Task care-round headers, expand controls, and Done buttons remain at least 44 px tall.
 - [ ] Journal form controls, file input, photo comparison, and timeline actions fit at phone width.
+- [ ] Admin external species review cards keep editable fields readable at tablet width and remain scrollable on phone width.
 - [ ] Modals and bottom sheets leave visible close/action controls after keyboard or viewport changes.
 
 ## Accessibility and input

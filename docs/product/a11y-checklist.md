@@ -45,6 +45,13 @@ Patterns used across Dr. Plant web. Re-run this list when adding major UI.
 - [x] Comment threads: `aria-expanded` / `aria-controls`
 - [x] Feed: `section` + post `article` semantics
 
+## Admin and plant intelligence
+
+- [x] External species review filters use `aria-pressed` and a labelled button group.
+- [x] External species review inputs are wrapped in visible labels.
+- [x] Treatment-plan problem guide links use text labels, not color-only pills.
+- [x] Care guide Dr. Plant handoff links are standard links with visible text.
+
 ## Manual QA (each release)
 
 - [ ] Tab through dashboard, plant profile, and tasks — no keyboard traps

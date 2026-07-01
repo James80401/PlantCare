@@ -170,8 +170,8 @@ Only Organization `sameAs` remains, pending official social URLs.
 Triggered by hosted Lighthouse checks showing `0 ms` TBT and `0` CLS, but slow regional FCP/LCP
 around 4-6 seconds. That shape points at delivery and first paint, not client-side main-thread work.
 
-- [x] **F1 - Compress production text assets** - Caddy now enables gzip for the web reverse proxy,
-  and nginx allows gzip for proxied responses with `gzip_proxied any`.
+- [x] **F1 - Compress production text assets** - Caddy now enables `zstd`/gzip for the web reverse
+  proxy, and nginx allows gzip for proxied responses with `gzip_proxied any`.
 - [x] **F2 - Cache hashed Vite assets** - `/assets/*` now sends
   `Cache-Control: public, max-age=31536000, immutable`.
 - [x] **F3 - Keep HTML and crawler files fresh** - SPA fallbacks, protected routes, `robots.txt`,
@@ -179,8 +179,11 @@ around 4-6 seconds. That shape points at delivery and first paint, not client-si
 - [x] **F4 - Shorten private first paint** - no-token sessions start auth in `ready` state and the
   small login surface is eager-loaded with the app shell instead of fetched after the `/` to
   `/login` client redirect.
+- [x] **F4b - Cache API-served static guide assets** - `/care-guides/images/*` and
+  `/care-guides/photos/*` now advertise 30-day immutable caching from the API static asset handler.
 - [ ] **F5 - Add an edge CDN/cache** - put `drplant.app` behind Cloudflare proxy/cache before public
-  launch so global Lighthouse regions do not all fetch app bytes from the origin droplet.
+  launch so global Lighthouse regions do not all fetch app bytes from the origin droplet. Repo-side
+  prep is complete; this remains an external DNS/Cloudflare configuration step.
 - [ ] **F6 - Rerun hosted Lighthouse from multiple regions** after deploy and compare FCP/LCP.
 
 **Acceptance:** production serves compressed JS/CSS, immutable hashed assets, fresh HTML, and global

@@ -14,12 +14,14 @@ interface TreatmentPlanDiagnosis {
 }
 
 interface TreatmentPlanCardProps {
+  plantId: string;
   diagnosis: TreatmentPlanDiagnosis;
   updating?: boolean;
   followUpCreating?: boolean;
   hasFollowUpTask?: boolean;
   onResolvedChange?: (resolved: boolean) => void;
   onCreateFollowUp?: (dueInDays: number, note?: string) => Promise<void>;
+  onRecoveryTasksApplied?: () => void;
 }
 
 export default function TreatmentPlanCard({
@@ -50,6 +52,7 @@ export default function TreatmentPlanCard({
         onCreateFollowUp={onCreateFollowUp}
         followUpCreating={followUpCreating}
         hasFollowUpTask={hasFollowUpTask}
+        plantCarePath={`/garden/plants/${plantId}/care`}
       />
       <RecoveryTasksPanel
         plantId={plantId}

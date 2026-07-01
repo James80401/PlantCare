@@ -95,6 +95,47 @@ describe('AdminSpeciesService', () => {
     expect(result.species.externalSource.status).toBe('reviewed');
   });
 
+  it('updates external species review fields without losing provenance', async () => {
+    const { service, prisma } = createService();
+
+    const result = await service.updateExternalSpeciesStatus('species-1', {
+      sunlight: 'Medium indirect light',
+      wateringFreqDays: 5,
+      toxicity: 'Unknown - review before placing near pets',
+      careNotes: 'Keep evenly moist, but never soggy.',
+      defaultImageUrl: 'https://example.com/prayer-plant.jpg',
+      sourceNote: 'Care cadence checked against provider result and local houseplant baseline.',
+      photoReviewStatus: 'needs_better_image',
+      photoReviewNote: 'Image is acceptable for triage, but needs a stronger leaf close-up.',
+    });
+
+    const updateArg = prisma.plantSpecies.update.mock.calls[0][0];
+    expect(updateArg.data).toMatchObject({
+      sunlight: 'Medium indirect light',
+      wateringFreqDays: 5,
+      toxicity: 'Unknown - review before placing near pets',
+      careNotes: 'Keep evenly moist, but never soggy.',
+      defaultImageUrl: 'https://example.com/prayer-plant.jpg',
+    });
+
+    const metadata = JSON.parse(updateArg.data.metadataJson) as typeof externalMetadata & {
+      externalSource: typeof externalMetadata.externalSource & {
+        sourceNote?: string;
+        photoReviewStatus?: string;
+        photoReviewNote?: string;
+      };
+    };
+    expect(metadata.pests).toEqual(['Spider mites']);
+    expect(metadata.externalSource).toMatchObject({
+      provider: 'plantnet',
+      status: 'user_confirmed',
+      sourceNote: 'Care cadence checked against provider result and local houseplant baseline.',
+      photoReviewStatus: 'needs_better_image',
+      photoReviewNote: 'Image is acceptable for triage, but needs a stronger leaf close-up.',
+    });
+    expect(result.species.wateringFreqDays).toBe(7);
+  });
+
   it('rejects catalog species without external provenance', async () => {
     const { service } = createService({
       plantSpecies: {

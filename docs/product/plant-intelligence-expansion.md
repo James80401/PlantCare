@@ -14,7 +14,7 @@ provider gates instead of pretending the local catalog already covers everything
 | Area | Baseline |
 |------|----------|
 | Local species catalog | 447 species |
-| Species photos | 444 local species photos; 3 catalog rows still need photo sourcing/review |
+| Species photos | 445 local species photos; 2 catalog rows still need reusable photo sourcing/review |
 | Task types | 12 shipped care task types |
 | Diagnosis storage | `Diagnosis.detailJson` stores forward-compatible structured data |
 | Dr. Plant context | Uses care baseline, tasks, diagnoses, journal, weather, and feedback context |
@@ -85,21 +85,24 @@ provider gates instead of pretending the local catalog already covers everything
 - Added a safe care-archetype fallback for provisional matches so Dr. Plant can explain the starting care model before species-specific notes are reviewed.
 - Updated the Add Plant wizard to show external-match status, confidence, archetype guidance, and a confirmation action before plant details.
 - Added admin-only external species review tooling so user-confirmed long-tail IDs can be marked `reviewed` or `curated` before the catalog treats them as fully vetted.
+- Added inline admin review edits for externally confirmed species: care notes, light, watering cadence, toxicity/safety copy, default image URL, source notes, review notes, and photo/license review state.
+- Added admin filters for `user_confirmed`, `reviewed`, and `curated` external species review states.
+- Added contextual guide links from diagnosis treatment plans into relevant plant-problem guides, plus compact Dr. Plant handoffs from plant Care guide cards.
 
 ## Next implementation batch
 
 1. Remaining photo cleanup:
-   - Fetch, license-check, and seed images for the new catalog rows.
-   - Re-run `npm run species:photos:verify` after DB seed reflects the new catalog.
+   - Hoya Mathilde and String of Dolphins still need truly reusable photo sources.
+   - Aloe Aristata now has a verified public-domain Wikimedia Commons photo.
+   - Re-run `npm run species:photos:list-missing` and `npm run species:photos:verify` after each source pass.
 
 2. Guide UX polish:
-   - Add contextual cross-links from problem/treatment plan cards into relevant guide sections.
-   - Consider compact "Ask Dr. Plant about this" actions in guide cards after product review.
+   - Contextual treatment-plan links and compact "Ask Dr. Plant about this" care-card actions are shipped.
+   - Next polish layer: measure whether guide links get used and add more route-specific guide targets if the problem library expands.
 
 3. Hybrid ID review follow-up:
-   - Add inline editing for care notes, toxicity, watering cadence, and source notes inside the admin review queue.
-   - Add photo/license review and a "needs better image" state for externally confirmed species.
-   - Add filters for `user_confirmed`, `reviewed`, and `curated` once review volume grows.
+   - Inline editing, photo/license review state, and status filters are shipped.
+   - Next polish layer: add bulk actions only after review volume justifies them.
 
 ## Product guardrails
 

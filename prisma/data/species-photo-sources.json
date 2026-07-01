@@ -4435,5 +4435,15 @@
     "attribution": "Forest &amp; Kim Starr",
     "sourcePage": "https://commons.wikimedia.org/wiki/File%3AStarr%20080117-2229%20Microsorum%20musifolium.jpg",
     "score": 40
+  },
+  "seed-aloe-aristata-aristaloe-aristata": {
+    "commonName": "Aloe Aristata",
+    "scientificName": "Aristaloe aristata",
+    "provider": "Wikimedia Commons",
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/AloeAristata.jpg",
+    "license": "Public domain",
+    "attribution": "Chhe",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:AloeAristata.jpg",
+    "score": 95
   }
 }

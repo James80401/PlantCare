@@ -93,9 +93,19 @@ export const adminApi = {
   externalSpecies: () => api.get('/admin/species/external'),
   reviewExternalSpecies: (
     speciesId: string,
-    status: 'reviewed' | 'curated',
-    reviewNote?: string,
-  ) => api.patch(`/admin/species/external/${speciesId}/review`, { status, reviewNote }),
+    data: {
+      status?: 'reviewed' | 'curated';
+      reviewNote?: string;
+      sunlight?: string;
+      wateringFreqDays?: number;
+      toxicity?: string;
+      careNotes?: string;
+      defaultImageUrl?: string;
+      sourceNote?: string;
+      photoReviewStatus?: 'unreviewed' | 'approved' | 'needs_better_image';
+      photoReviewNote?: string;
+    },
+  ) => api.patch(`/admin/species/external/${speciesId}/review`, data),
   buddyOverview: () =>
     api.get<{
       maxLevel: number;
