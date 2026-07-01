@@ -84,6 +84,7 @@ provider gates instead of pretending the local catalog already covers everything
 - Added explicit user confirmation for external matches; confirmation creates a normal `PlantSpecies` row and stores provider, match id, confidence, confirmation time, and user-confirmed status in `metadataJson.externalSource`.
 - Added a safe care-archetype fallback for provisional matches so Dr. Plant can explain the starting care model before species-specific notes are reviewed.
 - Updated the Add Plant wizard to show external-match status, confidence, archetype guidance, and a confirmation action before plant details.
+- Added admin-only external species review tooling so user-confirmed long-tail IDs can be marked `reviewed` or `curated` before the catalog treats them as fully vetted.
 
 ## Next implementation batch
 
@@ -95,9 +96,10 @@ provider gates instead of pretending the local catalog already covers everything
    - Add contextual cross-links from problem/treatment plan cards into relevant guide sections.
    - Consider compact "Ask Dr. Plant about this" actions in guide cards after product review.
 
-3. Hybrid ID review tooling:
-   - Add an admin/listing view for externally confirmed species so catalog review can improve care notes/photos over time.
-   - Consider promotion states such as `user_confirmed`, `reviewed`, and `curated` if review volume grows.
+3. Hybrid ID review follow-up:
+   - Add inline editing for care notes, toxicity, watering cadence, and source notes inside the admin review queue.
+   - Add photo/license review and a "needs better image" state for externally confirmed species.
+   - Add filters for `user_confirmed`, `reviewed`, and `curated` once review volume grows.
 
 ## Product guardrails
 

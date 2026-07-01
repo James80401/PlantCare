@@ -10,7 +10,7 @@ import { AdminAuditService } from './admin-audit.service';
 type AdminRequest = Request & {
   requestId?: string;
   user?: { sub?: string; email?: string };
-  params?: { userId?: string };
+  params?: { userId?: string; speciesId?: string };
 };
 
 @Injectable()
@@ -69,6 +69,8 @@ function adminActionName(req: AdminRequest) {
   if (method === 'GET' && path.includes('/admin/audit/summary')) return 'audit.summary';
   if (method === 'GET' && path.includes('/admin/audit')) return 'audit.list';
   if (method === 'GET' && path.includes('/admin/observability')) return 'observability.overview';
+  if (method === 'GET' && path.includes('/admin/species/external')) return 'species.external.list';
+  if (method === 'PATCH' && path.includes('/admin/species/external')) return 'species.external.review';
   return `${method.toLowerCase()}.${path.replace(/^\/api\/v1\/admin\/?/, '').replace(/[/?#].*$/, '') || 'admin'}`;
 }
 

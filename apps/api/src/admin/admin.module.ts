@@ -8,6 +8,8 @@ import { AdminObservabilityController } from './admin-observability.controller';
 import { AdminObservabilityService } from './admin-observability.service';
 import { AdminRegistrationsController } from './admin-registrations.controller';
 import { AdminRegistrationsService } from './admin-registrations.service';
+import { AdminSpeciesController } from './admin-species.controller';
+import { AdminSpeciesService } from './admin-species.service';
 import { AdminGuard } from './admin.guard';
 
 @Module({
@@ -16,12 +18,14 @@ import { AdminGuard } from './admin.guard';
     AdminAuditController,
     AdminObservabilityController,
     AdminBuddyController,
+    AdminSpeciesController,
   ],
   providers: [
     AdminRegistrationsService,
     AdminAuditService,
     AdminBuddyService,
     AdminObservabilityService,
+    AdminSpeciesService,
     AdminAuditInterceptor,
     AdminGuard,
   ],

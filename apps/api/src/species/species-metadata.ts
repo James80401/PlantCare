@@ -21,7 +21,10 @@ export interface SpeciesMetadata {
     confidence?: number;
     confirmedAt?: string;
     confirmedBy?: 'user';
-    status: 'user_confirmed';
+    status: 'user_confirmed' | 'reviewed' | 'curated';
+    reviewedAt?: string;
+    curatedAt?: string;
+    reviewNote?: string;
   };
 }
 

@@ -90,6 +90,12 @@ export const adminApi = {
   auditSummary: () => api.get('/admin/audit/summary'),
   auditLogs: (limit = 100) => api.get('/admin/audit', { params: { limit } }),
   observability: () => api.get('/admin/observability'),
+  externalSpecies: () => api.get('/admin/species/external'),
+  reviewExternalSpecies: (
+    speciesId: string,
+    status: 'reviewed' | 'curated',
+    reviewNote?: string,
+  ) => api.patch(`/admin/species/external/${speciesId}/review`, { status, reviewNote }),
   buddyOverview: () =>
     api.get<{
       maxLevel: number;

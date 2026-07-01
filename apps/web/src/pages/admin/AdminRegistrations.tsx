@@ -150,6 +150,44 @@ type AdminBuddyRow = {
   }[];
 };
 
+type ExternalSourceStatus = 'user_confirmed' | 'reviewed' | 'curated';
+
+type AdminExternalSpeciesReview = {
+  generatedAt: string;
+  totals: {
+    total: number;
+    userConfirmed: number;
+    reviewed: number;
+    curated: number;
+    needsReview: number;
+  };
+  items: AdminExternalSpeciesRow[];
+};
+
+type AdminExternalSpeciesRow = {
+  id: string;
+  commonName: string;
+  scientificName?: string | null;
+  sunlight?: string | null;
+  wateringFreqDays: number;
+  toxicity?: string | null;
+  careNotes?: string | null;
+  defaultImageUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  externalSource: {
+    provider: string;
+    providerMatchId?: string;
+    confidence?: number;
+    confirmedAt?: string;
+    confirmedBy?: 'user';
+    status: ExternalSourceStatus;
+    reviewedAt?: string;
+    curatedAt?: string;
+    reviewNote?: string;
+  };
+};
+
 const SHOP_CATEGORY_ORDER: ShopItemCategory[] = [
   'POT_SKIN',
   'BACKGROUND',
@@ -170,6 +208,7 @@ export default function AdminRegistrations() {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [observability, setObservability] = useState<AdminObservability | null>(null);
   const [buddyOverview, setBuddyOverview] = useState<AdminBuddyOverview | null>(null);
+  const [externalSpecies, setExternalSpecies] = useState<AdminExternalSpeciesReview | null>(null);
   const [auditSummary, setAuditSummary] = useState<AdminAuditSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
   const [buddyLevelDrafts, setBuddyLevelDrafts] = useState<Record<string, string>>({});
@@ -193,18 +232,20 @@ export default function AdminRegistrations() {
     const { data: me } = await usersApi.me();
     setIsAdmin(Boolean(me.isAdmin));
     if (!me.isAdmin) return;
-    const [usersRes, summaryRes, logsRes, observabilityRes, buddyRes] = await Promise.all([
+    const [usersRes, summaryRes, logsRes, observabilityRes, buddyRes, speciesRes] = await Promise.all([
       adminApi.listUsers(),
       adminApi.auditSummary(),
       adminApi.auditLogs(75),
       adminApi.observability(),
       adminApi.buddyOverview(),
+      adminApi.externalSpecies(),
     ]);
     setUsers(usersRes.data);
     setAuditSummary(summaryRes.data);
     setAuditLogs(logsRes.data);
     setObservability(observabilityRes.data);
     setBuddyOverview(buddyRes.data);
+    setExternalSpecies(speciesRes.data);
     setBuddyLevelDrafts((current) => {
       const next = { ...current };
       for (const row of buddyRes.data.buddies) {
@@ -304,6 +345,19 @@ export default function AdminRegistrations() {
     }
   };
 
+  const reviewExternalSpecies = async (speciesId: string, status: 'reviewed' | 'curated') => {
+    setBusyId(`species-${status}-${speciesId}`);
+    setError('');
+    try {
+      await adminApi.reviewExternalSpecies(speciesId, status);
+      await load();
+    } catch {
+      setError('External species review update failed.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (isAdmin === null) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
@@ -367,6 +421,13 @@ export default function AdminRegistrations() {
               description: 'Level and unlock controls for Buddy testing.',
               metric: buddyOverview ? String(buddyOverview.buddies.length) : '-',
               metricLabel: 'buddies',
+            },
+            {
+              href: '#external-species',
+              title: 'Species review',
+              description: 'Triage externally confirmed plant IDs.',
+              metric: externalSpecies ? String(externalSpecies.totals.needsReview) : '-',
+              metricLabel: 'to review',
             },
             {
               href: '#audit',
@@ -531,6 +592,93 @@ export default function AdminRegistrations() {
                 ))}
               </div>
             ) : null}
+          </section>
+        ) : null}
+        {externalSpecies ? (
+          <section id="external-species" className="scroll-mt-24 rounded-lg bg-white p-4 shadow-sm" aria-labelledby="external-species-heading">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 id="external-species-heading" className="text-lg font-semibold text-gray-900">
+                  External species review
+                </h2>
+                <p className="text-sm text-gray-600">
+                  User-confirmed long-tail IDs that entered the catalog from external photo identification.
+                </p>
+              </div>
+              <Button type="button" variant="secondary" onClick={() => load()}>
+                Refresh
+              </Button>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-5">
+              <AdminMetric label="External species" value={externalSpecies.totals.total} />
+              <AdminMetric label="Needs review" value={externalSpecies.totals.needsReview} />
+              <AdminMetric label="User confirmed" value={externalSpecies.totals.userConfirmed} />
+              <AdminMetric label="Reviewed" value={externalSpecies.totals.reviewed} />
+              <AdminMetric label="Curated" value={externalSpecies.totals.curated} />
+            </div>
+            <p className="mt-3 text-xs text-gray-500">
+              Snapshot generated {new Date(externalSpecies.generatedAt).toLocaleString()}.
+            </p>
+            {externalSpecies.items.length === 0 ? (
+              <p className="mt-4 rounded-2xl bg-emerald-50 p-6 text-gray-600">
+                No externally confirmed species are waiting in the catalog.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {externalSpecies.items.map((species) => (
+                  <article key={species.id} className="rounded-2xl border border-gray-100 bg-white p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-base font-bold text-gray-950">{species.commonName}</h3>
+                          <span className={`rounded-full px-2 py-1 text-xs font-semibold ${externalSpeciesStatusClass(species.externalSource.status)}`}>
+                            {externalSpeciesStatusLabel(species.externalSource.status)}
+                          </span>
+                        </div>
+                        {species.scientificName ? (
+                          <p className="mt-1 text-sm italic text-gray-600">{species.scientificName}</p>
+                        ) : null}
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                            {species.externalSource.provider}
+                          </span>
+                          <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                            {formatConfidence(species.externalSource.confidence)}
+                          </span>
+                          <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                            Water every {species.wateringFreqDays} days
+                          </span>
+                        </div>
+                        <p className="mt-3 text-sm text-gray-700">
+                          {species.careNotes ?? 'No care notes saved yet.'}
+                        </p>
+                        <p className="mt-2 text-xs text-gray-500">
+                          Confirmed {formatDateTime(species.externalSource.confirmedAt)}. Updated {formatDateTime(species.updatedAt)}.
+                          {species.externalSource.reviewNote ? ` Review note: ${species.externalSource.reviewNote}` : ''}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={busyId === `species-reviewed-${species.id}` || species.externalSource.status === 'reviewed'}
+                          onClick={() => reviewExternalSpecies(species.id, 'reviewed')}
+                        >
+                          Mark reviewed
+                        </Button>
+                        <Button
+                          type="button"
+                          disabled={busyId === `species-curated-${species.id}` || species.externalSource.status === 'curated'}
+                          onClick={() => reviewExternalSpecies(species.id, 'curated')}
+                        >
+                          Mark curated
+                        </Button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
         ) : null}
         {buddyOverview ? (
@@ -921,7 +1069,7 @@ function AdminSectionLinks({
   }[];
 }) {
   return (
-    <nav aria-label="Admin sections" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <nav aria-label="Admin sections" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((item) => (
         <a
           key={item.href}
@@ -981,6 +1129,28 @@ function statusClass(status: ManagedUser['accountApprovalStatus']) {
   if (status === 'APPROVED') return 'bg-emerald-100 text-emerald-900';
   if (status === 'REJECTED') return 'bg-rose-100 text-rose-900';
   return 'bg-amber-100 text-amber-900';
+}
+
+function externalSpeciesStatusLabel(status: ExternalSourceStatus) {
+  if (status === 'curated') return 'Curated';
+  if (status === 'reviewed') return 'Reviewed';
+  return 'User confirmed';
+}
+
+function externalSpeciesStatusClass(status: ExternalSourceStatus) {
+  if (status === 'curated') return 'bg-emerald-100 text-emerald-900';
+  if (status === 'reviewed') return 'bg-blue-100 text-blue-900';
+  return 'bg-amber-100 text-amber-900';
+}
+
+function formatConfidence(value?: number) {
+  if (typeof value !== 'number') return 'Confidence unknown';
+  return `${Math.round(value * 100)}% confidence`;
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) return 'unknown time';
+  return new Date(value).toLocaleString();
 }
 
 function shortId(value?: string | null) {
