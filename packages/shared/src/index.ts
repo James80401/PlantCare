@@ -38,3 +38,5 @@ export enum PotSize {
 
 export const FREE_PLANT_LIMIT = 5;
 export const FREE_IDENTIFY_MONTHLY_LIMIT = 3;
+export const FREE_DIAGNOSIS_MONTHLY_LIMIT = 5;
+export const FREE_DIAGNOSIS_CHAT_MONTHLY_LIMIT = 10;

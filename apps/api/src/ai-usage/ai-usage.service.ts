@@ -1,7 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { subMinutes, addHours } from 'date-fns';
+import { PlanTier } from '@prisma/client';
+import { subDays, subMinutes, addHours } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
+import { effectivePlanTier } from '../config/premium-policy';
+import { DIAGNOSIS_WINDOW_DAYS, freePlanLimits } from '../billing/billing-limits';
 
 export type AiUsageFeature = 'diagnosis' | 'diagnosis_chat';
 
@@ -121,12 +124,17 @@ export class AiUsageService {
     const now = new Date();
     const user = await this.prisma.user.findUnique({
       where: { id: ctx.userId },
-      select: { aiPausedUntil: true },
+      select: { aiPausedUntil: true, planTier: true },
     });
 
     if (user?.aiPausedUntil && user.aiPausedUntil > now) {
       await this.record({ ...ctx, status: 'PAUSED', reason: 'user paused after excessive AI usage' });
       throw this.pausedException(user.aiPausedUntil);
+    }
+
+    const isPremium = effectivePlanTier(this.config, user?.planTier ?? PlanTier.FREE) === PlanTier.PREMIUM;
+    if (!isPremium) {
+      await this.assertUnderMonthlyLimit(ctx, now);
     }
 
     const windowMinutes = this.configInt('AI_RATE_LIMIT_WINDOW_MINUTES', 60);
@@ -158,6 +166,52 @@ export class AiUsageService {
     await this.record({ ...ctx, status: 'ALLOWED' });
   }
 
+  /** Free-plan monthly caps per feature, on top of the rolling rate limit above.
+   *  Premium accounts (checked by the caller) are unlimited. */
+  private monthlyLimitFor(feature: AiUsageFeature): { max: number; label: string } | null {
+    const limits = freePlanLimits();
+    if (feature === 'diagnosis') {
+      return { max: limits.diagnosesPerWindow, label: 'plant diagnoses' };
+    }
+    if (feature === 'diagnosis_chat') {
+      return { max: limits.diagnosisChatsPerWindow, label: 'Dr. Plant chat messages' };
+    }
+    return null;
+  }
+
+  private async assertUnderMonthlyLimit(ctx: AiUsageContext, now: Date) {
+    const limit = this.monthlyLimitFor(ctx.feature);
+    if (!limit) return;
+
+    const since = subDays(now, DIAGNOSIS_WINDOW_DAYS);
+    const current = await this.prisma.aiUsageEvent.count({
+      where: {
+        userId: ctx.userId,
+        feature: ctx.feature,
+        status: 'ALLOWED',
+        createdAt: { gte: since },
+      },
+    });
+
+    if (current >= limit.max) {
+      await this.record({
+        ...ctx,
+        status: 'MONTHLY_LIMIT_REACHED',
+        reason: `${current} ${ctx.feature} calls in ${DIAGNOSIS_WINDOW_DAYS} days`,
+      });
+      throw new HttpException(
+        {
+          code: 'AI_MONTHLY_LIMIT_REACHED',
+          message: `Free accounts include ${limit.max} ${limit.label} every ${DIAGNOSIS_WINDOW_DAYS} days. Upgrade to Premium for unlimited access.`,
+          limit: limit.max,
+          windowDays: DIAGNOSIS_WINDOW_DAYS,
+          upgradePath: '/garden/subscription',
+        },
+        HttpStatus.PAYMENT_REQUIRED,
+      );
+    }
+  }
+
   classifyPlantIntent(text = '', hasImage = false): { allowed: boolean; reason?: string } {
     const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
     if (hasImage && !this.hasStrongOffTopicIntent(normalized)) return { allowed: true };
@@ -184,7 +238,10 @@ export class AiUsageService {
   }
 
   private async record(
-    ctx: AiUsageContext & { status: 'ALLOWED' | 'BLOCKED_OFF_TOPIC' | 'RATE_LIMITED' | 'PAUSED'; reason?: string },
+    ctx: AiUsageContext & {
+      status: 'ALLOWED' | 'BLOCKED_OFF_TOPIC' | 'RATE_LIMITED' | 'PAUSED' | 'MONTHLY_LIMIT_REACHED';
+      reason?: string;
+    },
   ) {
     await this.prisma.aiUsageEvent.create({
       data: {
