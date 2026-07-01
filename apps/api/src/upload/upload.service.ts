@@ -102,20 +102,24 @@ export class UploadService {
 
     if (pathname.startsWith('/uploads/')) {
       const filename = path.basename(pathname);
-      return path.join(this.uploadDir, filename);
+      return this.resolveWithinRoot(this.uploadDir, filename);
     }
 
     const carePrefix = '/care-guides/photos/';
     if (!pathname.startsWith(carePrefix)) return null;
     const relativePath = pathname.slice(carePrefix.length);
-    if (!relativePath || relativePath.includes('..')) return null;
+    if (!relativePath) return null;
 
-    const candidates = [
-      path.join(process.cwd(), 'apps', 'api', 'dist', 'care-guides', 'photos', relativePath),
-      path.join(process.cwd(), 'apps', 'api', 'src', 'care-guides', 'photos', relativePath),
-      path.join(process.cwd(), 'dist', 'care-guides', 'photos', relativePath),
-      path.join(process.cwd(), 'src', 'care-guides', 'photos', relativePath),
+    const candidateRoots = [
+      path.join(process.cwd(), 'apps', 'api', 'dist', 'care-guides', 'photos'),
+      path.join(process.cwd(), 'apps', 'api', 'src', 'care-guides', 'photos'),
+      path.join(process.cwd(), 'dist', 'care-guides', 'photos'),
+      path.join(process.cwd(), 'src', 'care-guides', 'photos'),
     ];
-    return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
+    for (const root of candidateRoots) {
+      const candidate = this.resolveWithinRoot(root, relativePath);
+      if (candidate && fs.existsSync(candidate)) return candidate;
+    }
+    return null;
   }
 }

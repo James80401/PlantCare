@@ -62,5 +62,12 @@ describe('UploadService thumbnails', () => {
     await expect(
       service.getThumbnailPath('/care-guides/photos/../../secret.jpg', 160),
     ).resolves.toBeNull();
+    // A trailing ".." segment resolves to the upload dir's parent, not a file inside it.
+    await expect(service.getThumbnailPath('/uploads/..', 160)).resolves.toBeNull();
+    // Percent-encoded traversal that reaches this method already decoded (e.g. via
+    // Express query parsing) must still be blocked, not just a literal "..".
+    await expect(
+      service.getThumbnailPath('/care-guides/photos/%2e%2e/%2e%2e/secret.jpg', 160),
+    ).resolves.toBeNull();
   });
 });
