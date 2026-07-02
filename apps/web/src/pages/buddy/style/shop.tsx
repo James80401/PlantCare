@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AccessoryPicker from '../../../components/buddy/AccessoryPicker';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { PageHeader } from '../../../components/ui/PageHeader';
+import { EQUIP_SLOTS } from '../../../hooks/buddy/shopTypes';
 import type { ShopItem, ShopItemCategory } from '../../../hooks/buddy/shopTypes';
+import { useBuddy } from '../../../hooks/buddy/useBuddy';
 import { useBuddyShop } from '../../../hooks/buddy/useBuddyShop';
+import { buddyApi } from '../../../services/api';
 import { shopLockLabel } from '../../../utils/shopLockLabel';
 
 const SHOP_SECTIONS: { title: string; category: ShopItemCategory }[] = [
@@ -20,10 +23,48 @@ const SHOP_SECTIONS: { title: string; category: ShopItemCategory }[] = [
   { title: 'Furniture', category: 'FURNITURE' },
 ];
 
+const SLOT_BY_CATEGORY: Partial<Record<ShopItemCategory, string>> = Object.fromEntries(
+  EQUIP_SLOTS.map((slot) => [slot.category, slot.key]),
+);
+
+function backgroundFromItem(itemId: string) {
+  return itemId.startsWith('bg_') ? itemId.slice(3) : itemId;
+}
+
+function backgroundShopId(key: string) {
+  return key.startsWith('bg_') ? key : `bg_${key}`;
+}
+
 export default function BuddyShopPage() {
+  const navigate = useNavigate();
+  const { buddy, refresh: refreshBuddy } = useBuddy();
   const { catalog, daily, loading, error, purchase, refresh } = useBuddyShop();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+
+  const equipped = (buddy?.equippedItems ?? {}) as Record<string, string>;
+
+  const equippedIdFor = (category: ShopItemCategory): string | undefined => {
+    if (category === 'BACKGROUND') return buddy ? backgroundShopId(buddy.terrariumBackground) : undefined;
+    const slot = SLOT_BY_CATEGORY[category];
+    return slot ? equipped[slot] : undefined;
+  };
+
+  const handleEquip = async (category: ShopItemCategory, itemId: string) => {
+    if (category === 'FURNITURE') {
+      navigate('/garden/buddy/style/terrarium');
+      return;
+    }
+    if (category === 'BACKGROUND') {
+      await buddyApi.update({ terrariumBackground: backgroundFromItem(itemId) });
+      await refreshBuddy();
+      return;
+    }
+    const slot = SLOT_BY_CATEGORY[category];
+    if (!slot) return;
+    await buddyApi.update({ equippedItems: { [slot]: itemId } });
+    await refreshBuddy();
+  };
 
   const priceLabel = (item: ShopItem) => {
     if (item.bloomTokenCost && item.bloomTokenCost > 0) {
@@ -126,9 +167,10 @@ export default function BuddyShopPage() {
           title={section.title}
           category={section.category}
           items={shopItems}
+          equippedId={equippedIdFor(section.category)}
           dewdrops={catalog.dewdrops}
           showShop
-          onEquip={() => {}}
+          onEquip={(itemId) => handleEquip(section.category, itemId)}
           onPurchase={handlePurchase}
         />
       ))}
