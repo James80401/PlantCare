@@ -75,13 +75,18 @@ export default function Household() {
     }
   };
 
-  const handleSharePlant = async (e: FormEvent, gardenId: string, plantId: string) => {
+  const handleSharePlant = async (e: FormEvent) => {
     e.preventDefault();
-    if (!gardenId || !plantId) return;
+    if (!shareGardenId || !sharePlantId) return;
     setMessage('');
     try {
-      await gardensApi.sharePlant(shareGardenId, { plantId: sharePlantId, canComplete: true });
+      await gardensApi.sharePlant(shareGardenId, {
+        plantId: sharePlantId,
+        canComplete: true,
+        canJournal: shareCanJournal,
+      });
       setSharePlantId('');
+      setShareCanJournal(true);
       setMessage('Plant shared with household.');
       await load();
     } catch (err) {
