@@ -31,6 +31,7 @@ export class UsersService {
         notifyPush: true,
         notifyEmail: true,
         notifySms: true,
+        phone: true,
         quietHoursStart: true,
         quietHoursEnd: true,
         experienceLevel: true,
@@ -74,6 +75,7 @@ export class UsersService {
       notifyPush?: boolean;
       notifyEmail?: boolean;
       notifySms?: boolean;
+      phone?: string;
       quietHoursStart?: number | null;
       quietHoursEnd?: number | null;
       timezone?: string;
@@ -104,6 +106,7 @@ export class UsersService {
         notifyPush: true,
         notifyEmail: true,
         notifySms: true,
+        phone: true,
         quietHoursStart: true,
         quietHoursEnd: true,
         timezone: true,

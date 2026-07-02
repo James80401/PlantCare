@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Put, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
+import { UpdateNotificationSettingsDto } from './dto/update-notification-settings.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
@@ -31,20 +32,7 @@ export class UsersController {
   @Put('me/notification-settings')
   updateSettings(
     @CurrentUser() user: JwtPayload,
-    @Body()
-    body: {
-      notifyPush?: boolean;
-      notifyEmail?: boolean;
-      notifySms?: boolean;
-      quietHoursStart?: number | null;
-      quietHoursEnd?: number | null;
-      timezone?: string;
-      latitude?: number;
-      longitude?: number;
-      locationLabel?: string | null;
-      locationQuery?: string;
-      temperatureUnit?: 'C' | 'F';
-    },
+    @Body() body: UpdateNotificationSettingsDto,
   ) {
     return this.usersService.updateNotificationSettings(user.sub, body);
   }
