@@ -21,6 +21,10 @@ touching production.
      `sameAs` URLs. **Tier E is done**: apex host + no-trailing-slash canonical redirects are in
      place. **Tier F production delivery tuning has started** after hosted Lighthouse showed slow
      regional FCP/LCP despite 0 ms TBT and 0 CLS.
+  3. **Plant intelligence / Plant Life** - problem library, care archetypes, treatment plans,
+     recovery suggestions, catalog sprint 1, hybrid long-tail ID review, guide intelligence, and
+     Plant Life progress polish are shipped. Remaining catalog photo gaps are Hoya Mathilde and
+     String of Dolphins, both pending exact reusable image sources.
 - **Source of truth docs:**
   - Strategy: [`docs/marketing/prelaunch-seo-funnel.md`](./marketing/prelaunch-seo-funnel.md) (the playbook)
   - Engineering tracker w/ checklists: [`docs/marketing/prelaunch-seo-subplan.md`](./marketing/prelaunch-seo-subplan.md)
@@ -174,6 +178,17 @@ while TBT stayed at `0 ms` and CLS at `0`. First fixes:
 3. **Fresh HTML/private files**: SPA fallbacks and crawler files send `Cache-Control: no-cache`.
 4. **Remaining bigger win**: put `drplant.app` behind Cloudflare/CDN edge caching before launch and
    rerun hosted Lighthouse from the same regions.
+
+### Plant intelligence / catalog - ACTIVE
+Current source: [`docs/product/plant-intelligence-expansion.md`](./product/plant-intelligence-expansion.md).
+Shipped: treatment plans, recovery task suggestions, richer guide intelligence, hybrid external-ID
+review, and Plant Life progress management. Remaining concrete gaps:
+1. **Species photos:** Hoya Mathilde and String of Dolphins still need exact reusable image sources.
+   iNaturalist/Commons exact-name searches found no acceptable CC0/CC-BY/CC-BY-SA source; do not use
+   nursery/blog images or parent-species substitutes without a new product decision.
+2. **Guide analytics:** measure whether contextual treatment-plan guide links get used before adding
+   more route targets.
+3. **Hybrid ID admin scale:** bulk review actions can wait until review volume justifies them.
 
 ---
 

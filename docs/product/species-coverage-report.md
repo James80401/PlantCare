@@ -92,5 +92,9 @@ succulents, cacti, orchids, carnivorous plants, edible crops, fruit, and
 outdoor ornamentals. The verifier now requires at least 400 species, so future
 catalog shrinkage or accidental data loss is caught in `npm run species:verify`.
 
-Open follow-up: the new rows need licensed photo sourcing before the photo
-coverage gate can move from the old 320-photo baseline to the expanded catalog.
+Photo follow-up: the expanded catalog now has 445 local species photos for 447
+species. The remaining exact reusable-source gaps are Hoya Mathilde (*Hoya
+mathilde*) and String of Dolphins (*Curio peregrinus* / `x Bacurio
+delphinatifolius`). iNaturalist and Wikimedia Commons exact-name checks did not
+surface acceptable CC0/CC-BY/CC-BY-SA photos, so do not use nursery/blog images
+or parent-species substitutes without a product decision.

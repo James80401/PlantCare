@@ -20,6 +20,7 @@ provider gates instead of pretending the local catalog already covers everything
 | Dr. Plant context | Uses care baseline, tasks, diagnoses, journal, weather, and feedback context |
 | Hybrid identification | External photo ID results stay provisional until user confirmation creates a first-class `PlantSpecies` row with source metadata |
 | Store release | Parked until full launch; PWA install is okay during private hosting |
+| Plant Life history | Per-plant progress check-ins support edit/delete, AI story recompute, task handoff, trend strip, and derived progress markers |
 
 ## Progress legend
 
@@ -44,6 +45,7 @@ provider gates instead of pretending the local catalog already covers everything
 | 6. Catalog expansion sprint 1 | `[x]` | Expand curated high-value inventory beyond the original 321 species. | Added a verified high-demand batch across houseplants, succulents, edibles, fruit, orchids, carnivorous plants, and outdoor ornamentals. |
 | 7. Hybrid long-tail identification | `[x]` | Let users identify plants beyond the local catalog without polluting curated data. | Provider-gated ID/enrichment path records source/confidence, maps to nearest care archetype, and promotes to `PlantSpecies` only after user confirmation. |
 | 8. Guide intelligence upgrade | `[x]` | Make care guides richer and more rescue-oriented. | Guides include common mistakes, diagnosis prompts, recovery links, and species-specific caveats. |
+| 9. Plant Life progress polish | `[x]` | Turn progress check-ins into a manageable plant-history surface. | Users can edit/delete progress entries, health-check tasks deep-link into check-ins, AI summaries refresh after edits, and the Journal tab shows latest story, trend, markers, and history. |
 
 ## Shipped in the first implementation pass
 
@@ -89,11 +91,21 @@ provider gates instead of pretending the local catalog already covers everything
 - Added admin filters for `user_confirmed`, `reviewed`, and `curated` external species review states.
 - Added contextual guide links from diagnosis treatment plans into relevant plant-problem guides, plus compact Dr. Plant handoffs from plant Care guide cards.
 
+## Shipped in Plant Life progress polish
+
+- Added edit and delete support for `PlantProgressEntry` through authenticated plant progress APIs.
+- Recomputed Dr. Plant progress summaries when check-in fields, notes, or photos change.
+- Added a Health Check task handoff so pending `HEALTH_CHECK` rows can open the exact Plant Life check-in flow.
+- Expanded the Journal tab's progress area into a Plant Life surface with latest story, flags, trend strip, derived progress markers, photo thumbnails, and full entry history controls.
+- Added focused API and web regression tests for progress entry management and health-check task routing.
+
 ## Next implementation batch
 
 1. Remaining photo cleanup:
-   - Hoya Mathilde and String of Dolphins still need truly reusable photo sources.
-   - Aloe Aristata now has a verified public-domain Wikimedia Commons photo.
+   - Hoya Mathilde and String of Dolphins still need exact truly reusable photo sources.
+   - Checked iNaturalist and Wikimedia Commons for exact Hoya Mathilde/Hoya mathilde, Curio peregrinus, Senecio peregrinus, String of Dolphins, and `× Bacurio delphinatifolius`; no acceptable CC0/CC-BY/CC-BY-SA exact-match image was found.
+   - The automated Commons resolver briefly matched String of Dolphins to a non-plant "String Figures" file; resolver title matching is now stricter to prevent that false positive.
+   - Aloe Aristata has a verified public-domain Wikimedia Commons photo.
    - Re-run `npm run species:photos:list-missing` and `npm run species:photos:verify` after each source pass.
 
 2. Guide UX polish:

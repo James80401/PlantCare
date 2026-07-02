@@ -2670,3 +2670,10 @@ Wildreturn, some rights reserved (CC BY)
 - License: CC BY 3.0
 - Forest &amp; Kim Starr
 - https://commons.wikimedia.org/wiki/File%3AStarr%20080117-2229%20Microsorum%20musifolium.jpg
+
+## Aloe Aristata
+- Scientific: *Aristaloe aristata*
+- License: Public domain
+- Chhe
+- https://commons.wikimedia.org/wiki/File:AloeAristata.jpg
+

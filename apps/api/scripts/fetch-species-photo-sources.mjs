@@ -219,6 +219,14 @@ function licenseFromMeta(extmetadata = {}) {
 
 async function findCommonsPhoto(scientificName, commonName) {
   const genus = scientificName.split(/\s+/)[0].toLowerCase();
+  const speciesWords = scientificName
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 3);
+  const commonWords = commonName
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !['plant', 'string'].includes(w));
   const searches = [
     `"${scientificName}"`,
     `"${scientificName.replace(/\s+var\.\s+.*$/i, '').trim()}"`,
@@ -257,8 +265,12 @@ async function findCommonsPhoto(scientificName, commonName) {
       if (title.includes('icon') || title.includes('logo') || title.includes('diagram')) continue;
 
       let score = 15;
-      if (title.includes(genus)) score += 25;
-      if (commonName.toLowerCase().split(/\s+/).some((w) => w.length > 3 && title.includes(w))) {
+      const hasScientificTitleMatch =
+        title.includes(genus) || speciesWords.some((w) => title.includes(w));
+      const commonTitleMatches = commonWords.filter((w) => title.includes(w)).length;
+      if (!hasScientificTitleMatch && commonTitleMatches < 2) continue;
+      if (hasScientificTitleMatch) score += 25;
+      if (commonTitleMatches >= 2) {
         score += 15;
       }
 
