@@ -25,6 +25,7 @@ import { AdminModule } from './admin/admin.module';
 import { ImageModerationModule } from './common/image-moderation.module';
 import { AiUsageModule } from './ai-usage/ai-usage.module';
 import { PlantProgressModule } from './progress/plant-progress.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -42,6 +43,7 @@ import { HealthController } from './health.controller';
     ImageModerationModule,
     AiUsageModule,
     PlantProgressModule,
+    RecommendationsModule,
     EmailModule,
     AuthModule,
     UsersModule,

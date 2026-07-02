@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Returns a **single aggregated payload** for the garden home screen: greeting, metrics, today’s tasks preview, attention items, week preview, schedule suggestions, engagement score, and weather hints.
+Returns a **single aggregated payload** for the garden home screen: greeting, metrics, today's tasks preview, attention items, recommendations, week preview, schedule suggestions, engagement score, and weather hints.
 
 The web `Dashboard.tsx` also loads plants and tasks separately for interactions; this endpoint optimizes first paint and copy.
 
@@ -32,6 +32,7 @@ The web `Dashboard.tsx` also loads plants and tasks separately for interactions;
 | `weekPreview` | 7-day task counts |
 | `weekSummary` | Server-computed headline, body, busiest day, and counts for the 7-day preview |
 | `scheduleSuggestions` | Adaptive schedule proposals |
+| `recommendations` | Durable non-critical guidance with Done, Snooze, Dismiss, and optional task conversion actions |
 | `engagement` | Score, streak, milestones context |
 
 `careSummary` is the preferred lightweight field for the dashboard's first
@@ -45,10 +46,16 @@ copy and counts. `attention` remains the detailed card list.
 `weekSummary` is the preferred lightweight source for the seven-day section
 copy. `weekPreview` remains the day-by-day grid data.
 
+`recommendations` is sourced from the recommendations module and should stay
+separate from `todayTasks`: watering and other critical care stays task-based,
+while Plant Check-In, move/protect, harvest, and flush-soil guidance can live as
+recommendations.
+
 Implementation: `dashboard.service.ts` + `dashboard-helpers.ts`.
 
 ## Related
 
 - [web/pages/dashboard.md](../web/pages/dashboard.md)
 - [api/tasks.md](tasks.md) (schedule suggestions apply)
+- [api/recommendations.md](recommendations.md)
 - [architecture/scheduling.md](../architecture/scheduling.md)

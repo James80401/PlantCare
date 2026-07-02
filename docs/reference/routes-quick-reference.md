@@ -69,6 +69,11 @@ See [api/weather.md](../api/weather.md).
 | GET | `/tasks/:id/explanation` |
 | GET | `/tasks/schedule-suggestions` |
 | POST | `/tasks/schedule-suggestions/:id/apply` |
+| GET | `/recommendations` |
+| PATCH | `/recommendations/:id/done` |
+| PATCH | `/recommendations/:id/snooze` |
+| PATCH | `/recommendations/:id/dismiss` |
+| POST | `/recommendations/:id/task` |
 
 ## Dashboard
 

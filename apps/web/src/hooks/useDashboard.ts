@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { dashboardApi } from '../services/api';
+import { dashboardApi, type RecommendationItem } from '../services/api';
 import type { DashboardPlant } from '../utils/dashboard';
 import type { SharedPlantView } from '../utils/household';
 import type { TaskItem } from '../utils/taskGroups';
@@ -129,6 +129,7 @@ export interface DashboardPayload {
   weekPreview: DashboardWeekDay[];
   weekSummary?: DashboardWeekSummary;
   scheduleSuggestions: DashboardScheduleSuggestion[];
+  recommendations: RecommendationItem[];
   healthStory?: DashboardHealthStory;
   weather: {
     hasLocation: boolean;

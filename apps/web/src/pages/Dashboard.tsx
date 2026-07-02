@@ -26,6 +26,7 @@ import {
 import { FormError } from '../components/a11y/FormError';
 import { StatusMessage } from '../components/a11y/StatusMessage';
 import { EngagementProgress } from '../components/engagement/EngagementProgress';
+import { RecommendationPanel } from '../components/recommendations/RecommendationPanel';
 import {
   resolveMilestones,
   getGardenWellness,
@@ -123,6 +124,7 @@ export default function Dashboard() {
   };
 
   const scheduleSuggestions = dash?.scheduleSuggestions ?? [];
+  const recommendations = dash?.recommendations ?? [];
   const firstName = dash?.greeting.name ?? 'there';
   const plants = dash?.plants ?? [];
   const sharedPlants = dash?.sharedPlants ?? [];
@@ -514,6 +516,12 @@ export default function Dashboard() {
         </div>
 
         <aside className="space-y-4">
+          <RecommendationPanel
+            recommendations={recommendations}
+            onChanged={reloadDash}
+            emptyText="No extra recommendations right now. Keep up with your care tasks."
+          />
+
           <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
             <h2 className="text-base font-semibold text-emerald-950 font-display">
               {attentionSummary?.headline ?? 'Needs attention'}

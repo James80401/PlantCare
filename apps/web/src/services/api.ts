@@ -207,6 +207,41 @@ export const dashboardApi = {
     api.get('/dashboard', { params: { from, to } }),
 };
 
+export interface RecommendationItem {
+  id: string;
+  plantId?: string | null;
+  gardenId?: string | null;
+  source: string;
+  sourceKey: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  status: 'ACTIVE' | 'DONE' | 'SNOOZED' | 'DISMISSED';
+  title: string;
+  body: string;
+  actionLabel?: string | null;
+  actionPath?: string | null;
+  suggestedTaskType?: string | null;
+  suggestedTaskDueInDays?: number | null;
+  snoozedUntil?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  plant?: {
+    id: string;
+    nickname?: string | null;
+    imageUrl?: string | null;
+    species: { commonName: string; defaultImageUrl?: string | null };
+  } | null;
+  garden?: { id: string; name: string } | null;
+}
+
+export const recommendationsApi = {
+  list: (plantId?: string) =>
+    api.get<RecommendationItem[]>('/recommendations', { params: { plantId } }),
+  done: (id: string) => api.patch(`/recommendations/${id}/done`),
+  snooze: (id: string) => api.patch(`/recommendations/${id}/snooze`),
+  dismiss: (id: string) => api.patch(`/recommendations/${id}/dismiss`),
+  convertToTask: (id: string) => api.post(`/recommendations/${id}/task`),
+};
+
 export const weatherApi = {
   adviceStatus: () =>
     api.get<{

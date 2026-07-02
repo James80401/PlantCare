@@ -12,6 +12,7 @@
 | Species | [species.md](species.md) | `/species` |
 | Plants | [plants.md](plants.md) | `/plants` |
 | Tasks | [tasks.md](tasks.md) | `/tasks` |
+| Recommendations | [recommendations.md](recommendations.md) | `/recommendations` |
 | Dashboard | [dashboard.md](dashboard.md) | `/dashboard` |
 | Gardens | [gardens.md](gardens.md) | `/gardens` |
 | Community | [community.md](community.md) | `/community` |

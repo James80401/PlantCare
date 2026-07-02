@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { addDays, format, startOfDay, subDays } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
+import { RecommendationsService } from '../recommendations/recommendations.service';
 import { SchedulerService } from '../scheduler/scheduler.service';
 import { WeatherService } from '../weather/weather.service';
 import { PlantMilestonesService } from '../milestones/plant-milestones.service';
@@ -33,6 +34,7 @@ export class DashboardService {
     private scheduler: SchedulerService,
     private weather: WeatherService,
     private plantMilestones: PlantMilestonesService,
+    private recommendations: RecommendationsService,
   ) {}
 
   async getDashboard(userId: string, from?: string, to?: string) {
@@ -51,6 +53,7 @@ export class DashboardService {
       recentJournalEntries,
       recentDiagnoses,
       openDiagnosisCount,
+      recommendations,
     ] = await Promise.all([
       this.prisma.user.findUnique({
         where: { id: userId },
@@ -174,6 +177,7 @@ export class DashboardService {
       this.prisma.diagnosis.count({
         where: { plant: { userId }, resolved: false },
       }),
+      this.recommendations.refreshForUser(userId, now),
     ]);
 
     const taskRows = tasks as TaskLike[];
@@ -253,6 +257,7 @@ export class DashboardService {
       weekPreview,
       weekSummary,
       scheduleSuggestions,
+      recommendations,
       healthStory: {
         openDiagnosisCount,
         recentJournal: recentJournalEntries.map((entry) =>

@@ -34,6 +34,28 @@ enum TaskStatus {
   SKIPPED
 }
 
+enum RecommendationStatus {
+  ACTIVE
+  DONE
+  SNOOZED
+  DISMISSED
+}
+
+enum RecommendationPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RecommendationSource {
+  DR_PLANT
+  PLANT_CHECK_IN
+  CARE_TIMING
+  ENVIRONMENT
+  SEASONAL
+  SYSTEM
+}
+
 enum PotSize {
   SMALL
   MEDIUM
@@ -112,6 +134,7 @@ model User {
   activityEvents        ActivityEvent[]
   buddy                 Buddy?
   plantMilestones       PlantMilestone[]
+  recommendations       Recommendation[]
   refreshTokens         RefreshToken[]
   aiUsageEvents         AiUsageEvent[]
   plantProgressEntries  PlantProgressEntry[]
@@ -276,6 +299,7 @@ model Plant {
   diagnosisConversations DiagnosisConversation[]
   shares                 PlantShare[]
   milestones             PlantMilestone[]
+  recommendations        Recommendation[]
 
   @@index([userId])
   @@index([gardenId])
@@ -332,6 +356,39 @@ model TaskFeedback {
   @@index([taskId])
   @@index([userId, createdAt])
   @@index([reason])
+}
+
+model Recommendation {
+  id                    String                 @id @default(cuid())
+  userId                String
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plantId               String?
+  plant                 Plant?                 @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  gardenId              String?
+  garden                Garden?                @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  source                RecommendationSource
+  sourceKey             String
+  priority              RecommendationPriority @default(MEDIUM)
+  status                RecommendationStatus   @default(ACTIVE)
+  title                 String
+  body                  String
+  actionLabel           String?
+  actionPath            String?
+  suggestedTaskType     TaskType?
+  suggestedTaskDueInDays Int?
+  metadataJson          String?
+  snoozedUntil          DateTime?
+  completedAt           DateTime?
+  dismissedAt           DateTime?
+  lastRefreshedAt       DateTime               @default(now())
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@unique([userId, sourceKey])
+  @@index([userId, status, priority])
+  @@index([plantId, status])
+  @@index([gardenId, status])
+  @@index([lastRefreshedAt])
 }
 
 model JournalEntry {
@@ -457,6 +514,7 @@ model Garden {
   plants    PlantShare[]
   invites   CareInvite[]
   activity  ActivityEvent[]
+  recommendations Recommendation[]
 
   @@index([ownerId])
 }

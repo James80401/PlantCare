@@ -228,14 +228,20 @@ describe('DashboardService', () => {
         { id: 'first_plant', title: 'First plant', unlocked: true },
       ]),
     };
+    const recommendations = {
+      refreshForUser: jest.fn().mockResolvedValue([
+        { id: 'rec-1', title: 'Check in on Monsty', priority: 'MEDIUM' },
+      ]),
+    };
     const service = new DashboardService(
       prisma as never,
       scheduler as never,
       weather as never,
       plantMilestones as never,
+      recommendations as never,
     );
 
-    return { service, prisma, scheduler, weather, plantMilestones };
+    return { service, prisma, scheduler, weather, plantMilestones, recommendations };
   }
 
   beforeEach(() => {
@@ -263,6 +269,7 @@ describe('DashboardService', () => {
       'metrics',
       'pendingTasks',
       'plants',
+      'recommendations',
       'scheduleSuggestions',
       'sharedPlants',
       'todayTasks',
@@ -300,6 +307,9 @@ describe('DashboardService', () => {
     });
     expect(result.todayTasks.map((task) => task.id)).toEqual(['task-overdue', 'task-today']);
     expect(result.pendingTasks.map((task) => task.id)).toEqual(['task-overdue', 'task-today']);
+    expect(result.recommendations).toEqual([
+      { id: 'rec-1', title: 'Check in on Monsty', priority: 'MEDIUM' },
+    ]);
     expect(result.weekPreview).toHaveLength(7);
     expect(result.weekPreview[0]).toMatchObject({ label: 'Today', count: 1 });
     expect(result.weekSummary).toEqual({

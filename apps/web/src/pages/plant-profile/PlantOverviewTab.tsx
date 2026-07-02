@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { format } from 'date-fns';
+import { RecommendationPanel } from '../../components/recommendations/RecommendationPanel';
+import { recommendationsApi, type RecommendationItem } from '../../services/api';
 import { PLANT_DETAILS_SECTION_ID } from '../../utils/gardenPaths';
 import { usePlantProfile } from './PlantProfileContext';
 import { PlantDetailsEditor } from './PlantDetailsEditor';
@@ -10,6 +12,12 @@ import { taskTypeLabel } from '../../utils/tasks';
 export default function PlantOverviewTab() {
   const ctx = usePlantProfile();
   const location = useLocation();
+  const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
+
+  const loadRecommendations = useCallback(async () => {
+    const { data } = await recommendationsApi.list(ctx.id);
+    setRecommendations(data);
+  }, [ctx.id]);
 
   useEffect(() => {
     if (location.hash.replace('#', '') !== PLANT_DETAILS_SECTION_ID) return;
@@ -18,6 +26,10 @@ export default function PlantOverviewTab() {
       block: 'start',
     });
   }, [location.hash, location.pathname]);
+
+  useEffect(() => {
+    void loadRecommendations();
+  }, [loadRecommendations]);
 
   return (
     <ProfileSection
@@ -50,6 +62,16 @@ export default function PlantOverviewTab() {
         </div>
 
         <PlantDetailsEditor />
+
+        <div className="lg:col-span-2">
+          <RecommendationPanel
+            title={`${ctx.plantLabel} recommendations`}
+            description="Useful plant-specific guidance that is not urgent enough to be a care task."
+            recommendations={recommendations}
+            onChanged={loadRecommendations}
+            emptyText="No plant-specific recommendations right now."
+          />
+        </div>
 
         <LocationEditor
           editingLocation={ctx.editingLocation}

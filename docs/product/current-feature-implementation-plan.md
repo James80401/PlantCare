@@ -24,6 +24,10 @@ clearer, more trustworthy, and better verified.
 
 ## Priority order
 
+**Current user-directed order (2026-07-02):** decision-backed recommendation
+systems first, then quality/UX polish, then plant intelligence/catalog depth,
+with performance and SEO lock-in held until the app is otherwise release-ready.
+
 | Priority | Track | Why now |
 |----------|-------|---------|
 | 1 | Dashboard clarity and payload slimming | Home screen is the daily command center; H1 is the clearest partial item. |
@@ -33,6 +37,36 @@ clearer, more trustworthy, and better verified.
 | 5 | Species/catalog depth | Existing browse/recommendation surfaces improve as content coverage grows. |
 | 6 | Quality, accessibility, and mobile release checks | Protect existing features as the app moves through public URL and closed testing. |
 | 7 | Plant Buddy quality | Buddy is feature-complete; focus on tests, polish, and analytics only when it is the active lane. |
+
+## Active recommendation foundation
+
+**Goal:** Treat helpful but non-critical guidance as durable recommendations,
+separate from urgent care tasks.
+
+**Decisions captured:**
+
+- Move/protect and harvest are recommendations, not task types.
+- Plant Check-In is adaptive recommendation guidance, not a normal care task.
+- Flush-soil guidance appears on a plant-dependent 1-3 month cadence.
+- Recommendations support Done, Snoozed, and Dismissed lifecycle actions.
+- Snooze is one simple action: show again tomorrow.
+- Recommendations can become tasks only when a task-backed action is explicitly
+  available and the user confirms.
+- Recommendations show on both dashboard and plant profile surfaces.
+
+**Status (2026-07-02):** Foundation slice shipped in code: `Recommendation`
+model, `/recommendations` API, dashboard payload integration, dashboard panel,
+plant overview panel, and first conservative generators for Plant Check-In,
+flush-soil, harvest, and outdoor move/protect guidance.
+
+**Next slices:**
+
+- Add Dr. Plant action cards that create recommendations or task-backed drafts
+  with explicit confirmation.
+- Replace older scheduled `HEALTH_CHECK` progress prompts where appropriate with
+  Plant Check-In recommendations.
+- Add garden-wide recommendation generators using garden environment defaults.
+- Add analytics for recommendation view, done, snooze, dismiss, and task convert.
 
 ## Track 1 - Dashboard clarity and API slimming
 

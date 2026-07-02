@@ -6,7 +6,7 @@
 
 ## Enums
 
-`PlanTier`, `TaskType`, `TaskStatus`, `PotSize`, `NotificationChannel`, `SubscriptionStatus`
+`PlanTier`, `TaskType`, `TaskStatus`, `RecommendationStatus`, `RecommendationPriority`, `RecommendationSource`, `PotSize`, `NotificationChannel`, `SubscriptionStatus`
 
 ## Models (summary)
 
@@ -19,6 +19,7 @@
 | `CareGuideImage` | Illustration metadata |
 | `Plant` | User plant instance |
 | `Task` | Scheduled care |
+| `Recommendation` | Durable non-critical guidance shown on dashboard and plant profiles |
 | `JournalEntry` | Notes |
 | `Diagnosis` | One-shot results |
 | `DiagnosisConversation` | Chat thread |
