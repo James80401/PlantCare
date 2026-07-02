@@ -105,6 +105,7 @@ model User {
   notifyPush            Boolean        @default(true)
   notifyEmail           Boolean        @default(true)
   notifySms             Boolean        @default(false)
+  phone                 String?
   quietHoursStart       Int?
   quietHoursEnd         Int?
   identifyCountThisMonth Int           @default(0)
