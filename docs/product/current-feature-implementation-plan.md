@@ -303,6 +303,10 @@ Android closed testing path.
 - Manual findings are recorded.
 - Blocking a11y issues are fixed or explicitly deferred with rationale.
 
+**Status (2026-07-02):** dashboard garden-summary failures now render as a polite live status,
+keep the rest of the dashboard usable, and have regression coverage for retrying the secondary
+garden summary request.
+
 ### Slice 6.3 - Android closed testing preflight
 
 - Configure mobile API base URL for production.

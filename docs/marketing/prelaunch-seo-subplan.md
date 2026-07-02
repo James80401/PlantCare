@@ -183,11 +183,12 @@ around 4-6 seconds. That shape points at delivery and first paint, not client-si
   `/login` client redirect.
 - [x] **F4b - Cache API-served static guide assets** - `/care-guides/images/*` and
   `/care-guides/photos/*` now advertise 30-day immutable caching from the API static asset handler.
-- [ ] **F5 - Add an edge CDN/cache** - put `drplant.app` behind Cloudflare proxy/cache before public
+- [ ] **F5 - Add an edge CDN/cache (deferred)** - put `drplant.app` behind Cloudflare proxy/cache before public
   launch so global Lighthouse regions do not all fetch app bytes from the origin droplet.
   `npm run cloudflare:tier-f:dry-run` now prints the web-only DNS/cache plan and
-  `npm run cloudflare:tier-f:apply` applies it when a Cloudflare API token is present.
-- [ ] **F6 - Rerun hosted Lighthouse from multiple regions** after deploy and compare FCP/LCP.
+  `npm run cloudflare:tier-f:apply` applies it when a Cloudflare API token is present. Parked until
+  Cloudflare account/token access is available.
+- [ ] **F6 - Rerun hosted Lighthouse from multiple regions (blocked by F5)** after deploy and compare FCP/LCP.
 
 **Acceptance:** production serves compressed JS/CSS, immutable hashed assets, fresh HTML, and global
 Lighthouse scores improve without weakening private-mode `noindex`/empty-sitemap protections.

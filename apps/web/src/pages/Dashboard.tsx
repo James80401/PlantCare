@@ -445,7 +445,11 @@ export default function Dashboard() {
                 <DashboardSkeleton />
               </>
             ) : gardenSummariesError ? (
-              <section className="rounded-3xl border border-amber-100 bg-amber-50/80 p-5 shadow-sm shadow-emerald-900/5">
+              <section
+                role="status"
+                aria-live="polite"
+                className="rounded-3xl border border-amber-100 bg-amber-50/80 p-5 shadow-sm shadow-emerald-900/5"
+              >
                 <h3 className="font-semibold text-amber-950">Garden summaries are unavailable</h3>
                 <p className="mt-1 text-sm leading-6 text-amber-900">
                   Your dashboard can still load care tasks and plants. Try the summaries again when
@@ -1203,4 +1207,3 @@ function PlantThumb({ plant, size }: { plant: DashboardPlant; size: 'sm' | 'lg' 
     </div>
   );
 }
-

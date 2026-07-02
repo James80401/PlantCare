@@ -176,8 +176,9 @@ while TBT stayed at `0 ms` and CLS at `0`. First fixes:
 1. **Compression**: Caddy enables gzip for the web reverse proxy; nginx allows proxied gzip.
 2. **Immutable assets**: `/assets/*` sends `Cache-Control: public, max-age=31536000, immutable`.
 3. **Fresh HTML/private files**: SPA fallbacks and crawler files send `Cache-Control: no-cache`.
-4. **Remaining bigger win**: put `drplant.app` behind Cloudflare/CDN edge caching before launch and
-   rerun hosted Lighthouse from the same regions.
+4. **Deferred bigger win**: put `drplant.app` behind Cloudflare/CDN edge caching before launch and
+   rerun hosted Lighthouse from the same regions. Repo automation exists, but the external flip is
+   parked until Cloudflare account/token access is available.
 
 ### Plant intelligence / catalog - ACTIVE
 Current source: [`docs/product/plant-intelligence-expansion.md`](./product/plant-intelligence-expansion.md).

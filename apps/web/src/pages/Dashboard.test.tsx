@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Dashboard from './Dashboard';
@@ -102,6 +102,30 @@ describe('Dashboard', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load your dashboard.');
     await waitFor(() => expect(screen.getByText('Kitchen herbs')).toBeInTheDocument());
+  });
+
+  it('keeps the dashboard usable when garden summaries fail and retries that request', async () => {
+    mockUseDashboard.mockReturnValue({
+      data: dashboardPayload(),
+      loading: false,
+      error: '',
+      reload: vi.fn(),
+    });
+    mockSummaries
+      .mockRejectedValueOnce(new Error('network down'))
+      .mockResolvedValueOnce({
+        data: [{ id: 'garden-1', name: 'Kitchen herbs', tasksDueToday: 0, overdue: 0 }],
+      });
+
+    renderDashboard();
+
+    expect(await screen.findByText('Garden summaries are unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Catch up gently')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry summaries' }));
+
+    await waitFor(() => expect(screen.getByText('Kitchen herbs')).toBeInTheDocument());
+    expect(mockSummaries).toHaveBeenCalledTimes(2);
   });
 });
 
