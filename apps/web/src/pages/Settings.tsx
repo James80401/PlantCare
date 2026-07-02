@@ -36,8 +36,10 @@ const LIGHT_LEVELS = [
   { value: 'high', label: 'Bright light' },
 ] as const;
 
+const E164_PATTERN = /^\+[1-9]\d{7,14}$/;
+
 export default function Settings() {
-  const { logout, refreshUser } = useAuth();
+  const { logout, refreshUser, isPremium } = useAuth();
   const {
     buddy,
     missing: buddyMissing,
@@ -48,6 +50,7 @@ export default function Settings() {
   const [notifyPush, setNotifyPush] = useState(true);
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [notifySms, setNotifySms] = useState(false);
+  const [phone, setPhone] = useState('');
   const [timezone, setTimezone] = useState('America/New_York');
   const [locationQuery, setLocationQuery] = useState('');
   const [locationLabel, setLocationLabel] = useState('');
@@ -74,6 +77,7 @@ export default function Settings() {
       setNotifyPush(data.notifyPush);
       setNotifyEmail(data.notifyEmail);
       setNotifySms(data.notifySms);
+      if (data.phone) setPhone(data.phone);
       setTimezone(data.timezone || 'America/New_York');
       if (data.locationLabel) setLocationLabel(data.locationLabel);
       if (data.latitude) setLatitude(String(data.latitude));
@@ -155,11 +159,17 @@ export default function Settings() {
     const lng = longitude ? parseFloat(longitude) : undefined;
     const hasCoords =
       lat !== undefined && !Number.isNaN(lat) && lng !== undefined && !Number.isNaN(lng);
+    const wantsSms = notifySms && isPremium;
+    if (wantsSms && !E164_PATTERN.test(phone.trim())) {
+      setError('Enter a valid phone number in international format (e.g. +15551234567).');
+      return;
+    }
     try {
       await usersApi.updateSettings({
         notifyPush,
         notifyEmail,
         notifySms,
+        phone: wantsSms ? phone.trim() : undefined,
         timezone,
         latitude: hasCoords ? lat : undefined,
         longitude: hasCoords ? lng : undefined,
@@ -339,9 +349,31 @@ export default function Settings() {
           Email reminders
         </label>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={notifySms} onChange={(e) => setNotifySms(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={notifySms}
+            disabled={!isPremium}
+            onChange={(e) => setNotifySms(e.target.checked)}
+          />
           SMS (Premium)
         </label>
+        {!isPremium ? (
+          <p className="text-xs leading-relaxed text-gray-600">
+            SMS reminders are a Premium perk.{' '}
+            <Link to="/garden/subscription" className="text-emerald-700 hover:underline">
+              Upgrade to enable
+            </Link>
+            .
+          </p>
+        ) : notifySms ? (
+          <input
+            type="tel"
+            placeholder="Phone number (e.g. +15551234567)"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        ) : null}
 
         <h2 className="font-semibold pt-2">Quiet hours (0–23)</h2>
         <div className="flex gap-2">

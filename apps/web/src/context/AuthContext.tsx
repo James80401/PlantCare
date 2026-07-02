@@ -18,6 +18,7 @@ interface User {
   isAdmin?: boolean;
   experienceLevel?: string | null;
   defaultLightLevel?: string | null;
+  phone?: string | null;
 }
 
 interface AuthContextValue {
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin: Boolean(data.isAdmin),
         experienceLevel: data.experienceLevel,
         defaultLightLevel: data.defaultLightLevel,
+        phone: data.phone,
       });
     } catch {
       localStorage.clear();
