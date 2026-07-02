@@ -55,6 +55,8 @@
     "production:signoff": "node scripts/production-signoff.mjs",
     "production:up": "docker compose -f docker-compose.production.yml --env-file .env.production up -d --build",
     "production:down": "docker compose -f docker-compose.production.yml down",
+    "cloudflare:tier-f:dry-run": "node scripts/apply-cloudflare-tier-f.mjs",
+    "cloudflare:tier-f:apply": "node scripts/apply-cloudflare-tier-f.mjs --apply --purge",
     "mobile:release:android": "npm run build -w @plant-care/web && npm run mobile:sync -w @plant-care/web && npm run mobile:android"
   },
   "devDependencies": {
