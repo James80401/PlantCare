@@ -1,9 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NotificationChannel, TaskStatus } from '@prisma/client';
+import { NotificationChannel, PlanTier, TaskStatus } from '@prisma/client';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
+import { effectivePlanTier } from '../config/premium-policy';
 import { resolveFcmTransport, sendFcmNotification } from './fcm.client';
+import { resolveSmsTransport, sendSmsNotification } from './sms.client';
 import { buildCareReminderPush, type TaskReminderRow } from './task-reminder-copy';
 
 @Injectable()
@@ -93,6 +95,12 @@ export class NotificationsService {
         });
       }
 
+      if (user.notifySms && this.isSmsEligible(user)) {
+        const taskWord = userTasks.length === 1 ? 'plant needs' : 'plants need';
+        const smsBody = `PlantCare: ${userTasks.length} ${taskWord} care${options.overdue ? ' (overdue)' : ' today'}. Open the app for details.`;
+        await this.sendSms(userId, user.phone, smsBody, options.overdue ? 'overdue' : 'due');
+      }
+
       await this.prisma.task.updateMany({
         where: { id: { in: userTasks.map((t) => t.id) } },
         data: { notifiedAt: new Date() },
@@ -151,6 +159,9 @@ export class NotificationsService {
     if (user.notifyEmail) {
       await this.sendEmail(user.email, title, body);
       await this.log(userId, NotificationChannel.EMAIL, `[${tag}] ${title}: ${body}`);
+    }
+    if (user.notifySms && this.isSmsEligible(user)) {
+      await this.sendSms(userId, user.phone, `${title}: ${body}`, tag);
     }
   }
 
@@ -220,6 +231,45 @@ export class NotificationsService {
     } catch (err) {
       this.logger.warn(`FCM failed for ${userId}: ${err}`);
       await this.log(userId, NotificationChannel.PUSH, `${logTag} (FCM error)`);
+    }
+  }
+
+  /** SMS is a premium perk (matches the "SMS (Premium)" Settings label) — gated
+   *  server-side, not just hidden in the UI, so API clients can't bypass it. */
+  private isSmsEligible(user: { planTier: PlanTier }): boolean {
+    return effectivePlanTier(this.config, user.planTier) === PlanTier.PREMIUM;
+  }
+
+  private async sendSms(userId: string, phone: string | null | undefined, body: string, tag = 'sms') {
+    const logTag = `[${tag}] ${body}`;
+
+    if (!phone) {
+      this.logger.log(`[sms mock] ${userId}: no phone number on file`);
+      await this.log(userId, NotificationChannel.SMS, logTag);
+      return;
+    }
+
+    const transport = resolveSmsTransport((key) => this.config.get<string>(key));
+    if (transport.mode === 'none') {
+      this.logger.log(`[sms mock] ${userId} (${phone}): ${body}`);
+      await this.log(userId, NotificationChannel.SMS, logTag);
+      return;
+    }
+
+    try {
+      const result = await sendSmsNotification(transport, phone, body);
+      if (result.sent) {
+        this.logger.log(`Twilio SMS sent to user ${userId}`);
+        await this.log(userId, NotificationChannel.SMS, logTag);
+      } else {
+        this.logger.warn(
+          `Twilio SMS failed for ${userId}: ${result.errorCode ?? ''} ${result.errorMessage ?? ''}`,
+        );
+        await this.log(userId, NotificationChannel.SMS, `${logTag} (SMS error)`);
+      }
+    } catch (err) {
+      this.logger.warn(`Twilio SMS threw for ${userId}: ${err}`);
+      await this.log(userId, NotificationChannel.SMS, `${logTag} (SMS error)`);
     }
   }
 
