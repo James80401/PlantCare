@@ -340,8 +340,17 @@ export default function Settings() {
         </label>
         {notifyPush && (
           <p className="text-xs leading-relaxed text-gray-600">
-            Includes care reminders and Plant Buddy alerts (journey return, sunshine, mood nudges).
-            On mobile, allow notifications when prompted after saving.
+            {Capacitor.isNativePlatform() ? (
+              <>
+                Includes care reminders and Plant Buddy alerts (journey return, sunshine, mood
+                nudges). Allow notifications when prompted after saving.
+              </>
+            ) : (
+              <>
+                Push notifications require the PlantCare mobile app. On the web, use email or SMS
+                reminders instead.
+              </>
+            )}
           </p>
         )}
         <label className="flex items-center gap-2 text-sm">
