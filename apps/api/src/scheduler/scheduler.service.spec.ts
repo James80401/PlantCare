@@ -61,6 +61,7 @@ describe('SchedulerService', () => {
     expect(types.has(TaskType.REPOT)).toBe(true);
     expect(types.has(TaskType.ROTATE)).toBe(true);
     expect(types.has(TaskType.INSPECT_PESTS)).toBe(true);
+    expect(types.has(TaskType.HEALTH_CHECK)).toBe(false);
 
     const repot = created.find((t) => t.taskType === TaskType.REPOT);
     expect(repot).toBeDefined();

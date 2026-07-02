@@ -2,11 +2,11 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TaskStatus, TaskType } from '@prisma/client';
 import axios from 'axios';
-import { addDays, startOfDay } from 'date-fns';
 import { AiUsageService } from '../ai-usage/ai-usage.service';
 import { ImageModerationService } from '../common/image-moderation.service';
 import { sharedPlantInclude, userCanJournalPlant, userCanViewPlantTasks } from '../gardens/task-access';
 import { PrismaService } from '../prisma/prisma.service';
+import { RecommendationsService } from '../recommendations/recommendations.service';
 import { UploadService } from '../upload/upload.service';
 import { CreatePlantProgressDto } from './dto/create-plant-progress.dto';
 import { UpdatePlantProgressDto } from './dto/update-plant-progress.dto';
@@ -83,6 +83,7 @@ export class PlantProgressService {
     private imageModeration: ImageModerationService,
     private aiUsage: AiUsageService,
     private config: ConfigService,
+    private recommendations: RecommendationsService,
   ) {
     this.apiKey = this.config.get<string>('OPENAI_API_KEY')?.trim();
     this.model = this.config.get<string>('OPENAI_MODEL', 'gpt-4.1-mini');
@@ -159,7 +160,7 @@ export class PlantProgressService {
       },
     });
 
-    await this.scheduleNextRoutineCheck(plantId, plant.gardenId, analysis.nextCheckInDays);
+    await this.recommendations.completePlantCheckInForPlant(userId, plantId);
     return entry;
   }
 
@@ -485,31 +486,6 @@ export class PlantProgressService {
         },
       }),
     ]);
-  }
-
-  private async scheduleNextRoutineCheck(plantId: string, gardenId: string | null, days: number) {
-    const dueDate = startOfDay(addDays(new Date(), Math.min(45, Math.max(3, days))));
-    const existing = await this.prisma.task.findFirst({
-      where: {
-        plantId,
-        taskType: TaskType.HEALTH_CHECK,
-        status: TaskStatus.PENDING,
-        sourceDiagnosisId: null,
-        dueDate: { gte: startOfDay(new Date()) },
-      },
-      select: { id: true },
-    });
-    if (existing) return;
-
-    await this.prisma.task.create({
-      data: {
-        plantId,
-        gardenId,
-        taskType: TaskType.HEALTH_CHECK,
-        dueDate,
-        status: TaskStatus.PENDING,
-      },
-    });
   }
 
   private label(value?: string | null) {

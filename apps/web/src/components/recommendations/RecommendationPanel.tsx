@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { recommendationsApi, type RecommendationItem } from '../../services/api';
+import { trackEvent } from '../../utils/analytics';
 import { taskTypeLabel } from '../../utils/tasks';
 
 const priorityClasses: Record<string, string> = {
@@ -24,6 +25,17 @@ export function RecommendationPanel({
 }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const visibleRecommendationIds = useMemo(
+    () => recommendations.map((recommendation) => recommendation.id).join('|'),
+    [recommendations],
+  );
+
+  useEffect(() => {
+    if (recommendations.length === 0) return;
+    for (const recommendation of recommendations) {
+      trackRecommendationEvent('recommendation_view', recommendation);
+    }
+  }, [visibleRecommendationIds]);
 
   const runAction = async (
     recommendation: RecommendationItem,
@@ -36,6 +48,7 @@ export function RecommendationPanel({
       if (action === 'snooze') await recommendationsApi.snooze(recommendation.id);
       if (action === 'dismiss') await recommendationsApi.dismiss(recommendation.id);
       if (action === 'task') await recommendationsApi.convertToTask(recommendation.id);
+      trackRecommendationEvent(recommendationActionEvent(action), recommendation);
       setMessage(action === 'task' ? 'Task added.' : 'Recommendation updated.');
       await onChanged();
     } catch {
@@ -86,6 +99,37 @@ export function RecommendationPanel({
       )}
     </section>
   );
+}
+
+type RecommendationAnalyticsEvent =
+  | 'recommendation_view'
+  | 'recommendation_done'
+  | 'recommendation_snooze'
+  | 'recommendation_dismiss'
+  | 'recommendation_task_convert';
+
+function trackRecommendationEvent(
+  event: RecommendationAnalyticsEvent,
+  recommendation: RecommendationItem,
+) {
+  trackEvent(event, {
+    recommendationId: recommendation.id,
+    source: recommendation.source,
+    priority: recommendation.priority,
+    plantId: recommendation.plantId ?? undefined,
+    gardenId: recommendation.gardenId ?? undefined,
+    hasTaskConversion: Boolean(recommendation.suggestedTaskType),
+    suggestedTaskType: recommendation.suggestedTaskType ?? undefined,
+  });
+}
+
+function recommendationActionEvent(
+  action: 'done' | 'snooze' | 'dismiss' | 'task',
+): RecommendationAnalyticsEvent {
+  if (action === 'task') return 'recommendation_task_convert';
+  if (action === 'done') return 'recommendation_done';
+  if (action === 'snooze') return 'recommendation_snooze';
+  return 'recommendation_dismiss';
 }
 
 function RecommendationCard({

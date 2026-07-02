@@ -63,12 +63,19 @@ flush-soil, harvest, and outdoor move/protect guidance.
 replies can now draft recommendation/task cards, and each card requires explicit
 confirmation before the backend saves a recommendation or creates a task.
 
+**Status (2026-07-02):** Near-term recommendation polish shipped in code:
+routine Plant Life prompts now resolve through Plant Check-In recommendations
+instead of recurring scheduled `HEALTH_CHECK` tasks, garden-wide environment
+recommendations are generated from garden defaults, and recommendation view /
+Done / Snooze / Dismiss / task-convert analytics events are emitted by the web
+recommendation panel.
+
 **Next slices:**
 
-- Replace older scheduled `HEALTH_CHECK` progress prompts where appropriate with
-  Plant Check-In recommendations.
-- Add garden-wide recommendation generators using garden environment defaults.
-- Add analytics for recommendation view, done, snooze, dismiss, and task convert.
+- Review recommendation analytics after enough private/open-testing usage to tune
+  copy, cadence, and card placement.
+- Decide whether any recommendation classes need richer confirmation flows before
+  launch.
 
 ## Track 1 - Dashboard clarity and API slimming
 

@@ -58,9 +58,17 @@ describe('PlantProgressService', () => {
       plantProgressEntry: {
         findMany: jest.fn().mockResolvedValue([]),
         findFirst: jest.fn().mockResolvedValue(entry),
+        create: jest.fn().mockImplementation(({ data }) => Promise.resolve({ id: 'entry-new', ...data })),
         update: jest.fn().mockImplementation(({ data }) => Promise.resolve({ ...entry, ...data })),
         delete: jest.fn().mockResolvedValue(entry),
       },
+      task: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+      taskFeedback: {
+        create: jest.fn().mockResolvedValue({ id: 'feedback-1' }),
+      },
+      $transaction: jest.fn((ops) => Promise.all(ops)),
     };
     const upload = { saveFile: jest.fn().mockResolvedValue('/uploads/progress.jpg') };
     const imageModeration = { assertImageAllowed: jest.fn().mockResolvedValue(null) };
@@ -68,16 +76,47 @@ describe('PlantProgressService', () => {
     const config = {
       get: jest.fn((_key: string, fallback?: string) => fallback),
     };
+    const recommendations = {
+      completePlantCheckInForPlant: jest.fn().mockResolvedValue({ count: 1 }),
+    };
     const service = new PlantProgressService(
       prisma as never,
       upload as never,
       imageModeration as never,
       aiUsage as never,
       config as never,
+      recommendations as never,
     );
 
-    return { service, prisma, upload, imageModeration };
+    return { service, prisma, upload, imageModeration, recommendations };
   }
+
+  it('creates a progress entry and completes the active Plant Check-In recommendation', async () => {
+    const { service, prisma, recommendations } = createService();
+
+    const result = await service.create('user-1', 'plant-1', {
+      overallHealth: 'STABLE',
+      growthChange: 'SAME',
+      leafCondition: 'HEALTHY',
+    });
+
+    expect(result.id).toBe('entry-new');
+    expect(prisma.plantProgressEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          plantId: 'plant-1',
+          userId: 'user-1',
+          overallHealth: 'STABLE',
+          analysisSummary: expect.any(String),
+        }),
+      }),
+    );
+    expect(recommendations.completePlantCheckInForPlant).toHaveBeenCalledWith(
+      'user-1',
+      'plant-1',
+    );
+    expect(prisma.task.findFirst).not.toHaveBeenCalled();
+  });
 
   it('updates an owned progress entry and recomputes the saved story when content changes', async () => {
     const { service, prisma } = createService();

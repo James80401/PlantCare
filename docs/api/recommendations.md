@@ -32,10 +32,11 @@ tomorrow.
 
 | Source | Behavior |
 |--------|----------|
-| `PLANT_CHECK_IN` | Adaptive Plant Check-In cadence: first check after 7 days, stable plants every 30 days, concerns sooner |
+| `PLANT_CHECK_IN` | Adaptive Plant Check-In cadence: first check after 7 days, stable plants every 30 days, concerns sooner. A submitted Plant Life check-in completes the active recommendation. |
 | `CARE_TIMING` | Flush-soil timing, generally 60-90 days depending on plant type |
 | `CARE_TIMING` | Harvest guidance for edible plants |
-| `ENVIRONMENT` | Outdoor move/protect guidance during harsher seasonal windows |
+| `ENVIRONMENT` | Plant and garden outdoor move/protect guidance during harsher seasonal windows |
+| `ENVIRONMENT` | Garden-wide indoor light-balance review by quarter |
 
 ## Statuses
 
@@ -52,3 +53,4 @@ tomorrow.
 - Priorities are `LOW`, `MEDIUM`, and `HIGH`.
 - Recommendations may include an `actionPath` for the web UI.
 - Only recommendations with `suggestedTaskType` can be converted into tasks.
+- Routine Plant Life prompts should use `PLANT_CHECK_IN` recommendations, not recurring `HEALTH_CHECK` tasks. Diagnosis follow-ups and weather protection checks may still create explicit `HEALTH_CHECK` tasks.

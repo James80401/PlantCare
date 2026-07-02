@@ -26,6 +26,13 @@ type RecommendationPlant = Plant & {
   garden: { id: string; name: string; location: string | null };
 };
 
+type RecommendationGarden = {
+  id: string;
+  name: string;
+  location: string | null;
+  plantCount: number;
+};
+
 type UpsertRecommendationInput = {
   userId: string;
   plantId?: string | null;
@@ -232,12 +239,28 @@ export class RecommendationsService {
     );
   }
 
+  async completePlantCheckInForPlant(userId: string, plantId: string, now = new Date()) {
+    return this.prisma.recommendation.updateMany({
+      where: {
+        userId,
+        plantId,
+        source: RecommendationSource.PLANT_CHECK_IN,
+        status: { in: ACTIVE_STATUSES },
+      },
+      data: {
+        status: RecommendationStatus.DONE,
+        completedAt: now,
+        snoozedUntil: null,
+      },
+    });
+  }
+
   private buildGeneratedRecommendations(
     userId: string,
     plants: RecommendationPlant[],
     now: Date,
   ): UpsertRecommendationInput[] {
-    return plants.flatMap((plant) => {
+    const plantRecommendations = plants.flatMap((plant) => {
       const items: UpsertRecommendationInput[] = [];
       const checkIn = this.buildPlantCheckInRecommendation(userId, plant, now);
       if (checkIn) items.push(checkIn);
@@ -249,6 +272,10 @@ export class RecommendationsService {
       if (protect) items.push(protect);
       return items;
     });
+    return [
+      ...plantRecommendations,
+      ...this.buildGardenRecommendations(userId, this.gardensFromPlants(plants), now),
+    ];
   }
 
   private buildPlantCheckInRecommendation(
@@ -278,10 +305,64 @@ export class RecommendationsService {
         : 'Add the first Plant Check-In to start this plant\'s health and growth story.',
       actionLabel: 'Plant Check-In',
       actionPath: `/garden/plants/${plant.id}/journal#progress-check-in`,
-      suggestedTaskType: TaskType.HEALTH_CHECK,
-      suggestedTaskDueInDays: 1,
       metadata: { dueDate: dueDate.toISOString(), intervalDays: interval },
     };
+  }
+
+  private buildGardenRecommendations(
+    userId: string,
+    gardens: RecommendationGarden[],
+    now: Date,
+  ): UpsertRecommendationInput[] {
+    return gardens.flatMap((garden) => {
+      const environment = (garden.location ?? '').toLowerCase();
+      const items: UpsertRecommendationInput[] = [];
+
+      if (environment.includes('outdoor')) {
+        const month = now.getMonth();
+        if ([0, 1, 5, 6, 7, 11].includes(month)) {
+          items.push({
+            userId,
+            gardenId: garden.id,
+            source: RecommendationSource.ENVIRONMENT,
+            sourceKey: `garden-outdoor-protection:${garden.id}:${format(now, 'yyyy-MM')}`,
+            priority: RecommendationPriority.MEDIUM,
+            title: `Review weather protection for ${garden.name}`,
+            body:
+              'This outdoor garden may need shade, wind protection, frost cover, or a move plan during harsher weather windows.',
+            actionLabel: 'Open garden',
+            actionPath: `/garden/gardens/${garden.id}`,
+            metadata: {
+              environment: garden.location,
+              plantCount: garden.plantCount,
+            },
+          });
+        }
+      }
+
+      if (environment.includes('indoor') && garden.plantCount >= 1) {
+        const quarter = Math.floor(now.getMonth() / 3) + 1;
+        items.push({
+          userId,
+          gardenId: garden.id,
+          source: RecommendationSource.ENVIRONMENT,
+          sourceKey: `garden-light-audit:${garden.id}:${now.getFullYear()}-Q${quarter}`,
+          priority: RecommendationPriority.LOW,
+          title: `Review light balance in ${garden.name}`,
+          body:
+            'Indoor light shifts through the year. Check whether plants are leaning, stretching, or sitting in more shade than expected.',
+          actionLabel: 'Open garden',
+          actionPath: `/garden/gardens/${garden.id}`,
+          metadata: {
+            environment: garden.location,
+            plantCount: garden.plantCount,
+            quarter,
+          },
+        });
+      }
+
+      return items;
+    });
   }
 
   private buildFlushSoilRecommendation(
@@ -444,6 +525,24 @@ export class RecommendationsService {
 
   private plantName(plant: RecommendationPlant) {
     return plant.nickname || plant.species.commonName;
+  }
+
+  private gardensFromPlants(plants: RecommendationPlant[]): RecommendationGarden[] {
+    const byGarden = new Map<string, RecommendationGarden>();
+    for (const plant of plants) {
+      const existing = byGarden.get(plant.garden.id);
+      if (existing) {
+        existing.plantCount += 1;
+      } else {
+        byGarden.set(plant.garden.id, {
+          id: plant.garden.id,
+          name: plant.garden.name,
+          location: plant.garden.location,
+          plantCount: 1,
+        });
+      }
+    }
+    return [...byGarden.values()];
   }
 
   private mergeMetadata(recommendation: Recommendation, patch: Record<string, unknown>) {

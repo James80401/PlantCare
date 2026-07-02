@@ -76,3 +76,7 @@ Current suggestion types:
 - Delay fertilizer outside the growing season.
 
 Applying a suggestion only updates pending tasks returned by the suggestion.
+
+Routine Plant Life progress prompts are handled by durable `PLANT_CHECK_IN`
+recommendations. `HEALTH_CHECK` tasks are still used for explicit diagnosis
+follow-ups, weather protection checks, and user-confirmed one-off task actions.

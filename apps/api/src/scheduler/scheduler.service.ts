@@ -277,19 +277,6 @@ export class SchedulerService {
       );
     }
 
-    const progressCheckDates = this.generateDates(
-      addDays(now, 14),
-      14,
-      Math.floor((DAYS_AHEAD - 14) / 14) + 1,
-    );
-    tasks.push(
-      ...progressCheckDates.map((dueDate) => ({
-        plantId,
-        taskType: TaskType.HEALTH_CHECK,
-        dueDate,
-      })),
-    );
-
     const moistureInterval = this.isVeryYoungPlant(plant.lifeStage)
       ? 3
       : plant.lifeStage === PlantLifeStage.YOUNG_PLANT

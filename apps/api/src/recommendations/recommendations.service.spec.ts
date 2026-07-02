@@ -107,6 +107,8 @@ describe('RecommendationsService', () => {
           priority: RecommendationPriority.MEDIUM,
           title: 'Check in on Mona',
           status: RecommendationStatus.ACTIVE,
+          suggestedTaskType: undefined,
+          actionPath: '/garden/plants/plant-1/journal#progress-check-in',
         }),
       }),
     );
@@ -118,6 +120,71 @@ describe('RecommendationsService', () => {
         }),
       }),
     );
+    expect(prisma.recommendation.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          sourceKey: 'garden-light-audit:garden-1:2026-Q3',
+          source: RecommendationSource.ENVIRONMENT,
+          title: 'Review light balance in Home',
+        }),
+      }),
+    );
+  });
+
+  it('generates garden-wide outdoor protection guidance from garden defaults', async () => {
+    const outdoorPlant = {
+      ...plant,
+      location: 'Patio',
+      garden: { id: 'garden-outdoor', name: 'Balcony', location: 'Outdoor' },
+    };
+    const { service, prisma } = createService({
+      plant: {
+        findMany: jest.fn().mockResolvedValue([outdoorPlant]),
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'plant-1',
+          userId: 'user-1',
+          gardenId: 'garden-outdoor',
+          shares: [],
+          garden: { members: [] },
+        }),
+      },
+    });
+
+    await service.refreshForUser('user-1', new Date('2026-07-02T12:00:00.000Z'));
+
+    expect(prisma.recommendation.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          sourceKey: 'garden-outdoor-protection:garden-outdoor:2026-07',
+          source: RecommendationSource.ENVIRONMENT,
+          gardenId: 'garden-outdoor',
+          plantId: undefined,
+          title: 'Review weather protection for Balcony',
+          actionPath: '/garden/gardens/garden-outdoor',
+        }),
+      }),
+    );
+  });
+
+  it('marks active plant check-in recommendations complete after a submitted check-in', async () => {
+    const { service, prisma } = createService();
+    const now = new Date('2026-07-02T12:00:00.000Z');
+
+    await service.completePlantCheckInForPlant('user-1', 'plant-1', now);
+
+    expect(prisma.recommendation.updateMany).toHaveBeenCalledWith({
+      where: {
+        userId: 'user-1',
+        plantId: 'plant-1',
+        source: RecommendationSource.PLANT_CHECK_IN,
+        status: { in: [RecommendationStatus.ACTIVE, RecommendationStatus.SNOOZED] },
+      },
+      data: {
+        status: RecommendationStatus.DONE,
+        completedAt: now,
+        snoozedUntil: null,
+      },
+    });
   });
 
   it('snoozes a recommendation until the next local day', async () => {
