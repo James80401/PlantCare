@@ -5,13 +5,14 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { addDays, format, startOfDay, subDays } from 'date-fns';
-import { TaskType } from '@prisma/client';
+import { RecommendationPriority, TaskType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { WeatherService } from '../weather/weather.service';
 import { ImageModerationService } from '../common/image-moderation.service';
 import { AiUsageService } from '../ai-usage/ai-usage.service';
 import { sharedPlantInclude, userCanCompletePlantTask } from '../gardens/task-access';
+import { RecommendationsService } from '../recommendations/recommendations.service';
 import { LlmDiagnosisService, type ChatTurn, type PlantContext } from './llm-diagnosis.service';
 import { OpenAiRequestError } from './openai-errors';
 import {
@@ -21,6 +22,7 @@ import {
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
+  ChatConfirmActionDraftDto,
   ChatHealthCheckActionDto,
   ChatJournalActionDto,
   ChatRecoveryTasksDto,
@@ -35,6 +37,19 @@ type ChatRecoverySuggestionView = RecoveryTaskSuggestion & {
 };
 
 const CHAT_HISTORY_TURN_LIMIT = 20;
+const TASK_DRAFT_LIMIT = 3;
+
+type ChatActionDraft = {
+  key: string;
+  kind: 'recommendation' | 'task';
+  title: string;
+  body: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  actionLabel?: string;
+  actionPath?: string;
+  taskType?: TaskType;
+  dueInDays?: number;
+};
 
 type GuidedFollowUpQuestion = {
   id: string;
@@ -53,6 +68,7 @@ export class DiagnosisChatService {
     private weather: WeatherService,
     private imageModeration: ImageModerationService,
     private aiUsage: AiUsageService,
+    private recommendations: RecommendationsService,
   ) {}
 
   private async getPlantForUser(userId: string, plantId: string) {
@@ -741,6 +757,209 @@ export class DiagnosisChatService {
     });
 
     return created;
+  }
+
+  async getActionDraftsFromChat(
+    userId: string,
+    plantId: string,
+    conversationId: string,
+    dto: ChatJournalActionDto,
+  ): Promise<{ drafts: ChatActionDraft[] }> {
+    const { note, conversation } = await this.resolveActionContext(
+      userId,
+      plantId,
+      conversationId,
+      dto,
+    );
+    const plant = await this.getPlantForUser(userId, plantId);
+    return { drafts: this.buildActionDrafts(note, conversation.id, plant) };
+  }
+
+  async confirmRecommendationDraft(
+    userId: string,
+    plantId: string,
+    conversationId: string,
+    dto: ChatConfirmActionDraftDto,
+  ) {
+    const { note, conversation } = await this.resolveActionContext(
+      userId,
+      plantId,
+      conversationId,
+      dto,
+    );
+    const plant = await this.getPlantForUser(userId, plantId);
+    const draft = this.findActionDraft(note, conversation.id, plant, dto.draftKey);
+    if (draft.kind !== 'recommendation') {
+      throw new BadRequestException('That draft is not a recommendation.');
+    }
+
+    return this.recommendations.createDrPlantRecommendation({
+      userId,
+      plantId,
+      gardenId: plant.gardenId,
+      sourceKey: `dr-plant:${conversation.id}:${draft.key}`,
+      priority: RecommendationPriority[draft.priority],
+      title: draft.title,
+      body: draft.body,
+      actionLabel: draft.actionLabel,
+      actionPath: draft.actionPath,
+      suggestedTaskType: draft.taskType,
+      suggestedTaskDueInDays: draft.dueInDays,
+      metadata: {
+        conversationId: conversation.id,
+        messageId: dto.messageId ?? null,
+        notePreview: note.slice(0, 240),
+      },
+    });
+  }
+
+  async confirmTaskDraft(
+    userId: string,
+    plantId: string,
+    conversationId: string,
+    dto: ChatConfirmActionDraftDto,
+  ) {
+    const { note, conversation } = await this.resolveActionContext(
+      userId,
+      plantId,
+      conversationId,
+      dto,
+    );
+    const plant = await this.getPlantForUser(userId, plantId);
+    const draft = this.findActionDraft(note, conversation.id, plant, dto.draftKey);
+    if (draft.kind !== 'task' || !draft.taskType) {
+      throw new BadRequestException('That draft is not a task.');
+    }
+
+    const dueInDays = draft.dueInDays ?? 1;
+    const task = await this.prisma.task.create({
+      data: {
+        plantId,
+        gardenId: plant.gardenId,
+        taskType: draft.taskType,
+        dueDate: startOfDay(addDays(new Date(), dueInDays)),
+      },
+      include: {
+        plant: { include: { species: true } },
+        sourceDiagnosis: {
+          select: { id: true, resultLabel: true, resolved: true },
+        },
+      },
+    });
+
+    await this.prisma.journalEntry.create({
+      data: {
+        plantId,
+        notes:
+          `Dr. Plant task added: ${draft.title} (${draft.taskType}, due in ${dueInDays} day${dueInDays === 1 ? '' : 's'}).\n\n` +
+          note,
+      },
+    });
+
+    return task;
+  }
+
+  private findActionDraft(
+    note: string,
+    conversationId: string,
+    plant: Awaited<ReturnType<typeof this.getPlantForUser>>,
+    draftKey: string,
+  ): ChatActionDraft {
+    const draft = this.buildActionDrafts(note, conversationId, plant).find(
+      (item) => item.key === draftKey,
+    );
+    if (!draft) throw new BadRequestException('Action draft is no longer available.');
+    return draft;
+  }
+
+  private buildActionDrafts(
+    note: string,
+    conversationId: string,
+    plant: Awaited<ReturnType<typeof this.getPlantForUser>>,
+  ): ChatActionDraft[] {
+    const plantName = plant.nickname || plant.species.commonName;
+    const recoverySuggestions = buildRecoverySuggestions(conversationId, null, note)
+      .slice(0, TASK_DRAFT_LIMIT)
+      .map((suggestion) => this.taskDraftFromSuggestion(suggestion));
+    const recommendationDrafts = this.recommendationDraftsFromNote(note, plantName, plant.id);
+
+    return [...recommendationDrafts, ...recoverySuggestions];
+  }
+
+  private taskDraftFromSuggestion(suggestion: RecoveryTaskSuggestion): ChatActionDraft {
+    const priority = (suggestion.priority ?? 'medium').toUpperCase() as ChatActionDraft['priority'];
+    return {
+      key: `task:${suggestion.key}`,
+      kind: 'task',
+      title: suggestion.label,
+      body: `${suggestion.taskType.replace(/_/g, ' ').toLowerCase()} suggested from this Dr. Plant reply.`,
+      priority,
+      taskType: suggestion.taskType,
+      dueInDays: suggestion.dueInDays,
+    };
+  }
+
+  private recommendationDraftsFromNote(
+    note: string,
+    plantName: string,
+    plantId: string,
+  ): ChatActionDraft[] {
+    const lower = note.toLowerCase();
+    const drafts: ChatActionDraft[] = [
+      {
+        key: 'recommendation:plant-check-in',
+        kind: 'recommendation',
+        title: `Check in on ${plantName}`,
+        body: 'Add a Plant Check-In recommendation so this advice turns into a follow-up health story.',
+        priority: this.hasUrgentHealthLanguage(lower) ? 'HIGH' : 'MEDIUM',
+        actionLabel: 'Plant Check-In',
+        actionPath: `/garden/plants/${plantId}/journal#progress-check-in`,
+        taskType: TaskType.HEALTH_CHECK,
+        dueInDays: this.hasUrgentHealthLanguage(lower) ? 1 : 3,
+      },
+    ];
+
+    if (/\b(flush|salt|mineral|crust|fertili[sz]er burn|tip burn)\b/i.test(note)) {
+      drafts.push({
+        key: 'recommendation:flush-soil',
+        kind: 'recommendation',
+        title: `Consider a soil flush for ${plantName}`,
+        body: 'Save this as non-urgent flush-soil guidance; confirm soil and drainage before acting.',
+        priority: 'MEDIUM',
+        actionLabel: 'Open care guide',
+        actionPath: `/garden/plants/${plantId}/care`,
+      });
+    }
+
+    if (/\b(move|protect|shade|frost|freeze|heat|cold|storm|bring.*inside|harsh sun)\b/i.test(note)) {
+      drafts.push({
+        key: 'recommendation:move-protect',
+        kind: 'recommendation',
+        title: `Review placement for ${plantName}`,
+        body: 'Save this as a move/protect recommendation rather than a care task.',
+        priority: 'MEDIUM',
+        actionLabel: 'Open plant',
+        actionPath: `/garden/plants/${plantId}/overview`,
+      });
+    }
+
+    if (/\b(harvest|ripe|pick|cut.*leaves|edible|fruit|herb)\b/i.test(note)) {
+      drafts.push({
+        key: 'recommendation:harvest',
+        kind: 'recommendation',
+        title: `Review harvest timing for ${plantName}`,
+        body: 'Save harvest guidance as a recommendation so it stays separate from critical care tasks.',
+        priority: 'LOW',
+        actionLabel: 'Open plant',
+        actionPath: `/garden/plants/${plantId}/overview`,
+      });
+    }
+
+    return drafts;
+  }
+
+  private hasUrgentHealthLanguage(lower: string) {
+    return /\b(declining|wilting|mushy|rot|pest|webbing|spreading|urgent|rapid|dying)\b/.test(lower);
   }
 
   private async resolveActionNote(

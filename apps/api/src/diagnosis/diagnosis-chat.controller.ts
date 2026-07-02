@@ -15,6 +15,7 @@ import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decor
 import { imageUploadOptions } from '../common/upload-options';
 import { DiagnosisChatService } from './diagnosis-chat.service';
 import {
+  ChatConfirmActionDraftDto,
   ChatHealthCheckActionDto,
   ChatJournalActionDto,
   ChatRecoveryTasksDto,
@@ -137,5 +138,35 @@ export class DiagnosisChatController {
       conversationId,
       dto,
     );
+  }
+
+  @Post(':conversationId/actions/drafts')
+  getActionDrafts(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('conversationId') conversationId: string,
+    @Body() dto: ChatJournalActionDto,
+  ) {
+    return this.chat.getActionDraftsFromChat(user.sub, plantId, conversationId, dto);
+  }
+
+  @Post(':conversationId/actions/recommendation-draft')
+  confirmRecommendationDraft(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('conversationId') conversationId: string,
+    @Body() dto: ChatConfirmActionDraftDto,
+  ) {
+    return this.chat.confirmRecommendationDraft(user.sub, plantId, conversationId, dto);
+  }
+
+  @Post(':conversationId/actions/task-draft')
+  confirmTaskDraft(
+    @CurrentUser() user: JwtPayload,
+    @Param('plantId') plantId: string,
+    @Param('conversationId') conversationId: string,
+    @Body() dto: ChatConfirmActionDraftDto,
+  ) {
+    return this.chat.confirmTaskDraft(user.sub, plantId, conversationId, dto);
   }
 }

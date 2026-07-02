@@ -3,6 +3,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   Max,
@@ -35,4 +36,10 @@ export class ChatRecoveryTasksDto extends ChatJournalActionDto {
   @ArrayNotEmpty()
   @IsString({ each: true })
   keys!: string[];
+}
+
+export class ChatConfirmActionDraftDto extends ChatJournalActionDto {
+  @IsString()
+  @IsNotEmpty()
+  draftKey!: string;
 }

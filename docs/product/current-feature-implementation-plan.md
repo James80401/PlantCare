@@ -59,10 +59,12 @@ model, `/recommendations` API, dashboard payload integration, dashboard panel,
 plant overview panel, and first conservative generators for Plant Check-In,
 flush-soil, harvest, and outdoor move/protect guidance.
 
+**Status (2026-07-02):** Dr. Plant action cards shipped in code. Assistant
+replies can now draft recommendation/task cards, and each card requires explicit
+confirmation before the backend saves a recommendation or creates a task.
+
 **Next slices:**
 
-- Add Dr. Plant action cards that create recommendations or task-backed drafts
-  with explicit confirmation.
 - Replace older scheduled `HEALTH_CHECK` progress prompts where appropriate with
   Plant Check-In recommendations.
 - Add garden-wide recommendation generators using garden environment defaults.

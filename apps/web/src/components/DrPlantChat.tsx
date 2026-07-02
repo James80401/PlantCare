@@ -37,6 +37,18 @@ interface ChatRecoverySuggestion {
   alreadyScheduled: boolean;
 }
 
+interface ChatActionDraft {
+  key: string;
+  kind: 'recommendation' | 'task';
+  title: string;
+  body: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  actionLabel?: string;
+  actionPath?: string;
+  taskType?: string;
+  dueInDays?: number;
+}
+
 interface GuidedContextQuestion {
   id: string;
   label: string;
@@ -454,6 +466,11 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
                     conversationId={activeId}
                     messageId={m.id}
                   />
+                  <ChatActionCards
+                    plantId={plantId}
+                    conversationId={activeId}
+                    messageId={m.id}
+                  />
                   </>
                 ) : null}
               </div>
@@ -860,6 +877,190 @@ function ChatRecoveryTasks({
             >
               {applying ? 'Adding...' : `Add ${selected.size} task${selected.size === 1 ? '' : 's'}`}
             </button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ChatActionCards({
+  plantId,
+  conversationId,
+  messageId,
+}: {
+  plantId: string;
+  conversationId: string;
+  messageId: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [drafts, setDrafts] = useState<ChatActionDraft[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [busyKey, setBusyKey] = useState('');
+  const [confirmedKeys, setConfirmedKeys] = useState<Set<string>>(new Set());
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const load = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      const { data } = await diagnosisChatApi.getActionDrafts(
+        plantId,
+        conversationId,
+        messageId,
+      );
+      setDrafts(data.drafts ?? []);
+    } catch (err: unknown) {
+      setError(formatApiErrorMessage(err, 'Could not draft action cards.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleExpanded = () => {
+    const next = !expanded;
+    setExpanded(next);
+    if (next && drafts.length === 0 && !loading) {
+      void load();
+    }
+  };
+
+  const confirm = async (draft: ChatActionDraft) => {
+    setBusyKey(draft.key);
+    setError('');
+    setSuccess('');
+    try {
+      if (draft.kind === 'recommendation') {
+        await diagnosisChatApi.confirmRecommendationDraft(
+          plantId,
+          conversationId,
+          messageId,
+          draft.key,
+        );
+        setSuccess('Recommendation saved.');
+      } else {
+        await diagnosisChatApi.confirmTaskDraft(
+          plantId,
+          conversationId,
+          messageId,
+          draft.key,
+        );
+        setSuccess('Task added.');
+      }
+      setConfirmedKeys((prev) => new Set(prev).add(draft.key));
+    } catch (err: unknown) {
+      setError(formatApiErrorMessage(err, 'Could not confirm that action.'));
+    } finally {
+      setBusyKey('');
+    }
+  };
+
+  return (
+    <div className="mt-2 border-t border-emerald-50 pt-2">
+      <button
+        type="button"
+        onClick={toggleExpanded}
+        className="min-h-8 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900 hover:bg-emerald-100"
+      >
+        {expanded ? 'Hide action cards' : 'Draft action cards'}
+      </button>
+
+      {expanded ? (
+        <div className="mt-2 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="text-xs font-semibold text-emerald-950">Confirm before changing care</p>
+              <p className="mt-0.5 text-xs text-emerald-800">
+                Review each draft. Nothing is saved until you confirm a card.
+              </p>
+            </div>
+            {drafts.length > 0 ? (
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => void load()}
+                className="min-h-8 rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
+              >
+                Refresh drafts
+              </button>
+            ) : null}
+          </div>
+
+          {loading ? (
+            <p className="mt-3 text-xs text-gray-600">Drafting action cards...</p>
+          ) : drafts.length === 0 ? (
+            <p className="mt-3 text-xs text-gray-600">
+              No action cards found in this reply yet.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {drafts.map((draft) => {
+                const confirmed = confirmedKeys.has(draft.key);
+                const isTask = draft.kind === 'task';
+                return (
+                  <article
+                    key={draft.key}
+                    className="rounded-2xl border border-emerald-100 bg-white p-3 text-xs"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-emerald-950">{draft.title}</p>
+                        <p className="mt-1 leading-5 text-gray-700">{draft.body}</p>
+                      </div>
+                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800">
+                        {draft.kind}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[0.68rem] text-gray-600">
+                      <span className="rounded-full bg-gray-50 px-2 py-0.5">
+                        {draft.priority.toLowerCase()} priority
+                      </span>
+                      {draft.taskType ? (
+                        <span className="rounded-full bg-gray-50 px-2 py-0.5">
+                          {taskTypeLabel(draft.taskType)}
+                        </span>
+                      ) : null}
+                      {draft.dueInDays != null ? (
+                        <span className="rounded-full bg-gray-50 px-2 py-0.5">
+                          {dueLabel(draft.dueInDays)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={Boolean(busyKey) || confirmed}
+                      onClick={() => void confirm(draft)}
+                      className={`mt-3 min-h-9 rounded-full px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50 ${
+                        isTask
+                          ? 'bg-amber-700 hover:bg-amber-800'
+                          : 'bg-emerald-800 hover:bg-emerald-900'
+                      }`}
+                    >
+                      {confirmed
+                        ? 'Confirmed'
+                        : busyKey === draft.key
+                          ? 'Confirming...'
+                          : isTask
+                            ? 'Confirm task'
+                            : 'Confirm recommendation'}
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+
+          {error ? (
+            <p className="mt-2 text-xs text-rose-700" role="alert">
+              {error}
+            </p>
+          ) : null}
+          {success ? (
+            <p className="mt-2 text-xs font-semibold text-emerald-800" role="status">
+              {success}
+            </p>
           ) : null}
         </div>
       ) : null}

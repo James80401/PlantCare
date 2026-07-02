@@ -23,5 +23,8 @@ Assistant replies expose explicit action buttons:
 - **Health check in 3 days** schedules a `HEALTH_CHECK` task and records the reply in the journal for context.
 - **Add recovery tasks** suggests task records from the reply and lets the user
   confirm which ones should be scheduled.
+- **Draft action cards** asks the API to create recommendation/task drafts from
+  the selected reply. Each card requires its own confirm click before a
+  recommendation is saved or a task is created.
 
 Requires OpenAI - [integration](../../integrations/openai.md).

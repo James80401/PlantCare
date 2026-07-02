@@ -11,6 +11,7 @@ describe('DiagnosisChatService actions', () => {
         findFirst: jest.fn().mockResolvedValue({
           id: 'plant-1',
           userId: 'user-1',
+          gardenId: 'garden-1',
           garden: null,
           shares: [],
           location: 'Living room',
@@ -46,6 +47,12 @@ describe('DiagnosisChatService actions', () => {
           taskType: 'HEALTH_CHECK',
         }),
       },
+      recommendation: {
+        upsert: jest.fn().mockResolvedValue({ id: 'rec-1' }),
+      },
+    };
+    const recommendations = {
+      createDrPlantRecommendation: jest.fn().mockResolvedValue({ id: 'rec-1' }),
     };
 
     const service = new DiagnosisChatService(
@@ -58,9 +65,10 @@ describe('DiagnosisChatService actions', () => {
         assertPlantIntentOrThrow: jest.fn().mockResolvedValue(undefined),
         reserveCall: jest.fn().mockResolvedValue(undefined),
       } as never,
+      recommendations as never,
     );
 
-    return { service, prisma };
+    return { service, prisma, recommendations };
   }
 
   it('saves an assistant reply to the journal', async () => {
@@ -224,6 +232,89 @@ describe('DiagnosisChatService actions', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           notes: expect.stringContaining('Dr. Plant recovery plan'),
+        }),
+      }),
+    );
+  });
+
+  it('returns explicit Dr. Plant action drafts from a chat reply', async () => {
+    const { service } = createService([
+      {
+        id: 'msg-1',
+        role: 'assistant',
+        content: 'Flush the soil if you see mineral crust. Check soil moisture today.',
+      },
+    ]);
+
+    const result = await service.getActionDraftsFromChat('user-1', 'plant-1', 'conv-1', {
+      messageId: 'msg-1',
+    });
+
+    expect(result.drafts.map((draft) => draft.key)).toEqual(
+      expect.arrayContaining([
+        'recommendation:plant-check-in',
+        'recommendation:flush-soil',
+      ]),
+    );
+    expect(result.drafts.some((draft) => draft.kind === 'task')).toBe(true);
+  });
+
+  it('confirms a Dr. Plant recommendation draft explicitly', async () => {
+    const { service, recommendations } = createService([
+      {
+        id: 'msg-1',
+        role: 'assistant',
+        content: 'Flush the soil if you see mineral crust.',
+      },
+    ]);
+
+    await service.confirmRecommendationDraft('user-1', 'plant-1', 'conv-1', {
+      messageId: 'msg-1',
+      draftKey: 'recommendation:flush-soil',
+    });
+
+    expect(recommendations.createDrPlantRecommendation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        plantId: 'plant-1',
+        gardenId: 'garden-1',
+        sourceKey: 'dr-plant:conv-1:recommendation:flush-soil',
+        title: 'Consider a soil flush for Snake Plant',
+      }),
+    );
+  });
+
+  it('confirms a Dr. Plant task draft explicitly', async () => {
+    const { service, prisma } = createService([
+      {
+        id: 'msg-1',
+        role: 'assistant',
+        content: 'Check soil moisture today.',
+      },
+    ]);
+    const { drafts } = await service.getActionDraftsFromChat('user-1', 'plant-1', 'conv-1', {
+      messageId: 'msg-1',
+    });
+    const taskDraft = drafts.find((draft) => draft.kind === 'task');
+
+    await service.confirmTaskDraft('user-1', 'plant-1', 'conv-1', {
+      messageId: 'msg-1',
+      draftKey: taskDraft!.key,
+    });
+
+    expect(prisma.task.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          plantId: 'plant-1',
+          gardenId: 'garden-1',
+          taskType: 'CHECK_MOISTURE',
+        }),
+      }),
+    );
+    expect(prisma.journalEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          notes: expect.stringContaining('Dr. Plant task added'),
         }),
       }),
     );

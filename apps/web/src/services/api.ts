@@ -480,6 +480,47 @@ export const diagnosisChatApi = {
       messageId,
       note,
     }),
+  getActionDrafts: (plantId: string, conversationId: string, messageId: string, note?: string) =>
+    api.post<{
+      drafts: {
+        key: string;
+        kind: 'recommendation' | 'task';
+        title: string;
+        body: string;
+        priority: 'LOW' | 'MEDIUM' | 'HIGH';
+        actionLabel?: string;
+        actionPath?: string;
+        taskType?: string;
+        dueInDays?: number;
+      }[];
+    }>(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/drafts`, {
+      messageId,
+      note,
+    }),
+  confirmRecommendationDraft: (
+    plantId: string,
+    conversationId: string,
+    messageId: string,
+    draftKey: string,
+    note?: string,
+  ) =>
+    api.post(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/recommendation-draft`, {
+      messageId,
+      draftKey,
+      note,
+    }),
+  confirmTaskDraft: (
+    plantId: string,
+    conversationId: string,
+    messageId: string,
+    draftKey: string,
+    note?: string,
+  ) =>
+    api.post(`/plants/${plantId}/diagnose/conversations/${conversationId}/actions/task-draft`, {
+      messageId,
+      draftKey,
+      note,
+    }),
   getGuidedContextQuestions: (plantId: string, conversationId: string) =>
     api.get<{
       title: string;

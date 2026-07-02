@@ -7,9 +7,10 @@ import { LlmDiagnosisService } from './llm-diagnosis.service';
 import { UploadModule } from '../upload/upload.module';
 import { WeatherModule } from '../weather/weather.module';
 import { AiUsageModule } from '../ai-usage/ai-usage.module';
+import { RecommendationsModule } from '../recommendations/recommendations.module';
 
 @Module({
-  imports: [UploadModule, WeatherModule, AiUsageModule],
+  imports: [UploadModule, WeatherModule, AiUsageModule, RecommendationsModule],
   controllers: [DiagnosisController, DiagnosisChatController],
   providers: [DiagnosisService, DiagnosisChatService, LlmDiagnosisService],
 })

@@ -42,6 +42,13 @@ type UpsertRecommendationInput = {
   metadata?: Record<string, unknown>;
 };
 
+export type DrPlantRecommendationInput = Omit<
+  UpsertRecommendationInput,
+  'source' | 'userId'
+> & {
+  userId: string;
+};
+
 const ACTIVE_STATUSES = [RecommendationStatus.ACTIVE, RecommendationStatus.SNOOZED];
 
 @Injectable()
@@ -213,6 +220,16 @@ export class RecommendationsService {
       await this.upsertActiveRecommendation(recommendation, now);
     }
     return this.listForUser(userId, { plantId, now });
+  }
+
+  async createDrPlantRecommendation(input: DrPlantRecommendationInput) {
+    return this.upsertActiveRecommendation(
+      {
+        ...input,
+        source: RecommendationSource.DR_PLANT,
+      },
+      new Date(),
+    );
   }
 
   private buildGeneratedRecommendations(

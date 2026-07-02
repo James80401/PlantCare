@@ -67,6 +67,9 @@ Creates a **`HEALTH_CHECK`** task linked via `sourceDiagnosisId`. Optional `note
 | POST | `/plants/:plantId/diagnose/conversations/:id/messages` |
 | POST | `/plants/:plantId/diagnose/conversations/:id/actions/journal-note` |
 | POST | `/plants/:plantId/diagnose/conversations/:id/actions/health-check` |
+| POST | `/plants/:plantId/diagnose/conversations/:id/actions/drafts` |
+| POST | `/plants/:plantId/diagnose/conversations/:id/actions/recommendation-draft` |
+| POST | `/plants/:plantId/diagnose/conversations/:id/actions/task-draft` |
 
 **Files:** `diagnosis.controller.ts`, `diagnosis-chat.controller.ts`, `llm-diagnosis.service.ts`
 
@@ -100,6 +103,13 @@ Chat actions are explicit user-confirmed actions from a Dr. Plant reply:
 
 - `journal-note` saves the selected assistant reply, or an explicit `note`, as a plant journal entry.
 - `health-check` creates a pending `HEALTH_CHECK` task and logs the selected reply or `note` to the journal.
+- `drafts` returns task/recommendation action cards from a selected assistant reply without changing data.
+- `recommendation-draft` confirms one returned recommendation draft and saves it to the durable recommendations system.
+- `task-draft` confirms one returned task draft and creates a pending task.
+
+Draft confirmation endpoints accept `messageId` plus `draftKey`. The server
+regenerates the draft from the selected reply before creating anything, so the
+client cannot silently mutate arbitrary task or recommendation details.
 
 Example body:
 
