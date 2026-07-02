@@ -30,6 +30,7 @@ export default function PlantCareTab() {
               section={section}
               defaultDetailLevel={defaultDetailLevel}
               drPlantPath={plantDrPlantPath(ctx.id)}
+              plantId={ctx.id}
             />
           ))}
         </div>

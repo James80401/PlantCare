@@ -181,13 +181,13 @@ while TBT stayed at `0 ms` and CLS at `0`. First fixes:
 
 ### Plant intelligence / catalog - ACTIVE
 Current source: [`docs/product/plant-intelligence-expansion.md`](./product/plant-intelligence-expansion.md).
-Shipped: treatment plans, recovery task suggestions, richer guide intelligence, hybrid external-ID
-review, and Plant Life progress management. Remaining concrete gaps:
+Shipped: treatment plans, recovery task suggestions, richer guide intelligence, guide analytics,
+hybrid external-ID review, and Plant Life progress management. Remaining concrete gaps:
 1. **Species photos:** Hoya Mathilde and String of Dolphins still need exact reusable image sources.
    iNaturalist/Commons exact-name searches found no acceptable CC0/CC-BY/CC-BY-SA source; do not use
    nursery/blog images or parent-species substitutes without a new product decision.
-2. **Guide analytics:** measure whether contextual treatment-plan guide links get used before adding
-   more route targets.
+2. **Guide expansion:** use `guide_link_click` / `guide_dr_plant_click` data before adding more
+   route-specific guide targets.
 3. **Hybrid ID admin scale:** bulk review actions can wait until review volume justifies them.
 
 ---

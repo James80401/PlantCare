@@ -1,10 +1,15 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import DiagnosisResult from './DiagnosisResult';
+import { trackEvent } from '../utils/analytics';
 
 vi.mock('../utils/apiAssets', () => ({
   resolveApiAssetUrl: (url: string) => url,
+}));
+
+vi.mock('../utils/analytics', () => ({
+  trackEvent: vi.fn(),
 }));
 
 describe('DiagnosisResult', () => {
@@ -66,5 +71,48 @@ describe('DiagnosisResult', () => {
       'href',
       '/garden/plants/plant-1/care',
     );
+  });
+
+  it('tracks treatment guide link clicks', () => {
+    render(
+      <MemoryRouter>
+        <DiagnosisResult
+          plantCarePath="/garden/plants/plant-1/care"
+          diagnosis={{
+            resultLabel: 'Yellow leaves',
+            detailJson: JSON.stringify({
+              treatmentPlan: {
+                matchedProblems: [
+                  {
+                    id: 'overwatering-root-risk',
+                    label: 'Overwatering or root rot risk',
+                    category: 'roots',
+                    overview: 'Wet roots can decline.',
+                    expectedTimeline: '1-2 weeks',
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Open this plant\'s care guide' }));
+    expect(trackEvent).toHaveBeenCalledWith('guide_link_click', {
+      surface: 'diagnosis_plant_care_guide',
+      target: '/garden/plants/plant-1/care',
+      label: "Open this plant's care guide",
+      diagnosisLabel: 'Yellow leaves',
+    });
+
+    fireEvent.click(screen.getAllByRole('link', { name: 'Overwatering or root rot risk' })[0]);
+    expect(trackEvent).toHaveBeenCalledWith('guide_link_click', {
+      surface: 'diagnosis_matched_problem',
+      target: '/plant-problems/root-rot',
+      label: 'Overwatering or root rot risk',
+      problemId: 'overwatering-root-risk',
+      diagnosisLabel: 'Yellow leaves',
+    });
   });
 });

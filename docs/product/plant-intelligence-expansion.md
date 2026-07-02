@@ -110,7 +110,8 @@ provider gates instead of pretending the local catalog already covers everything
 
 2. Guide UX polish:
    - Contextual treatment-plan links and compact "Ask Dr. Plant about this" care-card actions are shipped.
-   - Next polish layer: measure whether guide links get used and add more route-specific guide targets if the problem library expands.
+   - Guide analytics are shipped for diagnosis treatment-plan guide links and care-card "Ask Dr. Plant about this" clicks.
+   - Next polish layer: add more route-specific guide targets only if analytics show users are taking these paths.
 
 3. Hybrid ID review follow-up:
    - Inline editing, photo/license review state, and status filters are shipped.

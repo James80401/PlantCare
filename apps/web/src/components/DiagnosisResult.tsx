@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveApiAssetUrl } from '../utils/apiAssets';
+import { trackEvent } from '../utils/analytics';
 
 interface StructuredDetail {
   issueName?: string;
@@ -169,12 +170,34 @@ const PROBLEM_GUIDE_PATHS: Record<string, string> = {
 };
 
 function guideLinksForTreatmentPlan(treatmentPlan?: StructuredDetail['treatmentPlan']) {
-  const links = new Map<string, string>();
+  const links = new Map<string, { id: string; label: string; path: string }>();
   for (const problem of treatmentPlan?.matchedProblems ?? []) {
     const path = PROBLEM_GUIDE_PATHS[problem.id];
-    if (path) links.set(problem.label, path);
+    if (path) links.set(problem.label, { id: problem.id, label: problem.label, path });
   }
-  return [...links.entries()].map(([label, path]) => ({ label, path }));
+  return [...links.values()];
+}
+
+function trackGuideLinkClick({
+  surface,
+  target,
+  label,
+  problemId,
+  diagnosisLabel,
+}: {
+  surface: string;
+  target: string;
+  label: string;
+  problemId?: string;
+  diagnosisLabel: string;
+}) {
+  trackEvent('guide_link_click', {
+    surface,
+    target,
+    label,
+    problemId,
+    diagnosisLabel,
+  });
 }
 
 export default function DiagnosisResult({
@@ -338,6 +361,15 @@ export default function DiagnosisResult({
                 <Link
                   key={problem.id}
                   to={PROBLEM_GUIDE_PATHS[problem.id] ?? '/plant-problems'}
+                  onClick={() =>
+                    trackGuideLinkClick({
+                      surface: 'diagnosis_matched_problem',
+                      target: PROBLEM_GUIDE_PATHS[problem.id] ?? '/plant-problems',
+                      label: problem.label,
+                      problemId: problem.id,
+                      diagnosisLabel: diagnosis.resultLabel,
+                    })
+                  }
                   className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-emerald-100"
                 >
                   {problem.label}
@@ -356,6 +388,15 @@ export default function DiagnosisResult({
                   <Link
                     key={`${link.path}-${link.label}`}
                     to={link.path}
+                    onClick={() =>
+                      trackGuideLinkClick({
+                        surface: 'diagnosis_helpful_next_reads',
+                        target: link.path,
+                        label: link.label,
+                        problemId: link.id,
+                        diagnosisLabel: diagnosis.resultLabel,
+                      })
+                    }
                     className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50"
                   >
                     {link.label}
@@ -364,6 +405,14 @@ export default function DiagnosisResult({
                 {plantCarePath ? (
                   <Link
                     to={plantCarePath}
+                    onClick={() =>
+                      trackGuideLinkClick({
+                        surface: 'diagnosis_plant_care_guide',
+                        target: plantCarePath,
+                        label: "Open this plant's care guide",
+                        diagnosisLabel: diagnosis.resultLabel,
+                      })
+                    }
                     className="rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900"
                   >
                     Open this plant's care guide

@@ -75,6 +75,8 @@ contracts, closed two gaps, and locked them in with tests.
   kept alongside the once-per-browser `first_*` activation markers (different purpose).
 - [x] **B7 — Tests** — `apps/web/src/utils/analytics.test.ts` covers `gtag` forwarding, `trackOnce`
   fire-once-per-key dedup, and the localStorage-unavailable fallback.
+- [x] **B8 - Guide analytics** - `guide_link_click` tracks diagnosis treatment-plan guide links;
+  `guide_dr_plant_click` tracks care-card "Ask Dr. Plant about this" handoffs.
 - _Deferred (not code now):_ choosing an analytics provider (GA4/Plausible/PostHog); no ad pixels pre-launch.
 
 **Acceptance met:** every funnel event in the playbook's Analytics Plan fires once at the right

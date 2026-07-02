@@ -2,15 +2,16 @@ import { format } from 'date-fns';
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { Link } from 'react-router-dom';
 import { StructuredCareSectionCard } from '../../components/care/StructuredCareSectionCard';
+import { resolveApiAssetUrl } from '../../utils/apiAssets';
+import { trackEvent } from '../../utils/analytics';
 import { careSectionToneClasses, getCareSectionMeta } from '../../utils/careGuideSections';
-import { skipReasonLabel } from '../../utils/taskFeedback';
-import { formatGuideBody, taskTypeLabel } from '../../utils/tasks';
 import {
   countTimelineByType,
   filterTimelineEvents,
   type TimelineFilter,
 } from '../../utils/plantTimeline';
-import { resolveApiAssetUrl } from '../../utils/apiAssets';
+import { skipReasonLabel } from '../../utils/taskFeedback';
+import { formatGuideBody, taskTypeLabel } from '../../utils/tasks';
 import type { CareDetailLevel, CareOverviewSection, PlantRecord, TimelineEvent } from './types';
 
 const TIMELINE_FILTERS: Array<{ key: TimelineFilter; label: string }> = [
@@ -104,10 +105,12 @@ export function CareGuideCard({
   section,
   defaultDetailLevel = 'beginner',
   drPlantPath,
+  plantId,
 }: {
   section: CareOverviewSection;
   defaultDetailLevel?: CareDetailLevel;
   drPlantPath?: string;
+  plantId?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -123,6 +126,15 @@ export function CareGuideCard({
       {drPlantPath ? (
         <Link
           to={drPlantPath}
+          onClick={() =>
+            trackEvent('guide_dr_plant_click', {
+              surface: 'plant_care_card',
+              plantId,
+              sectionId: section.id,
+              sectionHeading: section.heading,
+              target: drPlantPath,
+            })
+          }
           className="inline-flex min-h-9 items-center justify-center rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100"
         >
           Ask Dr. Plant about this

@@ -7,6 +7,8 @@ type EventName =
   | 'first_plant_added'
   | 'first_dr_plant_message'
   | 'first_task_completed'
+  | 'guide_link_click'
+  | 'guide_dr_plant_click'
   | 'UserSignedUp'
   | 'PlantAdded'
   | 'TaskCompleted'
