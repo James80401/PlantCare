@@ -23,7 +23,8 @@ type NavItem = {
 
 const primaryNav: NavItem[] = [
   { to: '/garden', label: 'Home', mobileLabel: 'Home', icon: 'home', exact: true },
-  { to: '/garden/gardens', label: 'Gardens', mobileLabel: 'Gardens', icon: 'browse' },
+  { to: '/garden/gardens', label: 'Gardens', mobileLabel: 'Garden', icon: 'browse' },
+  { to: '/garden/household', label: 'Household', mobileLabel: 'House', icon: 'household' },
   { to: '/garden/plants/browse', label: 'Browse', mobileLabel: 'Browse', icon: 'browse' },
   { to: '/garden/community', label: 'Tips', mobileLabel: 'Tips', icon: 'community' },
 ];
@@ -41,7 +42,6 @@ const moreNav: NavItem[] = [
   { to: '/garden/tasks', label: 'Tasks', mobileLabel: 'Tasks', icon: 'tasks' },
   { to: '/garden/calendar', label: 'Calendar', mobileLabel: 'Calendar', icon: 'calendar' },
   { to: '/garden/buddy', label: 'Plant Buddy', mobileLabel: 'Buddy', icon: 'add' },
-  { to: '/garden/household', label: 'Household', mobileLabel: 'Household', icon: 'community' },
   { to: '/garden/insights/score', label: 'Garden score', mobileLabel: 'Score', icon: 'tasks' },
   {
     to: '/garden/subscription',
@@ -195,7 +195,7 @@ function LayoutShell({
         aria-label="Primary"
       >
         <div
-          className="mx-auto grid max-w-lg grid-cols-5 gap-1"
+          className="mx-auto grid max-w-lg grid-cols-6 gap-1"
         >
           {mobilePrimaryItems.map(({ to, mobileLabel, icon, exact }) => {
             const active = isActivePath(location.pathname, to, exact);

@@ -66,6 +66,17 @@ export function IconCommunity(props: IconProps) {
   );
 }
 
+export function IconHousehold(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M3 12l9-8 9 8" />
+      <path d="M6 10v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V10" />
+      <circle cx="9.5" cy="16" r="1.5" />
+      <circle cx="14.5" cy="16" r="1.5" />
+    </svg>
+  );
+}
+
 export function IconSettings(props: IconProps) {
   return (
     <svg {...base} {...props}>
@@ -99,6 +110,7 @@ export const navIcons = {
   tasks: IconChecklist,
   add: IconPlus,
   community: IconCommunity,
+  household: IconHousehold,
   settings: IconSettings,
   admin: IconAdmin,
   menu: IconMenu,

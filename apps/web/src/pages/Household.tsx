@@ -22,6 +22,7 @@ export default function Household() {
   const [lastInviteToken, setLastInviteToken] = useState('');
   const [shareGardenId, setShareGardenId] = useState<string | null>(null);
   const [sharePlantId, setSharePlantId] = useState('');
+  const [shareCanComplete, setShareCanComplete] = useState(true);
   const [shareCanJournal, setShareCanJournal] = useState(true);
   const [activity, setActivity] = useState<ActivityEventSummary[]>([]);
   const [acceptToken, setAcceptToken] = useState('');
@@ -82,10 +83,11 @@ export default function Household() {
     try {
       await gardensApi.sharePlant(shareGardenId, {
         plantId: sharePlantId,
-        canComplete: true,
+        canComplete: shareCanComplete,
         canJournal: shareCanJournal,
       });
       setSharePlantId('');
+      setShareCanComplete(true);
       setShareCanJournal(true);
       setMessage('Plant shared with household.');
       await load();
@@ -244,6 +246,15 @@ export default function Household() {
                       </option>
                     ))}
                   </select>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={shareCanComplete}
+                      onChange={(e) => setShareCanComplete(e.target.checked)}
+                      className="h-4 w-4 rounded border-emerald-200 text-emerald-700"
+                    />
+                    Allow caregivers to complete tasks
+                  </label>
                   <label className="flex items-center gap-2 text-sm text-gray-700">
                     <input
                       type="checkbox"

@@ -50,17 +50,18 @@ describe('Layout mobile navigation', () => {
     });
   });
 
-  it('keeps mobile primary navigation to the core five tap targets', () => {
+  it('keeps mobile primary navigation to the core tap targets', () => {
     renderLayout();
 
     const mobileNav = screen.getByRole('navigation', { name: 'Primary' });
 
     expect(within(mobileNav).getByRole('link', { name: /home/i })).toBeInTheDocument();
-    expect(within(mobileNav).getByRole('link', { name: /gardens/i })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('link', { name: /garden/i })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('link', { name: /house/i })).toBeInTheDocument();
     expect(within(mobileNav).getByRole('link', { name: /browse/i })).toBeInTheDocument();
     expect(within(mobileNav).getByRole('link', { name: /tips/i })).toBeInTheDocument();
     expect(within(mobileNav).getByRole('button', { name: /more/i })).toBeInTheDocument();
-    expect(within(mobileNav).getAllByRole('link')).toHaveLength(4);
+    expect(within(mobileNav).getAllByRole('link')).toHaveLength(5);
   });
 
   it('keeps admin and settings reachable from the mobile more menu', () => {
