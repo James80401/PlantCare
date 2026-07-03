@@ -16,8 +16,14 @@ export class BuddySchedulerService {
     private buddyNotifications: BuddyNotificationsListener,
   ) {}
 
+  /** Plant Buddy is a post-release feature — cron jobs no-op until ENABLE_PLANT_BUDDY=true. */
+  private isEnabled(): boolean {
+    return process.env.ENABLE_PLANT_BUDDY === 'true';
+  }
+
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async resetDailySunlight() {
+    if (!this.isEnabled()) return;
     const buddies = await this.prisma.buddy.findMany({ select: { id: true } });
     for (const { id } of buddies) {
       await this.buddyService.resetDailyIfNeeded(id);
@@ -27,6 +33,7 @@ export class BuddySchedulerService {
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async completeFinishedJourneys() {
+    if (!this.isEnabled()) return;
     const due = await this.prisma.buddyJourney.findMany({
       where: { completed: false, endsAt: { lte: new Date() } },
       include: { buddy: { select: { userId: true } } },
@@ -44,6 +51,7 @@ export class BuddySchedulerService {
 
   @Cron('0 10 * * *')
   async sendBuddyMoodNudges() {
+    if (!this.isEnabled()) return;
     await this.buddyNotifications.sendMoodNudges();
   }
 }

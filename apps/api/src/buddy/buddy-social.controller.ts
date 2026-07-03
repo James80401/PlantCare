@@ -1,13 +1,14 @@
 import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { BuddyEnabledGuard } from '../common/guards/buddy-enabled.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { BuddySocialService } from './buddy-social.service';
 import { AddFriendDto } from './dto/add-friend.dto';
 
 @ApiTags('buddy-social')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, BuddyEnabledGuard)
 @Controller('buddy/social')
 export class BuddySocialController {
   constructor(private social: BuddySocialService) {}

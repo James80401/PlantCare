@@ -2,13 +2,14 @@ import { Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DevOnlyGuard } from '../common/guards/dev-only.guard';
+import { BuddyEnabledGuard } from '../common/guards/buddy-enabled.guard';
 import { BuddyNotificationsListener } from './buddy-notifications.listener';
 import { BuddySchedulerService } from './buddy-scheduler.service';
 
 @ApiTags('buddy-dev')
 @ApiBearerAuth()
 @Controller('buddy/dev')
-@UseGuards(JwtAuthGuard, DevOnlyGuard)
+@UseGuards(JwtAuthGuard, DevOnlyGuard, BuddyEnabledGuard)
 export class BuddyDevController {
   constructor(
     private scheduler: BuddySchedulerService,

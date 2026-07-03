@@ -7,6 +7,7 @@ import { PurchaseItemDto } from './dto/purchase-item.dto';
 import { CompleteActivityDto } from './dto/complete-activity.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { BuddyEnabledGuard } from '../common/guards/buddy-enabled.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { BuddyService } from './buddy.service';
 import { BuddyJourneyService } from './buddy-journey.service';
@@ -17,7 +18,7 @@ import { JourneyRespondDto } from './dto/journey-respond.dto';
 
 @ApiTags('buddy')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, BuddyEnabledGuard)
 @Controller('buddy')
 export class BuddyController {
   constructor(
