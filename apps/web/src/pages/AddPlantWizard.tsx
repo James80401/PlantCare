@@ -421,6 +421,7 @@ export default function AddPlantWizard() {
         eyebrow="Grow your garden"
         title="Add a plant"
         description={stepTitle}
+        help="add-plant"
       />
       {gardens.length > 0 ? (
         <Card className="space-y-3">

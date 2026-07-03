@@ -40,6 +40,7 @@ export default function MyGardens() {
         eyebrow="Your spaces"
         title="My Gardens"
         description="Gardens group your plants and the people who help care for them."
+        help="gardens-list"
         action={
           <Button onClick={() => setCreating((v) => !v)}>
             {creating ? 'Close' : '+ Create garden'}

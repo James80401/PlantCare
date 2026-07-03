@@ -116,6 +116,7 @@ export default function Household() {
         eyebrow="Care Share"
         title="Household"
         description="Invite family or roommates to help with shared plants. Caregivers can complete tasks you assign."
+        help="household"
       />
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}

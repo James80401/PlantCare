@@ -21,6 +21,7 @@ export default function PlantCareTab() {
       eyebrow="Guide"
       title="Care"
       description="Care guidance tailored by species and growing environment when data is available."
+      help="plant-care"
     >
       {ctx.careOverview?.sections?.length ? (
         <div className="grid gap-4 lg:grid-cols-2">

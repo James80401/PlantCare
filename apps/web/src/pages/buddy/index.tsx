@@ -72,6 +72,7 @@ export default function BuddyHome() {
         eyebrow="Plant Buddy"
         title={buddy.name}
         description={greeting || `Your ${GROWTH_STAGE_LABEL[buddy.growthStage] ?? 'plant'} companion`}
+        help="buddy"
       />
 
       <SeasonalBanner />

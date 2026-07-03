@@ -254,6 +254,7 @@ export default function Community() {
         eyebrow="Community"
         title="Plant tips & wins"
         description="Share care notes with other gardeners. Link a species when your tip is plant-specific."
+        help="community"
       />
 
       <Card className="space-y-3">

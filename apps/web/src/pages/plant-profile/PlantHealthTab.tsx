@@ -28,6 +28,7 @@ export default function PlantHealthTab() {
         eyebrow="Plant health"
         title="Health"
         description="Check symptoms, ask Dr. Plant follow-ups, and keep recovery tasks moving."
+        help="plant-health"
       >
         <div className="space-y-5 pb-20 sm:pb-0">
           <HealthWorkflowGuide

@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBuddyCompanion } from '../context/BuddyCompanionContext';
 import { registerPushNative } from '../lib/registerPushNative';
 import { unregisterPushNative } from '../lib/unregisterPushNative';
+import { HelpButton } from '../components/ui/HelpButton';
 import type { TemperatureUnit } from '../utils/temperature';
 import {
   BUDDY_COMPANION_MODE_LABELS,
@@ -222,7 +223,10 @@ export default function Settings() {
 
   return (
     <div className="max-w-lg space-y-6 pb-20">
-      <h1 className="text-2xl font-bold text-emerald-900">Settings</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-emerald-900">Settings</h1>
+        <HelpButton topic="settings" />
+      </div>
 
       <section className="rounded-xl border border-emerald-100 bg-white p-6 space-y-3">
         <h2 className="font-semibold text-emerald-950">Plant Buddy</h2>

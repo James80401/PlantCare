@@ -36,6 +36,7 @@ export default function PlantOverviewTab() {
       eyebrow="Snapshot"
       title="Overview"
       description="The key growing context and recent care signals for this plant."
+      help="plant-overview"
     >
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.85fr)]">
         <div className="space-y-4">

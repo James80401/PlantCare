@@ -49,6 +49,7 @@ export default function GardenPlants() {
         eyebrow={garden.name}
         title="All Plants"
         description={`${garden.plants.length} plant${garden.plants.length === 1 ? '' : 's'} in this garden`}
+        help="garden-plants"
         action={
           <Link to={`/garden/plants/new?gardenId=${garden.id}`} className={addPlantButtonClass}>
             + Add plant

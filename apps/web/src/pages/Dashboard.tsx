@@ -27,6 +27,7 @@ import { FormError } from '../components/a11y/FormError';
 import { StatusMessage } from '../components/a11y/StatusMessage';
 import { EngagementProgress } from '../components/engagement/EngagementProgress';
 import { RecommendationPanel } from '../components/recommendations/RecommendationPanel';
+import { HelpButton } from '../components/ui/HelpButton';
 import {
   resolveMilestones,
   getGardenWellness,
@@ -298,12 +299,15 @@ export default function Dashboard() {
                   'Start your garden by adding a plant and Dr. Plant will build your daily routine.'}
               </p>
             </div>
-            <Link
-              to="/garden/plants/new"
-              className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-emerald-950 shadow-sm transition hover:bg-emerald-50"
-            >
-              + Add plant
-            </Link>
+            <div className="flex items-start gap-2">
+              <Link
+                to="/garden/plants/new"
+                className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-emerald-950 shadow-sm transition hover:bg-emerald-50"
+              >
+                + Add plant
+              </Link>
+              <HelpButton topic="dashboard" />
+            </div>
           </div>
 
           <div className="relative mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">

@@ -101,6 +101,7 @@ export default function GardenMembers() {
         eyebrow={garden.name}
         title="Members & Sharing"
         description="Invite people to help care for this garden. Caretakers can complete tasks and update plants; viewers can only look."
+        help="garden-members"
       />
 
       {message ? (

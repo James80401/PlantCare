@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Skeleton } from '../components/ui/Skeleton';
+import { HelpButton } from '../components/ui/HelpButton';
 import {
   SpeciesMetadataPanel,
   type SpeciesMetadata,
@@ -94,11 +95,14 @@ export default function SpeciesBrowseDetail() {
           )}
         </div>
         <div className="p-5 space-y-4">
-          <div>
-            <h1 className="font-display text-2xl font-bold text-emerald-950">{species.commonName}</h1>
-            {species.scientificName ? (
-              <p className="mt-1 text-sm italic text-gray-500">{species.scientificName}</p>
-            ) : null}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="font-display text-2xl font-bold text-emerald-950">{species.commonName}</h1>
+              {species.scientificName ? (
+                <p className="mt-1 text-sm italic text-gray-500">{species.scientificName}</p>
+              ) : null}
+            </div>
+            <HelpButton topic="species-detail" />
           </div>
 
           <div className="flex flex-wrap gap-2">

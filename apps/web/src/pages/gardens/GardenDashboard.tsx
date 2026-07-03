@@ -48,6 +48,7 @@ export default function GardenDashboard() {
         eyebrow={environment}
         title={garden.name}
         description={`${garden.plants.length} plant${garden.plants.length === 1 ? '' : 's'} · ${memberCount} member${memberCount === 1 ? '' : 's'}${garden.isOwner ? ' · You own this garden' : ' · Shared with you'}`}
+        help="garden-detail"
         action={
           <Link to={`/garden/plants/new?gardenId=${garden.id}`} className={addPlantButtonClass}>
             + Add plant

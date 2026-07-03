@@ -55,6 +55,7 @@ export default function PlantJournalTab() {
       eyebrow="History"
       title="Journal"
       description="Capture observations, measurements, and photos. Edit or delete entries from the timeline."
+      help="plant-journal"
     >
       <JournalProgressStory
         journalEntries={ctx.journalEntries}

@@ -84,6 +84,7 @@ export default function Tasks() {
       <PageHeader
         title={selectedGardenId && rounds[0] ? `${rounds[0].gardenName} care rounds` : 'Garden care rounds'}
         description="Work by garden and care type. One tap completes a plant; the large check completes the whole round."
+        help="tasks"
       />
 
       {selectedGardenId ? (

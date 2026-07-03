@@ -201,6 +201,7 @@ export default function BrowsePlants() {
             ? `Explore ${total} species — filter, search, then add any plant to your garden.`
             : 'Explore our catalog — filter, search, then add any plant to your garden.'
         }
+        help="browse-species"
         action={
           <Link to="/garden/plants/new">
             <Button>Add plant</Button>

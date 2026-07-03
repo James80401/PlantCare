@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { HelpButton } from '../components/ui/HelpButton';
 import { billingApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatApiErrorMessage } from '../utils/apiError';
@@ -70,7 +71,10 @@ export default function Subscription() {
           <Link to="/garden" className="text-sm font-medium text-emerald-700 hover:underline">
             Back to garden
           </Link>
-          <h1 className="mt-3 text-2xl font-bold text-emerald-950">Premium</h1>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <h1 className="text-2xl font-bold text-emerald-950">Premium</h1>
+            <HelpButton topic="subscription" />
+          </div>
           <p className="mt-1 text-sm text-gray-600">
             Premium billing is not open yet. Current approved accounts keep full beta access.
           </p>
@@ -92,7 +96,10 @@ export default function Subscription() {
         <Link to="/garden" className="text-sm font-medium text-emerald-700 hover:underline">
           Back to garden
         </Link>
-        <h1 className="mt-3 text-2xl font-bold text-emerald-950">Premium</h1>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold text-emerald-950">Premium</h1>
+          <HelpButton topic="subscription" />
+        </div>
         <p className="mt-1 text-sm text-gray-600">
           Track more plants and identify more species with DrPlant Premium.
         </p>

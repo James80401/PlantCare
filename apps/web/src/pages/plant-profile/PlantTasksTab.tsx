@@ -29,6 +29,7 @@ export default function PlantTasksTab() {
       eyebrow="Schedule"
       title="Tasks"
       description="Upcoming care actions for this plant. Open care steps before completing unfamiliar tasks."
+      help="plant-tasks"
     >
       {ctx.plantPendingFromHook.length ? (
         <ul className="space-y-2">

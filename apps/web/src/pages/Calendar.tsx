@@ -90,6 +90,7 @@ export default function Calendar() {
         eyebrow="Plan ahead"
         title="Care calendar"
         description="See what's due each day and tap a day for the full list."
+        help="calendar"
       />
 
       <div className="flex flex-wrap gap-2">

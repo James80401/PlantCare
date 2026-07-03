@@ -2,6 +2,8 @@ import { format } from 'date-fns';
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { Link } from 'react-router-dom';
 import { StructuredCareSectionCard } from '../../components/care/StructuredCareSectionCard';
+import { HelpButton } from '../../components/ui/HelpButton';
+import type { HelpTopicKey } from '../../content/helpTopics';
 import { resolveApiAssetUrl } from '../../utils/apiAssets';
 import { trackEvent } from '../../utils/analytics';
 import { careSectionToneClasses, getCareSectionMeta } from '../../utils/careGuideSections';
@@ -26,22 +28,29 @@ export function ProfileSection({
   eyebrow,
   title,
   description,
+  help,
   children,
 }: {
   eyebrow: string;
   title: string;
   description: string;
+  help?: HelpTopicKey;
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm shadow-emerald-900/5 sm:p-6">
-      <motionHeader eyebrow={eyebrow} title={title} description={description} />
+    <section className="relative rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm shadow-emerald-900/5 sm:p-6">
+      {help ? (
+        <div className="absolute right-5 top-5 sm:right-6 sm:top-6">
+          <HelpButton topic={help} />
+        </div>
+      ) : null}
+      <SectionHeader eyebrow={eyebrow} title={title} description={description} />
       {children}
     </section>
   );
 }
 
-function motionHeader({
+function SectionHeader({
   eyebrow,
   title,
   description,
@@ -51,7 +60,7 @@ function motionHeader({
   description: string;
 }) {
   return (
-    <div className="mb-5">
+    <div className="mb-5 max-w-[calc(100%-2.5rem)]">
       <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{eyebrow}</p>
       <h2 className="mt-1 text-2xl font-semibold text-emerald-950 font-display">{title}</h2>
       <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">{description}</p>
