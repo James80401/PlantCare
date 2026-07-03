@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NotificationChannel, PlanTier, TaskStatus } from '@prisma/client';
+import {
+  NotificationChannel,
+  PlanTier,
+  RecommendationPriority,
+  RecommendationStatus,
+  TaskStatus,
+} from '@prisma/client';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { effectivePlanTier } from '../config/premium-policy';
@@ -34,6 +40,60 @@ export class NotificationsService {
   async sendOverdueTaskReminders() {
     const count = await this.sendTaskRemindersForWindow({ overdue: true });
     this.logger.log(`Processed overdue reminders for ${count} users`);
+  }
+
+  /** Push-only nudge for active recommendations (e.g. routine plant check-ins) — these
+   *  are softer "worth a look" suggestions, not overdue-care urgency, so unlike tasks
+   *  they don't escalate to email/SMS. Scoped to HIGH/MEDIUM priority so this restores
+   *  reminders for what used to be task-backed check-ins without newly notifying about
+   *  low-priority nudges (soil flush, harvest timing) that were never reminded before. */
+  async sendRecommendationReminders() {
+    const now = new Date();
+    const recommendations = await this.prisma.recommendation.findMany({
+      where: {
+        status: RecommendationStatus.ACTIVE,
+        notifiedAt: null,
+        priority: { in: [RecommendationPriority.HIGH, RecommendationPriority.MEDIUM] },
+        OR: [{ snoozedUntil: null }, { snoozedUntil: { lte: now } }],
+      },
+      include: { user: true },
+      orderBy: { priority: 'desc' },
+    });
+
+    const byUser = new Map<string, typeof recommendations>();
+    for (const rec of recommendations) {
+      if (!byUser.has(rec.userId)) byUser.set(rec.userId, []);
+      byUser.get(rec.userId)!.push(rec);
+    }
+
+    for (const [userId, userRecs] of byUser) {
+      const user = userRecs[0].user;
+      if (this.isQuietHours(user)) continue;
+
+      if (user.notifyPush) {
+        const { title, body } = this.buildRecommendationPush(userRecs);
+        await this.sendPush(userId, title, body, { tag: 'recommendation', route: '/garden' });
+      }
+
+      await this.prisma.recommendation.updateMany({
+        where: { id: { in: userRecs.map((r) => r.id) } },
+        data: { notifiedAt: now },
+      });
+    }
+
+    this.logger.log(`Processed recommendation reminders for ${byUser.size} users`);
+  }
+
+  private buildRecommendationPush(recs: { title: string }[]): { title: string; body: string } {
+    if (recs.length === 1) {
+      return { title: 'Plant recommendation', body: recs[0].title };
+    }
+    const lines = recs.slice(0, 3).map((r) => r.title);
+    const extra = recs.length > 3 ? ` +${recs.length - 3} more` : '';
+    return {
+      title: `${recs.length} plant recommendations`,
+      body: `${lines.join(', ')}${extra}`,
+    };
   }
 
   private async sendTaskRemindersForWindow(options: { overdue: boolean }): Promise<number> {

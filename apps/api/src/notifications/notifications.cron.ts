@@ -13,5 +13,6 @@ export class NotificationsCron {
     this.logger.log('Running daily task reminders');
     await this.notifications.sendDueTaskReminders();
     await this.notifications.sendOverdueTaskReminders();
+    await this.notifications.sendRecommendationReminders();
   }
 }

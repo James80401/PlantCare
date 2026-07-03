@@ -1,4 +1,4 @@
-import { NotificationChannel, PlanTier } from '@prisma/client';
+import { NotificationChannel, PlanTier, RecommendationPriority, RecommendationStatus } from '@prisma/client';
 import { NotificationsService } from './notifications.service';
 import * as fcmClient from './fcm.client';
 import * as smsClient from './sms.client';
@@ -8,6 +8,8 @@ describe('NotificationsService', () => {
   const deviceFindMany = jest.fn();
   const deviceDeleteMany = jest.fn();
   const userFindUnique = jest.fn();
+  const recommendationFindMany = jest.fn();
+  const recommendationUpdateMany = jest.fn();
 
   const prisma = {
     deviceToken: {
@@ -17,6 +19,10 @@ describe('NotificationsService', () => {
     notificationLog: { create: logCreate },
     user: { findUnique: userFindUnique },
     task: { findMany: jest.fn() },
+    recommendation: {
+      findMany: recommendationFindMany,
+      updateMany: recommendationUpdateMany,
+    },
   };
 
   const configGet = jest.fn();
@@ -30,6 +36,8 @@ describe('NotificationsService', () => {
     deviceFindMany.mockResolvedValue([{ token: 'device-1', platform: 'android' }]);
     logCreate.mockResolvedValue({});
     configGet.mockReturnValue(undefined);
+    recommendationFindMany.mockResolvedValue([]);
+    recommendationUpdateMany.mockResolvedValue({ count: 0 });
   });
 
   it('logs mock push when user has no device tokens', async () => {
@@ -244,6 +252,121 @@ describe('NotificationsService', () => {
       expect(logCreate).not.toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ channel: NotificationChannel.SMS }) }),
       );
+    });
+  });
+
+  describe('sendRecommendationReminders', () => {
+    const baseUser = {
+      id: 'user-1',
+      email: 'a@example.com',
+      notifyPush: true,
+      quietHoursStart: null,
+      quietHoursEnd: null,
+    };
+
+    it('queries only ACTIVE, unnotified, HIGH/MEDIUM-priority recommendations that are not snoozed', async () => {
+      const service = createService();
+      await service.sendRecommendationReminders();
+
+      expect(recommendationFindMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: RecommendationStatus.ACTIVE,
+            notifiedAt: null,
+            priority: { in: [RecommendationPriority.HIGH, RecommendationPriority.MEDIUM] },
+          }),
+        }),
+      );
+    });
+
+    it('sends a push and marks notifiedAt for a due recommendation', async () => {
+      recommendationFindMany.mockResolvedValue([
+        {
+          id: 'rec-1',
+          userId: 'user-1',
+          title: 'Check in on Mona',
+          priority: RecommendationPriority.MEDIUM,
+          user: baseUser,
+        },
+      ]);
+
+      const service = createService();
+      await service.sendRecommendationReminders();
+
+      expect(logCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            channel: NotificationChannel.PUSH,
+            message: expect.stringContaining('Check in on Mona'),
+          }),
+        }),
+      );
+      expect(recommendationUpdateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['rec-1'] } },
+        data: { notifiedAt: expect.any(Date) },
+      });
+    });
+
+    it('does not push during quiet hours, and leaves notifiedAt unset', async () => {
+      recommendationFindMany.mockResolvedValue([
+        {
+          id: 'rec-1',
+          userId: 'user-1',
+          title: 'Check in on Mona',
+          priority: RecommendationPriority.MEDIUM,
+          user: { ...baseUser, quietHoursStart: 0, quietHoursEnd: 23 },
+        },
+      ]);
+
+      const service = createService();
+      await service.sendRecommendationReminders();
+
+      expect(logCreate).not.toHaveBeenCalled();
+      expect(recommendationUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('does not push when the user has push notifications disabled, but still marks notifiedAt', async () => {
+      recommendationFindMany.mockResolvedValue([
+        {
+          id: 'rec-1',
+          userId: 'user-1',
+          title: 'Check in on Mona',
+          priority: RecommendationPriority.MEDIUM,
+          user: { ...baseUser, notifyPush: false },
+        },
+      ]);
+
+      const service = createService();
+      await service.sendRecommendationReminders();
+
+      expect(logCreate).not.toHaveBeenCalled();
+      expect(recommendationUpdateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['rec-1'] } },
+        data: { notifiedAt: expect.any(Date) },
+      });
+    });
+
+    it('bundles multiple recommendations for the same user into one push', async () => {
+      recommendationFindMany.mockResolvedValue([
+        { id: 'rec-1', userId: 'user-1', title: 'Check in on Mona', priority: RecommendationPriority.MEDIUM, user: baseUser },
+        { id: 'rec-2', userId: 'user-1', title: 'Review outdoor protection for Fern', priority: RecommendationPriority.MEDIUM, user: baseUser },
+      ]);
+
+      const service = createService();
+      await service.sendRecommendationReminders();
+
+      expect(logCreate).toHaveBeenCalledTimes(1);
+      expect(logCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            message: expect.stringContaining('2 plant recommendations'),
+          }),
+        }),
+      );
+      expect(recommendationUpdateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['rec-1', 'rec-2'] } },
+        data: { notifiedAt: expect.any(Date) },
+      });
     });
   });
 });
