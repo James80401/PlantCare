@@ -53,4 +53,5 @@ tomorrow.
 - Priorities are `LOW`, `MEDIUM`, and `HIGH`.
 - Recommendations may include an `actionPath` for the web UI.
 - Only recommendations with `suggestedTaskType` can be converted into tasks.
+- The web UI must ask for explicit confirmation before calling task conversion.
 - Routine Plant Life prompts should use `PLANT_CHECK_IN` recommendations, not recurring `HEALTH_CHECK` tasks. Diagnosis follow-ups and weather protection checks may still create explicit `HEALTH_CHECK` tasks.

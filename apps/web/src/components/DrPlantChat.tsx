@@ -939,7 +939,7 @@ function ChatActionCards({
           messageId,
           draft.key,
         );
-        setSuccess('Recommendation saved.');
+        setSuccess('Recommendation saved as optional guidance.');
       } else {
         await diagnosisChatApi.confirmTaskDraft(
           plantId,
@@ -947,7 +947,7 @@ function ChatActionCards({
           messageId,
           draft.key,
         );
-        setSuccess('Task added.');
+        setSuccess('Task added to your care list.');
       }
       setConfirmedKeys((prev) => new Set(prev).add(draft.key));
     } catch (err: unknown) {
@@ -973,7 +973,8 @@ function ChatActionCards({
             <div>
               <p className="text-xs font-semibold text-emerald-950">Confirm before changing care</p>
               <p className="mt-0.5 text-xs text-emerald-800">
-                Review each draft. Nothing is saved until you confirm a card.
+                Review each draft. Recommendations stay optional; tasks become due care only after
+                you confirm.
               </p>
             </div>
             {drafts.length > 0 ? (
@@ -1010,7 +1011,7 @@ function ChatActionCards({
                         <p className="mt-1 leading-5 text-gray-700">{draft.body}</p>
                       </div>
                       <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800">
-                        {draft.kind}
+                        {isTask ? 'task draft' : 'recommendation draft'}
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2 text-[0.68rem] text-gray-600">
@@ -1032,7 +1033,7 @@ function ChatActionCards({
                       type="button"
                       disabled={Boolean(busyKey) || confirmed}
                       onClick={() => void confirm(draft)}
-                      className={`mt-3 min-h-9 rounded-full px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50 ${
+                      className={`mt-3 min-h-10 rounded-full px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50 ${
                         isTask
                           ? 'bg-amber-700 hover:bg-amber-800'
                           : 'bg-emerald-800 hover:bg-emerald-900'

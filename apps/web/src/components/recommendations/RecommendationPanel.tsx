@@ -39,11 +39,16 @@ export function RecommendationPanel({
   emptyText?: string;
 }) {
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+  const [confirmingTaskId, setConfirmingTaskId] = useState<string | null>(null);
   const visibleRecommendationIds = useMemo(
     () => recommendations.map((recommendation) => recommendation.id).join('|'),
     [recommendations],
   );
+
+  useEffect(() => {
+    setConfirmingTaskId(null);
+  }, [visibleRecommendationIds]);
 
   useEffect(() => {
     if (recommendations.length === 0) return;
@@ -57,17 +62,18 @@ export function RecommendationPanel({
     action: 'done' | 'snooze' | 'dismiss' | 'task',
   ) => {
     setBusyId(recommendation.id);
-    setMessage('');
+    setMessage(null);
     try {
       if (action === 'done') await recommendationsApi.done(recommendation.id);
       if (action === 'snooze') await recommendationsApi.snooze(recommendation.id);
       if (action === 'dismiss') await recommendationsApi.dismiss(recommendation.id);
       if (action === 'task') await recommendationsApi.convertToTask(recommendation.id);
       trackRecommendationEvent(recommendationActionEvent(action), recommendation);
-      setMessage(actionMessage(action));
+      setMessage({ tone: 'success', text: actionMessage(action) });
+      setConfirmingTaskId(null);
       await onChanged();
     } catch {
-      setMessage('Could not update that recommendation. Try again.');
+      setMessage({ tone: 'error', text: 'Could not update that recommendation. Try again.' });
     } finally {
       setBusyId(null);
     }
@@ -91,8 +97,16 @@ export function RecommendationPanel({
       </div>
 
       {message ? (
-        <p className="mt-3 rounded-2xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900">
-          {message}
+        <p
+          className={`mt-3 rounded-2xl px-3 py-2 text-sm font-medium ${
+            message.tone === 'error'
+              ? 'bg-rose-50 text-rose-800'
+              : 'bg-emerald-50 text-emerald-900'
+          }`}
+          role={message.tone === 'error' ? 'alert' : 'status'}
+          aria-live={message.tone === 'error' ? 'assertive' : 'polite'}
+        >
+          {message.text}
         </p>
       ) : null}
 
@@ -108,6 +122,9 @@ export function RecommendationPanel({
               key={recommendation.id}
               recommendation={recommendation}
               busy={busyId === recommendation.id}
+              confirmingTask={confirmingTaskId === recommendation.id}
+              onStartTaskConfirmation={() => setConfirmingTaskId(recommendation.id)}
+              onCancelTaskConfirmation={() => setConfirmingTaskId(null)}
               onAction={runAction}
             />
           ))}
@@ -158,10 +175,16 @@ function actionMessage(action: 'done' | 'snooze' | 'dismiss' | 'task') {
 function RecommendationCard({
   recommendation,
   busy,
+  confirmingTask,
+  onStartTaskConfirmation,
+  onCancelTaskConfirmation,
   onAction,
 }: {
   recommendation: RecommendationItem;
   busy: boolean;
+  confirmingTask: boolean;
+  onStartTaskConfirmation: () => void;
+  onCancelTaskConfirmation: () => void;
   onAction: (
     recommendation: RecommendationItem,
     action: 'done' | 'snooze' | 'dismiss' | 'task',
@@ -175,6 +198,7 @@ function RecommendationCard({
     recommendation.plant?.species.commonName ||
     recommendation.garden?.name ||
     'Garden';
+  const confirmationId = `recommendation-task-confirm-${recommendation.id}`;
 
   return (
     <article className={`rounded-2xl border p-3 shadow-sm shadow-white/40 ${priorityClass}`}>
@@ -203,7 +227,7 @@ function RecommendationCard({
         {recommendation.actionPath && recommendation.actionLabel ? (
           <Link
             to={recommendation.actionPath}
-            className="inline-flex min-h-9 items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
+            className="inline-flex min-h-10 items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
           >
             {recommendation.actionLabel}
           </Link>
@@ -212,8 +236,10 @@ function RecommendationCard({
           <button
             type="button"
             disabled={busy}
-            onClick={() => void onAction(recommendation, 'task')}
-            className="inline-flex min-h-9 items-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
+            onClick={onStartTaskConfirmation}
+            aria-expanded={confirmingTask}
+            aria-controls={confirmationId}
+            className="inline-flex min-h-10 items-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
           >
             Create task
           </button>
@@ -222,7 +248,7 @@ function RecommendationCard({
           type="button"
           disabled={busy}
           onClick={() => void onAction(recommendation, 'done')}
-          className="inline-flex min-h-9 items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
+          className="inline-flex min-h-10 items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
         >
           Mark done
         </button>
@@ -230,7 +256,7 @@ function RecommendationCard({
           type="button"
           disabled={busy}
           onClick={() => void onAction(recommendation, 'snooze')}
-          className="inline-flex min-h-9 items-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-80 ring-1 ring-current hover:opacity-100 disabled:opacity-50"
+          className="inline-flex min-h-10 items-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-80 ring-1 ring-current hover:opacity-100 disabled:opacity-50"
         >
           Remind tomorrow
         </button>
@@ -238,13 +264,52 @@ function RecommendationCard({
           type="button"
           disabled={busy}
           onClick={() => void onAction(recommendation, 'dismiss')}
-          className="inline-flex min-h-9 items-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-70 hover:opacity-100 disabled:opacity-50"
+          className="inline-flex min-h-10 items-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-70 hover:opacity-100 disabled:opacity-50"
         >
           Dismiss
         </button>
       </div>
+
+      {confirmingTask && recommendation.suggestedTaskType ? (
+        <div
+          id={confirmationId}
+          className="mt-3 rounded-2xl border border-emerald-900/10 bg-white/80 p-3"
+          role="group"
+          aria-label="Confirm task creation"
+        >
+          <p className="text-sm font-semibold text-emerald-950">Create this as a care task?</p>
+          <p className="mt-1 text-xs leading-5 text-emerald-900/80">
+            Dr. Plant will add a {taskTypeLabel(recommendation.suggestedTaskType).toLowerCase()}{' '}
+            task {dueLabel(recommendation.suggestedTaskDueInDays)} and mark this recommendation
+            done.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void onAction(recommendation, 'task')}
+              className="inline-flex min-h-10 items-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
+            >
+              Confirm task
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onCancelTaskConfirmation}
+              className="inline-flex min-h-10 items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
+            >
+              Keep as recommendation
+            </button>
+          </div>
+        </div>
+      ) : null}
     </article>
   );
+}
+
+function dueLabel(days?: number | null) {
+  if (days == null || days <= 1) return 'for tomorrow';
+  return `in ${days} days`;
 }
 
 function titleCase(value: string) {

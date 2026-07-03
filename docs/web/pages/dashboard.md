@@ -21,4 +21,5 @@ Garden home — plant cards, upcoming tasks, navigation. See [user guide](../../
 - Dashboard recommendations render through `RecommendationPanel`, which labels
   each card by source (Dr. Plant, Plant Life, Care timing, Environment, Seasonal)
   and priority, uses "Remind tomorrow" for snooze, and shows a calm "All quiet
-  for now" state when there is no non-critical guidance.
+  for now" state when there is no non-critical guidance. Task-backed
+  recommendations require an inline confirmation before a care task is created.

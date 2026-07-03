@@ -21,6 +21,7 @@ Sections:
 
 Plant-specific recommendations use the shared `RecommendationPanel` UX: source
 and priority labels, clear action copy, and a quiet empty state when Dr. Plant
-has no extra non-critical guidance.
+has no extra non-critical guidance. Task-backed recommendations open a
+confirmation panel before creating a care task.
 
 **User guide:** [plant profile](../../user-guide/plant-profile.md) · **Tutorial:** [changing location](../../tutorials/changing-plant-location.md)

@@ -79,8 +79,8 @@ recommendation panel.
 
 - Review recommendation analytics after enough private/open-testing usage to tune
   copy, cadence, and card placement.
-- Decide whether any recommendation classes need richer confirmation flows before
-  launch.
+- Decide whether any recommendation classes need richer confirmation flows beyond
+  the now-shipped task-conversion confirmation step before launch.
 
 ## Track 1 - Dashboard clarity and API slimming
 
