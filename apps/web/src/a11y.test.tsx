@@ -1,9 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { axe } from 'jest-axe';
 import TaskRow from './components/tasks/TaskRow';
 import DrPlantContextPanel from './components/DrPlantContextPanel';
+import { HelpButton } from './components/ui/HelpButton';
 import type { TaskItem } from './utils/taskGroups';
 import { diagnosisApi } from './services/api';
 
@@ -67,6 +68,14 @@ describe('accessibility (axe)', () => {
     const { container } = render(<DrPlantContextPanel plantId="plant-1" />);
     await screen.findByText('Care baseline');
 
+    expect(await violations(container)).toEqual([]);
+  });
+
+  it('HelpButton has no structural a11y violations, closed or open', async () => {
+    const { container } = render(<HelpButton topic="dashboard" />);
+    expect(await violations(container)).toEqual([]);
+
+    fireEvent.click(screen.getByRole('button', { name: /help/i }));
     expect(await violations(container)).toEqual([]);
   });
 });

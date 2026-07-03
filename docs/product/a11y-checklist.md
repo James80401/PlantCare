@@ -32,6 +32,9 @@ Patterns used across Dr. Plant web. Re-run this list when adding major UI.
 - [x] `aria-labelledby` on task instructions and bottom sheet
 - [x] Escape closes dialogs (`useDialogA11y`)
 - [x] Initial focus in modal (close button or sheet panel)
+- [x] Contextual "?" help panels (`HelpButton`): same dialog pattern, `aria-label`
+      on the trigger names the topic ("Help: Settings"), close button labeled
+      "Close help"
 
 ## Media
 
@@ -88,3 +91,4 @@ Patterns used across Dr. Plant web. Re-run this list when adding major UI.
 | `StatusMessage` | `apps/web/src/components/a11y/StatusMessage.tsx` |
 | `SkipLink` | `apps/web/src/components/a11y/SkipLink.tsx` |
 | `useDialogA11y` | `apps/web/src/hooks/useDialogA11y.ts` |
+| `HelpButton` | `apps/web/src/components/ui/HelpButton.tsx` |
