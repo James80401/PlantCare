@@ -124,3 +124,29 @@ export function milestoneKeysToUnlock(snapshot: MilestoneEngagementSnapshot): Pl
     (definition) => definition.id,
   );
 }
+
+export type PlantLifeMilestoneId =
+  | 'baseline'
+  | 'three_check_ins'
+  | 'progress_photo'
+  | 'new_growth'
+  | 'stable_streak'
+  | 'recovery_signal';
+
+export interface PlantLifeMilestoneDefinition {
+  id: PlantLifeMilestoneId;
+  title: string;
+}
+
+export const PLANT_LIFE_MILESTONE_DEFS: PlantLifeMilestoneDefinition[] = [
+  { id: 'baseline', title: 'Baseline saved' },
+  { id: 'three_check_ins', title: 'Three check-ins' },
+  { id: 'progress_photo', title: 'Photo record' },
+  { id: 'new_growth', title: 'New growth noted' },
+  { id: 'stable_streak', title: 'Stable streak' },
+  { id: 'recovery_signal', title: 'Recovery signal' },
+];
+
+export function plantLifeMilestoneKey(plantId: string, id: PlantLifeMilestoneId) {
+  return `plant_life:${plantId}:${id}`;
+}

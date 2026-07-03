@@ -124,6 +124,10 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
   const latestProgress = progressEntries[0];
   const isEditing = Boolean(editingEntryId);
   const previewUrl = photoPreview || (existingPhotoUrl ? resolveApiAssetUrl(existingPhotoUrl) : null);
+  const plantLifeMilestones = useMemo(
+    () => plantLifeMilestonesForPlant(ctx.plant.milestones as PlantRecord[] | undefined, ctx.id),
+    [ctx.plant, ctx.id],
+  );
   const progressMilestones = useMemo(() => progressBadges(progressEntries), [progressEntries]);
 
   useEffect(() => {
@@ -392,7 +396,7 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
         <div className="space-y-3">
           <ProgressSummaryCard entry={latestResult || latestProgress} />
           <ProgressTrendStrip entries={progressEntries} />
-          <ProgressMilestones badges={progressMilestones} />
+          <ProgressMilestones milestones={plantLifeMilestones} fallbackBadges={progressMilestones} />
           <ProgressHistoryList
             entries={progressEntries}
             busyEntryId={busyEntryId}
@@ -538,20 +542,52 @@ function ProgressTrendStrip({ entries }: { entries: PlantRecord[] }) {
   );
 }
 
-function ProgressMilestones({ badges }: { badges: string[] }) {
-  if (!badges.length) return null;
+function ProgressMilestones({
+  milestones,
+  fallbackBadges,
+}: {
+  milestones: PlantRecord[];
+  fallbackBadges: string[];
+}) {
+  if (!milestones.length && !fallbackBadges.length) return null;
   return (
     <div className="rounded-2xl border border-lime-100 bg-white p-4">
-      <p className="text-sm font-semibold text-emerald-950">Progress markers</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {badges.map((badge) => (
-          <span
-            key={badge}
-            className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100"
-          >
-            {badge}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-emerald-950">Plant Life milestones</p>
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            Earned from this plant's check-ins and progress history.
+          </p>
+        </div>
+        {milestones.length ? (
+          <span className="rounded-full bg-lime-50 px-2.5 py-1 text-xs font-semibold text-lime-900 ring-1 ring-lime-100">
+            {milestones.length}
           </span>
-        ))}
+        ) : null}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {milestones.length
+          ? milestones.map((milestone) => (
+              <span
+                key={milestone.id as string}
+                className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100"
+                title={
+                  milestone.unlockedAt
+                    ? `Unlocked ${format(new Date(milestone.unlockedAt as string), 'MMM d, yyyy')}`
+                    : undefined
+                }
+              >
+                {milestone.title as string}
+              </span>
+            ))
+          : fallbackBadges.map((badge) => (
+              <span
+                key={badge}
+                className="rounded-full bg-lime-50 px-3 py-1.5 text-xs font-semibold text-lime-900 ring-1 ring-lime-100"
+              >
+                {badge}
+              </span>
+            ))}
       </div>
     </div>
   );
@@ -1189,7 +1225,10 @@ function progressBadges(entries: PlantRecord[]) {
   if (entries.length >= 3) badges.push('Three check-ins');
   if (entries.some((entry) => entry.photoUrl)) badges.push('Photo record');
   if (entries.some((entry) => entry.growthChange === 'NEW_GROWTH')) badges.push('New growth noted');
-  if (entries.slice(0, 3).every((entry) => ['THRIVING', 'STABLE'].includes(entry.overallHealth as string))) {
+  if (
+    entries.length >= 3 &&
+    entries.slice(0, 3).every((entry) => ['THRIVING', 'STABLE'].includes(entry.overallHealth as string))
+  ) {
     badges.push('Stable streak');
   }
   if (hasRecoveryMoment(entries)) badges.push('Recovery signal');
@@ -1208,6 +1247,16 @@ function hasRecoveryMoment(entries: PlantRecord[]) {
       ['STABLE', 'THRIVING'].includes(entry.overallHealth as string)
     );
   });
+}
+
+function plantLifeMilestonesForPlant(milestones: PlantRecord[] = [], plantId: string) {
+  const prefix = `plant_life:${plantId}:`;
+  return milestones
+    .filter((milestone) => String(milestone.milestoneKey || '').startsWith(prefix))
+    .sort(
+      (a, b) =>
+        new Date(b.unlockedAt as string).getTime() - new Date(a.unlockedAt as string).getTime(),
+    );
 }
 
 function pickLatestEntry(entries: PlantRecord[]): PlantRecord | null {

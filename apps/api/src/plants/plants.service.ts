@@ -91,6 +91,11 @@ export class PlantsService {
         },
         journalEntries: { orderBy: { createdAt: 'desc' }, take: 10 },
         progressEntries: { orderBy: { createdAt: 'desc' }, take: 10 },
+        milestones: {
+          where: { plantId: id },
+          orderBy: { unlockedAt: 'desc' },
+          select: { id: true, milestoneKey: true, title: true, unlockedAt: true },
+        },
         diagnoses: { orderBy: { createdAt: 'desc' }, take: 5 },
         ...sharedPlantInclude,
       },

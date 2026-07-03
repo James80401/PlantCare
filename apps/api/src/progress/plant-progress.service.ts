@@ -5,6 +5,7 @@ import axios from 'axios';
 import { AiUsageService } from '../ai-usage/ai-usage.service';
 import { ImageModerationService } from '../common/image-moderation.service';
 import { sharedPlantInclude, userCanJournalPlant, userCanViewPlantTasks } from '../gardens/task-access';
+import { PlantMilestonesService } from '../milestones/plant-milestones.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RecommendationsService } from '../recommendations/recommendations.service';
 import { UploadService } from '../upload/upload.service';
@@ -84,6 +85,7 @@ export class PlantProgressService {
     private aiUsage: AiUsageService,
     private config: ConfigService,
     private recommendations: RecommendationsService,
+    private milestones: PlantMilestonesService,
   ) {
     this.apiKey = this.config.get<string>('OPENAI_API_KEY')?.trim();
     this.model = this.config.get<string>('OPENAI_MODEL', 'gpt-4.1-mini');
@@ -161,6 +163,7 @@ export class PlantProgressService {
     });
 
     await this.recommendations.completePlantCheckInForPlant(userId, plantId);
+    await this.syncPlantLifeMilestones(userId, plantId);
     return entry;
   }
 
@@ -210,7 +213,7 @@ export class PlantProgressService {
       });
     }
 
-    return this.prisma.plantProgressEntry.update({
+    const updated = await this.prisma.plantProgressEntry.update({
       where: { id: entryId },
       data: {
         overallHealth: nextDto.overallHealth,
@@ -230,6 +233,8 @@ export class PlantProgressService {
           : {}),
       },
     });
+    await this.syncPlantLifeMilestones(userId, plantId);
+    return updated;
   }
 
   async remove(userId: string, plantId: string, entryId: string) {
@@ -486,6 +491,21 @@ export class PlantProgressService {
         },
       }),
     ]);
+  }
+
+  private async syncPlantLifeMilestones(userId: string, plantId: string) {
+    const entries = await this.prisma.plantProgressEntry.findMany({
+      where: { plantId },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      select: {
+        overallHealth: true,
+        growthChange: true,
+        photoUrl: true,
+        createdAt: true,
+      },
+    });
+    await this.milestones.syncPlantLifeMilestones(userId, plantId, entries);
   }
 
   private label(value?: string | null) {

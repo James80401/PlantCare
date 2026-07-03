@@ -22,8 +22,8 @@ touching production.
      place. **Tier F production delivery tuning has started** after hosted Lighthouse showed slow
      regional FCP/LCP despite 0 ms TBT and 0 CLS.
   3. **Plant intelligence / Plant Life** - problem library, care archetypes, treatment plans,
-     recovery suggestions, catalog sprint 1, hybrid long-tail ID review, guide intelligence, and
-     Plant Life progress polish are shipped. Remaining catalog photo gaps are Hoya Mathilde and
+     recovery suggestions, catalog sprint 1, hybrid long-tail ID review, guide intelligence,
+     Plant Life progress polish, and per-plant Plant Life milestones are shipped. Remaining catalog photo gaps are Hoya Mathilde and
      String of Dolphins, both pending exact reusable image sources and tracked in
      [species-photo-sourcing-log.md](product/species-photo-sourcing-log.md).
 - **Source of truth docs:**
@@ -184,7 +184,7 @@ while TBT stayed at `0 ms` and CLS at `0`. First fixes:
 ### Plant intelligence / catalog - ACTIVE
 Current source: [`docs/product/plant-intelligence-expansion.md`](./product/plant-intelligence-expansion.md).
 Shipped: treatment plans, recovery task suggestions, richer guide intelligence, guide analytics,
-hybrid external-ID review, and Plant Life progress management. Remaining concrete gaps:
+hybrid external-ID review, Plant Life progress management, and per-plant Plant Life milestones. Remaining concrete gaps:
 1. **Species photos:** Hoya Mathilde and String of Dolphins still need exact reusable image sources.
    The 2026-07-03 iNaturalist/Commons/source-resolver pass is logged in
    [species-photo-sourcing-log.md](product/species-photo-sourcing-log.md); do not use nursery/blog

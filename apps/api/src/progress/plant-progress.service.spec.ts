@@ -79,6 +79,9 @@ describe('PlantProgressService', () => {
     const recommendations = {
       completePlantCheckInForPlant: jest.fn().mockResolvedValue({ count: 1 }),
     };
+    const milestones = {
+      syncPlantLifeMilestones: jest.fn().mockResolvedValue(undefined),
+    };
     const service = new PlantProgressService(
       prisma as never,
       upload as never,
@@ -86,13 +89,14 @@ describe('PlantProgressService', () => {
       aiUsage as never,
       config as never,
       recommendations as never,
+      milestones as never,
     );
 
-    return { service, prisma, upload, imageModeration, recommendations };
+    return { service, prisma, upload, imageModeration, recommendations, milestones };
   }
 
   it('creates a progress entry and completes the active Plant Check-In recommendation', async () => {
-    const { service, prisma, recommendations } = createService();
+    const { service, prisma, recommendations, milestones } = createService();
 
     const result = await service.create('user-1', 'plant-1', {
       overallHealth: 'STABLE',
@@ -115,11 +119,16 @@ describe('PlantProgressService', () => {
       'user-1',
       'plant-1',
     );
+    expect(milestones.syncPlantLifeMilestones).toHaveBeenCalledWith(
+      'user-1',
+      'plant-1',
+      expect.any(Array),
+    );
     expect(prisma.task.findFirst).not.toHaveBeenCalled();
   });
 
   it('updates an owned progress entry and recomputes the saved story when content changes', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, milestones } = createService();
 
     const result = await service.update('user-1', 'plant-1', 'entry-1', {
       overallHealth: 'CONCERNED',
@@ -145,6 +154,11 @@ describe('PlantProgressService', () => {
         storyJson: expect.any(String),
       }),
     });
+    expect(milestones.syncPlantLifeMilestones).toHaveBeenCalledWith(
+      'user-1',
+      'plant-1',
+      expect.any(Array),
+    );
   });
 
   it('replaces a progress photo after moderation', async () => {

@@ -20,7 +20,7 @@ provider gates instead of pretending the local catalog already covers everything
 | Dr. Plant context | Uses care baseline, tasks, diagnoses, journal, weather, and feedback context |
 | Hybrid identification | External photo ID results stay provisional until user confirmation creates a first-class `PlantSpecies` row with source metadata |
 | Store release | Parked until full launch; PWA install is okay during private hosting |
-| Plant Life history | Per-plant progress check-ins support edit/delete, AI story recompute, task handoff, trend strip, and derived progress markers |
+| Plant Life history | Per-plant progress check-ins support edit/delete, AI story recompute, task handoff, trend strip, persisted milestones, and history controls |
 
 ## Progress legend
 
@@ -96,8 +96,9 @@ provider gates instead of pretending the local catalog already covers everything
 - Added edit and delete support for `PlantProgressEntry` through authenticated plant progress APIs.
 - Recomputed Dr. Plant progress summaries when check-in fields, notes, or photos change.
 - Added a Health Check task handoff so pending `HEALTH_CHECK` rows can open the exact Plant Life check-in flow.
-- Expanded the Journal tab's progress area into a Plant Life surface with latest story, flags, trend strip, derived progress markers, photo thumbnails, and full entry history controls.
+- Expanded the Journal tab's progress area into a Plant Life surface with latest story, flags, trend strip, persisted milestones, photo thumbnails, and full entry history controls.
 - Added focused API and web regression tests for progress entry management and health-check task routing.
+- Persisted per-plant Plant Life milestones for baseline check-ins, three check-ins, progress photos, new growth, stable streaks, and recovery signals.
 
 ## Next implementation batch
 
