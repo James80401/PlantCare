@@ -24,7 +24,8 @@ touching production.
   3. **Plant intelligence / Plant Life** - problem library, care archetypes, treatment plans,
      recovery suggestions, catalog sprint 1, hybrid long-tail ID review, guide intelligence, and
      Plant Life progress polish are shipped. Remaining catalog photo gaps are Hoya Mathilde and
-     String of Dolphins, both pending exact reusable image sources.
+     String of Dolphins, both pending exact reusable image sources and tracked in
+     [species-photo-sourcing-log.md](product/species-photo-sourcing-log.md).
 - **Source of truth docs:**
   - Strategy: [`docs/marketing/prelaunch-seo-funnel.md`](./marketing/prelaunch-seo-funnel.md) (the playbook)
   - Engineering tracker w/ checklists: [`docs/marketing/prelaunch-seo-subplan.md`](./marketing/prelaunch-seo-subplan.md)
@@ -185,8 +186,9 @@ Current source: [`docs/product/plant-intelligence-expansion.md`](./product/plant
 Shipped: treatment plans, recovery task suggestions, richer guide intelligence, guide analytics,
 hybrid external-ID review, and Plant Life progress management. Remaining concrete gaps:
 1. **Species photos:** Hoya Mathilde and String of Dolphins still need exact reusable image sources.
-   iNaturalist/Commons exact-name searches found no acceptable CC0/CC-BY/CC-BY-SA source; do not use
-   nursery/blog images or parent-species substitutes without a new product decision.
+   The 2026-07-03 iNaturalist/Commons/source-resolver pass is logged in
+   [species-photo-sourcing-log.md](product/species-photo-sourcing-log.md); do not use nursery/blog
+   images or parent-species substitutes without a new product decision.
 2. **Guide expansion:** use `guide_link_click` / `guide_dr_plant_click` data before adding more
    route-specific guide targets.
 3. **Hybrid ID admin scale:** bulk review actions can wait until review volume justifies them.

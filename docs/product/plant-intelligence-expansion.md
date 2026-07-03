@@ -103,6 +103,7 @@ provider gates instead of pretending the local catalog already covers everything
 
 1. Remaining photo cleanup:
    - Hoya Mathilde and String of Dolphins still need exact truly reusable photo sources.
+   - Re-checked exact iNaturalist taxon results, reusable-license iNaturalist observations, Wikimedia Commons exact searches, and the automated missing-photo resolver on 2026-07-03; the full source review and closure checklist live in [species-photo-sourcing-log.md](species-photo-sourcing-log.md).
    - Checked iNaturalist and Wikimedia Commons for exact Hoya Mathilde/Hoya mathilde, Curio peregrinus, Senecio peregrinus, String of Dolphins, and `× Bacurio delphinatifolius`; no acceptable CC0/CC-BY/CC-BY-SA exact-match image was found.
    - The automated Commons resolver briefly matched String of Dolphins to a non-plant "String Figures" file; resolver title matching is now stricter to prevent that false positive.
    - Aloe Aristata has a verified public-domain Wikimedia Commons photo.

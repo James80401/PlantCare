@@ -97,4 +97,6 @@ species. The remaining exact reusable-source gaps are Hoya Mathilde (*Hoya
 mathilde*) and String of Dolphins (*Curio peregrinus* / `x Bacurio
 delphinatifolius`). iNaturalist and Wikimedia Commons exact-name checks did not
 surface acceptable CC0/CC-BY/CC-BY-SA photos, so do not use nursery/blog images
-or parent-species substitutes without a product decision.
+or parent-species substitutes without a product decision. The latest exact-source
+review and completion checklist are tracked in
+[species-photo-sourcing-log.md](species-photo-sourcing-log.md).
