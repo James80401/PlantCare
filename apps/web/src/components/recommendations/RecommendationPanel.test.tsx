@@ -59,13 +59,17 @@ describe('RecommendationPanel', () => {
       hasTaskConversion: false,
       suggestedTaskType: undefined,
     });
+    expect(screen.getByText('Plant Life')).toBeInTheDocument();
+    expect(screen.getByText('Helpful next step')).toBeInTheDocument();
+    expect(screen.getByText('Monty')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Mark done' }));
 
     await waitFor(() => {
       expect(recommendationsApi.done).toHaveBeenCalledWith('rec-1');
       expect(onChanged).toHaveBeenCalled();
     });
+    expect(screen.getByText('Marked done for this recommendation cycle.')).toBeInTheDocument();
     expect(trackEvent).toHaveBeenCalledWith('recommendation_done', {
       recommendationId: 'rec-1',
       source: 'PLANT_CHECK_IN',
@@ -75,5 +79,22 @@ describe('RecommendationPanel', () => {
       hasTaskConversion: false,
       suggestedTaskType: undefined,
     });
+  });
+
+  it('renders a reassuring empty state', () => {
+    render(
+      <MemoryRouter>
+        <RecommendationPanel
+          recommendations={[]}
+          onChanged={vi.fn()}
+          emptyText="No extra recommendations right now. Keep up with your care tasks."
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('All quiet for now')).toBeInTheDocument();
+    expect(
+      screen.getByText('No extra recommendations right now. Keep up with your care tasks.'),
+    ).toBeInTheDocument();
   });
 });

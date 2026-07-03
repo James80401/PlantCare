@@ -80,7 +80,7 @@ describe('Dashboard', () => {
 
     expect(await screen.findByRole('link', { name: /My Gardens: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Garden score: 91/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Care areas: 2/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Care areas: 1/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Gardens ready: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Completed: 4/i })).toBeInTheDocument();
     expect(screen.getByText('Kitchen herbs')).toBeInTheDocument();

@@ -10,12 +10,27 @@ const priorityClasses: Record<string, string> = {
   LOW: 'border-slate-200 bg-slate-50 text-slate-800',
 };
 
+const priorityLabels: Record<string, string> = {
+  HIGH: 'Worth doing soon',
+  MEDIUM: 'Helpful next step',
+  LOW: 'Nice when you have time',
+};
+
+const sourceLabels: Record<string, string> = {
+  DR_PLANT: 'Dr. Plant',
+  PLANT_CHECK_IN: 'Plant Life',
+  CARE_TIMING: 'Care timing',
+  ENVIRONMENT: 'Environment',
+  SEASONAL: 'Seasonal',
+  SYSTEM: 'Dr. Plant',
+};
+
 export function RecommendationPanel({
   title = 'Recommendations',
   description = 'Helpful next steps that are useful, but not urgent care tasks.',
   recommendations,
   onChanged,
-  emptyText = 'No recommendations right now.',
+  emptyText = 'Dr. Plant will surface gentle suggestions here when there is a useful next step.',
 }: {
   title?: string;
   description?: string;
@@ -49,7 +64,7 @@ export function RecommendationPanel({
       if (action === 'dismiss') await recommendationsApi.dismiss(recommendation.id);
       if (action === 'task') await recommendationsApi.convertToTask(recommendation.id);
       trackRecommendationEvent(recommendationActionEvent(action), recommendation);
-      setMessage(action === 'task' ? 'Task added.' : 'Recommendation updated.');
+      setMessage(actionMessage(action));
       await onChanged();
     } catch {
       setMessage('Could not update that recommendation. Try again.');
@@ -63,7 +78,7 @@ export function RecommendationPanel({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            Guidance
+            Gentle guidance
           </p>
           <h2 className="mt-1 text-lg font-semibold text-emerald-950 font-display">{title}</h2>
           <p className="mt-1 text-sm leading-6 text-gray-600">{description}</p>
@@ -82,9 +97,10 @@ export function RecommendationPanel({
       ) : null}
 
       {recommendations.length === 0 ? (
-        <p className="mt-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-3 py-4 text-sm text-gray-500">
-          {emptyText}
-        </p>
+        <div className="mt-4 rounded-2xl border border-dashed border-emerald-100 bg-emerald-50/40 px-4 py-4">
+          <p className="text-sm font-semibold text-emerald-950">All quiet for now</p>
+          <p className="mt-1 text-sm leading-6 text-emerald-800">{emptyText}</p>
+        </div>
       ) : (
         <div className="mt-4 space-y-3">
           {recommendations.map((recommendation) => (
@@ -132,6 +148,13 @@ function recommendationActionEvent(
   return 'recommendation_dismiss';
 }
 
+function actionMessage(action: 'done' | 'snooze' | 'dismiss' | 'task') {
+  if (action === 'task') return 'Task created and added to your care list.';
+  if (action === 'done') return 'Marked done for this recommendation cycle.';
+  if (action === 'snooze') return 'Paused until tomorrow.';
+  return 'Dismissed. Dr. Plant will not keep nudging this item.';
+}
+
 function RecommendationCard({
   recommendation,
   busy,
@@ -145,6 +168,8 @@ function RecommendationCard({
   ) => Promise<void>;
 }) {
   const priorityClass = priorityClasses[recommendation.priority] ?? priorityClasses.MEDIUM;
+  const sourceLabel = sourceLabels[recommendation.source] ?? titleCase(recommendation.source);
+  const priorityLabel = priorityLabels[recommendation.priority] ?? 'Helpful next step';
   const plantName =
     recommendation.plant?.nickname ||
     recommendation.plant?.species.commonName ||
@@ -152,23 +177,29 @@ function RecommendationCard({
     'Garden';
 
   return (
-    <article className={`rounded-2xl border p-3 ${priorityClass}`}>
+    <article className={`rounded-2xl border p-3 shadow-sm shadow-white/40 ${priorityClass}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-75">
-            {plantName} / {recommendation.priority.toLowerCase()} priority
-          </p>
+          <div className="flex flex-wrap gap-1.5">
+            <span className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold">
+              {sourceLabel}
+            </span>
+            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-semibold">
+              {priorityLabel}
+            </span>
+          </div>
           <h3 className="mt-1 font-semibold">{recommendation.title}</h3>
+          <p className="mt-1 text-xs font-medium opacity-75">{plantName}</p>
         </div>
         {recommendation.suggestedTaskType ? (
           <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold">
-            {taskTypeLabel(recommendation.suggestedTaskType)}
+            Can become {taskTypeLabel(recommendation.suggestedTaskType).toLowerCase()}
           </span>
         ) : null}
       </div>
       <p className="mt-2 text-sm leading-6 opacity-90">{recommendation.body}</p>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2 border-t border-current/10 pt-3">
         {recommendation.actionPath && recommendation.actionLabel ? (
           <Link
             to={recommendation.actionPath}
@@ -184,7 +215,7 @@ function RecommendationCard({
             onClick={() => void onAction(recommendation, 'task')}
             className="inline-flex min-h-9 items-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
           >
-            Add task
+            Create task
           </button>
         ) : null}
         <button
@@ -193,7 +224,7 @@ function RecommendationCard({
           onClick={() => void onAction(recommendation, 'done')}
           className="inline-flex min-h-9 items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
         >
-          Done
+          Mark done
         </button>
         <button
           type="button"
@@ -201,7 +232,7 @@ function RecommendationCard({
           onClick={() => void onAction(recommendation, 'snooze')}
           className="inline-flex min-h-9 items-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-80 ring-1 ring-current hover:opacity-100 disabled:opacity-50"
         >
-          Tomorrow
+          Remind tomorrow
         </button>
         <button
           type="button"
@@ -214,4 +245,12 @@ function RecommendationCard({
       </div>
     </article>
   );
+}
+
+function titleCase(value: string) {
+  return value
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }

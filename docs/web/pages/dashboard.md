@@ -18,3 +18,7 @@ Garden home — plant cards, upcoming tasks, navigation. See [user guide](../../
 - Broader fields such as `plants`, `pendingTasks`, `todayTasks`, `attention`,
   `weekPreview`, and `healthStory` still power the detailed sections while the
   dashboard API is slimmed over time.
+- Dashboard recommendations render through `RecommendationPanel`, which labels
+  each card by source (Dr. Plant, Plant Life, Care timing, Environment, Seasonal)
+  and priority, uses "Remind tomorrow" for snooze, and shows a calm "All quiet
+  for now" state when there is no non-critical guidance.
