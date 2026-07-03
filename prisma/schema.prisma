@@ -381,6 +381,7 @@ model Recommendation {
   snoozedUntil          DateTime?
   completedAt           DateTime?
   dismissedAt           DateTime?
+  notifiedAt            DateTime?
   lastRefreshedAt       DateTime               @default(now())
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
