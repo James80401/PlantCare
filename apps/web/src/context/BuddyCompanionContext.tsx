@@ -47,6 +47,8 @@ interface BuddyUpdateInput {
 
 const BuddyCompanionContext = createContext<BuddyCompanionContextValue | null>(null);
 
+const BUDDY_ENABLED = import.meta.env.VITE_ENABLE_PLANT_BUDDY === 'true';
+
 export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
   const [buddy, setBuddy] = useState<BuddyState | null>(null);
   const [missing, setMissing] = useState(false);
@@ -128,6 +130,12 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
   }, [buddy]);
 
   useEffect(() => {
+    // Plant Buddy is a post-release feature — keep the provider mountable
+    // (so useBuddyCompanion() stays safe to call everywhere) but never fetch.
+    if (!BUDDY_ENABLED) {
+      setLoading(false);
+      return;
+    }
     refresh();
   }, [refresh]);
 
@@ -149,6 +157,7 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
   }, [buddy?.id, loadGreeting]);
 
   useEffect(() => {
+    if (!BUDDY_ENABLED) return;
     const id = window.setInterval(refreshGardenMetrics, 60_000);
     return () => window.clearInterval(id);
   }, [refreshGardenMetrics]);
@@ -156,7 +165,7 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
   const traveling = isJourneyTraveling(journey) || Boolean(buddy?.hasActiveJourney);
 
   useEffect(() => {
-    if (!traveling) return;
+    if (!BUDDY_ENABLED || !traveling) return;
     const id = window.setInterval(refreshJourney, 30_000);
     return () => window.clearInterval(id);
   }, [traveling, refreshJourney]);

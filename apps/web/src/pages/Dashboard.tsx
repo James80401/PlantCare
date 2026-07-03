@@ -45,6 +45,8 @@ import {
 import { resolveApiAssetUrl, resolveApiThumbnailUrl } from '../utils/apiAssets';
 import { formatMeasurementValues } from '../utils/journalMeasurements';
 
+const BUDDY_ENABLED = import.meta.env.VITE_ENABLE_PLANT_BUDDY === 'true';
+
 interface ScheduleSuggestion {
   id: string;
   plantId: string;
@@ -383,8 +385,12 @@ export default function Dashboard() {
 
       <WeatherAdvicePanel />
 
-      <BuddyDashboardPanel />
-      <SeasonalBanner />
+      {BUDDY_ENABLED ? (
+        <>
+          <BuddyDashboardPanel />
+          <SeasonalBanner />
+        </>
+      ) : null}
 
       {dashError ? (
         <FormError className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-rose-700">

@@ -6,6 +6,8 @@ import type { BuddyState } from '../../hooks/buddy/types';
 import type { ShopItem, ShopItemCategory } from '../../hooks/buddy/shopTypes';
 import { formatApiErrorMessage } from '../../utils/apiError';
 
+const BUDDY_ENABLED = import.meta.env.VITE_ENABLE_PLANT_BUDDY === 'true';
+
 type ManagedUser = {
   id: string;
   email: string;
@@ -262,7 +264,9 @@ export default function AdminRegistrations() {
       adminApi.auditSummary(),
       adminApi.auditLogs(75),
       adminApi.observability(),
-      adminApi.buddyOverview(),
+      // Plant Buddy is a post-release feature — skip the call entirely rather
+      // than let the guarded 404 fail this whole Promise.all.
+      BUDDY_ENABLED ? adminApi.buddyOverview() : Promise.resolve({ data: null }),
       adminApi.externalSpecies(),
     ]);
     setUsers(usersRes.data);
@@ -280,7 +284,7 @@ export default function AdminRegistrations() {
     });
     setBuddyLevelDrafts((current) => {
       const next = { ...current };
-      for (const row of buddyRes.data.buddies) {
+      for (const row of buddyRes.data?.buddies ?? []) {
         if (next[row.buddy.id] === undefined) next[row.buddy.id] = String(row.buddy.level);
       }
       return next;
@@ -491,13 +495,17 @@ export default function AdminRegistrations() {
               metric: observability ? String(observability.notifications.activeDeviceTokens) : '-',
               metricLabel: 'tokens',
             },
-            {
-              href: '#buddy-lab',
-              title: 'Buddy lab',
-              description: 'Level and unlock controls for Buddy testing.',
-              metric: buddyOverview ? String(buddyOverview.buddies.length) : '-',
-              metricLabel: 'buddies',
-            },
+            ...(BUDDY_ENABLED
+              ? [
+                  {
+                    href: '#buddy-lab',
+                    title: 'Buddy lab',
+                    description: 'Level and unlock controls for Buddy testing.',
+                    metric: buddyOverview ? String(buddyOverview.buddies.length) : '-',
+                    metricLabel: 'buddies',
+                  },
+                ]
+              : []),
             {
               href: '#external-species',
               title: 'Species review',

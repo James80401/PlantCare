@@ -38,6 +38,7 @@ const LIGHT_LEVELS = [
 ] as const;
 
 const E164_PATTERN = /^\+[1-9]\d{7,14}$/;
+const BUDDY_ENABLED = import.meta.env.VITE_ENABLE_PLANT_BUDDY === 'true';
 
 export default function Settings() {
   const { logout, refreshUser, isPremium } = useAuth();
@@ -228,54 +229,56 @@ export default function Settings() {
         <HelpButton topic="settings" />
       </div>
 
-      <section className="rounded-xl border border-emerald-100 bg-white p-6 space-y-3">
-        <h2 className="font-semibold text-emerald-950">Plant Buddy</h2>
-        <p className="text-sm text-gray-600 leading-relaxed">
-          Your Finch-style companion — journeys, quests, shop, and Garden Town sunshine.
-        </p>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium text-gray-700">Floating Buddy</p>
-            {buddyDisplaySaved ? (
-              <span className="text-xs font-medium text-emerald-700">Saved</span>
-            ) : null}
+      {BUDDY_ENABLED ? (
+        <section className="rounded-xl border border-emerald-100 bg-white p-6 space-y-3">
+          <h2 className="font-semibold text-emerald-950">Plant Buddy</h2>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Your Finch-style companion — journeys, quests, shop, and Garden Town sunshine.
+          </p>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-gray-700">Floating Buddy</p>
+              {buddyDisplaySaved ? (
+                <span className="text-xs font-medium text-emerald-700">Saved</span>
+              ) : null}
+            </div>
+            <div className="grid grid-cols-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-1">
+              {buddyCompanionModes().map((mode) => {
+                const active = buddyDisplayMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => void handleBuddyDisplayModeChange(mode)}
+                    disabled={buddyLoading}
+                    className={`min-h-10 rounded-lg px-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60 ${
+                      active
+                        ? 'bg-white text-emerald-900 shadow-sm'
+                        : 'text-emerald-800 hover:bg-white/70'
+                    }`}
+                    aria-pressed={active}
+                  >
+                    {BUDDY_COMPANION_MODE_LABELS[mode]}
+                  </button>
+                );
+              })}
+            </div>
+            {buddyDisplayError ? (
+              <p className="text-sm text-red-600">{buddyDisplayError}</p>
+            ) : (
+              <p className="text-xs leading-relaxed text-gray-500">
+                This controls only the floating companion and follows your account across devices.
+              </p>
+            )}
           </div>
-          <div className="grid grid-cols-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-1">
-            {buddyCompanionModes().map((mode) => {
-              const active = buddyDisplayMode === mode;
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => void handleBuddyDisplayModeChange(mode)}
-                  disabled={buddyLoading}
-                  className={`min-h-10 rounded-lg px-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60 ${
-                    active
-                      ? 'bg-white text-emerald-900 shadow-sm'
-                      : 'text-emerald-800 hover:bg-white/70'
-                  }`}
-                  aria-pressed={active}
-                >
-                  {BUDDY_COMPANION_MODE_LABELS[mode]}
-                </button>
-              );
-            })}
-          </div>
-          {buddyDisplayError ? (
-            <p className="text-sm text-red-600">{buddyDisplayError}</p>
-          ) : (
-            <p className="text-xs leading-relaxed text-gray-500">
-              This controls only the floating companion and follows your account across devices.
-            </p>
-          )}
-        </div>
-        <Link
-          to="/garden/buddy"
-          className="inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
-        >
-          Open Plant Buddy
-        </Link>
-      </section>
+          <Link
+            to="/garden/buddy"
+            className="inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+          >
+            Open Plant Buddy
+          </Link>
+        </section>
+      ) : null}
 
       <section className="rounded-xl border border-emerald-100 bg-white p-6 space-y-3">
         <h2 className="font-semibold text-emerald-950">Household (Care Share)</h2>
@@ -346,8 +349,7 @@ export default function Settings() {
           <p className="text-xs leading-relaxed text-gray-600">
             {Capacitor.isNativePlatform() ? (
               <>
-                Includes care reminders and Plant Buddy alerts (journey return, sunshine, mood
-                nudges). Allow notifications when prompted after saving.
+                Includes care reminders{BUDDY_ENABLED ? ' and Plant Buddy alerts (journey return, sunshine, mood nudges)' : ''}. Allow notifications when prompted after saving.
               </>
             ) : (
               <>

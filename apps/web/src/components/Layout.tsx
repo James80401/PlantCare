@@ -60,6 +60,7 @@ const adminNav: NavItem = {
 };
 
 const SHOW_UPGRADE = import.meta.env.VITE_ENABLE_PREMIUM_BILLING === 'true';
+const BUDDY_ENABLED = import.meta.env.VITE_ENABLE_PLANT_BUDDY === 'true';
 
 export default function Layout() {
   const auth = useAuth();
@@ -80,13 +81,14 @@ function LayoutShell({
   const desktopMoreMenuRef = useRef<HTMLDivElement>(null);
   const mobileMoreMenuRef = useRef<HTMLDivElement>(null);
   const { missing: buddyMissing } = useBuddyCompanion();
-  const buddyQuestClaims = useBuddyQuestBadge(Boolean(user) && !buddyMissing);
+  const buddyQuestClaims = useBuddyQuestBadge(BUDDY_ENABLED && Boolean(user) && !buddyMissing);
   const MenuIcon = navIcons.menu;
   const desktopPrimaryItems = user?.isAdmin
     ? [...primaryNav, adminNav, settingsNav]
     : [...primaryNav, settingsNav];
   const mobilePrimaryItems = primaryNav;
   const desktopSecondaryItems = moreNav.filter((item) => {
+    if (item.to === '/garden/buddy' && !BUDDY_ENABLED) return false;
     if (item.freeOnly && (isPremium || !SHOW_UPGRADE)) return false;
     if (item.premiumOnly && !isPremium) return false;
     if (item.adminOnly && !user?.isAdmin) return false;
@@ -257,7 +259,7 @@ function LayoutShell({
           </div>
         </div>
       </nav>
-      <BuddyFloatingCompanion />
+      {BUDDY_ENABLED ? <BuddyFloatingCompanion /> : null}
     </div>
   );
 }

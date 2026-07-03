@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
 
+const BUDDY_ENABLED = import.meta.env.VITE_ENABLE_PLANT_BUDDY === 'true';
+
 const tourSections = [
   {
     title: 'Home',
@@ -35,7 +37,9 @@ const tourSections = [
   },
   {
     title: 'Settings',
-    body: 'Control reminders, Plant Buddy display, account preferences, and other app-level options.',
+    body: BUDDY_ENABLED
+      ? 'Control reminders, Plant Buddy display, account preferences, and other app-level options.'
+      : 'Control reminders, account preferences, and other app-level options.',
     to: '/garden/settings',
     action: 'Open settings',
   },
