@@ -28,6 +28,11 @@ clearer, more trustworthy, and better verified.
 systems first, then quality/UX polish, then plant intelligence/catalog depth,
 with performance and SEO lock-in held until the app is otherwise release-ready.
 
+**Active UX/a11y pass (2026-07-03):** the detailed implementation checklist for
+the current quality/UX polish priority lives in
+[core-ux-a11y-pass-plan.md](core-ux-a11y-pass-plan.md). Work through that plan
+in small slices rather than as one broad sprint.
+
 | Priority | Track | Why now |
 |----------|-------|---------|
 | 1 | Dashboard clarity and payload slimming | Home screen is the daily command center; H1 is the clearest partial item. |

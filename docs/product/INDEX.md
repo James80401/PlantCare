@@ -7,6 +7,7 @@
 | [roadmap.md](roadmap.md) | PM / dev / release | Canonical consolidated roadmap and source-of-truth status |
 | [current-feature-implementation-plan.md](current-feature-implementation-plan.md) | PM / dev | Active implementation plan for improving shipped features |
 | [plant-intelligence-expansion.md](plant-intelligence-expansion.md) | PM / dev | Checkpoint tracker for diagnosis, treatment, catalog, and guide intelligence |
+| [core-ux-a11y-pass-plan.md](core-ux-a11y-pass-plan.md) | PM / dev / QA | Active checkpoint plan for the core UX and accessibility pass |
 | [improvement-recommendations.md](improvement-recommendations.md) | PM / dev | Researched, prioritized improvement backlog |
 | [improvement-checklist.md](improvement-checklist.md) | PM / dev | Archived roadmap acceptance criteria and implementation ideas |
 | [species-coverage-report.md](species-coverage-report.md) | PM / dev | Species catalog filter-attribute coverage audit (CONTENT-1 input) |
