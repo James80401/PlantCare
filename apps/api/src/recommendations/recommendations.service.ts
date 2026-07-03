@@ -318,28 +318,9 @@ export class RecommendationsService {
       const environment = (garden.location ?? '').toLowerCase();
       const items: UpsertRecommendationInput[] = [];
 
-      if (environment.includes('outdoor')) {
-        const month = now.getMonth();
-        if ([0, 1, 5, 6, 7, 11].includes(month)) {
-          items.push({
-            userId,
-            gardenId: garden.id,
-            source: RecommendationSource.ENVIRONMENT,
-            sourceKey: `garden-outdoor-protection:${garden.id}:${format(now, 'yyyy-MM')}`,
-            priority: RecommendationPriority.MEDIUM,
-            title: `Review weather protection for ${garden.name}`,
-            body:
-              'This outdoor garden may need shade, wind protection, frost cover, or a move plan during harsher weather windows.',
-            actionLabel: 'Open garden',
-            actionPath: `/garden/gardens/${garden.id}`,
-            metadata: {
-              environment: garden.location,
-              plantCount: garden.plantCount,
-            },
-          });
-        }
-      }
-
+      // Outdoor weather protection is already covered per-plant by
+      // buildMoveProtectRecommendation; a garden-level card here would just
+      // duplicate it for every outdoor garden.
       if (environment.includes('indoor') && garden.plantCount >= 1) {
         const quarter = Math.floor(now.getMonth() / 3) + 1;
         items.push({
@@ -493,7 +474,7 @@ export class RecommendationsService {
         status: RecommendationStatus.SNOOZED,
         snoozedUntil: { lte: now },
       },
-      data: { status: RecommendationStatus.ACTIVE, snoozedUntil: null },
+      data: { status: RecommendationStatus.ACTIVE, snoozedUntil: null, notifiedAt: null },
     });
   }
 

@@ -131,7 +131,7 @@ describe('RecommendationsService', () => {
     );
   });
 
-  it('generates garden-wide outdoor protection guidance from garden defaults', async () => {
+  it('generates plant-level outdoor protection guidance and does not duplicate it at the garden level', async () => {
     const outdoorPlant = {
       ...plant,
       location: 'Patio',
@@ -155,12 +155,19 @@ describe('RecommendationsService', () => {
     expect(prisma.recommendation.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         create: expect.objectContaining({
-          sourceKey: 'garden-outdoor-protection:garden-outdoor:2026-07',
+          sourceKey: 'move-protect:plant-1:2026-07',
           source: RecommendationSource.ENVIRONMENT,
-          gardenId: 'garden-outdoor',
-          plantId: undefined,
-          title: 'Review weather protection for Balcony',
-          actionPath: '/garden/gardens/garden-outdoor',
+          gardenId: 'garden-1',
+          plantId: 'plant-1',
+          title: 'Review outdoor protection for Mona',
+          actionPath: '/garden/plants/plant-1/overview',
+        }),
+      }),
+    );
+    expect(prisma.recommendation.upsert).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          sourceKey: expect.stringContaining('garden-outdoor-protection'),
         }),
       }),
     );
