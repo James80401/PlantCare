@@ -9,8 +9,8 @@ type AnimMap = Record<string, 'completing' | 'skipping' | 'snoozing'>;
 interface TaskDayGroupProps {
   group: DayGroup;
   animating: AnimMap;
-  onComplete: (id: string, feedback?: TaskCompleteFeedback) => void;
-  onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
+  onComplete: (id: string, feedback?: TaskCompleteFeedback) => Promise<unknown> | unknown;
+  onSkip: (id: string, feedback?: TaskSkipFeedback) => Promise<unknown> | unknown;
   onSnooze?: (id: string, days: 1 | 3 | 7) => void;
 }
 

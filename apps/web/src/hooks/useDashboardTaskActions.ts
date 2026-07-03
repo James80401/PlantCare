@@ -38,8 +38,10 @@ export function useDashboardTaskActions(
       }
       await new Promise((r) => setTimeout(r, COMPLETE_ANIM_MS));
       patchTask(id, { status: data.status, completedAt: data.completedAt });
+      return true;
     } catch {
       await onRefresh();
+      return false;
     } finally {
       setAnimating((a) => {
         const next = { ...a };
@@ -50,11 +52,11 @@ export function useDashboardTaskActions(
   };
 
   const handleComplete = (id: string, feedback?: TaskCompleteFeedback) => {
-    void runWithAnimation(id, 'completing', () => tasksApi.complete(id, feedback));
+    return runWithAnimation(id, 'completing', () => tasksApi.complete(id, feedback));
   };
 
   const handleSkip = (id: string, feedback?: TaskSkipFeedback) => {
-    void runWithAnimation(id, 'skipping', () => tasksApi.skip(id, feedback));
+    return runWithAnimation(id, 'skipping', () => tasksApi.skip(id, feedback));
   };
 
   const handleSnooze = async (id: string, days: 1 | 3 | 7) => {

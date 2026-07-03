@@ -46,8 +46,8 @@ describe('buildDrPlantContextSummary', () => {
     const summary = buildDrPlantContextSummary({
       ...base,
       feedback: [
-        { action: 'SKIP', reason: 'SOIL_STILL_WET', note: 'damp 2 inches down' },
-        { action: 'COMPLETE', reason: 'SOIL_VERY_DRY', note: null },
+        { action: 'SKIP', reason: 'SOIL_STILL_WET', note: 'damp 2 inches down', taskType: 'WATER' },
+        { action: 'COMPLETE', reason: 'SOIL_VERY_DRY', note: null, taskType: 'WATER' },
         { action: 'SNOOZE', reason: 'SNOOZE_3D', note: 'Snoozed' },
       ],
     });
@@ -55,12 +55,12 @@ describe('buildDrPlantContextSummary', () => {
     const feedbackItems = summary.items.filter((i) => i.category === 'feedback');
     expect(feedbackItems.map((i) => i.label)).toEqual([
       '1 recent skip',
-      'Recent care feedback',
+      '1 recent care observation',
     ]);
     // Snooze rows are not surfaced as feedback chips.
     expect(feedbackItems).toHaveLength(2);
-    expect(feedbackItems[0].detail).toContain('damp 2 inches down');
-    expect(feedbackItems[1].detail).toContain('soil very dry');
+    expect(feedbackItems[0].detail).toContain('water: damp 2 inches down');
+    expect(feedbackItems[1].detail).toContain('Water: soil very dry');
   });
 
   it('omits optional chips when no signals are present', () => {

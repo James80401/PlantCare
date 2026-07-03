@@ -43,8 +43,8 @@ interface PlantProfileContextValue {
   latestCompleted?: PlantRecord;
   plantPendingFromHook: ReturnType<typeof useTasksInRange>['tasks'];
   animating: ReturnType<typeof useTasksInRange>['animating'];
-  handleCompleteTask: (taskId: string, feedback?: TaskCompleteFeedback) => void;
-  handleSkipTask: (taskId: string, feedback?: TaskSkipFeedback) => void;
+  handleCompleteTask: (taskId: string, feedback?: TaskCompleteFeedback) => Promise<unknown> | unknown;
+  handleSkipTask: (taskId: string, feedback?: TaskSkipFeedback) => Promise<unknown> | unknown;
   handleSnooze: ReturnType<typeof useTasksInRange>['handleSnooze'];
   journalNotes: string;
   setJournalNotes: (value: string) => void;
@@ -375,13 +375,15 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
   };
 
   const handleCompleteTask = (taskId: string, feedback?: TaskCompleteFeedback) => {
-    completeFromHook(taskId, feedback);
+    const result = completeFromHook(taskId, feedback);
     window.setTimeout(() => void load(), 700);
+    return result;
   };
 
   const handleSkipTask = (taskId: string, feedback?: TaskSkipFeedback) => {
-    skipFromHook(taskId, feedback);
+    const result = skipFromHook(taskId, feedback);
     window.setTimeout(() => void load(), 700);
+    return result;
   };
 
   const plantPendingFromHook = useMemo(() => {

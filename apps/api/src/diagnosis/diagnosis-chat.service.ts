@@ -110,7 +110,12 @@ export class DiagnosisChatService {
           where: { userId, task: { plantId: plant.id }, createdAt: { gte: since } },
           orderBy: { createdAt: 'desc' },
           take: 4,
-          select: { action: true, reason: true, note: true },
+          select: {
+            action: true,
+            reason: true,
+            note: true,
+            task: { select: { taskType: true } },
+          },
         }),
         this.prisma.diagnosis.findFirst({
           where: { plantId: plant.id },
@@ -156,6 +161,7 @@ export class DiagnosisChatService {
         action: f.action,
         reason: f.reason,
         note: f.note,
+        taskType: f.task.taskType,
       })),
       activeDiagnosis:
         lastDiagnosis && !lastDiagnosis.resolved

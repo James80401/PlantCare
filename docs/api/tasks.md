@@ -37,7 +37,7 @@ Allowed reasons:
 - `PLANT_LOOKS_HEALTHY`
 - `OTHER`
 
-Stored as `TaskFeedback` with `action: COMPLETE`. Repeated dry/stressed feedback on **WATER** completions can surface a **water-accelerate** schedule suggestion (see schedule suggestions below). Web: quick feedback panel on WATER complete in [`TaskRow.tsx`](../../apps/web/src/components/tasks/TaskRow.tsx).
+Stored as `TaskFeedback` with `action: COMPLETE`. Repeated dry/stressed feedback on **WATER** completions can surface a **water-accelerate** schedule suggestion (see schedule suggestions below). Web: quick feedback panel in [`TaskRow.tsx`](../../apps/web/src/components/tasks/TaskRow.tsx). If the user explicitly checks "Also save this note to journal," the web client creates a separate journal entry after the task completion succeeds; the task API itself does not create that journal entry.
 
 ## Skip feedback
 

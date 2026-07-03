@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, isPast, isToday, parseISO } from 'date-fns';
+import { journalApi } from '../../services/api';
 import TaskInstructionsLink from '../TaskInstructionsLink';
 import TaskScheduleExplanationLink from '../TaskScheduleExplanationLink';
 import {
@@ -20,8 +21,8 @@ type AnimState = 'completing' | 'skipping' | 'snoozing' | null;
 interface TaskRowProps {
   task: TaskItem;
   animState: AnimState;
-  onComplete: (id: string, feedback?: TaskCompleteFeedback) => void;
-  onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
+  onComplete: (id: string, feedback?: TaskCompleteFeedback) => Promise<unknown> | unknown;
+  onSkip: (id: string, feedback?: TaskSkipFeedback) => Promise<unknown> | unknown;
   onSnooze?: (id: string, days: 1 | 3 | 7) => void;
   /** When true, type icon/label is omitted (parent section shows category). */
   groupedByType?: boolean;
@@ -47,6 +48,8 @@ export default function TaskRow({
     'SOIL_VERY_DRY',
   );
   const [completeNote, setCompleteNote] = useState('');
+  const [saveCompleteNoteToJournal, setSaveCompleteNoteToJournal] = useState(false);
+  const [journalStatus, setJournalStatus] = useState('');
   const due = parseISO(task.dueDate);
   const isDone = task.status === 'DONE';
   const isSkipped = task.status === 'SKIPPED';
@@ -61,6 +64,7 @@ export default function TaskRow({
   const progressCheckInPath = `/garden/plants/${task.plant.id}/journal?progressTask=${encodeURIComponent(
     task.id,
   )}#progress-check-in`;
+  const trimmedCompleteNote = completeNote.trim();
 
   const rowClass = [
     'task-row group relative flex gap-3 rounded-2xl border px-3 py-3.5 transition-all duration-300 sm:px-4',
@@ -85,7 +89,7 @@ export default function TaskRow({
         {isPending ? (
           <button
             type="button"
-            onClick={() => onComplete(task.id)}
+            onClick={() => void onComplete(task.id)}
             disabled={!!animState}
             className="task-check flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
             aria-label={`Mark ${taskTypeLabel(task.taskType)} for ${plantLabel} as done`}
@@ -382,21 +386,7 @@ export default function TaskRow({
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      onComplete(
-                        task.id,
-                        task.taskType === 'WATER'
-                          ? {
-                              reason: selectedCompleteReason,
-                              note: completeNote.trim() || undefined,
-                            }
-                          : completeNote.trim()
-                            ? { note: completeNote.trim() }
-                            : undefined,
-                      );
-                      setCompleteFeedbackOpen(false);
-                      setCompleteNote('');
-                    }}
+                    onClick={() => void completeWithObservation()}
                     className="rounded-full bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800"
                   >
                     {task.taskType === 'WATER' ? 'Save feedback & complete' : 'Complete with note'}
@@ -404,15 +394,38 @@ export default function TaskRow({
                   <button
                     type="button"
                     onClick={() => {
-                      onComplete(task.id);
+                      void onComplete(task.id);
                       setCompleteFeedbackOpen(false);
                       setCompleteNote('');
+                      setSaveCompleteNoteToJournal(false);
+                      setJournalStatus('');
                     }}
                     className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
                   >
                     {task.taskType === 'WATER' ? 'Complete without feedback' : 'Complete'}
                   </button>
                 </div>
+                <label className="mt-3 flex items-start gap-2 rounded-xl bg-white/70 px-3 py-2 text-xs leading-5 text-sky-950 ring-1 ring-sky-100">
+                  <input
+                    type="checkbox"
+                    checked={saveCompleteNoteToJournal}
+                    disabled={!trimmedCompleteNote}
+                    onChange={(event) => setSaveCompleteNoteToJournal(event.target.checked)}
+                    className="mt-1"
+                  />
+                  <span>
+                    <span className="font-semibold">Also save this note to journal</span>
+                    <span className="block text-gray-600">
+                      Useful for observations you want in the plant timeline, not just task
+                      feedback.
+                    </span>
+                  </span>
+                </label>
+                {journalStatus ? (
+                  <p className="mt-2 text-xs font-medium text-sky-900" role="status">
+                    {journalStatus}
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -420,5 +433,49 @@ export default function TaskRow({
       </div>
     </li>
   );
+
+  async function completeWithObservation() {
+    const feedback: TaskCompleteFeedback | undefined =
+      task.taskType === 'WATER'
+        ? {
+            reason: selectedCompleteReason,
+            note: trimmedCompleteNote || undefined,
+          }
+        : trimmedCompleteNote
+          ? { note: trimmedCompleteNote }
+          : undefined;
+    const completed = await Promise.resolve(onComplete(task.id, feedback));
+    if (completed === false) {
+      setJournalStatus('Task could not be completed. Try again before saving to journal.');
+      return;
+    }
+
+    if (saveCompleteNoteToJournal && trimmedCompleteNote) {
+      try {
+        await journalApi.create(task.plant.id, {
+          notes: careObservationJournalNote(task, trimmedCompleteNote, selectedCompleteReason),
+        });
+        setJournalStatus('Saved to journal.');
+      } catch {
+        setJournalStatus('Task completed, but the journal note could not be saved.');
+        return;
+      }
+    }
+
+    setCompleteFeedbackOpen(false);
+    setCompleteNote('');
+    setSaveCompleteNoteToJournal(false);
+  }
+}
+
+function careObservationJournalNote(
+  task: TaskItem,
+  note: string,
+  waterReason: TaskCompleteReason,
+) {
+  const prefix = `${taskTypeLabel(task.taskType)} observation`;
+  if (task.taskType !== 'WATER') return `${prefix}: ${note}`;
+  const reason = TASK_COMPLETE_REASONS.find((entry) => entry.value === waterReason)?.label;
+  return `${prefix}${reason ? ` (${reason})` : ''}: ${note}`;
 }
 

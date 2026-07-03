@@ -64,8 +64,10 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
       }
       await new Promise((r) => setTimeout(r, COMPLETE_ANIM_MS));
       patchTask(id, { status: data.status, completedAt: data.completedAt });
+      return true;
     } catch {
-      load();
+      await load();
+      return false;
     } finally {
       setAnimating((a) => {
         const next = { ...a };
@@ -76,7 +78,7 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
   };
 
   const handleComplete = (id: string, feedback?: TaskCompleteFeedback) => {
-    void runWithAnimation(id, 'completing', () => tasksApi.complete(id, feedback));
+    return runWithAnimation(id, 'completing', () => tasksApi.complete(id, feedback));
   };
 
   const handleBulkComplete = async (ids: string[]) => {
@@ -106,7 +108,7 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
   };
 
   const handleSkip = (id: string, feedback?: TaskSkipFeedback) => {
-    void runWithAnimation(id, 'skipping', () => tasksApi.skip(id, feedback));
+    return runWithAnimation(id, 'skipping', () => tasksApi.skip(id, feedback));
   };
 
   const handleSnooze = async (id: string, days: 1 | 3 | 7) => {

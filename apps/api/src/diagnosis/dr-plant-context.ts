@@ -14,7 +14,12 @@ export interface DrPlantContextSignals {
   sunlight: string | null;
   journal: Array<{ notes: string | null; createdAt: Date }>;
   pendingTasks: Array<{ taskType: string; dueDate: Date }>;
-  feedback: Array<{ action: string; reason: string | null; note: string | null }>;
+  feedback: Array<{
+    action: string;
+    reason: string | null;
+    note: string | null;
+    taskType?: string | null;
+  }>;
   activeDiagnosis: { resultLabel: string; createdAt: Date } | null;
   weatherAlert: { label: string; location: string } | null;
 }
@@ -80,10 +85,11 @@ export function buildDrPlantContextSummary(
   );
   if (skips.length) {
     const first = skips[0];
+    const skippedTask = first.taskType ? taskTypeLabel(first.taskType).toLowerCase() : 'care';
     items.push({
       category: 'feedback',
       label: plural(skips.length, 'recent skip'),
-      detail: (first.note || first.reason || '').slice(0, 120) || undefined,
+      detail: `${skippedTask}: ${(first.note || reasonLabel(first.reason) || '').slice(0, 100)}`,
     });
   }
 
@@ -92,13 +98,14 @@ export function buildDrPlantContextSummary(
   );
   if (completes.length) {
     const first = completes[0];
-    const reasonLabel = first.reason ? first.reason.replace(/_/g, ' ').toLowerCase() : '';
+    const careTask = first.taskType ? taskTypeLabel(first.taskType) : 'Care';
+    const readableReason = reasonLabel(first.reason);
     const detail = first.note
-      ? `${reasonLabel ? `${reasonLabel}: ` : ''}${first.note}`
-      : reasonLabel;
+      ? `${careTask}: ${readableReason ? `${readableReason}: ` : ''}${first.note}`
+      : `${careTask}: ${readableReason}`;
     items.push({
       category: 'feedback',
-      label: 'Recent care feedback',
+      label: plural(completes.length, 'recent care observation'),
       detail: detail.slice(0, 120) || undefined,
     });
   }
@@ -124,4 +131,9 @@ export function buildDrPlantContextSummary(
     intro: "Dr. Plant tailors answers using your plant's recent care and conditions:",
     items,
   };
+}
+
+function reasonLabel(reason: string | null | undefined) {
+  if (!reason) return '';
+  return reason.replace(/_/g, ' ').toLowerCase();
 }

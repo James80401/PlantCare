@@ -1,8 +1,15 @@
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import TaskRow from './TaskRow';
 import type { TaskItem } from '../../utils/taskGroups';
+import { journalApi } from '../../services/api';
+
+vi.mock('../../services/api', () => ({
+  journalApi: {
+    create: vi.fn().mockResolvedValue({}),
+  },
+}));
 
 function makeTask(overrides: Partial<TaskItem> = {}): TaskItem {
   return {
@@ -17,7 +24,7 @@ function makeTask(overrides: Partial<TaskItem> = {}): TaskItem {
 
 function renderRow(props: Partial<React.ComponentProps<typeof TaskRow>> = {}) {
   const handlers = {
-    onComplete: vi.fn(),
+    onComplete: vi.fn().mockResolvedValue(true),
     onSkip: vi.fn(),
     onSnooze: vi.fn(),
   };
@@ -32,6 +39,10 @@ function renderRow(props: Partial<React.ComponentProps<typeof TaskRow>> = {}) {
 }
 
 describe('TaskRow', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('completes a task immediately from the checkmark', () => {
     const { onComplete } = renderRow();
 
@@ -40,13 +51,40 @@ describe('TaskRow', () => {
     expect(onComplete).toHaveBeenCalledWith('task-1');
   });
 
-  it('still allows optional water feedback from the secondary action', () => {
+  it('still allows optional water feedback from the secondary action', async () => {
     const { onComplete } = renderRow({ task: makeTask({ taskType: 'WATER' as TaskItem['taskType'] }) });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add note' }));
     fireEvent.click(screen.getByRole('button', { name: /Save feedback & complete/i }));
 
-    expect(onComplete).toHaveBeenCalledWith('task-1', { reason: 'SOIL_VERY_DRY', note: undefined });
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledWith('task-1', {
+        reason: 'SOIL_VERY_DRY',
+        note: undefined,
+      });
+    });
+  });
+
+  it('can save a completion observation to the journal after completion succeeds', async () => {
+    const { onComplete } = renderRow({ task: makeTask({ taskType: 'WATER' as TaskItem['taskType'] }) });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add note' }));
+    fireEvent.change(screen.getByPlaceholderText('Example: soil was dry 2 inches down'), {
+      target: { value: 'Soil was dry and leaves perked up after watering' },
+    });
+    fireEvent.click(screen.getByLabelText(/Also save this note to journal/i));
+    fireEvent.click(screen.getByRole('button', { name: /Save feedback & complete/i }));
+
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledWith('task-1', {
+        reason: 'SOIL_VERY_DRY',
+        note: 'Soil was dry and leaves perked up after watering',
+      });
+      expect(journalApi.create).toHaveBeenCalledWith('plant-1', {
+        notes:
+          'Water observation (Soil was very dry): Soil was dry and leaves perked up after watering',
+      });
+    });
   });
 
   it('skips with the default reason', () => {

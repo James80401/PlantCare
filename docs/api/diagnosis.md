@@ -82,7 +82,8 @@ Creates a **`HEALTH_CHECK`** task linked via `sourceDiagnosisId`. Optional `note
 Returns a user-facing summary of the **same** signals Dr. Plant feeds the model
 (see `DiagnosisChatService.gatherContextSignals`), as readable chips for a
 "What Dr. Plant sees" panel on the Health tab. No prompt internals or secrets are
-exposed. Shape:
+exposed. Recent completed-task feedback is labelled as care observations and can
+include the related task type when known. Shape:
 
 ```json
 {
@@ -90,7 +91,8 @@ exposed. Shape:
   "items": [
     { "category": "care", "label": "Care baseline", "detail": "Living room · medium pot · water ~every 7 days · light: Bright indirect" },
     { "category": "health", "label": "Open issue: Overwatering", "detail": "Noted Jun 2" },
-    { "category": "tasks", "label": "2 upcoming care tasks", "detail": "next: Water Jun 6" }
+    { "category": "tasks", "label": "2 upcoming care tasks", "detail": "next: Water Jun 6" },
+    { "category": "feedback", "label": "1 recent care observation", "detail": "Water: soil very dry" }
   ]
 }
 ```
