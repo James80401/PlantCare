@@ -20,12 +20,14 @@ export class CommunityController {
     @CurrentUser() user: JwtPayload,
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
+    @Query('scope') scope?: string,
   ) {
     const parsed = parseInt(limit || '20', 10);
     return this.community.listPosts(
       Number.isFinite(parsed) ? parsed : 20,
       user.sub,
       cursor?.trim() || undefined,
+      scope === 'following' ? 'following' : 'all',
     );
   }
 
@@ -84,5 +86,10 @@ export class CommunityController {
   @Post('users/:id/block')
   toggleBlockUser(@CurrentUser() user: JwtPayload, @Param('id') targetUserId: string) {
     return this.community.toggleBlockUser(user.sub, targetUserId);
+  }
+
+  @Post('users/:id/follow')
+  toggleFollow(@CurrentUser() user: JwtPayload, @Param('id') targetUserId: string) {
+    return this.community.toggleFollow(user.sub, targetUserId);
   }
 }

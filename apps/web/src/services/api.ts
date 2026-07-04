@@ -680,7 +680,7 @@ export interface CommunityPostSummary {
   body: string;
   imageUrl?: string | null;
   createdAt: string;
-  author?: { id: string; name?: string | null };
+  author?: { id: string; name?: string | null; followedByMe?: boolean };
   species?: { id: string; commonName: string } | null;
   _count?: { comments: number; likes: number };
   likedByMe?: boolean;
@@ -842,9 +842,9 @@ export type CommunityPostsPage = {
 };
 
 export const communityApi = {
-  listPosts: (params?: { limit?: number; cursor?: string }) =>
+  listPosts: (params?: { limit?: number; cursor?: string; scope?: 'all' | 'following' }) =>
     api.get<CommunityPostsPage>('/community/posts', {
-      params: { limit: params?.limit ?? 20, cursor: params?.cursor },
+      params: { limit: params?.limit ?? 20, cursor: params?.cursor, scope: params?.scope },
     }),
   createPost: (data: { body: string; speciesId?: string; imageUrl?: string }) =>
     api.post<CommunityPostSummary>('/community/posts', data),
@@ -865,6 +865,8 @@ export const communityApi = {
     ),
   toggleBlockUser: (userId: string) =>
     api.post<{ blocked: boolean }>(`/community/users/${userId}/block`),
+  toggleFollow: (userId: string) =>
+    api.post<{ following: boolean }>(`/community/users/${userId}/follow`),
 };
 
 export default api;

@@ -207,6 +207,7 @@ export default function Community() {
   const [speciesId, setSpeciesId] = useState('');
   const [speciesOptions, setSpeciesOptions] = useState<Array<{ id: string; commonName: string }>>([]);
   const [posting, setPosting] = useState(false);
+  const [scope, setScope] = useState<'all' | 'following'>('all');
 
   useEffect(() => {
     if (!imageFile) {
@@ -218,28 +219,31 @@ export default function Community() {
     return () => URL.revokeObjectURL(objectUrl);
   }, [imageFile]);
 
-  const loadPage = useCallback(async (cursor?: string) => {
-    const loadingMorePage = Boolean(cursor);
-    if (loadingMorePage) setLoadingMore(true);
-    else setLoading(true);
-    setError('');
-    try {
-      const { data } = await communityApi.listPosts({ limit: PAGE_SIZE, cursor });
-      setPosts((current) => (loadingMorePage ? [...current, ...data.posts] : data.posts));
-      setNextCursor(data.nextCursor);
-      setHasMore(data.hasMore);
-    } catch (err) {
-      setError(
-        formatApiErrorMessage(
-          err,
-          loadingMorePage ? 'Could not load more posts.' : 'Could not load community posts.',
-        ),
-      );
-    } finally {
-      if (loadingMorePage) setLoadingMore(false);
-      else setLoading(false);
-    }
-  }, []);
+  const loadPage = useCallback(
+    async (cursor?: string) => {
+      const loadingMorePage = Boolean(cursor);
+      if (loadingMorePage) setLoadingMore(true);
+      else setLoading(true);
+      setError('');
+      try {
+        const { data } = await communityApi.listPosts({ limit: PAGE_SIZE, cursor, scope });
+        setPosts((current) => (loadingMorePage ? [...current, ...data.posts] : data.posts));
+        setNextCursor(data.nextCursor);
+        setHasMore(data.hasMore);
+      } catch (err) {
+        setError(
+          formatApiErrorMessage(
+            err,
+            loadingMorePage ? 'Could not load more posts.' : 'Could not load community posts.',
+          ),
+        );
+      } finally {
+        if (loadingMorePage) setLoadingMore(false);
+        else setLoading(false);
+      }
+    },
+    [scope],
+  );
 
   const load = useCallback(() => loadPage(), [loadPage]);
 
@@ -325,6 +329,15 @@ export default function Community() {
       await load();
     } catch (err) {
       setError(formatApiErrorMessage(err, 'Could not block this user.'));
+    }
+  };
+
+  const handleFollow = async (authorId: string) => {
+    try {
+      await communityApi.toggleFollow(authorId);
+      await load();
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not update follow status.'));
     }
   };
 
@@ -418,11 +431,32 @@ export default function Community() {
 
       {error ? <FormError>{error}</FormError> : null}
 
+      <div className="flex gap-2" role="tablist" aria-label="Feed scope">
+        {(['all', 'following'] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            role="tab"
+            aria-selected={scope === option}
+            onClick={() => setScope(option)}
+            className={`inline-flex min-h-10 items-center rounded-full px-4 py-2 text-sm font-semibold transition ${
+              scope === option
+                ? 'bg-emerald-800 text-white'
+                : 'bg-white text-emerald-800 border border-emerald-100 hover:bg-emerald-50'
+            }`}
+          >
+            {option === 'all' ? 'All posts' : 'Following'}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <StatusMessage>Loading feed…</StatusMessage>
       ) : posts.length === 0 ? (
         <p className="rounded-2xl border border-emerald-100 bg-white p-6 text-center text-sm text-gray-500">
-          No posts yet — be the first to share a tip.
+          {scope === 'following'
+            ? 'No posts yet from people you follow.'
+            : 'No posts yet — be the first to share a tip.'}
         </p>
       ) : (
         <section aria-label="Community feed">
@@ -431,18 +465,34 @@ export default function Community() {
             <li key={post.id}>
               <article aria-labelledby={`post-${post.id}-author`}>
               <Card className="space-y-2">
-                <div>
-                  {post.originalPost ? (
-                    <p className="text-xs font-semibold text-gray-500">
-                      🔁 {post.author?.name || 'Gardener'} reshared
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    {post.originalPost ? (
+                      <p className="text-xs font-semibold text-gray-500">
+                        🔁 {post.author?.name || 'Gardener'} reshared
+                      </p>
+                    ) : null}
+                    <p id={`post-${post.id}-author`} className="text-sm font-semibold text-emerald-900">
+                      {post.originalPost ? post.originalPost.author?.name || 'Gardener' : post.author?.name || 'Gardener'}
                     </p>
+                    <p className="text-xs text-gray-400">
+                      {new Date((post.originalPost ?? post).createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  {post.author?.id && post.author.id !== user?.id ? (
+                    <button
+                      type="button"
+                      onClick={() => handleFollow(post.author!.id)}
+                      className={`inline-flex min-h-9 shrink-0 items-center rounded-full px-3 py-1 text-xs font-semibold transition ${
+                        post.author.followedByMe
+                          ? 'border border-emerald-200 text-emerald-800 hover:bg-emerald-50'
+                          : 'bg-emerald-800 text-white hover:bg-emerald-900'
+                      }`}
+                      aria-pressed={Boolean(post.author.followedByMe)}
+                    >
+                      {post.author.followedByMe ? 'Following' : 'Follow'}
+                    </button>
                   ) : null}
-                  <p id={`post-${post.id}-author`} className="text-sm font-semibold text-emerald-900">
-                    {post.originalPost ? post.originalPost.author?.name || 'Gardener' : post.author?.name || 'Gardener'}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date((post.originalPost ?? post).createdAt).toLocaleString()}
-                  </p>
                 </div>
                 {post.body ? (
                   <p className="text-sm leading-6 text-gray-700 whitespace-pre-wrap">{post.body}</p>

@@ -136,6 +136,8 @@ model User {
   postReports           PostReport[]
   blockedUsers          BlockedUser[]      @relation("Blocker")
   blockedByUsers        BlockedUser[]      @relation("Blocked")
+  following             Follow[]           @relation("Follower")
+  followers             Follow[]           @relation("Following")
   activityEvents        ActivityEvent[]
   buddy                 Buddy?
   plantMilestones       PlantMilestone[]
@@ -613,6 +615,19 @@ model BlockedUser {
 
   @@unique([blockerId, blockedId])
   @@index([blockerId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 model Comment {

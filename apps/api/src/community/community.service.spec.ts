@@ -76,7 +76,10 @@ describe('CommunityService author field exposure', () => {
     await service.listPosts(10, 'user-1');
 
     const call = prisma.communityPost.findMany.mock.calls[0][0];
-    expect(call.include.author.select).toEqual({ id: true, name: true });
+    expect(call.include.author.select).not.toHaveProperty('email');
+    expect(call.include.author.select).toEqual(
+      expect.objectContaining({ id: true, name: true }),
+    );
   });
 
   it('never selects author.email when creating a post', async () => {
@@ -304,5 +307,95 @@ describe('CommunityService.listPosts hides removed originals', () => {
     const result = await service.listPosts(10, 'viewer-1');
 
     expect(result.posts[0].originalPost).toBeNull();
+  });
+});
+
+describe('CommunityService.toggleFollow', () => {
+  it('follows a user who is not yet followed', async () => {
+    const prisma = {
+      follow: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: 'follow-1' }),
+        delete: jest.fn(),
+      },
+    };
+    const service = new CommunityService(prisma as never);
+
+    const result = await service.toggleFollow('user-1', 'user-2');
+
+    expect(result).toEqual({ following: true });
+    expect(prisma.follow.create).toHaveBeenCalledWith({
+      data: { followerId: 'user-1', followingId: 'user-2' },
+    });
+  });
+
+  it('unfollows a user who is already followed', async () => {
+    const prisma = {
+      follow: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'follow-1' }),
+        create: jest.fn(),
+        delete: jest.fn().mockResolvedValue({}),
+      },
+    };
+    const service = new CommunityService(prisma as never);
+
+    const result = await service.toggleFollow('user-1', 'user-2');
+
+    expect(result).toEqual({ following: false });
+    expect(prisma.follow.delete).toHaveBeenCalledWith({ where: { id: 'follow-1' } });
+  });
+
+  it('refuses to let a user follow themselves', async () => {
+    const prisma = { follow: { findUnique: jest.fn(), create: jest.fn(), delete: jest.fn() } };
+    const service = new CommunityService(prisma as never);
+
+    await expect(service.toggleFollow('user-1', 'user-1')).rejects.toThrow(
+      'You cannot follow yourself',
+    );
+  });
+});
+
+describe('CommunityService.listPosts following scope', () => {
+  it('filters the feed to only followed authors when scope is "following"', async () => {
+    const prisma = {
+      communityPost: { findMany: jest.fn().mockResolvedValue([]) },
+      blockedUser: { findMany: jest.fn().mockResolvedValue([]) },
+      follow: { findMany: jest.fn().mockResolvedValue([{ followingId: 'followed-1' }]) },
+    };
+    const service = new CommunityService(prisma as never);
+
+    await service.listPosts(10, 'viewer-1', undefined, 'following');
+
+    const call = prisma.communityPost.findMany.mock.calls[0][0];
+    expect(call.where.authorId).toEqual({ in: ['followed-1'] });
+  });
+
+  it('combines the following filter with the blocked-author exclusion', async () => {
+    const prisma = {
+      communityPost: { findMany: jest.fn().mockResolvedValue([]) },
+      blockedUser: { findMany: jest.fn().mockResolvedValue([{ blockedId: 'blocked-1' }]) },
+      follow: { findMany: jest.fn().mockResolvedValue([{ followingId: 'followed-1' }]) },
+    };
+    const service = new CommunityService(prisma as never);
+
+    await service.listPosts(10, 'viewer-1', undefined, 'following');
+
+    const call = prisma.communityPost.findMany.mock.calls[0][0];
+    expect(call.where.authorId).toEqual({ in: ['followed-1'], notIn: ['blocked-1'] });
+  });
+
+  it('does not filter by following when scope is "all" (default)', async () => {
+    const prisma = {
+      communityPost: { findMany: jest.fn().mockResolvedValue([]) },
+      blockedUser: { findMany: jest.fn().mockResolvedValue([]) },
+      follow: { findMany: jest.fn() },
+    };
+    const service = new CommunityService(prisma as never);
+
+    await service.listPosts(10, 'viewer-1');
+
+    expect(prisma.follow.findMany).not.toHaveBeenCalled();
+    const call = prisma.communityPost.findMany.mock.calls[0][0];
+    expect(call.where.authorId).toBeUndefined();
   });
 });

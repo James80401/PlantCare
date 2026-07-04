@@ -24,46 +24,85 @@ const originalPostSelect = {
   },
 };
 
-type PostWithOriginal = { originalPost?: { hiddenAt: Date | null } | null };
+type RawPost = Record<string, unknown> & {
+  originalPost?: (Record<string, unknown> & { hiddenAt: Date | null }) | null;
+  author?: (Record<string, unknown> & { followers?: Array<{ id: string }> }) | null;
+};
 
-/** A reshare embeds its original post's content — if that original gets
- *  auto-hidden after this reshare was created, strip the embed so hidden
- *  content can't keep circulating through reshares. */
-function hideRemovedOriginals<T extends PostWithOriginal>(
-  posts: T[],
-): Array<Omit<T, 'originalPost'> & { originalPost: null | Omit<NonNullable<T['originalPost']>, 'hiddenAt'> }> {
-  return posts.map(({ originalPost, ...post }) => {
-    if (!originalPost || originalPost.hiddenAt) {
-      return { ...post, originalPost: null };
+/** Applies both post-processing steps in one pass, since chaining separate
+ *  generic mappers here fights TypeScript's structural inference more than
+ *  it's worth for glue code with no other callers:
+ *  - A reshare embeds its original post's content — if that original gets
+ *    auto-hidden after this reshare was created, strip the embed so hidden
+ *    content can't keep circulating through reshares.
+ *  - Mirrors likes → likedByMe: strips the raw `followers` probe relation
+ *    and exposes a plain `followedByMe` boolean on the post's author. */
+function finalizePosts(posts: RawPost[]): Record<string, unknown>[] {
+  return posts.map((post) => {
+    const { originalPost, author, ...rest } = post;
+    const visibleOriginal =
+      !originalPost || originalPost.hiddenAt
+        ? null
+        : (() => {
+            const { hiddenAt: _hiddenAt, ...visible } = originalPost;
+            return visible;
+          })();
+
+    if (!author) {
+      return { ...rest, originalPost: visibleOriginal, author: null };
     }
-    const { hiddenAt: _hiddenAt, ...visible } = originalPost;
-    return { ...post, originalPost: visible };
-  }) as never;
+    const { followers, ...authorRest } = author;
+    return {
+      ...rest,
+      originalPost: visibleOriginal,
+      author: { ...authorRest, followedByMe: (followers?.length ?? 0) > 0 },
+    };
+  });
 }
 
+// A viewer id of '' can never match a real cuid, so this keeps a single
+// consistent include shape (avoiding a TS union on `author`) whether or
+// not a viewer is present, while still returning an empty match set.
 const postInclude = (viewerId?: string) => ({
-  author: { select: { id: true, name: true } },
+  author: {
+    select: {
+      id: true,
+      name: true,
+      followers: {
+        where: { followerId: viewerId ?? '' },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  },
   species: { select: { id: true, commonName: true } },
   originalPost: originalPostSelect,
   _count: { select: { comments: true, likes: true } },
-  ...(viewerId
-    ? {
-        likes: {
-          where: { userId: viewerId },
-          select: { id: true },
-          take: 1,
-        },
-      }
-    : {}),
+  likes: {
+    where: { userId: viewerId ?? '' },
+    select: { id: true },
+    take: 1,
+  },
 });
 
 @Injectable()
 export class CommunityService {
   constructor(private prisma: PrismaService) {}
 
-  async listPosts(limit = 20, viewerId?: string, cursor?: string) {
+  async listPosts(
+    limit = 20,
+    viewerId?: string,
+    cursor?: string,
+    scope: 'all' | 'following' = 'all',
+  ) {
     const take = Math.min(50, Math.max(1, limit));
     const blockedAuthorIds = viewerId ? await this.getBlockedAuthorIds(viewerId) : [];
+    const followingIds =
+      scope === 'following' && viewerId ? await this.getFollowingIds(viewerId) : null;
+
+    const authorFilter: { in?: string[]; notIn?: string[] } = {};
+    if (followingIds) authorFilter.in = followingIds;
+    if (blockedAuthorIds.length) authorFilter.notIn = blockedAuthorIds;
 
     const rows = await this.prisma.communityPost.findMany({
       take: take + 1,
@@ -75,7 +114,7 @@ export class CommunityService {
         : {}),
       where: {
         hiddenAt: null,
-        ...(blockedAuthorIds.length ? { authorId: { notIn: blockedAuthorIds } } : {}),
+        ...(Object.keys(authorFilter).length ? { authorId: authorFilter } : {}),
       },
       orderBy: { createdAt: 'desc' },
       include: postInclude(viewerId),
@@ -83,7 +122,7 @@ export class CommunityService {
 
     const hasMore = rows.length > take;
     const page = hasMore ? rows.slice(0, take) : rows;
-    const posts = mapCommunityPostsForViewer(hideRemovedOriginals(page), viewerId);
+    const posts = mapCommunityPostsForViewer(finalizePosts(page), viewerId);
 
     return {
       posts,
@@ -101,6 +140,34 @@ export class CommunityService {
       select: { blockedId: true },
     });
     return rows.map((r) => r.blockedId);
+  }
+
+  private async getFollowingIds(viewerId: string): Promise<string[]> {
+    const rows = await this.prisma.follow.findMany({
+      where: { followerId: viewerId },
+      select: { followingId: true },
+    });
+    return rows.map((r) => r.followingId);
+  }
+
+  async toggleFollow(userId: string, targetUserId: string) {
+    if (userId === targetUserId) {
+      throw new ForbiddenException('You cannot follow yourself');
+    }
+
+    const existing = await this.prisma.follow.findUnique({
+      where: { followerId_followingId: { followerId: userId, followingId: targetUserId } },
+    });
+
+    if (existing) {
+      await this.prisma.follow.delete({ where: { id: existing.id } });
+      return { following: false };
+    }
+
+    await this.prisma.follow.create({
+      data: { followerId: userId, followingId: targetUserId },
+    });
+    return { following: true };
   }
 
   createPost(userId: string, dto: CreatePostDto) {
@@ -134,7 +201,7 @@ export class CommunityService {
       include: postInclude(userId),
     });
 
-    return mapCommunityPostsForViewer(hideRemovedOriginals([created]), userId)[0];
+    return mapCommunityPostsForViewer(finalizePosts([created]), userId)[0];
   }
 
   async deletePost(userId: string, postId: string) {
