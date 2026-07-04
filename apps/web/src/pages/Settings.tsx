@@ -40,6 +40,12 @@ const LIGHT_LEVELS = [
 const E164_PATTERN = /^\+[1-9]\d{7,14}$/;
 const BUDDY_ENABLED = import.meta.env.VITE_ENABLE_PLANT_BUDDY === 'true';
 
+function formatHourLabel(hour: number): string {
+  const period = hour < 12 ? 'AM' : 'PM';
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${displayHour}:00 ${period}`;
+}
+
 export default function Settings() {
   const { logout, refreshUser, isPremium } = useAuth();
   const {
@@ -62,6 +68,7 @@ export default function Settings() {
   const [locationSearching, setLocationSearching] = useState(false);
   const [quietStart, setQuietStart] = useState('');
   const [quietEnd, setQuietEnd] = useState('');
+  const [reminderHour, setReminderHour] = useState('9');
   const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('C');
   const [experienceLevel, setExperienceLevel] = useState('beginner');
   const [defaultLightLevel, setDefaultLightLevel] = useState('medium');
@@ -86,6 +93,7 @@ export default function Settings() {
       if (data.longitude) setLongitude(String(data.longitude));
       if (data.quietHoursStart != null) setQuietStart(String(data.quietHoursStart));
       if (data.quietHoursEnd != null) setQuietEnd(String(data.quietHoursEnd));
+      if (data.reminderHour != null) setReminderHour(String(data.reminderHour));
       if (data.temperatureUnit === 'F' || data.temperatureUnit === 'C') {
         setTemperatureUnit(data.temperatureUnit);
       }
@@ -178,6 +186,9 @@ export default function Settings() {
         locationQuery: !hasCoords && locationQuery.trim() ? locationQuery.trim() : undefined,
         locationLabel: locationLabel || undefined,
         temperatureUnit,
+        quietHoursStart: quietStart.trim() ? Number(quietStart) : null,
+        quietHoursEnd: quietEnd.trim() ? Number(quietEnd) : null,
+        reminderHour: reminderHour.trim() ? Number(reminderHour) : null,
       });
       if (hasCoords && locationLabel) {
         setLocationQuery('');
@@ -389,6 +400,22 @@ export default function Settings() {
             className="w-full border rounded-lg px-3 py-2"
           />
         ) : null}
+
+        <h2 className="font-semibold pt-2">Daily reminder time</h2>
+        <p className="text-sm text-gray-600">
+          Care reminders and recommendation nudges are sent once a day at this hour.
+        </p>
+        <select
+          value={reminderHour}
+          onChange={(e) => setReminderHour(e.target.value)}
+          className="border rounded-lg px-3 py-2 w-40"
+        >
+          {Array.from({ length: 24 }, (_, hour) => (
+            <option key={hour} value={hour}>
+              {formatHourLabel(hour)}
+            </option>
+          ))}
+        </select>
 
         <h2 className="font-semibold pt-2">Quiet hours (0–23)</h2>
         <div className="flex gap-2">

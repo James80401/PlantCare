@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { NotificationsService } from './notifications.service';
 
 @Injectable()
@@ -8,9 +8,11 @@ export class NotificationsCron {
 
   constructor(private notifications: NotificationsService) {}
 
-  @Cron('0 9 * * *')
+  /** Runs every hour so each user's reminders fire at their own chosen
+   *  reminderHour (default 9am) instead of a single fixed time for everyone. */
+  @Cron(CronExpression.EVERY_HOUR)
   async handleDailyReminders() {
-    this.logger.log('Running daily task reminders');
+    this.logger.log('Running hourly task reminder sweep');
     await this.notifications.sendDueTaskReminders();
     await this.notifications.sendOverdueTaskReminders();
     await this.notifications.sendRecommendationReminders();

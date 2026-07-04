@@ -108,6 +108,7 @@ model User {
   phone                 String?
   quietHoursStart       Int?
   quietHoursEnd         Int?
+  reminderHour          Int?
   identifyCountThisMonth Int           @default(0)
   identifyCountResetAt  DateTime       @default(now())
   emailVerified         Boolean        @default(true)

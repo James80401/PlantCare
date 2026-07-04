@@ -34,6 +34,7 @@ export class UsersService {
         phone: true,
         quietHoursStart: true,
         quietHoursEnd: true,
+        reminderHour: true,
         experienceLevel: true,
         defaultLightLevel: true,
         createdAt: true,
@@ -78,6 +79,7 @@ export class UsersService {
       phone?: string;
       quietHoursStart?: number | null;
       quietHoursEnd?: number | null;
+      reminderHour?: number | null;
       timezone?: string;
       latitude?: number;
       longitude?: number;
@@ -109,6 +111,7 @@ export class UsersService {
         phone: true,
         quietHoursStart: true,
         quietHoursEnd: true,
+        reminderHour: true,
         timezone: true,
         temperatureUnit: true,
         latitude: true,

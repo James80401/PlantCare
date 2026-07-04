@@ -41,6 +41,12 @@ export class UpdateNotificationSettingsDto {
   quietHoursEnd?: number | null;
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(23)
+  reminderHour?: number | null;
+
+  @IsOptional()
   @IsString()
   @MaxLength(100)
   timezone?: string;

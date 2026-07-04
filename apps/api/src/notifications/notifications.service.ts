@@ -32,6 +32,14 @@ export class NotificationsService {
     return hour >= user.quietHoursStart || hour < user.quietHoursEnd;
   }
 
+  /** Daily reminder digests (tasks, recommendations) fire once, at the user's
+   *  chosen hour (default 9am) — the hourly cron calls this to decide whether
+   *  this run is that user's moment, since notifiedAt gating means a skipped
+   *  hour is simply picked up on a later run. */
+  isReminderHourDue(user: { reminderHour: number | null }): boolean {
+    return (user.reminderHour ?? 9) === new Date().getHours();
+  }
+
   async sendDueTaskReminders() {
     const count = await this.sendTaskRemindersForWindow({ overdue: false });
     this.logger.log(`Processed due-today reminders for ${count} users`);
@@ -68,7 +76,7 @@ export class NotificationsService {
 
     for (const [userId, userRecs] of byUser) {
       const user = userRecs[0].user;
-      if (this.isQuietHours(user)) continue;
+      if (this.isQuietHours(user) || !this.isReminderHourDue(user)) continue;
 
       if (user.notifyPush) {
         const { title, body } = this.buildRecommendationPush(userRecs);
@@ -123,7 +131,7 @@ export class NotificationsService {
 
     for (const [userId, userTasks] of byUser) {
       const user = userTasks[0].plant.user;
-      if (this.isQuietHours(user)) continue;
+      if (this.isQuietHours(user) || !this.isReminderHourDue(user)) continue;
 
       const rows: TaskReminderRow[] = userTasks.map((t) => ({
         taskType: t.taskType,

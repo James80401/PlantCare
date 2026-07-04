@@ -262,6 +262,7 @@ describe('NotificationsService', () => {
       notifyPush: true,
       quietHoursStart: null,
       quietHoursEnd: null,
+      reminderHour: new Date().getHours(),
     };
 
     it('queries only ACTIVE, unnotified, HIGH/MEDIUM-priority recommendations that are not snoozed', async () => {
@@ -315,6 +316,25 @@ describe('NotificationsService', () => {
           title: 'Check in on Mona',
           priority: RecommendationPriority.MEDIUM,
           user: { ...baseUser, quietHoursStart: 0, quietHoursEnd: 23 },
+        },
+      ]);
+
+      const service = createService();
+      await service.sendRecommendationReminders();
+
+      expect(logCreate).not.toHaveBeenCalled();
+      expect(recommendationUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it("does not push outside the user's reminder hour, and leaves notifiedAt unset", async () => {
+      const offHour = (new Date().getHours() + 1) % 24;
+      recommendationFindMany.mockResolvedValue([
+        {
+          id: 'rec-1',
+          userId: 'user-1',
+          title: 'Check in on Mona',
+          priority: RecommendationPriority.MEDIUM,
+          user: { ...baseUser, reminderHour: offHour },
         },
       ]);
 
