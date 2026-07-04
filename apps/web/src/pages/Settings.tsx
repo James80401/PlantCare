@@ -7,6 +7,7 @@ import { useBuddyCompanion } from '../context/BuddyCompanionContext';
 import { registerPushNative } from '../lib/registerPushNative';
 import { unregisterPushNative } from '../lib/unregisterPushNative';
 import { HelpButton } from '../components/ui/HelpButton';
+import { LightMeterButton } from '../components/ui/LightMeterButton';
 import type { TemperatureUnit } from '../utils/temperature';
 import {
   BUDDY_COMPANION_MODE_LABELS,
@@ -341,6 +342,7 @@ export default function Settings() {
             ))}
           </select>
         </label>
+        <LightMeterButton onApply={(level) => setDefaultLightLevel(level)} />
         <button
           type="submit"
           className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
