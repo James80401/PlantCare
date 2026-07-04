@@ -55,8 +55,11 @@ export default function Household() {
 
   useEffect(() => {
     // Poll in the background so a caregiver's changes (shared plants,
-    // accepted invites) show up here without a manual reload.
-    const id = window.setInterval(() => load({ silent: true }), 20_000);
+    // accepted invites) show up here without a manual reload. 30s errs
+    // toward Buddy's 60s always-on garden-metrics interval rather than a
+    // much tighter one, trading a little immediacy for less background
+    // request volume.
+    const id = window.setInterval(() => load({ silent: true }), 30_000);
     return () => window.clearInterval(id);
   }, [load]);
 

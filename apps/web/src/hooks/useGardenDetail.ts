@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { gardensApi, type GardenDetail } from '../services/api';
 import { formatApiErrorMessage } from '../utils/apiError';
 
-const SYNC_INTERVAL_MS = 20_000;
+// Always-on background poll (not gated by an "actively watching" state like
+// Buddy's 30s journey refresh), so this errs toward Buddy's 60s garden-metrics
+// interval rather than a much tighter one, trading a little immediacy for
+// meaningfully less background request volume.
+const SYNC_INTERVAL_MS = 30_000;
 
 /** Shared loader for the Garden Dashboard and its subsection pages. Polls in
  *  the background so a caregiver's changes (completed tasks, new plants)

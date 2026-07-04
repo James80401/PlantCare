@@ -40,7 +40,7 @@ describe('useGardenDetail', () => {
     detail.mockResolvedValue({ data: { id: 'g1', name: 'Kitchen (updated)' } } as never);
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(20_000);
+      await vi.advanceTimersByTimeAsync(30_000);
     });
 
     expect(detail).toHaveBeenCalledTimes(2);
@@ -57,7 +57,7 @@ describe('useGardenDetail', () => {
     detail.mockRejectedValue(new Error('flaky'));
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(20_000);
+      await vi.advanceTimersByTimeAsync(30_000);
     });
 
     expect(result.current.error).toBe('');
