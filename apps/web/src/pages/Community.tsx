@@ -129,6 +129,67 @@ function PostComments({
   );
 }
 
+function ReportPostForm({ postId, onReported }: { postId: string; onReported: (hidden: boolean) => void }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!reason.trim()) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      const { data } = await communityApi.reportPost(postId, reason.trim());
+      setDone(true);
+      onReported(data.hidden);
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not submit report.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (done) {
+    return <p className="text-xs text-gray-500">Report submitted. Thanks for flagging this.</p>;
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-xs font-semibold text-gray-500 hover:underline"
+      >
+        Report
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2 rounded-xl bg-gray-50 p-2 sm:flex-row">
+      <input
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="Why are you reporting this post?"
+        className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm"
+        autoFocus
+      />
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={submitting || !reason.trim()}>
+          {submitting ? '…' : 'Submit'}
+        </Button>
+        <Button type="button" size="sm" variant="secondary" onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+      </div>
+      {error ? <FormError className="text-xs">{error}</FormError> : null}
+    </form>
+  );
+}
+
 const PAGE_SIZE = 15;
 
 export default function Community() {
@@ -248,6 +309,25 @@ export default function Community() {
     }
   };
 
+  const handleReshare = async (postId: string) => {
+    try {
+      await communityApi.reshare(postId);
+      await load();
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not reshare this post.'));
+    }
+  };
+
+  const handleBlock = async (authorId: string, authorName: string) => {
+    if (!confirm(`Block ${authorName}? You will no longer see their posts.`)) return;
+    try {
+      await communityApi.toggleBlockUser(authorId);
+      await load();
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not block this user.'));
+    }
+  };
+
   return (
     <div>
       <PageHeader
@@ -352,27 +432,41 @@ export default function Community() {
               <article aria-labelledby={`post-${post.id}-author`}>
               <Card className="space-y-2">
                 <div>
+                  {post.originalPost ? (
+                    <p className="text-xs font-semibold text-gray-500">
+                      🔁 {post.author?.name || 'Gardener'} reshared
+                    </p>
+                  ) : null}
                   <p id={`post-${post.id}-author`} className="text-sm font-semibold text-emerald-900">
-                    {post.author?.name || 'Gardener'}
+                    {post.originalPost ? post.originalPost.author?.name || 'Gardener' : post.author?.name || 'Gardener'}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {new Date(post.createdAt).toLocaleString()}
+                    {new Date((post.originalPost ?? post).createdAt).toLocaleString()}
                   </p>
                 </div>
-                {post.species ? (
-                  <span className="inline-block rounded-full bg-lime-100 px-2.5 py-0.5 text-xs font-semibold text-lime-900">
-                    {post.species.commonName}
-                  </span>
+                {post.body ? (
+                  <p className="text-sm leading-6 text-gray-700 whitespace-pre-wrap">{post.body}</p>
                 ) : null}
-                {post.imageUrl ? (
-                  <img
-                    src={resolveApiAssetUrl(post.imageUrl) ?? undefined}
-                    alt={`Photo shared by ${post.author?.name || 'gardener'}`}
-                    className="max-h-96 w-full rounded-2xl border border-emerald-100 object-cover"
-                    loading="lazy"
-                  />
-                ) : null}
-                <p className="text-sm leading-6 text-gray-700 whitespace-pre-wrap">{post.body}</p>
+                <div className={post.originalPost ? 'space-y-2 rounded-2xl border border-gray-100 bg-gray-50/60 p-3' : 'space-y-2'}>
+                  {(post.originalPost?.species ?? post.species) ? (
+                    <span className="inline-block rounded-full bg-lime-100 px-2.5 py-0.5 text-xs font-semibold text-lime-900">
+                      {(post.originalPost?.species ?? post.species)?.commonName}
+                    </span>
+                  ) : null}
+                  {(post.originalPost?.imageUrl ?? post.imageUrl) ? (
+                    <img
+                      src={resolveApiAssetUrl(post.originalPost?.imageUrl ?? post.imageUrl) ?? undefined}
+                      alt={`Photo shared by ${(post.originalPost?.author ?? post.author)?.name || 'gardener'}`}
+                      className="max-h-96 w-full rounded-2xl border border-emerald-100 object-cover"
+                      loading="lazy"
+                    />
+                  ) : null}
+                  {post.originalPost ? (
+                    <p className="text-sm leading-6 text-gray-700 whitespace-pre-wrap">
+                      {post.originalPost.body}
+                    </p>
+                  ) : null}
+                </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <button
                     type="button"
@@ -387,6 +481,30 @@ export default function Community() {
                   <span className="text-xs text-gray-500">
                     {post._count?.comments ?? 0} comments
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => handleReshare(post.id)}
+                    className="inline-flex min-h-11 items-center text-xs font-semibold text-emerald-800 hover:underline"
+                  >
+                    🔁 Reshare
+                  </button>
+                  {post.author?.id !== user?.id ? (
+                    <button
+                      type="button"
+                      onClick={() => handleBlock(post.author!.id, post.author?.name || 'this gardener')}
+                      className="text-xs font-semibold text-gray-500 hover:underline"
+                    >
+                      Block
+                    </button>
+                  ) : null}
+                  {post.author?.id !== user?.id ? (
+                    <ReportPostForm
+                      postId={post.id}
+                      onReported={(hidden) => {
+                        if (hidden) load();
+                      }}
+                    />
+                  ) : null}
                 </div>
                 <PostComments
                   postId={post.id}

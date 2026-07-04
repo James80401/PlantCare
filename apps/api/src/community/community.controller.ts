@@ -5,6 +5,8 @@ import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decor
 import { CommunityService } from './community.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePostDto } from './dto/create-post.dto';
+import { ReportPostDto } from './dto/report-post.dto';
+import { ResharePostDto } from './dto/reshare-post.dto';
 
 @ApiTags('community')
 @ApiBearerAuth()
@@ -59,5 +61,28 @@ export class CommunityController {
   @Post('posts/:id/like')
   toggleLike(@CurrentUser() user: JwtPayload, @Param('id') postId: string) {
     return this.community.toggleLike(user.sub, postId);
+  }
+
+  @Post('posts/:id/reshare')
+  reshare(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') postId: string,
+    @Body() dto: ResharePostDto,
+  ) {
+    return this.community.reshare(user.sub, postId, dto);
+  }
+
+  @Post('posts/:id/report')
+  reportPost(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') postId: string,
+    @Body() dto: ReportPostDto,
+  ) {
+    return this.community.reportPost(user.sub, postId, dto);
+  }
+
+  @Post('users/:id/block')
+  toggleBlockUser(@CurrentUser() user: JwtPayload, @Param('id') targetUserId: string) {
+    return this.community.toggleBlockUser(user.sub, targetUserId);
   }
 }

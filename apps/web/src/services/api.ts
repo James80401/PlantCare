@@ -684,6 +684,14 @@ export interface CommunityPostSummary {
   species?: { id: string; commonName: string } | null;
   _count?: { comments: number; likes: number };
   likedByMe?: boolean;
+  originalPost?: {
+    id: string;
+    body: string;
+    imageUrl?: string | null;
+    createdAt: string;
+    author?: { id: string; name?: string | null };
+    species?: { id: string; commonName: string } | null;
+  } | null;
 }
 
 export interface CommunityCommentSummary {
@@ -848,6 +856,15 @@ export const communityApi = {
   deleteComment: (commentId: string) => api.delete(`/community/comments/${commentId}`),
   toggleLike: (postId: string) =>
     api.post<{ liked: boolean; likeCount: number }>(`/community/posts/${postId}/like`),
+  reshare: (postId: string, comment?: string) =>
+    api.post<CommunityPostSummary>(`/community/posts/${postId}/reshare`, { comment }),
+  reportPost: (postId: string, reason: string) =>
+    api.post<{ reported: boolean; alreadyReported: boolean; hidden: boolean }>(
+      `/community/posts/${postId}/report`,
+      { reason },
+    ),
+  toggleBlockUser: (userId: string) =>
+    api.post<{ blocked: boolean }>(`/community/users/${userId}/block`),
 };
 
 export default api;
