@@ -45,6 +45,7 @@ describe('timeline filtering', () => {
       journal: 2,
       care: 1,
       diagnosis: 1,
+      progress: 0,
     });
   });
 
