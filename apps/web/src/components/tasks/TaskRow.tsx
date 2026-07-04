@@ -5,14 +5,15 @@ import { journalApi } from '../../services/api';
 import TaskInstructionsLink from '../TaskInstructionsLink';
 import TaskScheduleExplanationLink from '../TaskScheduleExplanationLink';
 import {
-  TASK_SKIP_REASONS,
+  skipReasonsForTask,
   type TaskSkipFeedback,
   type TaskSkipReason,
-  TASK_COMPLETE_REASONS,
+  completeReasonsForTask,
+  completeReasonLabel,
   type TaskCompleteFeedback,
   type TaskCompleteReason,
 } from '../../utils/taskFeedback';
-import { taskTypeLabel } from '../../utils/tasks';
+import { taskJournalPrompt, taskTypeLabel } from '../../utils/tasks';
 import { SNOOZE_OPTIONS } from '../../utils/taskSnooze';
 import { TASK_TYPE_ICONS, type TaskItem } from '../../utils/taskGroups';
 
@@ -65,6 +66,16 @@ export default function TaskRow({
     task.id,
   )}#progress-check-in`;
   const trimmedCompleteNote = completeNote.trim();
+  const skipReasons = skipReasonsForTask(task.taskType);
+  const effectiveSkipReason = skipReasons.some((reason) => reason.value === selectedReason)
+    ? selectedReason
+    : skipReasons[0].value;
+  const completeReasons = completeReasonsForTask(task.taskType);
+  const effectiveCompleteReason = completeReasons.some(
+    (reason) => reason.value === selectedCompleteReason,
+  )
+    ? selectedCompleteReason
+    : completeReasons[0].value;
 
   const rowClass = [
     'task-row group relative flex gap-3 rounded-2xl border px-3 py-3.5 transition-all duration-300 sm:px-4',
@@ -271,11 +282,11 @@ export default function TaskRow({
                   Why skip this task?
                 </p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {TASK_SKIP_REASONS.map((reason) => (
+                  {skipReasons.map((reason) => (
                     <label
                       key={reason.value}
                       className={`cursor-pointer rounded-xl border px-3 py-2 text-xs transition ${
-                        selectedReason === reason.value
+                        effectiveSkipReason === reason.value
                           ? 'border-amber-300 bg-white text-amber-950 shadow-sm'
                           : 'border-amber-100 bg-white/60 text-gray-700 hover:bg-white'
                       }`}
@@ -284,7 +295,7 @@ export default function TaskRow({
                         type="radio"
                         name={`skip-reason-${task.id}`}
                         value={reason.value}
-                        checked={selectedReason === reason.value}
+                        checked={effectiveSkipReason === reason.value}
                         onChange={() => setSelectedReason(reason.value)}
                         className="sr-only"
                       />
@@ -308,7 +319,7 @@ export default function TaskRow({
                     type="button"
                     onClick={() =>
                       onSkip(task.id, {
-                        reason: selectedReason,
+                        reason: effectiveSkipReason,
                         note: note.trim() || undefined,
                       })
                     }
@@ -342,15 +353,14 @@ export default function TaskRow({
                 className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
-                  {task.taskType === 'WATER' ? 'Quick feedback (water)' : 'Complete task'}
+                  Care result
                 </p>
-                {task.taskType === 'WATER' ? (
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {TASK_COMPLETE_REASONS.map((r) => (
+                  {completeReasons.map((r) => (
                     <label
                       key={r.value}
                       className={`cursor-pointer rounded-xl border px-3 py-2 text-xs transition ${
-                        selectedCompleteReason === r.value
+                        effectiveCompleteReason === r.value
                           ? 'border-sky-300 bg-white text-sky-950 shadow-sm'
                           : 'border-sky-100 bg-white/60 text-gray-700 hover:bg-white'
                       }`}
@@ -359,7 +369,7 @@ export default function TaskRow({
                         type="radio"
                         name={`complete-reason-${task.id}`}
                         value={r.value}
-                        checked={selectedCompleteReason === r.value}
+                        checked={effectiveCompleteReason === r.value}
                         onChange={() => setSelectedCompleteReason(r.value)}
                         className="sr-only"
                       />
@@ -368,18 +378,13 @@ export default function TaskRow({
                     </label>
                   ))}
                 </div>
-                ) : null}
-                <label className={`block ${task.taskType === 'WATER' ? 'mt-3' : 'mt-2'}`}>
+                <label className="mt-3 block">
                   <span className="text-xs font-medium text-gray-600">Optional note</span>
                   <input
                     value={completeNote}
                     onChange={(event) => setCompleteNote(event.target.value)}
                     maxLength={240}
-                    placeholder={
-                      task.taskType === 'WATER'
-                        ? 'Example: soil was dry 2 inches down'
-                        : 'Example: removed dead leaves, fertilized lightly'
-                    }
+                    placeholder={`Example: ${taskJournalPrompt(task.taskType)}`}
                     className="mt-1 w-full rounded-xl border border-sky-100 bg-white px-3 py-2 text-sm focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-100"
                   />
                 </label>
@@ -389,7 +394,7 @@ export default function TaskRow({
                     onClick={() => void completeWithObservation()}
                     className="rounded-full bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800"
                   >
-                    {task.taskType === 'WATER' ? 'Save feedback & complete' : 'Complete with note'}
+                    Save result & complete
                   </button>
                   <button
                     type="button"
@@ -402,7 +407,7 @@ export default function TaskRow({
                     }}
                     className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
                   >
-                    {task.taskType === 'WATER' ? 'Complete without feedback' : 'Complete'}
+                    Complete without result
                   </button>
                 </div>
                 <label className="mt-3 flex items-start gap-2 rounded-xl bg-white/70 px-3 py-2 text-xs leading-5 text-sky-950 ring-1 ring-sky-100">
@@ -435,15 +440,10 @@ export default function TaskRow({
   );
 
   async function completeWithObservation() {
-    const feedback: TaskCompleteFeedback | undefined =
-      task.taskType === 'WATER'
-        ? {
-            reason: selectedCompleteReason,
-            note: trimmedCompleteNote || undefined,
-          }
-        : trimmedCompleteNote
-          ? { note: trimmedCompleteNote }
-          : undefined;
+    const feedback: TaskCompleteFeedback = {
+      reason: effectiveCompleteReason,
+      note: trimmedCompleteNote || undefined,
+    };
     const completed = await Promise.resolve(onComplete(task.id, feedback));
     if (completed === false) {
       setJournalStatus('Task could not be completed. Try again before saving to journal.');
@@ -453,7 +453,7 @@ export default function TaskRow({
     if (saveCompleteNoteToJournal && trimmedCompleteNote) {
       try {
         await journalApi.create(task.plant.id, {
-          notes: careObservationJournalNote(task, trimmedCompleteNote, selectedCompleteReason),
+          notes: careObservationJournalNote(task, trimmedCompleteNote, effectiveCompleteReason),
         });
         setJournalStatus('Saved to journal.');
       } catch {
@@ -475,7 +475,7 @@ function careObservationJournalNote(
 ) {
   const prefix = `${taskTypeLabel(task.taskType)} observation`;
   if (task.taskType !== 'WATER') return `${prefix}: ${note}`;
-  const reason = TASK_COMPLETE_REASONS.find((entry) => entry.value === waterReason)?.label;
+  const reason = completeReasonLabel(waterReason);
   return `${prefix}${reason ? ` (${reason})` : ''}: ${note}`;
 }
 

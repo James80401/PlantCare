@@ -41,6 +41,18 @@ describe('buildCareReminderPush', () => {
     expect(push.body).toContain('Fertilize');
   });
 
+  it('uses canonical task labels for multi-word task types', () => {
+    const push = buildCareReminderPush([
+      {
+        taskType: 'PH_TEST',
+        plantId: 'p1',
+        dueDate: new Date(),
+        plant,
+      },
+    ]);
+    expect(push.title).toContain('Test soil pH');
+  });
+
   it('prefixes overdue reminders', () => {
     const push = buildCareReminderPush(
       [{ taskType: 'WATER', plantId: 'p1', dueDate: new Date('2026-05-20'), plant }],

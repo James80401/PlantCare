@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { taskTypeLabel as sharedTaskTypeLabel } from '@plant-care/shared';
 
 export type TaskReminderRow = {
   taskType: string;
@@ -11,11 +12,7 @@ export type TaskReminderRow = {
 };
 
 export function taskTypeLabel(taskType: string): string {
-  return taskType
-    .toLowerCase()
-    .split('_')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
+  return sharedTaskTypeLabel(taskType);
 }
 
 function plantName(row: TaskReminderRow): string {

@@ -18,6 +18,14 @@
 
 Uses `growing-environment.ts` — outdoor and succulent/cactus skip mist.
 
+## Task type boundaries
+
+The active care-task system has 12 task types. Do not add new enum values such
+as harvest, move, or flush unless the product decision also defines scheduling
+rules, care-guide coverage, completion/skip feedback, notification labels, and
+Dr. Plant context. For now, one-off non-critical care should usually be a
+recommendation or journal observation rather than a new task type.
+
 ## On task complete
 
 Creates next task at `completedAt + interval`. Mist may not reschedule if rules disallow.

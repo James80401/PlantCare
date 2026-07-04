@@ -55,7 +55,7 @@ describe('TaskRow', () => {
     const { onComplete } = renderRow({ task: makeTask({ taskType: 'WATER' as TaskItem['taskType'] }) });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add note' }));
-    fireEvent.click(screen.getByRole('button', { name: /Save feedback & complete/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Save result & complete/i }));
 
     await waitFor(() => {
       expect(onComplete).toHaveBeenCalledWith('task-1', {
@@ -69,11 +69,11 @@ describe('TaskRow', () => {
     const { onComplete } = renderRow({ task: makeTask({ taskType: 'WATER' as TaskItem['taskType'] }) });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add note' }));
-    fireEvent.change(screen.getByPlaceholderText('Example: soil was dry 2 inches down'), {
+    fireEvent.change(screen.getByPlaceholderText(/soil moisture/i), {
       target: { value: 'Soil was dry and leaves perked up after watering' },
     });
     fireEvent.click(screen.getByLabelText(/Also save this note to journal/i));
-    fireEvent.click(screen.getByRole('button', { name: /Save feedback & complete/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Save result & complete/i }));
 
     await waitFor(() => {
       expect(onComplete).toHaveBeenCalledWith('task-1', {
@@ -93,7 +93,23 @@ describe('TaskRow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     fireEvent.click(screen.getByRole('button', { name: /Save reason & skip/i }));
 
-    expect(onSkip).toHaveBeenCalledWith('task-1', { reason: 'SOIL_STILL_WET', note: undefined });
+    expect(onSkip).toHaveBeenCalledWith('task-1', { reason: 'PLANT_LOOKS_HEALTHY', note: undefined });
+  });
+
+  it('uses general care result feedback for non-water tasks', async () => {
+    const { onComplete } = renderRow();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add note' }));
+    expect(screen.getByText('Routine care done')).toBeInTheDocument();
+    expect(screen.queryByText('Soil was very dry')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Save result & complete/i }));
+
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledWith('task-1', {
+        reason: 'ROUTINE_CARE_DONE',
+        note: undefined,
+      });
+    });
   });
 
   it('snoozes for the chosen duration', () => {

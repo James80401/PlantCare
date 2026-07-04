@@ -17,7 +17,16 @@ Returns `TaskInstructionsDto`: title, summary, sections (markdown body + images)
 
 **Service chain:** `TasksService` → `CareGuidesService.getInstructionsForTask`
 
-**Task types:** all 12 Prisma `TaskType` values (see schema). Instructions return structured sections when seeded (beginner/advanced toggle in web).
+**Task types:** the shipped system intentionally uses the 12 Prisma `TaskType`
+values: `WATER`, `FERTILIZE`, `PRUNE`, `MIST`, `PH_TEST`, `PEST_CONTROL`,
+`REPOT`, `ROTATE`, `CLEAN_LEAVES`, `INSPECT_PESTS`, `CHECK_MOISTURE`, and
+`HEALTH_CHECK`. Instructions return structured sections when seeded
+(beginner/advanced toggle in web).
+
+Task labels and user-facing prompts are backed by shared task metadata in
+`@plant-care/shared`. Older backlog mentions such as harvest, move, and flush
+are not active task types; add them only after defining scheduling behavior,
+guide coverage, feedback semantics, and Dr. Plant context.
 
 ## Complete feedback
 
@@ -30,14 +39,26 @@ Returns `TaskInstructionsDto`: title, summary, sections (markdown body + images)
 }
 ```
 
-Allowed reasons:
+Allowed reasons for watering-specific feedback:
 
 - `SOIL_VERY_DRY`
 - `PLANT_LOOKS_STRESSED`
 - `PLANT_LOOKS_HEALTHY`
 - `OTHER`
 
-Stored as `TaskFeedback` with `action: COMPLETE`. Repeated dry/stressed feedback on **WATER** completions can surface a **water-accelerate** schedule suggestion (see schedule suggestions below). Web: quick feedback panel in [`TaskRow.tsx`](../../apps/web/src/components/tasks/TaskRow.tsx). If the user explicitly checks "Also save this note to journal," the web client creates a separate journal entry after the task completion succeeds; the task API itself does not create that journal entry.
+Allowed reasons for non-water task results:
+
+- `ROUTINE_CARE_DONE`
+- `PLANT_LOOKS_STRESSED`
+- `PLANT_LOOKS_HEALTHY`
+- `OTHER`
+
+Stored as `TaskFeedback` with `action: COMPLETE`. Repeated dry/stressed feedback
+on **WATER** completions can surface a **water-accelerate** schedule suggestion
+(see schedule suggestions below). Web: the task row shows task-type-aware
+feedback prompts. If the user explicitly checks "Also save this note to
+journal," the web client creates a separate journal entry after the task
+completion succeeds; the task API itself does not create that journal entry.
 
 ## Skip feedback
 
@@ -50,11 +71,17 @@ Stored as `TaskFeedback` with `action: COMPLETE`. Repeated dry/stressed feedback
 }
 ```
 
-Allowed reasons:
+Allowed reasons for water/moisture checks:
 
 - `SOIL_STILL_WET`
 - `PLANT_LOOKS_HEALTHY`
 - `RAIN_HANDLED_WATERING`
+- `TOO_BUSY`
+- `OTHER`
+
+For non-water care tasks, clients should prefer general skip reasons:
+
+- `PLANT_LOOKS_HEALTHY`
 - `TOO_BUSY`
 - `OTHER`
 
