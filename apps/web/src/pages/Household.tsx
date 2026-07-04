@@ -28,22 +28,36 @@ export default function Household() {
   const [acceptToken, setAcceptToken] = useState('');
   const [message, setMessage] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setLoading(true);
+      setError('');
+    }
     try {
       const [gardenRes, plantRes] = await Promise.all([gardensApi.mine(), plantsApi.list()]);
       setGardens(gardenRes.data);
       setMyPlants(plantRes.data);
+      if (!options?.silent) setError('');
     } catch (err) {
-      setError(formatApiErrorMessage(err, 'Could not load households.'));
+      // A silent background poll that fails shouldn't blank out a working
+      // view — just skip this tick and retry on the next one.
+      if (!options?.silent) {
+        setError(formatApiErrorMessage(err, 'Could not load households.'));
+      }
     } finally {
-      setLoading(false);
+      if (!options?.silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  useEffect(() => {
+    // Poll in the background so a caregiver's changes (shared plants,
+    // accepted invites) show up here without a manual reload.
+    const id = window.setInterval(() => load({ silent: true }), 20_000);
+    return () => window.clearInterval(id);
   }, [load]);
 
   const loadActivity = async (gardenId: string) => {
