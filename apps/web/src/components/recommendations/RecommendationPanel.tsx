@@ -80,7 +80,7 @@ export function RecommendationPanel({
   };
 
   return (
-    <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
+    <section className="min-w-0 rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
@@ -201,9 +201,9 @@ function RecommendationCard({
   const confirmationId = `recommendation-task-confirm-${recommendation.id}`;
 
   return (
-    <article className={`rounded-2xl border p-3 shadow-sm shadow-white/40 ${priorityClass}`}>
+    <article className={`min-w-0 rounded-2xl border p-3 shadow-sm shadow-white/40 ${priorityClass}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap gap-1.5">
             <span className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold">
               {sourceLabel}
@@ -212,24 +212,24 @@ function RecommendationCard({
               {priorityLabel}
             </span>
           </div>
-          <h3 className="mt-1 font-semibold">{recommendation.title}</h3>
-          <p className="mt-1 text-xs font-medium opacity-75">{plantName}</p>
+          <h3 className="mt-1 break-words font-semibold">{recommendation.title}</h3>
+          <p className="mt-1 break-words text-xs font-medium opacity-75">{plantName}</p>
         </div>
         {recommendation.suggestedTaskType ? (
-          <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold">
+          <span className="max-w-full rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold">
             Can become {taskTypeLabel(recommendation.suggestedTaskType).toLowerCase()}
           </span>
         ) : null}
       </div>
-      <p className="mt-2 text-sm leading-6 opacity-90">{recommendation.body}</p>
+      <p className="mt-2 break-words text-sm leading-6 opacity-90">{recommendation.body}</p>
 
-      <div className="mt-3 flex flex-wrap gap-2 border-t border-current/10 pt-3">
+      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-current/10 pt-3 sm:flex sm:flex-wrap">
         {recommendation.actionPath && recommendation.actionLabel ? (
           <Link
             to={recommendation.actionPath}
-            className="inline-flex min-h-10 items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
+            className="col-span-2 inline-flex min-h-10 min-w-0 items-center justify-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50 sm:col-span-1 sm:justify-start"
           >
-            {recommendation.actionLabel}
+            <span className="truncate">{recommendation.actionLabel}</span>
           </Link>
         ) : null}
         {recommendation.suggestedTaskType ? (
@@ -239,7 +239,7 @@ function RecommendationCard({
             onClick={onStartTaskConfirmation}
             aria-expanded={confirmingTask}
             aria-controls={confirmationId}
-            className="inline-flex min-h-10 items-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
           >
             Create task
           </button>
@@ -248,7 +248,7 @@ function RecommendationCard({
           type="button"
           disabled={busy}
           onClick={() => void onAction(recommendation, 'done')}
-          className="inline-flex min-h-10 items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
         >
           Mark done
         </button>
@@ -256,7 +256,7 @@ function RecommendationCard({
           type="button"
           disabled={busy}
           onClick={() => void onAction(recommendation, 'snooze')}
-          className="inline-flex min-h-10 items-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-80 ring-1 ring-current hover:opacity-100 disabled:opacity-50"
+          className="inline-flex min-h-10 items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-80 ring-1 ring-current hover:opacity-100 disabled:opacity-50"
         >
           Remind tomorrow
         </button>
@@ -264,7 +264,7 @@ function RecommendationCard({
           type="button"
           disabled={busy}
           onClick={() => void onAction(recommendation, 'dismiss')}
-          className="inline-flex min-h-10 items-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-70 hover:opacity-100 disabled:opacity-50"
+          className="inline-flex min-h-10 items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-70 hover:opacity-100 disabled:opacity-50"
         >
           Dismiss
         </button>

@@ -75,7 +75,7 @@ reduces duplicated UI behavior.
 |------------|--------|------|---------------|
 | 0. Baseline audit setup | [x] | Define viewports, flows, and issue categories. | Audit worksheet exists and every core flow has an owner slice. |
 | 1. Global shell and navigation | [~] | Make page framing, nav, focus, and mobile chrome consistent. | First shell fix shipped: nav focus styling and Escape close for More menu. Continue with manual route-by-route audit. |
-| 2. Dashboard command center | [ ] | Make the home screen calmer and more action-oriented. | Critical care, recommendations, summaries, and empty states are easy to scan. |
+| 2. Dashboard command center | [~] | Make the home screen calmer and more action-oriented. | Critical care, recommendations, summaries, and empty states are easy to scan. |
 | 3. Add plant and discovery | [ ] | Reduce friction from first plant search to saved plant. | Search, identify, external match confirmation, and empty/error states are clear. |
 | 4. Plant profile overview and care | [ ] | Make a plant's status, care, and next action obvious. | Overview and Care tabs explain what matters without overwhelming the user. |
 | 5. Tasks and recommendations | [ ] | Make critical tasks and optional guidance feel distinct. | Complete, skip, snooze, dismiss, and task conversion paths are consistent. |
@@ -222,14 +222,17 @@ route-by-route visual review before marking the checkpoint fully done.
 - Dashboard is readable at 390 px width with no horizontal scroll.
 - Component tests cover changed empty/error/action states.
 
-**Status (2026-07-05):** first Dashboard command-center slices shipped.
+**Status (2026-07-05):** Dashboard command-center slices are mostly shipped.
 Mobile now opens with compact quick stats and a details disclosure for the full
 metric grid. Critical due/overdue care now appears in a named Priority care
-section immediately after the hero, before weather, Buddy, recommendations, and
-garden summaries. The same section shows an all-caught-up state when an active
-garden has no urgent care. Remaining Checkpoint 2 work is manual route/viewport
-review for long names, recommendation card density, and secondary dashboard
-sections before marking the checkpoint fully done.
+section immediately after the hero and before optional guidance. The same
+section shows an all-caught-up state when an active garden has no urgent care.
+The closeout polish pass moved weather, Buddy, and seasonal context below the
+primary garden/recommendation work, tightened recommendation action density on
+mobile, and made plant cards, section headers, suggestion cards, attention
+items, and recommendation cards safer for long names and long labels. Remaining
+Checkpoint 2 work is one hosted visual pass across mobile and desktop with
+real account data before marking the checkpoint fully done.
 
 ## Checkpoint 3 - Add plant and discovery
 

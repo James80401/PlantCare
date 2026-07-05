@@ -429,18 +429,6 @@ export default function Dashboard() {
         />
       ) : null}
 
-      {dash?.weather.hasLocation && dash.weather.cachedSummary ? (
-        <section className="max-h-28 overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm text-sky-950">
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">Weather</p>
-          <p className="mt-1 line-clamp-3 leading-6">{dash.weather.cachedSummary}</p>
-        </section>
-      ) : null}
-
-      <WeatherAdvicePanel />
-
-      <BuddyDashboardPanel />
-      <SeasonalBanner />
-
       {(scheduleSuggestions.length > 0 || scheduleMessage) && (
         <section className="rounded-3xl border border-lime-100 bg-lime-50/70 p-4 shadow-sm shadow-emerald-900/5">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -634,6 +622,22 @@ export default function Dashboard() {
               : drPlantAction
           }
         />
+      </section>
+
+      <section className="space-y-3 sm:space-y-4" aria-label="Garden context">
+        {dash?.weather.hasLocation && dash.weather.cachedSummary ? (
+          <section className="max-h-28 overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm text-sky-950">
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">Weather</p>
+            <p className="mt-1 line-clamp-3 leading-6">{dash.weather.cachedSummary}</p>
+          </section>
+        ) : null}
+
+        <WeatherAdvicePanel />
+
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+          <BuddyDashboardPanel />
+          <SeasonalBanner />
+        </div>
       </section>
 
       {plantCount > 0 && (
@@ -1105,17 +1109,17 @@ function SectionHeader({
   actionTo?: string;
 }) {
   return (
-    <div className="flex items-end justify-between gap-4">
-      <div>
+    <div className="flex min-w-0 items-end justify-between gap-4">
+      <div className="min-w-0">
         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{eyebrow}</p>
-        <h2 className="mt-1 text-xl font-semibold text-emerald-950 font-display">{title}</h2>
+        <h2 className="mt-1 break-words text-xl font-semibold text-emerald-950 font-display">{title}</h2>
       </div>
       {actionLabel && actionTo && (
         <Link
           to={actionTo}
-          className="shrink-0 rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
+          className="inline-flex max-w-[45%] shrink-0 rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
         >
-          {actionLabel}
+          <span className="truncate">{actionLabel}</span>
         </Link>
       )}
     </div>
@@ -1180,9 +1184,9 @@ function ScheduleSuggestionCard({
   onApply: () => void;
 }) {
   return (
-    <article className="rounded-2xl border border-lime-100 bg-white p-4 shadow-sm">
+    <article className="min-w-0 rounded-2xl border border-lime-100 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-lime-700">
             <Link
               to={`/garden/plants/${suggestion.plantId}`}
@@ -1192,7 +1196,7 @@ function ScheduleSuggestionCard({
             </Link>{' '}
             · {taskTypeLabel(suggestion.taskType)}
           </p>
-          <h3 className="mt-1 font-semibold text-emerald-950">{suggestion.title}</h3>
+          <h3 className="mt-1 break-words font-semibold text-emerald-950">{suggestion.title}</h3>
         </div>
         <span className="rounded-full bg-lime-100 px-2.5 py-1 text-xs font-semibold text-lime-900">
           {suggestion.confidence} confidence
@@ -1251,13 +1255,13 @@ function AttentionItemCard({
 
   return (
     <article
-      className={`rounded-2xl border p-3 transition hover:-translate-y-0.5 hover:shadow-sm ${toneClasses[item.priority]}`}
+      className={`min-w-0 rounded-2xl border p-3 transition hover:-translate-y-0.5 hover:shadow-sm ${toneClasses[item.priority]}`}
     >
       <div className="flex gap-3">
         {plant ? <PlantThumb plant={plant} size="sm" /> : null}
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{item.plantName}</p>
-          <p className="mt-0.5 text-xs opacity-80">{item.reason}</p>
+          <p className="break-words font-semibold">{item.plantName}</p>
+          <p className="mt-0.5 break-words text-xs opacity-80">{item.reason}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Link
               to={primaryTo}
@@ -1292,14 +1296,14 @@ function SuggestionCard({
   actionTo: To;
 }) {
   return (
-    <article className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5 sm:p-5">
-      <h2 className="text-lg font-semibold text-emerald-950 font-display">{title}</h2>
+    <article className="min-w-0 rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5 sm:p-5">
+      <h2 className="break-words text-lg font-semibold text-emerald-950 font-display">{title}</h2>
       <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-600">{body}</p>
       <Link
         to={actionTo}
-        className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100 sm:mt-4"
+        className="mt-3 inline-flex max-w-full rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100 sm:mt-4"
       >
-        {actionLabel}
+        <span className="truncate">{actionLabel}</span>
       </Link>
     </article>
   );
@@ -1320,23 +1324,25 @@ function PlantCard({
   const overdueCount = getOverdueTasks(plantTasks).length;
 
   return (
-    <article className="group overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
-      <div className="flex gap-4 p-4">
-        <Link to={`/garden/plants/${plant.id}`} className="flex min-w-0 flex-1 gap-4">
+    <article className="group min-w-0 overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
+      <div className="flex gap-3 p-3 sm:gap-4 sm:p-4">
+        <Link to={`/garden/plants/${plant.id}`} className="flex min-w-0 flex-1 gap-3 sm:gap-4">
           <PlantThumb plant={plant} size="lg" />
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold text-emerald-950">{name}</h3>
+            <h3 className="break-words font-semibold leading-snug text-emerald-950">{name}</h3>
             <p className="truncate text-sm text-gray-500">{plant.species.commonName}</p>
             {sharedMeta ? (
-              <span className="mt-1 inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-900">
+              <span className="mt-1 inline-block max-w-full truncate rounded-full bg-sky-100 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-900">
                 Shared · {sharedMeta.gardenName}
               </span>
             ) : null}
             <div className="mt-3 space-y-1.5 text-xs text-gray-600">
               {next ? (
-                <p className="flex items-center gap-1.5 font-medium text-emerald-800">
+                <p className="flex min-w-0 items-center gap-1.5 font-medium text-emerald-800">
                   <TaskTypeIcon taskType={next.taskType} className="h-3.5 w-3.5 shrink-0" />
-                  Next: {taskTypeLabel(next.taskType)} on {format(parseISO(next.dueDate), 'MMM d')}
+                  <span className="min-w-0 break-words">
+                    Next: {taskTypeLabel(next.taskType)} on {format(parseISO(next.dueDate), 'MMM d')}
+                  </span>
                 </p>
               ) : (
                 <p className="font-medium text-amber-700">No upcoming task found</p>
@@ -1346,7 +1352,7 @@ function PlantCard({
             </div>
           </div>
         </Link>
-        <div className="flex shrink-0 flex-col items-end gap-1">
+        <div className="flex max-w-24 shrink-0 flex-col items-end gap-1 sm:max-w-28">
           {plant.unresolvedDiagnosis ? (
             <Link
               to={plantDrPlantPath(plant.id)}

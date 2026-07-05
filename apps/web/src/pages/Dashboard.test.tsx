@@ -36,15 +36,15 @@ vi.mock('../components/gardens/GardenCard', () => ({
 }));
 
 vi.mock('../components/weather/WeatherAdvicePanel', () => ({
-  WeatherAdvicePanel: () => null,
+  WeatherAdvicePanel: () => <section>Weather advice panel</section>,
 }));
 
 vi.mock('../components/buddy/BuddyDashboardPanel', () => ({
-  default: () => null,
+  default: () => <section>Buddy dashboard panel</section>,
 }));
 
 vi.mock('../components/buddy/SeasonalBanner', () => ({
-  default: () => null,
+  default: () => <section>Seasonal banner panel</section>,
 }));
 
 function renderDashboard() {
@@ -100,6 +100,29 @@ describe('Dashboard', () => {
     expect(screen.getByText('Priority care')).toBeInTheDocument();
     expect(screen.getByText('Kitchen herbs')).toBeInTheDocument();
     expect(screen.getByText('Porch plants')).toBeInTheDocument();
+  });
+
+  it('keeps optional context panels below the primary dashboard work', async () => {
+    mockUseDashboard.mockReturnValue({
+      data: dashboardPayload(),
+      loading: false,
+      error: '',
+      reload: vi.fn(),
+    });
+    mockSummaries.mockResolvedValue({
+      data: [{ id: 'garden-1', name: 'Kitchen herbs', tasksDueToday: 1, overdue: 0 }],
+    });
+
+    renderDashboard();
+
+    expect(await screen.findByText('Kitchen herbs')).toBeInTheDocument();
+
+    const priorityCare = screen.getByText('Priority care');
+    const recommendations = screen.getByRole('heading', { name: 'Recommendations' });
+    const gardenContext = screen.getByLabelText('Garden context');
+
+    expect(priorityCare.compareDocumentPosition(gardenContext)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(recommendations.compareDocumentPosition(gardenContext)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it('surfaces dashboard load failures as an alert while garden summaries can still render', async () => {
