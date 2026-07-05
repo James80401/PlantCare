@@ -1,7 +1,7 @@
 # Core UX and accessibility pass plan
 
 > **Status:** active planning document, created 2026-07-03  
-> **Navigation:** [Roadmap](roadmap.md) | [Current feature implementation plan](current-feature-implementation-plan.md) | [Accessibility checklist](a11y-checklist.md) | [UAT checklist](uat-checklist.md)
+> **Navigation:** [Roadmap](roadmap.md) | [Current feature implementation plan](current-feature-implementation-plan.md) | [Audit worksheet](core-ux-a11y-audit.md) | [Accessibility checklist](a11y-checklist.md) | [UAT checklist](uat-checklist.md)
 
 This plan turns the next product priority into a practical implementation queue:
 run a manual UX and accessibility pass across the core Dr. Plant flows, then
@@ -73,8 +73,8 @@ reduces duplicated UI behavior.
 
 | Checkpoint | Status | Goal | Exit criteria |
 |------------|--------|------|---------------|
-| 0. Baseline audit setup | [ ] | Define viewports, flows, and issue categories. | Audit checklist exists and every core flow has an owner slice. |
-| 1. Global shell and navigation | [ ] | Make page framing, nav, focus, and mobile chrome consistent. | No traps, skip link works, nav labels and active state are clear. |
+| 0. Baseline audit setup | [x] | Define viewports, flows, and issue categories. | Audit worksheet exists and every core flow has an owner slice. |
+| 1. Global shell and navigation | [~] | Make page framing, nav, focus, and mobile chrome consistent. | First shell fix shipped: nav focus styling and Escape close for More menu. Continue with manual route-by-route audit. |
 | 2. Dashboard command center | [ ] | Make the home screen calmer and more action-oriented. | Critical care, recommendations, summaries, and empty states are easy to scan. |
 | 3. Add plant and discovery | [ ] | Reduce friction from first plant search to saved plant. | Search, identify, external match confirmation, and empty/error states are clear. |
 | 4. Plant profile overview and care | [ ] | Make a plant's status, care, and next action obvious. | Overview and Care tabs explain what matters without overwhelming the user. |
@@ -123,6 +123,11 @@ Use these labels while auditing and fixing:
 - Findings are grouped by issue category and flow.
 - No fixes are made before the first small batch is selected.
 
+**Status (2026-07-05):** baseline audit setup shipped. The reusable worksheet is
+[core-ux-a11y-audit.md](core-ux-a11y-audit.md); it defines viewports, test
+states, core flow ownership, issue categories, and the first global-shell issue
+log.
+
 ## Checkpoint 1 - Global shell and navigation
 
 ### Surfaces
@@ -159,6 +164,12 @@ Use these labels while auditing and fixing:
 - Mobile bottom nav never hides the last actionable control.
 - Focus rings are visible on buttons, links, tabs, chips, and icon controls.
 - Status messages are announced without stealing focus.
+
+**Status (2026-07-05):** first shell slice shipped. Header links, desktop nav,
+mobile bottom nav, More menu links, and logout now share explicit visible focus
+treatment. Desktop and mobile More buttons expose popup state and close with
+Escape as well as outside click. Remaining Checkpoint 1 work is the manual
+route-by-route audit against the worksheet.
 
 ## Checkpoint 2 - Dashboard command center
 

@@ -81,4 +81,37 @@ describe('Layout mobile navigation', () => {
     expect(within(mobileNav).getByRole('link', { name: /admin/i })).toBeInTheDocument();
     expect(moreMenu).toHaveClass('overflow-y-auto');
   });
+
+  it('closes the mobile more menu with Escape', () => {
+    renderLayout('/garden/settings');
+
+    const mobileNav = screen.getByRole('navigation', { name: 'Primary' });
+    const moreButton = within(mobileNav).getByRole('button', { name: /more/i });
+
+    fireEvent.click(moreButton);
+    expect(document.getElementById('mobile-more-menu')).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(document.getElementById('mobile-more-menu')).not.toBeInTheDocument();
+    expect(moreButton).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('keeps the skip-link target focusable and visible focus styles on shell nav', () => {
+    renderLayout('/garden/community');
+
+    const skipLink = screen.getByRole('link', { name: /skip to main content/i });
+    const main = document.getElementById('main-content');
+    const desktopNav = screen.getByRole('navigation', { name: 'Main' });
+    const activeDesktopLink = within(desktopNav).getByRole('link', { name: /tips/i });
+    const mobileNav = screen.getByRole('navigation', { name: 'Primary' });
+    const activeMobileLink = within(mobileNav).getByRole('link', { name: /tips/i });
+
+    expect(skipLink).toHaveAttribute('href', '#main-content');
+    expect(main).toHaveAttribute('tabindex', '-1');
+    expect(activeDesktopLink).toHaveAttribute('aria-current', 'page');
+    expect(activeDesktopLink).toHaveClass('focus-visible:ring-2');
+    expect(activeMobileLink).toHaveAttribute('aria-current', 'page');
+    expect(activeMobileLink).toHaveClass('focus-visible:ring-2');
+  });
 });

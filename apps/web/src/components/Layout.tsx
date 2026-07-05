@@ -60,6 +60,10 @@ const adminNav: NavItem = {
 };
 
 const SHOW_UPGRADE = import.meta.env.VITE_ENABLE_PREMIUM_BILLING === 'true';
+const focusRingClass =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-900';
+const lightFocusRingClass =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2';
 
 export default function Layout() {
   const auth = useAuth();
@@ -111,6 +115,11 @@ function LayoutShell({
 
   useEffect(() => {
     if (!moreOpen) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setMoreOpen(false);
+    }
+
     function onPointerDown(event: MouseEvent) {
       const target = event.target as Node;
       if (
@@ -120,8 +129,12 @@ function LayoutShell({
         setMoreOpen(false);
       }
     }
+    document.addEventListener('keydown', onKeyDown);
     document.addEventListener('mousedown', onPointerDown);
-    return () => document.removeEventListener('mousedown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mousedown', onPointerDown);
+    };
   }, [moreOpen]);
 
   return (
@@ -130,7 +143,10 @@ function LayoutShell({
       <header className="sticky top-0 z-30 bg-emerald-900 text-white shadow-md">
         <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
-            <Link to="/garden" className="min-w-0 text-xl font-bold tracking-tight font-display">
+            <Link
+              to="/garden"
+              className={`min-w-0 rounded-lg text-xl font-bold tracking-tight font-display ${focusRingClass}`}
+            >
               <span className="block truncate">Dr. Plant</span>
             </Link>
             <nav className="hidden sm:flex items-center gap-1 text-sm" aria-label="Main">
@@ -141,7 +157,7 @@ function LayoutShell({
                     key={to}
                     to={to}
                     aria-current={active ? 'page' : undefined}
-                    className={`rounded-full px-3 py-2 transition ${
+                    className={`rounded-full px-3 py-2 transition ${focusRingClass} ${
                       active
                         ? 'bg-white/12 text-emerald-50 font-semibold'
                         : 'text-emerald-100 hover:bg-white/10 hover:text-white'
@@ -172,7 +188,7 @@ function LayoutShell({
                 type="button"
                 onClick={logout}
                 aria-label="Log out"
-                className="rounded-full min-h-11 min-w-11 px-3 py-1 text-emerald-200 hover:bg-white/10 hover:text-white"
+                className={`rounded-full min-h-11 min-w-11 px-3 py-1 text-emerald-200 hover:bg-white/10 hover:text-white ${focusRingClass}`}
               >
                 Log out
               </button>
@@ -203,7 +219,7 @@ function LayoutShell({
                 key={to}
                 to={to}
                 aria-current={active ? 'page' : undefined}
-                className={`relative flex min-h-14 flex-col items-center justify-center rounded-2xl px-2 py-1.5 transition ${
+                className={`relative flex min-h-14 flex-col items-center justify-center rounded-2xl px-2 py-1.5 transition ${lightFocusRingClass} ${
                   active
                     ? 'bg-emerald-800 text-white shadow-sm'
                     : 'text-gray-500 hover:bg-emerald-50 hover:text-emerald-800'
@@ -220,7 +236,8 @@ function LayoutShell({
               onClick={() => setMoreOpen((value) => !value)}
               aria-expanded={moreOpen}
               aria-controls="mobile-more-menu"
-              className={`relative flex min-h-14 w-full flex-col items-center justify-center rounded-2xl px-2 py-1.5 transition ${
+              aria-haspopup="true"
+              className={`relative flex min-h-14 w-full flex-col items-center justify-center rounded-2xl px-2 py-1.5 transition ${lightFocusRingClass} ${
                 hasActiveMobileSecondary || moreOpen
                   ? 'bg-emerald-800 text-white shadow-sm'
                   : 'text-gray-500 hover:bg-emerald-50 hover:text-emerald-800'
@@ -245,6 +262,7 @@ function LayoutShell({
             {moreOpen ? (
               <div
                 id="mobile-more-menu"
+                aria-label="More navigation"
                 className="absolute bottom-[calc(100%+0.75rem)] right-0 max-h-[min(70vh,28rem)] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto rounded-2xl border border-emerald-100 bg-white p-2 text-sm shadow-2xl"
               >
                 <MoreMenuLinks
@@ -287,7 +305,8 @@ function MoreMenu({
         onClick={onToggle}
         aria-expanded={open}
         aria-controls="desktop-more-menu"
-        className={`inline-flex min-h-10 items-center gap-2 rounded-full px-3 py-2 transition ${
+        aria-haspopup="true"
+        className={`inline-flex min-h-10 items-center gap-2 rounded-full px-3 py-2 transition ${focusRingClass} ${
           active || open
             ? 'bg-white/12 text-emerald-50 font-semibold'
             : 'text-emerald-100 hover:bg-white/10 hover:text-white'
@@ -312,6 +331,7 @@ function MoreMenu({
       {open ? (
         <div
           id="desktop-more-menu"
+          aria-label="More navigation"
           className="absolute right-0 top-[calc(100%+0.5rem)] w-60 rounded-2xl border border-emerald-100 bg-white p-2 text-sm text-emerald-950 shadow-2xl"
         >
           <MoreMenuLinks
@@ -344,7 +364,7 @@ function MoreMenuLinks({
           <Link
             key={to}
             to={to}
-            className={`relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 font-medium transition focus:outline-none ${
+            className={`relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 font-medium transition ${lightFocusRingClass} ${
               active
                 ? 'bg-emerald-800 text-white'
                 : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-900 focus:bg-emerald-50'
