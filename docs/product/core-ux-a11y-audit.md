@@ -47,6 +47,8 @@ using the categories from the plan.
 | UX-002 | Global shell | a11y | Mobile/Desktop | Medium | More menu did not close with Escape after keyboard users opened it. | Fixed in Checkpoint 1 slice. |
 | UX-003 | Global shell | a11y | Mobile/Desktop | Medium | Skip link targeted `#main-content`, but did not explicitly move focus there after activation. | Fixed: skip link now focuses the main landmark directly. |
 | UX-004 | Global shell | a11y | Mobile/Desktop | Low | Secondary routes made the More button visually active, but the button name did not announce that it represented the current section. | Fixed: More announces "current section" and its popup is labelled as a navigation group. |
+| UX-005 | Dashboard | mobile | Mobile | Medium | First screen had too many metric cards before the user saw what needed action. | Fixed: mobile now shows compact quick stats and hides the full metric grid behind a details disclosure. |
+| UX-006 | Dashboard | confusing | Mobile/Desktop | Medium | Critical care competed with garden summaries and optional guidance lower on the page. | Fixed: Priority care now appears immediately after the hero and renders due/overdue task rows before optional content. |
 
 ## Pass criteria
 

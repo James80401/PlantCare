@@ -222,6 +222,15 @@ route-by-route visual review before marking the checkpoint fully done.
 - Dashboard is readable at 390 px width with no horizontal scroll.
 - Component tests cover changed empty/error/action states.
 
+**Status (2026-07-05):** first Dashboard command-center slices shipped.
+Mobile now opens with compact quick stats and a details disclosure for the full
+metric grid. Critical due/overdue care now appears in a named Priority care
+section immediately after the hero, before weather, Buddy, recommendations, and
+garden summaries. The same section shows an all-caught-up state when an active
+garden has no urgent care. Remaining Checkpoint 2 work is manual route/viewport
+review for long names, recommendation card density, and secondary dashboard
+sections before marking the checkpoint fully done.
+
 ## Checkpoint 3 - Add plant and discovery
 
 ### Surfaces

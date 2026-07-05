@@ -95,6 +95,9 @@ describe('Dashboard', () => {
       'aria-expanded',
       'true',
     );
+    expect(screen.getByRole('region', { name: /Catch up gently/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open tasks' })).toBeInTheDocument();
+    expect(screen.getByText('Priority care')).toBeInTheDocument();
     expect(screen.getByText('Kitchen herbs')).toBeInTheDocument();
     expect(screen.getByText('Porch plants')).toBeInTheDocument();
   });
@@ -132,7 +135,7 @@ describe('Dashboard', () => {
     renderDashboard();
 
     expect(await screen.findByText('Garden summaries are unavailable')).toBeInTheDocument();
-    expect(screen.getByText('Catch up gently')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /Catch up gently/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry summaries' }));
 

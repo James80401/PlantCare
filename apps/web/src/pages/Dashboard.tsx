@@ -36,6 +36,7 @@ import {
   getOldestPlantAgeDays,
 } from '../utils/engagement';
 import type { TaskItem } from '../utils/taskGroups';
+import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
 import { taskTypeLabel } from '../utils/tasks';
 import { plantDrPlantPath } from './plant-profile/constants';
 import {
@@ -198,6 +199,12 @@ export default function Dashboard() {
   );
   const completedTodayCount =
     careSummary?.counts.completedToday ?? metrics?.completedToday ?? 0;
+  const priorityCareTasks =
+    todayCareTasks.length > 0
+      ? todayCareTasks
+      : dash?.todayTasks?.length
+        ? dash.todayTasks
+        : [...overdueTasks, ...todayTasks];
 
   const drPlantAction = useMemo((): To => {
     if (allGardenPlants.length === 1) {
@@ -239,6 +246,19 @@ export default function Dashboard() {
         actionTo: careSummary.actionTo,
       }
     : getSuggestedAction(plants, overdueTasks, todayTasks);
+  const hasGardenStarted = plantCount > 0 || gardenSummaries.length > 0;
+  const completeDashboardTask = (id: string, feedback?: TaskCompleteFeedback) => {
+    handleComplete(id, feedback);
+    window.setTimeout(() => void refreshAfterTask(), 700);
+  };
+  const skipDashboardTask = (id: string, feedback?: TaskSkipFeedback) => {
+    handleSkip(id, feedback);
+    window.setTimeout(() => void refreshAfterTask(), 700);
+  };
+  const snoozeDashboardTask = async (id: string, days: 1 | 3 | 7) => {
+    await handleSnooze(id, days);
+    await refreshAfterTask();
+  };
   const engagementContext = useMemo(
     () => ({
       plantCount,
@@ -390,6 +410,25 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {dashError ? (
+        <FormError className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-rose-700">
+          {dashError}
+        </FormError>
+      ) : null}
+
+      {!dashboardLoading ? (
+        <PriorityCareSection
+          tasks={priorityCareTasks}
+          animating={animating}
+          hasGardenStarted={hasGardenStarted}
+          dueTodayCount={dueTodayCount}
+          overdueCount={overdueCount}
+          onComplete={completeDashboardTask}
+          onSkip={skipDashboardTask}
+          onSnooze={snoozeDashboardTask}
+        />
+      ) : null}
+
       {dash?.weather.hasLocation && dash.weather.cachedSummary ? (
         <section className="max-h-28 overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm text-sky-950">
           <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">Weather</p>
@@ -401,12 +440,6 @@ export default function Dashboard() {
 
       <BuddyDashboardPanel />
       <SeasonalBanner />
-
-      {dashError ? (
-        <FormError className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-rose-700">
-          {dashError}
-        </FormError>
-      ) : null}
 
       {(scheduleSuggestions.length > 0 || scheduleMessage) && (
         <section className="rounded-3xl border border-lime-100 bg-lime-50/70 p-4 shadow-sm shadow-emerald-900/5">
@@ -500,39 +533,6 @@ export default function Dashboard() {
               ))}
             </div>
           )}
-
-          {/* Today's care kept as a secondary quick-action list under the gardens. */}
-          {todayCareTasks.length > 0 ? (
-            <>
-              <SectionHeader
-                eyebrow="Due now"
-                title="Today's care"
-                actionLabel="View all"
-                actionTo="/garden/tasks"
-              />
-            <ul className="space-y-2">
-              {todayCareTasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  animState={animating[task.id] ?? null}
-                  onComplete={(id, feedback) => {
-                    handleComplete(id, feedback);
-                    window.setTimeout(() => void refreshAfterTask(), 700);
-                  }}
-                  onSkip={(id, feedback) => {
-                    handleSkip(id, feedback);
-                    window.setTimeout(() => void refreshAfterTask(), 700);
-                  }}
-                  onSnooze={async (id, days) => {
-                    await handleSnooze(id, days);
-                    await refreshAfterTask();
-                  }}
-                />
-              ))}
-            </ul>
-            </>
-          ) : null}
         </div>
 
         <aside className="space-y-4">
@@ -992,6 +992,104 @@ function CompactDashboardFocus({
         </Link>
       ))}
     </nav>
+  );
+}
+
+function PriorityCareSection({
+  tasks,
+  animating,
+  hasGardenStarted,
+  dueTodayCount,
+  overdueCount,
+  onComplete,
+  onSkip,
+  onSnooze,
+}: {
+  tasks: TaskItem[];
+  animating: Record<string, 'completing' | 'skipping' | 'snoozing'>;
+  hasGardenStarted: boolean;
+  dueTodayCount: number;
+  overdueCount: number;
+  onComplete: (id: string, feedback?: TaskCompleteFeedback) => void;
+  onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
+  onSnooze: (id: string, days: 1 | 3 | 7) => Promise<void>;
+}) {
+  if (!hasGardenStarted) return null;
+
+  const visibleTasks = tasks.slice(0, 4);
+  const hiddenCount = Math.max(0, tasks.length - visibleTasks.length);
+  const hasCriticalCare = tasks.length > 0;
+  const headline = overdueCount
+    ? 'Catch up gently'
+    : dueTodayCount
+      ? "Today's care"
+      : 'All caught up';
+  const body = overdueCount
+    ? `${overdueCount} overdue care item${overdueCount === 1 ? '' : 's'} should be handled before optional recommendations.`
+    : dueTodayCount
+      ? `${dueTodayCount} care item${dueTodayCount === 1 ? '' : 's'} due today.`
+      : 'No critical care tasks need action today. Optional recommendations can wait.';
+
+  return (
+    <section
+      className={`rounded-3xl border p-4 shadow-sm shadow-emerald-900/5 sm:p-5 ${
+        hasCriticalCare
+          ? 'border-amber-100 bg-amber-50/70'
+          : 'border-emerald-100 bg-emerald-50/70'
+      }`}
+      aria-labelledby="priority-care-heading"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p
+            className={`text-xs font-semibold uppercase tracking-wide ${
+              hasCriticalCare ? 'text-amber-800' : 'text-emerald-700'
+            }`}
+          >
+            Priority care
+          </p>
+          <h2 id="priority-care-heading" className="mt-1 text-lg font-semibold text-emerald-950 font-display">
+            {headline}
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-700">{body}</p>
+        </div>
+        <Link
+          to="/garden/tasks"
+          className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
+        >
+          {hasCriticalCare ? 'Open tasks' : 'View calendar'}
+        </Link>
+      </div>
+
+      {hasCriticalCare ? (
+        <div className="mt-4 space-y-3">
+          <ul className="space-y-2">
+            {visibleTasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                animState={animating[task.id] ?? null}
+                onComplete={onComplete}
+                onSkip={onSkip}
+                onSnooze={onSnooze}
+              />
+            ))}
+          </ul>
+          {hiddenCount > 0 ? (
+            <Link
+              to="/garden/tasks"
+              className="inline-flex text-sm font-semibold text-emerald-800 hover:underline"
+            >
+              View {hiddenCount} more care item{hiddenCount === 1 ? '' : 's'}
+            </Link>
+          ) : null}
+        </div>
+      ) : (
+        <div className="mt-4 rounded-2xl bg-white/80 px-4 py-3 text-sm text-emerald-900 ring-1 ring-emerald-100">
+          Keep an eye on recommendations below when you have time, but there is no urgent plant care waiting.
+        </div>
+      )}
+    </section>
   );
 }
 
