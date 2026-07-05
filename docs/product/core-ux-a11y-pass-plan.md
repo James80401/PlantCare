@@ -76,7 +76,7 @@ reduces duplicated UI behavior.
 | 0. Baseline audit setup | [x] | Define viewports, flows, and issue categories. | Audit worksheet exists and every core flow has an owner slice. |
 | 1. Global shell and navigation | [~] | Make page framing, nav, focus, and mobile chrome consistent. | First shell fix shipped: nav focus styling and Escape close for More menu. Continue with manual route-by-route audit. |
 | 2. Dashboard command center | [x] | Make the home screen calmer and more action-oriented. | Critical care, recommendations, summaries, and empty states are easy to scan. |
-| 3. Add plant and discovery | [ ] | Reduce friction from first plant search to saved plant. | Search, identify, external match confirmation, and empty/error states are clear. |
+| 3. Add plant and discovery | [x] | Reduce friction from first plant search to saved plant. | Search, identify, external match confirmation, and empty/error states are clear. |
 | 4. Plant profile overview and care | [ ] | Make a plant's status, care, and next action obvious. | Overview and Care tabs explain what matters without overwhelming the user. |
 | 5. Tasks and recommendations | [ ] | Make critical tasks and optional guidance feel distinct. | Complete, skip, snooze, dismiss, and task conversion paths are consistent. |
 | 6. Journal and Plant Life | [ ] | Make progress history understandable and useful. | Check-ins, photos, summaries, edits, deletes, and empty states feel coherent. |
@@ -279,6 +279,22 @@ below the primary care, garden, recommendation, and next-action sections.
 - Provisional external matches feel useful but honest.
 - Photo-ID failure states offer a clear alternate path.
 - Mobile form controls are comfortable and labelled.
+
+**Status (2026-07-05):** Add plant and discovery checkpoint shipped. The add
+plant entry screen now separates photo identification from name search with
+plain-language guidance, and manual search starts with a useful beginner state
+instead of a blank result area. No-result states point users toward shorter
+common names, filters, browsing, or photo identification. External photo matches
+now use confidence-based copy that frames provider results as provisional,
+explains that confirmation creates a reviewable species record, and clarifies
+that care guidance is approximate until reviewed. The details step now explains
+that only garden and species are required and that nickname, age, date, notes,
+and photo can be added later. Browse/recommended species cards now cap visible
+recommendation reasons, expose overflow counts, use text placeholders for
+missing photos, and recover from empty results with a clear photo-identification
+path. Focused component tests cover the add-plant first screen, manual search
+empty/no-result states, provisional external confirmation copy, and optional
+details reassurance.
 
 ## Checkpoint 4 - Plant profile overview and care
 
