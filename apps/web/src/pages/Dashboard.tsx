@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation, type To } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import TaskRow from '../components/tasks/TaskRow';
+import { TaskTypeIcon } from '../components/tasks/TaskTypeIcon';
 import {
   useDashboard,
   type DashboardAttention,
@@ -34,7 +35,7 @@ import {
   getMilestoneHighlights,
   getOldestPlantAgeDays,
 } from '../utils/engagement';
-import { TASK_TYPE_ICONS, type TaskItem } from '../utils/taskGroups';
+import type { TaskItem } from '../utils/taskGroups';
 import { taskTypeLabel } from '../utils/tasks';
 import { plantDrPlantPath } from './plant-profile/constants';
 import {
@@ -1154,8 +1155,8 @@ function PlantCard({
             ) : null}
             <div className="mt-3 space-y-1.5 text-xs text-gray-600">
               {next ? (
-                <p className="font-medium text-emerald-800">
-                  <span aria-hidden>{TASK_TYPE_ICONS[next.taskType] ?? '🌿'} </span>
+                <p className="flex items-center gap-1.5 font-medium text-emerald-800">
+                  <TaskTypeIcon taskType={next.taskType} className="h-3.5 w-3.5 shrink-0" />
                   Next: {taskTypeLabel(next.taskType)} on {format(parseISO(next.dueDate), 'MMM d')}
                 </p>
               ) : (

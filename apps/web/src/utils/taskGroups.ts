@@ -148,21 +148,6 @@ export function groupTasksByDay(tasks: TaskItem[]): DayGroup[] {
   return groups;
 }
 
-export const TASK_TYPE_ICONS: Record<string, string> = {
-  WATER: '~',
-  FERTILIZE: '+',
-  PRUNE: '/',
-  MIST: '...',
-  PH_TEST: 'pH',
-  PEST_CONTROL: '!',
-  REPOT: 'Pot',
-  ROTATE: 'Turn',
-  CLEAN_LEAVES: 'Clean',
-  INSPECT_PESTS: 'Check',
-  CHECK_MOISTURE: 'Moisture',
-  HEALTH_CHECK: 'Health',
-};
-
 /** Display order for grouping to-dos by care category. */
 export const TASK_TYPE_ORDER: string[] = [
   'WATER',

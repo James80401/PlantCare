@@ -36,7 +36,7 @@ export default function BuddyOnboarding() {
       <PageHeader
         eyebrow="Plant Buddy"
         title="Plant Buddy is optional"
-        description="A small companion can grow alongside your garden, but you can skip this and use the rest of DrPlant right away."
+        description="A small companion can grow alongside your garden, but you can skip this and use the rest of Dr. Plant right away."
       />
 
       <Card className="border-amber-200 bg-amber-50/80">
@@ -45,7 +45,7 @@ export default function BuddyOnboarding() {
             <h2 className="text-base font-semibold text-emerald-950">No setup required</h2>
             <p className="mt-1 text-sm leading-6 text-gray-700">
               Buddy adds encouragement, quests, and customization. It does not block gardens, plant care,
-              DrPlant health checks, journal notes, or reminders.
+              Dr. Plant health checks, journal notes, or reminders.
             </p>
           </div>
           <Link

@@ -4,9 +4,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../components/ui/PageHeader';
 import { SkeletonTaskRows } from '../components/ui/Skeleton';
 import { useTasksInRange } from '../hooks/useTasksInRange';
+import { TaskTypeIcon } from '../components/tasks/TaskTypeIcon';
 import {
   groupDueTasksIntoCareRounds,
-  TASK_TYPE_ICONS,
   type CareTypeRound,
   type PlantCareRoundItem,
 } from '../utils/taskGroups';
@@ -156,7 +156,7 @@ export default function Tasks() {
                       aria-expanded={open}
                     >
                       <h3 className="flex items-center gap-2 font-semibold text-emerald-950">
-                        <span aria-hidden>{TASK_TYPE_ICONS[careType.taskType] ?? 'Care'}</span>
+                        <TaskTypeIcon taskType={careType.taskType} className="h-5 w-5 text-emerald-700" />
                         {taskTypeLabel(careType.taskType)}
                       </h3>
                       <p className="mt-0.5 text-xs text-gray-600">{summary}</p>

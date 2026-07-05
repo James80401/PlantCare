@@ -95,6 +95,10 @@ export class SchedulerService {
     return dates;
   }
 
+  generateRecurringDates(start: Date, intervalDays: number, count: number): Date[] {
+    return this.generateDates(addDays(start, intervalDays), intervalDays, count);
+  }
+
   private isEdibleOrHerb(category: ReturnType<typeof classifySpeciesForCare>): boolean {
     return category === 'herb' || category === 'vegetable' || category === 'fruit' || category === 'citrus';
   }
@@ -197,23 +201,23 @@ export class SchedulerService {
       plant.species.wateringFreqDays,
       plant.potSize,
     );
-    const waterDates = this.generateDates(
+    const waterDates = this.generateRecurringDates(
       now,
       waterInterval,
-      Math.ceil(DAYS_AHEAD / waterInterval),
+      Math.floor(DAYS_AHEAD / waterInterval),
     );
 
     const tasks: { plantId: string; taskType: TaskType; dueDate: Date }[] = waterDates.map(
       (dueDate) => ({ plantId, taskType: TaskType.WATER, dueDate }),
     );
 
-    const pruneDates = this.generateDates(now, 30, Math.floor(DAYS_AHEAD / 30));
+    const pruneDates = this.generateRecurringDates(now, 30, Math.floor(DAYS_AHEAD / 30));
     tasks.push(
       ...pruneDates.map((dueDate) => ({ plantId, taskType: TaskType.PRUNE, dueDate })),
     );
 
     if (this.isGrowingSeason(now) && this.canScheduleFertilizer(plant)) {
-      const fertDates = this.generateDates(now, 30, Math.floor(DAYS_AHEAD / 30));
+      const fertDates = this.generateRecurringDates(now, 30, Math.floor(DAYS_AHEAD / 30));
       tasks.push(
         ...fertDates.map((dueDate) => ({
           plantId,
@@ -224,7 +228,7 @@ export class SchedulerService {
     }
 
     if (shouldScheduleMist(env, category)) {
-      const mistDates = this.generateDates(now, 3, Math.floor(DAYS_AHEAD / 3));
+      const mistDates = this.generateRecurringDates(now, 3, Math.floor(DAYS_AHEAD / 3));
       tasks.push(
         ...mistDates.slice(0, 10).map((dueDate) => ({
           plantId,
@@ -236,14 +240,14 @@ export class SchedulerService {
 
     const phInterval = this.isEdibleOrHerb(category) ? 90 : 180;
     if (phInterval <= DAYS_AHEAD) {
-      const phDates = this.generateDates(now, phInterval, Math.floor(DAYS_AHEAD / phInterval));
+      const phDates = this.generateRecurringDates(now, phInterval, Math.floor(DAYS_AHEAD / phInterval));
       tasks.push(
         ...phDates.map((dueDate) => ({ plantId, taskType: TaskType.PH_TEST, dueDate })),
       );
     }
 
     const pestInterval = this.isGrowingSeason(now) ? 14 : 30;
-    const pestDates = this.generateDates(now, pestInterval, Math.floor(DAYS_AHEAD / pestInterval));
+    const pestDates = this.generateRecurringDates(now, pestInterval, Math.floor(DAYS_AHEAD / pestInterval));
     tasks.push(
       ...pestDates.map((dueDate) => ({ plantId, taskType: TaskType.PEST_CONTROL, dueDate })),
     );
@@ -255,19 +259,19 @@ export class SchedulerService {
     }
 
     if (isIndoor) {
-      const rotateDates = this.generateDates(now, 14, Math.floor(DAYS_AHEAD / 14));
+      const rotateDates = this.generateRecurringDates(now, 14, Math.floor(DAYS_AHEAD / 14));
       tasks.push(
         ...rotateDates.map((dueDate) => ({ plantId, taskType: TaskType.ROTATE, dueDate })),
       );
 
-      const cleanDates = this.generateDates(now, 21, Math.floor(DAYS_AHEAD / 21));
+      const cleanDates = this.generateRecurringDates(now, 21, Math.floor(DAYS_AHEAD / 21));
       tasks.push(
         ...cleanDates.map((dueDate) => ({ plantId, taskType: TaskType.CLEAN_LEAVES, dueDate })),
       );
     }
 
     if (this.isPestProneSpecies(category)) {
-      const inspectDates = this.generateDates(now, 7, Math.floor(DAYS_AHEAD / 7));
+      const inspectDates = this.generateRecurringDates(now, 7, Math.floor(DAYS_AHEAD / 7));
       tasks.push(
         ...inspectDates.map((dueDate) => ({
           plantId,
@@ -283,7 +287,7 @@ export class SchedulerService {
         ? 5
         : 7;
     if (this.isVeryYoungPlant(plant.lifeStage) || plant.lifeStage === PlantLifeStage.YOUNG_PLANT || plant.species.wateringFreqDays <= 5) {
-      const moistureDates = this.generateDates(now, moistureInterval, Math.floor(DAYS_AHEAD / moistureInterval));
+      const moistureDates = this.generateRecurringDates(now, moistureInterval, Math.floor(DAYS_AHEAD / moistureInterval));
       tasks.push(
         ...moistureDates.map((dueDate) => ({
           plantId,

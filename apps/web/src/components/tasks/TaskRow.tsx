@@ -15,7 +15,8 @@ import {
 } from '../../utils/taskFeedback';
 import { taskJournalPrompt, taskTypeLabel } from '../../utils/tasks';
 import { SNOOZE_OPTIONS } from '../../utils/taskSnooze';
-import { TASK_TYPE_ICONS, type TaskItem } from '../../utils/taskGroups';
+import type { TaskItem } from '../../utils/taskGroups';
+import { TaskTypeIcon } from './TaskTypeIcon';
 
 type AnimState = 'completing' | 'skipping' | 'snoozing' | null;
 
@@ -57,7 +58,6 @@ export default function TaskRow({
   const isPending = task.status === 'PENDING';
   const overdue = isPending && isPast(due) && !isToday(due);
   const plantLabel = task.plant.nickname || task.plant.species.commonName;
-  const icon = TASK_TYPE_ICONS[task.taskType] ?? '🌿';
   const dueLabel = isToday(due) ? 'Due today' : `Due ${format(due, 'MMM d')}`;
   const skipPanelId = `skip-panel-${task.id}`;
   const snoozePanelId = `snooze-panel-${task.id}`;
@@ -143,9 +143,7 @@ export default function TaskRow({
               } ${animState === 'completing' ? 'task-row__title--strike' : ''}`}
             >
               {!groupedByType && (
-                <span className="mr-1.5" aria-hidden>
-                  {icon}
-                </span>
+                <TaskTypeIcon taskType={task.taskType} className="mr-1.5 inline h-4 w-4 align-[-0.125em] text-emerald-700" />
               )}
               {groupedByType ? plantLabel : taskTypeLabel(task.taskType)}
             </span>

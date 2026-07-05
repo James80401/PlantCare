@@ -730,7 +730,7 @@ export default function AddPlantWizard() {
                 placeholder="e.g. 3"
               />
               <p className="text-xs text-gray-500">
-                Age helps DrPlant tune reminders. Sprouts and seedlings skip harsh care tasks and get closer moisture checks.
+                Age helps Dr. Plant tune reminders. Sprouts and seedlings skip harsh care tasks and get closer moisture checks.
               </p>
             </div>
             <div>
