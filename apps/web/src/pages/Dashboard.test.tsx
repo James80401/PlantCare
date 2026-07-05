@@ -83,6 +83,18 @@ describe('Dashboard', () => {
     expect(screen.getByRole('link', { name: /Care areas: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Gardens ready: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Completed: 4/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Today care: 1 due/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Late care: 1 overdue/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Care type summary: 2 areas/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Show details/i })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Show details/i }));
+    expect(screen.getByRole('button', { name: /Hide details/i })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
     expect(screen.getByText('Kitchen herbs')).toBeInTheDocument();
     expect(screen.getByText('Porch plants')).toBeInTheDocument();
   });
