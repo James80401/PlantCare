@@ -35,6 +35,7 @@ function renderLayout(path = '/garden') {
           <Route index element={<p>Dashboard content</p>} />
           <Route path="settings" element={<p>Settings content</p>} />
           <Route path="community" element={<p>Community content</p>} />
+          <Route path="tasks" element={<p>Tasks content</p>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -109,9 +110,35 @@ describe('Layout mobile navigation', () => {
 
     expect(skipLink).toHaveAttribute('href', '#main-content');
     expect(main).toHaveAttribute('tabindex', '-1');
+    fireEvent.click(skipLink);
+    expect(document.activeElement).toBe(main);
     expect(activeDesktopLink).toHaveAttribute('aria-current', 'page');
     expect(activeDesktopLink).toHaveClass('focus-visible:ring-2');
     expect(activeMobileLink).toHaveAttribute('aria-current', 'page');
     expect(activeMobileLink).toHaveClass('focus-visible:ring-2');
+  });
+
+  it('announces More as the current section for secondary routes', () => {
+    renderLayout('/garden/tasks');
+
+    const mobileNav = screen.getByRole('navigation', { name: 'Primary' });
+    const mobileMoreButton = within(mobileNav).getByRole('button', {
+      name: /more\s*,\s*current section/i,
+    });
+    const desktopNav = screen.getByRole('navigation', { name: 'Main' });
+    const desktopMoreButton = within(desktopNav).getByRole('button', {
+      name: /more\s*,\s*current section/i,
+    });
+
+    expect(mobileMoreButton).toHaveClass('bg-emerald-800');
+    expect(desktopMoreButton).toHaveClass('bg-white/12');
+
+    fireEvent.click(mobileMoreButton);
+
+    expect(within(mobileNav).getByRole('group', { name: 'More navigation' })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('link', { name: /tasks/i })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 });

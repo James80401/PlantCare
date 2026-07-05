@@ -253,6 +253,7 @@ function LayoutShell({
                 </span>
               ) : null}
               <span className="mt-1 max-w-full truncate text-[11px] font-medium leading-4">More</span>
+              {hasActiveMobileSecondary ? <span className="sr-only">, current section</span> : null}
               {buddyQuestClaims > 0 ? (
                 <span className="sr-only">
                   , {buddyQuestClaims} quest{buddyQuestClaims === 1 ? '' : 's'} ready to claim
@@ -262,6 +263,7 @@ function LayoutShell({
             {moreOpen ? (
               <div
                 id="mobile-more-menu"
+                role="group"
                 aria-label="More navigation"
                 className="absolute bottom-[calc(100%+0.75rem)] right-0 max-h-[min(70vh,28rem)] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto rounded-2xl border border-emerald-100 bg-white p-2 text-sm shadow-2xl"
               >
@@ -314,6 +316,7 @@ function MoreMenu({
       >
         <MenuIcon className="h-5 w-5" aria-hidden />
         <span>More</span>
+        {active ? <span className="sr-only">, current section</span> : null}
         {buddyQuestClaims > 0 ? (
           <span
             className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-xs font-bold text-emerald-950"
@@ -331,6 +334,7 @@ function MoreMenu({
       {open ? (
         <div
           id="desktop-more-menu"
+          role="group"
           aria-label="More navigation"
           className="absolute right-0 top-[calc(100%+0.5rem)] w-60 rounded-2xl border border-emerald-100 bg-white p-2 text-sm text-emerald-950 shadow-2xl"
         >

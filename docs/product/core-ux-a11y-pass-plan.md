@@ -165,11 +165,13 @@ log.
 - Focus rings are visible on buttons, links, tabs, chips, and icon controls.
 - Status messages are announced without stealing focus.
 
-**Status (2026-07-05):** first shell slice shipped. Header links, desktop nav,
+**Status (2026-07-05):** shell slices shipped. Header links, desktop nav,
 mobile bottom nav, More menu links, and logout now share explicit visible focus
 treatment. Desktop and mobile More buttons expose popup state and close with
-Escape as well as outside click. Remaining Checkpoint 1 work is the manual
-route-by-route audit against the worksheet.
+Escape as well as outside click. The skip link now moves focus directly to
+`#main-content`, and More announces when it is the current section for routes
+inside the secondary navigation. Remaining Checkpoint 1 work is manual
+route-by-route visual review before marking the checkpoint fully done.
 
 ## Checkpoint 2 - Dashboard command center
 
