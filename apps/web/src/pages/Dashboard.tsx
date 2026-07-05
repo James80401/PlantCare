@@ -472,8 +472,8 @@ export default function Dashboard() {
         <GardenStorySection story={healthStory} />
       ) : null}
 
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.75fr)]">
-        <div className="space-y-4">
+      <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.75fr)]">
+        <div className="min-w-0 space-y-4">
           <SectionHeader
             eyebrow="Start here"
             title="Your gardens"
@@ -515,7 +515,7 @@ export default function Dashboard() {
               />
             )
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
               {gardenSummaries.map((garden) => (
                 <GardenCard key={garden.id} garden={garden} />
               ))}
@@ -523,7 +523,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           <RecommendationPanel
             recommendations={recommendations}
             onChanged={reloadDash}
