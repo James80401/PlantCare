@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { buddyApi } from '../../services/api';
 import type { JourneyResponse, JourneyState } from './types';
 import { formatApiErrorMessage } from '../../utils/apiError';
+import { useInterval } from '../useInterval';
 
 export function useJourney(enabled: boolean) {
   const [data, setData] = useState<JourneyResponse | null>(null);
@@ -25,13 +26,8 @@ export function useJourney(enabled: boolean) {
     refresh();
   }, [refresh]);
 
-  useEffect(() => {
-    if (!enabled) return;
-    const journey = data?.journey;
-    if (!journey || journey.completed) return;
-    const id = window.setInterval(refresh, 30_000);
-    return () => window.clearInterval(id);
-  }, [enabled, data?.journey, refresh]);
+  const journey = data?.journey;
+  useInterval(refresh, 30_000, enabled && Boolean(journey && !journey.completed));
 
   return { data, journey: data?.journey ?? null, loading, error, refresh, setData };
 }

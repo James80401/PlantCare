@@ -12,6 +12,7 @@ import { buddyApi, dashboardApi } from '../services/api';
 import { trackEvent } from '../utils/analytics';
 import type { BuddyCompanionMode, BuddyState, BuddyTrait, JourneyState } from '../hooks/buddy/types';
 import { isJourneyTraveling } from '../hooks/buddy/useJourney';
+import { useInterval } from '../hooks/useInterval';
 import {
   buildBuddyPhraseContext,
   EMPTY_GARDEN_METRICS,
@@ -156,19 +157,11 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
     if (buddy) loadGreeting();
   }, [buddy?.id, loadGreeting]);
 
-  useEffect(() => {
-    if (!BUDDY_ENABLED) return;
-    const id = window.setInterval(refreshGardenMetrics, 60_000);
-    return () => window.clearInterval(id);
-  }, [refreshGardenMetrics]);
+  useInterval(refreshGardenMetrics, 60_000, BUDDY_ENABLED);
 
   const traveling = isJourneyTraveling(journey) || Boolean(buddy?.hasActiveJourney);
 
-  useEffect(() => {
-    if (!BUDDY_ENABLED || !traveling) return;
-    const id = window.setInterval(refreshJourney, 30_000);
-    return () => window.clearInterval(id);
-  }, [traveling, refreshJourney]);
+  useInterval(refreshJourney, 30_000, BUDDY_ENABLED && traveling);
 
   const phraseContext = useMemo(() => {
     if (!buddy) return null;

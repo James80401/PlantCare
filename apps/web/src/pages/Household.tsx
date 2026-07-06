@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatActivityLabel } from '../utils/household';
 import { CreateGardenForm } from '../components/gardens/CreateGardenForm';
 import { formatApiErrorMessage } from '../utils/apiError';
+import { useInterval } from '../hooks/useInterval';
 
 export default function Household() {
   const { user } = useAuth();
@@ -53,15 +54,11 @@ export default function Household() {
     load();
   }, [load]);
 
-  useEffect(() => {
-    // Poll in the background so a caregiver's changes (shared plants,
-    // accepted invites) show up here without a manual reload. 30s errs
-    // toward Buddy's 60s always-on garden-metrics interval rather than a
-    // much tighter one, trading a little immediacy for less background
-    // request volume.
-    const id = window.setInterval(() => load({ silent: true }), 30_000);
-    return () => window.clearInterval(id);
-  }, [load]);
+  // Poll in the background so a caregiver's changes (shared plants, accepted
+  // invites) show up here without a manual reload. 30s errs toward Buddy's
+  // 60s always-on garden-metrics interval rather than a much tighter one,
+  // trading a little immediacy for less background request volume.
+  useInterval(() => load({ silent: true }), 30_000);
 
   const loadActivity = async (gardenId: string) => {
     const { data } = await gardensApi.activity(gardenId);

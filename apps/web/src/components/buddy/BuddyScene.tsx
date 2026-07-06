@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import { useInterval } from '../../hooks/useInterval';
 import { BuddyActor, PotHome, furnitureEmoji } from './BuddyItemVisuals';
 import { EncounterFigure, TravelLandmarks, biomeVisual } from './BuddyJourneyWorld';
 import {
@@ -100,13 +101,11 @@ export default function BuddyScene({
   const [view, setView] = useState<'interior' | 'exterior'>('interior');
   const interior = mode === 'home' && view === 'interior';
 
-  useEffect(() => {
-    if (reducedMotion) return;
-    const id = window.setInterval(() => {
-      setActionIndex((index) => index + 1);
-    }, mode === 'traveling' ? 4200 : 3600);
-    return () => window.clearInterval(id);
-  }, [mode, reducedMotion]);
+  useInterval(
+    () => setActionIndex((index) => index + 1),
+    mode === 'traveling' ? 4200 : 3600,
+    !reducedMotion,
+  );
 
   useEffect(() => {
     if (!pokeReaction) return;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { gardensApi, type GardenDetail } from '../services/api';
 import { formatApiErrorMessage } from '../utils/apiError';
+import { useInterval } from './useInterval';
 
 // Always-on background poll (not gated by an "actively watching" state like
 // Buddy's 30s journey refresh), so this errs toward Buddy's 60s garden-metrics
@@ -45,11 +46,7 @@ export function useGardenDetail(gardenId: string | undefined) {
     reload();
   }, [reload]);
 
-  useEffect(() => {
-    if (!gardenId) return;
-    const id = window.setInterval(() => reload({ silent: true }), SYNC_INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, [gardenId, reload]);
+  useInterval(() => reload({ silent: true }), SYNC_INTERVAL_MS, Boolean(gardenId));
 
   return { garden, loading, error, reload };
 }

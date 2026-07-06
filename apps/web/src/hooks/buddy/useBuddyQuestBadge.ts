@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { buddyApi } from '../../services/api';
+import { useInterval } from '../useInterval';
 
 /** Count of daily/achievement quests ready to claim (for nav badge). */
 export function useBuddyQuestBadge(enabled = true) {
@@ -22,10 +23,9 @@ export function useBuddyQuestBadge(enabled = true) {
 
   useEffect(() => {
     refresh();
-    if (!enabled) return;
-    const id = window.setInterval(refresh, 60_000);
-    return () => window.clearInterval(id);
-  }, [refresh, enabled]);
+  }, [refresh]);
+
+  useInterval(refresh, 60_000, enabled);
 
   return claimable;
 }

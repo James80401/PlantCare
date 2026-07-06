@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBuddyCompanion } from '../../context/BuddyCompanionContext';
+import { useInterval } from '../../hooks/useInterval';
 import { pickBuddyPhrase, pushRecentPhraseId } from './pickBuddyPhrase';
 import BuddyCharacterModel from './BuddyCharacterModel';
 import BuddyCompanionAnimated from './BuddyCompanionAnimated';
@@ -211,13 +212,11 @@ export default function BuddyFloatingCompanion() {
     setSpeechKey((k) => k + 1);
   }, [phraseTick, phraseContext, greeting]);
 
-  useEffect(() => {
-    if (hideOnRoute || loading || missing || !phraseContext) return;
-    const id = window.setInterval(() => {
-      setPhraseTick((t) => t + 1);
-    }, PHRASE_ROTATE_MS);
-    return () => window.clearInterval(id);
-  }, [hideOnRoute, loading, missing, phraseContext]);
+  useInterval(
+    () => setPhraseTick((t) => t + 1),
+    PHRASE_ROTATE_MS,
+    !hideOnRoute && !loading && !missing && Boolean(phraseContext),
+  );
 
   useEffect(() => {
     if (expanded) loadGreeting();
