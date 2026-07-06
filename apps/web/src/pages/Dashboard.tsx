@@ -70,6 +70,8 @@ export default function Dashboard() {
   const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null);
   const [scheduleMessage, setScheduleMessage] = useState('');
   const [metricsOpen, setMetricsOpen] = useState(false);
+  const [recommendationsExpanded, setRecommendationsExpanded] = useState(false);
+  const [attentionExpanded, setAttentionExpanded] = useState(false);
 
   const { data: dash, loading: dashLoading, error: dashError, reload: reloadDash } =
     useDashboard();
@@ -130,6 +132,11 @@ export default function Dashboard() {
 
   const scheduleSuggestions = dash?.scheduleSuggestions ?? [];
   const recommendations = dash?.recommendations ?? [];
+  const RECOMMENDATIONS_PREVIEW_COUNT = 3;
+  const visibleRecommendations = recommendationsExpanded
+    ? recommendations
+    : recommendations.slice(0, RECOMMENDATIONS_PREVIEW_COUNT);
+  const hiddenRecommendationsCount = recommendations.length - visibleRecommendations.length;
   const firstName = dash?.greeting.name ?? 'there';
   const plants = dash?.plants ?? [];
   const sharedPlants = dash?.sharedPlants ?? [];
@@ -183,6 +190,11 @@ export default function Dashboard() {
   const weekPreview = dash?.weekPreview ?? [];
   const weekSummary = dash?.weekSummary;
   const attentionItems = dash?.attention ?? [];
+  const ATTENTION_PREVIEW_COUNT = 3;
+  const visibleAttentionItems = attentionExpanded
+    ? attentionItems
+    : attentionItems.slice(0, ATTENTION_PREVIEW_COUNT);
+  const hiddenAttentionCount = attentionItems.length - visibleAttentionItems.length;
   const metrics = dash?.metrics;
   const healthStory = dash?.healthStory;
   const careSummary = dash?.careSummary;
@@ -306,10 +318,21 @@ export default function Dashboard() {
   const secondaryPanels = (
     <>
       <RecommendationPanel
-        recommendations={recommendations}
+        recommendations={visibleRecommendations}
         onChanged={reloadDash}
         emptyText="No extra recommendations right now. Keep up with your care tasks."
       />
+      {hiddenRecommendationsCount > 0 || recommendationsExpanded ? (
+        <button
+          type="button"
+          onClick={() => setRecommendationsExpanded((expanded) => !expanded)}
+          className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
+        >
+          {recommendationsExpanded
+            ? 'Show fewer recommendations'
+            : `Show ${hiddenRecommendationsCount} more recommendation${hiddenRecommendationsCount === 1 ? '' : 's'}`}
+        </button>
+      ) : null}
 
       <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
         <h2 className="text-base font-semibold text-emerald-950 font-display">
@@ -329,13 +352,26 @@ export default function Dashboard() {
                 'Add more photos, notes, and care feedback over time to make this smarter.'}
             </p>
           ) : (
-            attentionItems.map((item) => (
-              <AttentionItemCard
-                key={item.plantId}
-                item={item}
-                plant={plants.find((p) => p.id === item.plantId)}
-              />
-            ))
+            <>
+              {visibleAttentionItems.map((item) => (
+                <AttentionItemCard
+                  key={item.plantId}
+                  item={item}
+                  plant={plants.find((p) => p.id === item.plantId)}
+                />
+              ))}
+              {hiddenAttentionCount > 0 || attentionExpanded ? (
+                <button
+                  type="button"
+                  onClick={() => setAttentionExpanded((expanded) => !expanded)}
+                  className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
+                >
+                  {attentionExpanded
+                    ? 'Show fewer'
+                    : `Show ${hiddenAttentionCount} more`}
+                </button>
+              ) : null}
+            </>
           )}
         </div>
       </section>
@@ -369,6 +405,178 @@ export default function Dashboard() {
       </section>
     </>
   );
+
+  // Moved directly under Priority Care — plants are the core content of this
+  // page, and previously sat below seven other sections (adaptive scheduling,
+  // health story, gardens, recommendations, tips, weather, progress).
+  const plantsSection = (
+    <section id="plants" className="space-y-4 scroll-mt-24">
+      <SectionHeader
+        eyebrow="Garden"
+        title="Your plants"
+        actionLabel="Add plant"
+        actionTo="/garden/plants/new"
+      />
+
+      {(plants.length > 0 || sharedPlants.length > 0) && (
+        <div>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                ['all', 'All plants'],
+                ['mine', 'My plants'],
+                ['shared', 'Shared with me'],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setPlantScope(key)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  plantScope === key
+                    ? 'bg-emerald-800 text-white'
+                    : 'bg-white border border-emerald-100 text-emerald-800 hover:bg-emerald-50'
+                }`}
+              >
+                {label}
+                {key === 'shared' && sharedPlants.length > 0 ? ` (${sharedPlants.length})` : ''}
+              </button>
+            ))}
+          </div>
+          {sharedPlants.length > 0 ? (
+            <p className="text-xs text-gray-500">
+              Shared plants come from households you joined.{' '}
+              <Link to="/garden/household" className="font-semibold text-emerald-700 hover:underline">
+                Manage Care Share
+              </Link>
+            </p>
+          ) : null}
+        </div>
+      )}
+
+      {dashboardLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {[0, 1, 2].map((index) => (
+            <div
+              key={index}
+              className="h-36 animate-pulse rounded-3xl border border-emerald-100 bg-white"
+            />
+          ))}
+        </div>
+      ) : visiblePlants.length === 0 ? (
+        <EmptyState
+          title={plantScope === 'shared' ? 'No shared plants yet' : 'No plants yet'}
+          body={
+            plantScope === 'shared'
+              ? 'Accept a household invite to see plants others share with you.'
+              : 'Add a plant and Dr. Plant will create a schedule, care guide, and profile you can track over time.'
+          }
+          actionLabel={plantScope === 'shared' ? 'Household settings' : 'Add your first plant'}
+          actionTo={plantScope === 'shared' ? '/garden/household' : '/garden/plants/new'}
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {visiblePlants.map((plant) => (
+            <PlantCard
+              key={plant.id}
+              plant={plant}
+              tasks={pendingTasks}
+              sharedMeta={
+                'shared' in plant && plant.shared
+                  ? { gardenName: plant.gardenName, role: plant.memberRole }
+                  : undefined
+              }
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+
+  // Adaptive scheduling, the health/journal story, and progress/milestones are
+  // all "check when curious," not daily-use info — previously each was its
+  // own always-expanded section (6 suggestion cards, a 3-column story, a full
+  // progress card), stacking up between the plant list and the rest of the
+  // page. Consolidated into one closed-by-default disclosure.
+  const hasHealthStory = Boolean(
+    healthStory &&
+      (healthStory.recentJournal.length > 0 ||
+        healthStory.recentDiagnoses.length > 0 ||
+        healthStory.openDiagnosisCount > 0),
+  );
+  const hasEngagementProgress = plantCount > 0 && gardenWellness.score > 0;
+  const hasScheduleSuggestions = scheduleSuggestions.length > 0 || Boolean(scheduleMessage);
+  const hasMoreInsights = hasScheduleSuggestions || hasHealthStory || hasEngagementProgress;
+
+  const moreInsightsSummaryParts: string[] = [];
+  if (scheduleSuggestions.length > 0) {
+    moreInsightsSummaryParts.push(
+      `${scheduleSuggestions.length} schedule suggestion${scheduleSuggestions.length === 1 ? '' : 's'}`,
+    );
+  }
+  if (hasHealthStory) moreInsightsSummaryParts.push('recent activity');
+  if (hasEngagementProgress) moreInsightsSummaryParts.push('your progress');
+
+  const moreInsightsSection = hasMoreInsights ? (
+    <details className="group rounded-3xl border border-emerald-100 bg-white/70 p-4 shadow-sm shadow-emerald-900/5">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-emerald-800 [&::-webkit-details-marker]:hidden">
+        <span>
+          More insights
+          {moreInsightsSummaryParts.length > 0 ? ` — ${moreInsightsSummaryParts.join(', ')}` : ''}
+        </span>
+        <span aria-hidden className="shrink-0 transition group-open:rotate-180">
+          ▾
+        </span>
+      </summary>
+      <div className="mt-4 space-y-4">
+        {hasScheduleSuggestions && (
+          <section className="rounded-3xl border border-lime-100 bg-lime-50/70 p-4 shadow-sm shadow-emerald-900/5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">
+                  Adaptive scheduling
+                </p>
+                <h2 className="mt-1 text-lg font-semibold text-lime-950 font-display">
+                  Review schedule suggestions
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-700">
+                  Suggestions are based on skipped-task feedback, season, and care context. Nothing
+                  changes unless you approve it.
+                </p>
+              </div>
+            </div>
+            {scheduleMessage ? (
+              <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-medium text-lime-900">
+                {scheduleMessage}
+              </p>
+            ) : null}
+            {scheduleSuggestions.length > 0 && (
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {scheduleSuggestions.map((suggestion) => (
+                  <ScheduleSuggestionCard
+                    key={suggestion.id}
+                    suggestion={suggestion}
+                    applying={applyingSuggestionId === suggestion.id}
+                    onApply={() => applyScheduleSuggestion(suggestion.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {hasHealthStory ? <GardenStorySection story={healthStory!} /> : null}
+
+        {hasEngagementProgress ? (
+          <EngagementProgress
+            wellness={gardenWellness}
+            streak={dash?.engagement.streak ?? engagementContext.streak}
+            milestones={milestoneHighlights}
+          />
+        ) : null}
+      </div>
+    </details>
+  ) : null;
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
@@ -504,48 +712,9 @@ export default function Dashboard() {
         />
       ) : null}
 
-      {(scheduleSuggestions.length > 0 || scheduleMessage) && (
-        <section className="rounded-3xl border border-lime-100 bg-lime-50/70 p-4 shadow-sm shadow-emerald-900/5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">
-                Adaptive scheduling
-              </p>
-              <h2 className="mt-1 text-lg font-semibold text-lime-950 font-display">
-                Review schedule suggestions
-              </h2>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-700">
-                Suggestions are based on skipped-task feedback, season, and care context. Nothing
-                changes unless you approve it.
-              </p>
-            </div>
-          </div>
-          {scheduleMessage ? (
-            <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-medium text-lime-900">
-              {scheduleMessage}
-            </p>
-          ) : null}
-          {scheduleSuggestions.length > 0 && (
-            <div className="mt-4 grid gap-3 lg:grid-cols-2">
-              {scheduleSuggestions.map((suggestion) => (
-                <ScheduleSuggestionCard
-                  key={suggestion.id}
-                  suggestion={suggestion}
-                  applying={applyingSuggestionId === suggestion.id}
-                  onApply={() => applyScheduleSuggestion(suggestion.id)}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+      {plantsSection}
 
-      {healthStory &&
-      (healthStory.recentJournal.length > 0 ||
-        healthStory.recentDiagnoses.length > 0 ||
-        healthStory.openDiagnosisCount > 0) ? (
-        <GardenStorySection story={healthStory} />
-      ) : null}
+      {moreInsightsSection}
 
       <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.75fr)]">
         <div className="min-w-0 space-y-4">
@@ -615,13 +784,19 @@ export default function Dashboard() {
         </aside>
       </section>
 
-      <section className="grid gap-3 sm:gap-4 lg:grid-cols-3">
-        <SuggestionCard
-          title={recommendedAction.title}
-          body={recommendedAction.body}
-          actionLabel={recommendedAction.actionLabel}
-          actionTo={recommendedAction.actionTo}
-        />
+      {/* Priority Care above already covers every case recommendedAction can
+          describe once a garden exists (overdue/today/caught-up), in more
+          detail — so this first tip card only adds anything new before
+          there's a garden started at all ("Add your first plant"). */}
+      <section className={`grid gap-3 sm:gap-4 ${hasGardenStarted ? 'lg:grid-cols-2' : 'lg:grid-cols-3'}`}>
+        {!hasGardenStarted ? (
+          <SuggestionCard
+            title={recommendedAction.title}
+            body={recommendedAction.body}
+            actionLabel={recommendedAction.actionLabel}
+            actionTo={recommendedAction.actionTo}
+          />
+        ) : null}
         <SuggestionCard
           title="Seasonal care note"
           body={seasonalTip}
@@ -666,96 +841,6 @@ export default function Dashboard() {
             <SeasonalBanner />
           </div>
         ) : null}
-      </section>
-
-      {plantCount > 0 && (
-        <EngagementProgress
-          wellness={gardenWellness}
-          streak={dash?.engagement.streak ?? engagementContext.streak}
-          milestones={milestoneHighlights}
-        />
-      )}
-
-      <section id="plants" className="space-y-4 scroll-mt-24">
-        <SectionHeader
-          eyebrow="Garden"
-          title="Your plants"
-          actionLabel="Add plant"
-          actionTo="/garden/plants/new"
-        />
-
-        {(plants.length > 0 || sharedPlants.length > 0) && (
-          <div>
-            <div className="flex flex-wrap gap-2">
-              {(
-                [
-                  ['all', 'All plants'],
-                  ['mine', 'My plants'],
-                  ['shared', 'Shared with me'],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setPlantScope(key)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    plantScope === key
-                      ? 'bg-emerald-800 text-white'
-                      : 'bg-white border border-emerald-100 text-emerald-800 hover:bg-emerald-50'
-                  }`}
-                >
-                  {label}
-                  {key === 'shared' && sharedPlants.length > 0 ? ` (${sharedPlants.length})` : ''}
-                </button>
-              ))}
-            </div>
-            {sharedPlants.length > 0 ? (
-              <p className="text-xs text-gray-500">
-                Shared plants come from households you joined.{' '}
-                <Link to="/garden/household" className="font-semibold text-emerald-700 hover:underline">
-                  Manage Care Share
-                </Link>
-              </p>
-            ) : null}
-          </div>
-        )}
-
-        {dashboardLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {[0, 1, 2].map((index) => (
-              <div
-                key={index}
-                className="h-36 animate-pulse rounded-3xl border border-emerald-100 bg-white"
-              />
-            ))}
-          </div>
-        ) : visiblePlants.length === 0 ? (
-          <EmptyState
-            title={plantScope === 'shared' ? 'No shared plants yet' : 'No plants yet'}
-            body={
-              plantScope === 'shared'
-                ? 'Accept a household invite to see plants others share with you.'
-                : 'Add a plant and Dr. Plant will create a schedule, care guide, and profile you can track over time.'
-            }
-            actionLabel={plantScope === 'shared' ? 'Household settings' : 'Add your first plant'}
-            actionTo={plantScope === 'shared' ? '/garden/household' : '/garden/plants/new'}
-          />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {visiblePlants.map((plant) => (
-              <PlantCard
-                key={plant.id}
-                plant={plant}
-                tasks={pendingTasks}
-                sharedMeta={
-                  'shared' in plant && plant.shared
-                    ? { gardenName: plant.gardenName, role: plant.memberRole }
-                    : undefined
-                }
-              />
-            ))}
-          </div>
-        )}
       </section>
     </div>
   );
