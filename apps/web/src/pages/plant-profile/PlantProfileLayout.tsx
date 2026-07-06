@@ -282,9 +282,11 @@ function PlantProfileShell() {
 
 function ProfileNextAction() {
   const ctx = usePlantProfile();
+  const location = useLocation();
   const healthPath = plantDrPlantPath(ctx.id);
   const tasksPath = `/garden/plants/${ctx.id}/tasks`;
   const journalPath = `/garden/plants/${ctx.id}/journal`;
+  const onTasksTab = location.pathname === tasksPath;
 
   if (ctx.activeDiagnosisCount > 0) {
     return (
@@ -302,6 +304,9 @@ function ProfileNextAction() {
   }
 
   if (ctx.nextTask) {
+    // The Tasks tab immediately below already shows this exact task — a "View
+    // tasks" button here would just link back to the page already on screen.
+    if (onTasksTab) return null;
     const taskLabel = taskTypeLabel(ctx.nextTask.taskType as string);
     return (
       <ActionBanner
