@@ -9,7 +9,7 @@ import {
   type DashboardHealthStory,
 } from '../hooks/useDashboard';
 import { useDashboardTaskActions } from '../hooks/useDashboardTaskActions';
-import { tasksApi, gardensApi, type GardenSummaryCard, type RecommendationItem } from '../services/api';
+import { tasksApi, gardensApi, type GardenSummaryCard } from '../services/api';
 import { GardenCard } from '../components/gardens/GardenCard';
 import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
 import BuddyDashboardPanel from '../components/buddy/BuddyDashboardPanel';
@@ -26,7 +26,6 @@ import {
 import { FormError } from '../components/a11y/FormError';
 import { StatusMessage } from '../components/a11y/StatusMessage';
 import { EngagementProgress } from '../components/engagement/EngagementProgress';
-import { RecommendationPanel } from '../components/recommendations/RecommendationPanel';
 import { HelpButton } from '../components/ui/HelpButton';
 import {
   resolveMilestones,
@@ -124,7 +123,6 @@ export default function Dashboard() {
   };
 
   const scheduleSuggestions = dash?.scheduleSuggestions ?? [];
-  const recommendations = dash?.recommendations ?? [];
   const firstName = dash?.greeting.name ?? 'there';
   const plants = dash?.plants ?? [];
   const sharedPlants = dash?.sharedPlants ?? [];
@@ -281,12 +279,6 @@ export default function Dashboard() {
   const dashboardLoading = dashLoading;
   const gardensLoading = dashLoading || gardenSummariesLoading;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
-  const recommendationSummary = getRecommendationSummary(recommendations);
-  const attentionDisclosureSummary =
-    attentionSummary?.body ??
-    (needsAttentionCount
-      ? `${needsAttentionCount} plant${needsAttentionCount === 1 ? '' : 's'} may need a closer look.`
-      : 'No major issues detected from your current schedule.');
   const totalWeekItems = weekPreview.reduce((sum, day) => sum + day.count, 0);
   const weekDisclosureSummary =
     weekSummary?.body ??
@@ -300,56 +292,10 @@ export default function Dashboard() {
         } plant${plantCount === 1 ? '' : 's'}. Open a garden to browse its plants.`
       : 'Create a garden, then add plants into it.';
 
-  // Keep optional context as summaries first. Users can expand when they want
-  // the full recommendation, attention, or calendar lists.
+  // Keep optional dashboard context as summaries first. Garden-specific
+  // recommendations and attention now live inside each garden view.
   const secondaryPanels = (
     <>
-      <DashboardDisclosure
-        eyebrow="Recommendations"
-        title="Recommendations"
-        summary={recommendationSummary}
-        countLabel={
-          recommendations.length
-            ? `${recommendations.length} recommendation${recommendations.length === 1 ? '' : 's'}`
-            : 'Optional'
-        }
-      >
-        <RecommendationPanel
-          title="Recommendation details"
-          recommendations={recommendations}
-          onChanged={reloadDash}
-          emptyText="No extra recommendations right now. Keep up with your care tasks."
-        />
-      </DashboardDisclosure>
-
-      <DashboardDisclosure
-        eyebrow="Attention"
-        title={attentionSummary?.headline ?? 'Needs attention'}
-        summary={attentionDisclosureSummary}
-        countLabel={
-          needsAttentionCount
-            ? `${needsAttentionCount} item${needsAttentionCount === 1 ? '' : 's'}`
-            : 'All clear'
-        }
-      >
-        <div className="space-y-3">
-          {attentionItems.length === 0 ? (
-            <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-              {attentionSummary?.body ??
-                'Add more photos, notes, and care feedback over time to make this smarter.'}
-            </p>
-          ) : (
-            attentionItems.map((item) => (
-              <AttentionItemCard
-                key={item.plantId}
-                item={item}
-                plant={plants.find((p) => p.id === item.plantId)}
-              />
-            ))
-          )}
-        </div>
-      </DashboardDisclosure>
-
       <DashboardDisclosure
         eyebrow="Calendar"
         title={weekSummary?.headline ?? 'Next seven days'}
@@ -1052,10 +998,10 @@ function PriorityCareSection({
       ? "Today's care"
       : 'All caught up';
   const body = overdueCount
-    ? `${overdueCount} overdue care item${overdueCount === 1 ? '' : 's'} should be handled before optional recommendations.`
+    ? `${overdueCount} overdue care item${overdueCount === 1 ? '' : 's'} should be handled before optional guidance.`
     : dueTodayCount
       ? `${dueTodayCount} care item${dueTodayCount === 1 ? '' : 's'} due today.`
-      : 'No critical care tasks need action today. Optional recommendations can wait.';
+      : 'No critical care tasks need action today. Optional garden guidance can wait.';
 
   const completeRound = async (key: string, ids: string[]) => {
     setBusyGroup(key);
@@ -1155,7 +1101,7 @@ function PriorityCareSection({
         </div>
       ) : showDetails ? (
         <div className="mt-4 rounded-2xl bg-white/80 px-4 py-3 text-sm text-emerald-900 ring-1 ring-emerald-100">
-          Keep an eye on recommendations below when you have time, but there is no urgent plant care waiting.
+          Open a garden when you want optional guidance, but there is no urgent plant care waiting.
         </div>
       ) : null}
     </section>
@@ -1220,23 +1166,6 @@ function DashboardDisclosure({
       <div className="mt-4 min-w-0 space-y-4">{children}</div>
     </details>
   );
-}
-
-function getRecommendationSummary(recommendations: RecommendationItem[]) {
-  if (recommendations.length === 0) {
-    return 'No optional recommendations are waiting. Critical care tasks still stay separate above.';
-  }
-
-  const taskConversions = recommendations.filter((item) => item.suggestedTaskType);
-  const top = recommendations[0];
-  if (taskConversions.length > 0) {
-    const taskLabel = taskTypeLabel(taskConversions[0].suggestedTaskType!);
-    return `Suggested next step: add or review ${taskLabel.toLowerCase()} guidance. Open details when you want the full recommendation list.`;
-  }
-
-  return `${recommendations.length} optional recommendation${
-    recommendations.length === 1 ? '' : 's'
-  } available. Top suggestion: ${top.title}`;
 }
 
 function EmptyState({

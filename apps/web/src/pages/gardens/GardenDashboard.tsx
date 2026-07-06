@@ -1,11 +1,19 @@
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { PageHeader, Card, SkeletonGrid } from '../../components/ui';
 import { FormError } from '../../components/a11y/FormError';
+import { RecommendationPanel } from '../../components/recommendations/RecommendationPanel';
 import { useGardenDetail } from '../../hooks/useGardenDetail';
 import { resolveApiThumbnailUrl } from '../../utils/apiAssets';
 import { taskTypeLabel } from '../../utils/tasks';
-import type { GardenDetail } from '../../services/api';
+import {
+  recommendationsApi,
+  type GardenDetail,
+  type GardenDetailPlant,
+  type RecommendationItem,
+} from '../../services/api';
+import { plantDrPlantPath } from '../plant-profile/constants';
 
 const addPlantButtonClass =
   'inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-900';
@@ -18,6 +26,50 @@ const addPlantButtonClass =
 export default function GardenDashboard() {
   const { gardenId } = useParams<{ gardenId: string }>();
   const { garden, loading, error } = useGardenDetail(gardenId);
+  const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [recommendationsError, setRecommendationsError] = useState('');
+
+  const gardenPlantIds = useMemo(
+    () => new Set((garden?.plants ?? []).map((plant) => plant.id)),
+    [garden?.plants],
+  );
+  const attentionPlants = useMemo(
+    () => (garden?.plants ?? []).filter((plant) => plant.needsAttention),
+    [garden?.plants],
+  );
+  const gardenRecommendations = useMemo(
+    () =>
+      recommendations.filter((recommendation) =>
+        recommendation.gardenId === garden?.id ||
+        (recommendation.plantId ? gardenPlantIds.has(recommendation.plantId) : false) ||
+        (recommendation.plant?.id ? gardenPlantIds.has(recommendation.plant.id) : false),
+      ),
+    [garden?.id, gardenPlantIds, recommendations],
+  );
+
+  const loadRecommendations = useCallback(async () => {
+    if (!garden) {
+      setRecommendations([]);
+      return;
+    }
+
+    setRecommendationsLoading(true);
+    setRecommendationsError('');
+    try {
+      const { data } = await recommendationsApi.list();
+      setRecommendations(data);
+    } catch {
+      setRecommendations([]);
+      setRecommendationsError('Could not load this garden\'s recommendations.');
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  }, [garden?.id]);
+
+  useEffect(() => {
+    void loadRecommendations();
+  }, [loadRecommendations]);
 
   if (loading) {
     return (
@@ -97,6 +149,15 @@ export default function GardenDashboard() {
           accent="emerald"
         />
       </div>
+
+      <GardenFocusSections
+        garden={garden}
+        attentionPlants={attentionPlants}
+        recommendations={gardenRecommendations}
+        recommendationsLoading={recommendationsLoading}
+        recommendationsError={recommendationsError}
+        onRecommendationsChanged={loadRecommendations}
+      />
 
       {/* Plants */}
       <section>
@@ -197,6 +258,169 @@ function SubsectionCard({
       <h3 className="font-semibold text-emerald-950">{title}</h3>
       <p className="mt-1 text-sm text-gray-600">{summary}</p>
     </Link>
+  );
+}
+
+function GardenFocusSections({
+  garden,
+  attentionPlants,
+  recommendations,
+  recommendationsLoading,
+  recommendationsError,
+  onRecommendationsChanged,
+}: {
+  garden: GardenDetail;
+  attentionPlants: GardenDetailPlant[];
+  recommendations: RecommendationItem[];
+  recommendationsLoading: boolean;
+  recommendationsError: string;
+  onRecommendationsChanged: () => Promise<void> | void;
+}) {
+  const hasAttention = attentionPlants.length > 0;
+  const hasRecommendations =
+    recommendationsLoading || recommendationsError || recommendations.length > 0;
+
+  if (!hasAttention && !hasRecommendations) return null;
+
+  return (
+    <section className="grid gap-3 lg:grid-cols-2" aria-label={`${garden.name} guidance`}>
+      {hasAttention ? (
+        <GardenDisclosure
+          eyebrow="Needs attention"
+          title="Needs attention"
+          summary={`${attentionPlants.length} plant${attentionPlants.length === 1 ? '' : 's'} in this garden may need a closer look.`}
+          countLabel={`${attentionPlants.length} plant${attentionPlants.length === 1 ? '' : 's'}`}
+        >
+          <div className="space-y-3">
+            {attentionPlants.map((plant) => (
+              <GardenAttentionPlantCard key={plant.id} plant={plant} />
+            ))}
+          </div>
+        </GardenDisclosure>
+      ) : null}
+
+      {hasRecommendations ? (
+        <GardenDisclosure
+          eyebrow="Recommendations"
+          title="Recommendations"
+          summary={
+            recommendationsLoading
+              ? 'Loading optional guidance for this garden.'
+              : recommendationsError
+                ? recommendationsError
+                : `${recommendations.length} optional recommendation${recommendations.length === 1 ? '' : 's'} for this garden.`
+          }
+          countLabel={
+            recommendationsLoading
+              ? 'Loading'
+              : `${recommendations.length} rec${recommendations.length === 1 ? '' : 's'}`
+          }
+        >
+          {recommendationsLoading ? (
+            <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              Loading this garden's recommendations...
+            </p>
+          ) : recommendationsError ? (
+            <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-800">
+              {recommendationsError}
+            </p>
+          ) : (
+            <RecommendationPanel
+              title={`${garden.name} recommendation details`}
+              description="Useful guidance for plants in this garden. Critical care tasks stay in Tasks."
+              recommendations={recommendations}
+              onChanged={onRecommendationsChanged}
+              emptyText="No recommendations for this garden right now."
+            />
+          )}
+        </GardenDisclosure>
+      ) : null}
+    </section>
+  );
+}
+
+function GardenDisclosure({
+  eyebrow,
+  title,
+  summary,
+  countLabel,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  summary: string;
+  countLabel?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group rounded-3xl border border-emerald-100 bg-white/80 p-4 shadow-sm shadow-emerald-900/5">
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{eyebrow}</p>
+          <h2 className="mt-1 text-lg font-semibold text-emerald-950 font-display">{title}</h2>
+          <p className="mt-1 text-sm leading-6 text-gray-600">{summary}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {countLabel ? (
+            <span className="hidden rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 sm:inline-flex">
+              {countLabel}
+            </span>
+          ) : null}
+          <span
+            aria-hidden
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-lg font-bold text-emerald-800 transition group-open:rotate-45"
+          >
+            +
+          </span>
+        </div>
+      </summary>
+      <div className="mt-4 min-w-0">{children}</div>
+    </details>
+  );
+}
+
+function GardenAttentionPlantCard({ plant }: { plant: GardenDetailPlant }) {
+  const name = plant.nickname || plant.species.commonName;
+  return (
+    <article className="rounded-2xl border border-rose-100 bg-rose-50 p-3 text-sm text-rose-950">
+      <div className="flex items-center gap-3">
+        {plantImageUrl(plant) ? (
+          <img
+            src={plantImageUrl(plant) ?? undefined}
+            alt=""
+            className="h-12 w-12 rounded-xl bg-white object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-xl">
+            🪴
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate font-semibold">{name}</h3>
+          <p className="truncate text-xs opacity-80">{plant.species.commonName}</p>
+        </div>
+      </div>
+      <p className="mt-2 leading-6">
+        This plant is flagged for attention. Open the plant profile or ask Dr. Plant before changing
+        routine care.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Link
+          to={`/garden/plants/${plant.id}`}
+          className="inline-flex min-h-9 items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-rose-900 hover:bg-rose-100"
+        >
+          Open plant
+        </Link>
+        <Link
+          to={plantDrPlantPath(plant.id)}
+          className="inline-flex min-h-9 items-center rounded-full bg-rose-700 px-3 py-1 text-xs font-semibold text-white hover:bg-rose-800"
+        >
+          Ask Dr. Plant
+        </Link>
+      </div>
+    </article>
   );
 }
 

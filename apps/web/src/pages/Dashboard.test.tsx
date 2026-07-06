@@ -102,7 +102,7 @@ describe('Dashboard', () => {
     expect(screen.getByText('Porch plants')).toBeInTheDocument();
   });
 
-  it('keeps optional context panels below the primary dashboard work', async () => {
+  it('keeps garden-specific guidance out of the main dashboard', async () => {
     mockUseDashboard.mockReturnValue({
       data: dashboardPayload(),
       loading: false,
@@ -117,12 +117,13 @@ describe('Dashboard', () => {
 
     expect(await screen.findByText('Kitchen herbs')).toBeInTheDocument();
 
-    const priorityCare = screen.getByText('Priority care');
-    const recommendations = screen.getByRole('heading', { name: 'Recommendations' });
     const gardenContext = screen.getByLabelText('Garden context');
 
-    expect(priorityCare.compareDocumentPosition(gardenContext)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(recommendations.compareDocumentPosition(gardenContext)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(screen.getByText('Priority care').compareDocumentPosition(gardenContext)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(screen.queryByRole('heading', { name: 'Recommendations' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Needs attention' })).not.toBeInTheDocument();
   });
 
   it('surfaces dashboard load failures as an alert while garden summaries can still render', async () => {
