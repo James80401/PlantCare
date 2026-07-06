@@ -46,6 +46,7 @@ npm run production:up
 - Use managed PostgreSQL (RDS, Cloud SQL) or compose `postgres`
 - `FCM_SERVER_KEY` for real push (see [operations/push-notifications.md](operations/push-notifications.md))
 - Configure OpenAI, SMTP, S3, Stripe as needed
+- Schedule nightly backups: `scripts/backup-production.sh` via cron (see [operations/backups.md](operations/backups.md))
 - Post-deploy: `API_URL=... npm run verify` and `npm run smoke:buddy`
 
 Full runbook: [guides/15-production-deploy-and-android.md](guides/15-production-deploy-and-android.md)

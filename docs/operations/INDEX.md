@@ -12,5 +12,6 @@
 | [testing.md](testing.md) | Jest, Vitest, smoke |
 | [ai-cost-and-usage.md](ai-cost-and-usage.md) | AI scope gate, rate limiting, usage events, cost |
 | [observability.md](observability.md) | Request ids, structured logs, exception filter, Sentry |
+| [backups.md](backups.md) | Nightly pg_dump + uploads archive, S3 offsite, restore runbook |
 
 Legacy: [../DEPLOY.md](../DEPLOY.md)
