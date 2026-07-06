@@ -198,9 +198,16 @@ export default function Settings() {
 
   const handleDelete = async () => {
     if (!confirm('Delete your account and all plant data? This cannot be undone.')) return;
-    await usersApi.deleteAccount();
-    logout();
-    navigate('/login');
+    const typed = window.prompt('Type DELETE to permanently delete your account.');
+    if (typed !== 'DELETE') return;
+    setError('');
+    try {
+      await usersApi.deleteAccount();
+      logout();
+      navigate('/login');
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not delete account. Try again or contact support.'));
+    }
   };
 
   const detectGeoLocation = () => {
@@ -231,7 +238,7 @@ export default function Settings() {
       <section className="rounded-xl border border-emerald-100 bg-white p-6 space-y-3">
         <h2 className="font-semibold text-emerald-950">Plant Buddy</h2>
         <p className="text-sm text-gray-600 leading-relaxed">
-          Your Finch-style companion — journeys, quests, shop, and Garden Town sunshine.
+          Your Finch-style companion: journeys, quests, shop, and Garden Town sunshine.
         </p>
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
@@ -388,26 +395,35 @@ export default function Settings() {
           />
         ) : null}
 
-        <h2 className="font-semibold pt-2">Quiet hours (0–23)</h2>
+        <h2 className="font-semibold pt-2">Quiet hours (0-23)</h2>
+        <p className="text-sm text-gray-600">
+          Optional reminder pause window in 24-hour time.
+        </p>
         <div className="flex gap-2">
-          <input
-            type="number"
-            min={0}
-            max={23}
-            placeholder="Start"
-            value={quietStart}
-            onChange={(e) => setQuietStart(e.target.value)}
-            className="border rounded-lg px-3 py-2 w-24"
-          />
-          <input
-            type="number"
-            min={0}
-            max={23}
-            placeholder="End"
-            value={quietEnd}
-            onChange={(e) => setQuietEnd(e.target.value)}
-            className="border rounded-lg px-3 py-2 w-24"
-          />
+          <label className="block text-sm">
+            <span className="sr-only">Quiet hours start</span>
+            <input
+              type="number"
+              min={0}
+              max={23}
+              placeholder="Start"
+              value={quietStart}
+              onChange={(e) => setQuietStart(e.target.value)}
+              className="border rounded-lg px-3 py-2 w-24"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="sr-only">Quiet hours end</span>
+            <input
+              type="number"
+              min={0}
+              max={23}
+              placeholder="End"
+              value={quietEnd}
+              onChange={(e) => setQuietEnd(e.target.value)}
+              className="border rounded-lg px-3 py-2 w-24"
+            />
+          </label>
         </div>
 
         <h2 className="font-semibold pt-2">Location (optional, for weather)</h2>
@@ -427,7 +443,7 @@ export default function Settings() {
             autoComplete="address-level2"
           />
           {locationSearching ? (
-            <p className="mt-1 text-xs text-gray-500">Searching…</p>
+            <p className="mt-1 text-xs text-gray-500">Searching...</p>
           ) : null}
           {locationOptions.length > 0 && (
             <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-emerald-100 bg-white shadow-lg">
@@ -475,7 +491,7 @@ export default function Settings() {
               checked={temperatureUnit === 'C'}
               onChange={() => setTemperatureUnit('C')}
             />
-            Celsius (°C)
+            Celsius (C)
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -484,22 +500,25 @@ export default function Settings() {
               checked={temperatureUnit === 'F'}
               onChange={() => setTemperatureUnit('F')}
             />
-            Fahrenheit (°F)
+            Fahrenheit (F)
           </label>
         </div>
 
-        <input
-          value={timezone}
-          onChange={(e) => setTimezone(e.target.value)}
-          className="w-full border rounded-lg px-3 py-2"
-          placeholder="Timezone (e.g. America/New_York)"
-        />
+        <label className="block text-sm">
+          <span className="font-medium text-gray-700">Timezone</span>
+          <input
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+            placeholder="Timezone (e.g. America/New_York)"
+          />
+        </label>
 
         <button type="submit" className="w-full bg-emerald-700 text-white py-2 rounded-lg font-medium">
           Save settings
         </button>
-        {saved && <p className="text-emerald-600 text-sm text-center">Saved!</p>}
-        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+        {saved && <p className="text-emerald-600 text-sm text-center" role="status">Settings saved.</p>}
+        {error && <p className="text-red-600 text-sm text-center" role="alert">{error}</p>}
       </form>
 
       <button
@@ -507,7 +526,7 @@ export default function Settings() {
         onClick={handleDelete}
         className="w-full border border-red-300 text-red-700 py-2 rounded-lg text-sm"
       >
-        Delete account
+        Delete account and plant data
       </button>
     </div>
   );

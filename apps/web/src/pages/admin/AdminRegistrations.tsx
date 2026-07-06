@@ -380,6 +380,10 @@ export default function AdminRegistrations() {
   };
 
   const reviewExternalSpecies = async (speciesId: string, status: 'reviewed' | 'curated') => {
+    const label = status === 'curated' ? 'curated' : 'reviewed';
+    if (!window.confirm(`Mark this external species as ${label}? Save review edits first if you changed fields.`)) {
+      return;
+    }
     setBusyId(`species-${status}-${speciesId}`);
     setError('');
     try {
@@ -585,7 +589,7 @@ export default function AdminRegistrations() {
                       <li key={user.userId} className="flex items-center justify-between gap-3">
                         <span className="min-w-0 truncate text-gray-900">{user.email}</span>
                         <span className="shrink-0 text-xs font-semibold text-gray-600">
-                          {user.calls} calls · {user.imageCount} images
+                          {user.calls} calls - {user.imageCount} images
                         </span>
                       </li>
                     ))}
@@ -601,11 +605,11 @@ export default function AdminRegistrations() {
                     {observability.ai.latestEvents.slice(0, 5).map((event) => (
                       <li key={event.id}>
                         <p className="text-gray-900">
-                          {event.user?.email ?? 'Unknown user'} · {event.status.toLowerCase()} · {event.feature.replace('_', ' ')}
+                          {event.user?.email ?? 'Unknown user'} - {event.status.toLowerCase()} - {event.feature.replace('_', ' ')}
                         </p>
                         <p className="text-xs text-gray-500">
                           {new Date(event.createdAt).toLocaleString()}
-                          {event.reason ? ` · ${event.reason}` : ''}
+                          {event.reason ? ` - ${event.reason}` : ''}
                         </p>
                       </li>
                     ))}
@@ -695,6 +699,10 @@ export default function AdminRegistrations() {
             <p className="mt-3 text-xs text-gray-500">
               Snapshot generated {new Date(externalSpecies.generatedAt).toLocaleString()}.
             </p>
+            <p className="mt-3 rounded-2xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-950">
+              Review flow: save edited care/photo fields first, then mark reviewed or curated.
+              Curated means the plant is launch-ready for normal users.
+            </p>
             <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filter external species review">
               {(['all', 'user_confirmed', 'reviewed', 'curated'] as ExternalSpeciesFilter[]).map((filter) => (
                 <button
@@ -725,59 +733,63 @@ export default function AdminRegistrations() {
                 {visibleExternalSpecies.map((species) => {
                   const draft = externalSpeciesDrafts[species.id] ?? externalSpeciesDraftFromRow(species);
                   return (
-                  <article key={species.id} className="rounded-2xl border border-gray-100 bg-white p-4">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-base font-bold text-gray-950">{species.commonName}</h3>
-                          <span className={`rounded-full px-2 py-1 text-xs font-semibold ${externalSpeciesStatusClass(species.externalSource.status)}`}>
-                            {externalSpeciesStatusLabel(species.externalSource.status)}
-                          </span>
+                    <article key={species.id} className="rounded-2xl border border-gray-100 bg-white p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-base font-bold text-gray-950">{species.commonName}</h3>
+                            <span className={`rounded-full px-2 py-1 text-xs font-semibold ${externalSpeciesStatusClass(species.externalSource.status)}`}>
+                              {externalSpeciesStatusLabel(species.externalSource.status)}
+                            </span>
+                          </div>
+                          {species.scientificName ? (
+                            <p className="mt-1 text-sm italic text-gray-600">{species.scientificName}</p>
+                          ) : null}
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                            <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                              {species.externalSource.provider}
+                            </span>
+                            <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                              {formatConfidence(species.externalSource.confidence)}
+                            </span>
+                            <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                              Water every {species.wateringFreqDays} days
+                            </span>
+                            <span className={`rounded-full px-2 py-1 font-semibold ${photoReviewStatusClass(species.externalSource.photoReviewStatus)}`}>
+                              {photoReviewStatusLabel(species.externalSource.photoReviewStatus)}
+                            </span>
+                          </div>
+                          <p className="mt-3 text-sm text-gray-700">
+                            {species.careNotes ?? 'No care notes saved yet.'}
+                          </p>
+                          <p className="mt-2 text-xs text-gray-500">
+                            Confirmed {formatDateTime(species.externalSource.confirmedAt)}. Updated {formatDateTime(species.updatedAt)}.
+                            {species.externalSource.reviewNote ? ` Review note: ${species.externalSource.reviewNote}` : ''}
+                          </p>
                         </div>
-                        {species.scientificName ? (
-                          <p className="mt-1 text-sm italic text-gray-600">{species.scientificName}</p>
-                        ) : null}
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                          <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
-                            {species.externalSource.provider}
-                          </span>
-                          <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
-                            {formatConfidence(species.externalSource.confidence)}
-                          </span>
-                          <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
-                            Water every {species.wateringFreqDays} days
-                          </span>
-                          <span className={`rounded-full px-2 py-1 font-semibold ${photoReviewStatusClass(species.externalSource.photoReviewStatus)}`}>
-                            {photoReviewStatusLabel(species.externalSource.photoReviewStatus)}
-                          </span>
+                        <div className="flex shrink-0 flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={busyId === `species-reviewed-${species.id}` || species.externalSource.status === 'reviewed'}
+                            onClick={() => reviewExternalSpecies(species.id, 'reviewed')}
+                          >
+                            Mark reviewed
+                          </Button>
+                          <Button
+                            type="button"
+                            disabled={busyId === `species-curated-${species.id}` || species.externalSource.status === 'curated'}
+                            onClick={() => reviewExternalSpecies(species.id, 'curated')}
+                          >
+                            Mark curated
+                          </Button>
                         </div>
-                        <p className="mt-3 text-sm text-gray-700">
-                          {species.careNotes ?? 'No care notes saved yet.'}
-                        </p>
-                        <p className="mt-2 text-xs text-gray-500">
-                          Confirmed {formatDateTime(species.externalSource.confirmedAt)}. Updated {formatDateTime(species.updatedAt)}.
-                          {species.externalSource.reviewNote ? ` Review note: ${species.externalSource.reviewNote}` : ''}
-                        </p>
                       </div>
-                      <div className="flex shrink-0 flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          disabled={busyId === `species-reviewed-${species.id}` || species.externalSource.status === 'reviewed'}
-                          onClick={() => reviewExternalSpecies(species.id, 'reviewed')}
-                        >
-                          Mark reviewed
-                        </Button>
-                        <Button
-                          type="button"
-                          disabled={busyId === `species-curated-${species.id}` || species.externalSource.status === 'curated'}
-                          onClick={() => reviewExternalSpecies(species.id, 'curated')}
-                        >
-                          Mark curated
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="mt-4 grid gap-3 border-t border-gray-100 pt-4 lg:grid-cols-2">
+                      <p className="mt-3 rounded-2xl bg-gray-50 px-3 py-2 text-xs leading-5 text-gray-600">
+                        Status buttons update review state only. Use Save review edits for care
+                        notes, photo/license notes, or source notes.
+                      </p>
+                      <div className="mt-4 grid gap-3 border-t border-gray-100 pt-4 lg:grid-cols-2">
                       <label className="block text-sm">
                         <span className="font-semibold text-gray-700">Light baseline</span>
                         <input
@@ -1246,9 +1258,9 @@ function BuddyCatalogControls({
                         {item.id}
                       </p>
                       <p className="mt-1 text-xs text-gray-600">
-                        Tier {item.tier} · level {item.levelRequired}
-                        {item.requiresPremium ? ' · premium' : ''}
-                        {item.seasonalEventId ? ' · seasonal' : ''}
+                        Tier {item.tier} - level {item.levelRequired}
+                        {item.requiresPremium ? ' - premium' : ''}
+                        {item.seasonalEventId ? ' - seasonal' : ''}
                       </p>
                     </div>
                     <span className={`shrink-0 rounded-full px-2 py-1 text-[0.65rem] font-bold ${owned ? 'bg-emerald-100 text-emerald-900' : 'bg-gray-100 text-gray-700'}`}>

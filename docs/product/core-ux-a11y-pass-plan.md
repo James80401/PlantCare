@@ -81,7 +81,7 @@ reduces duplicated UI behavior.
 | 5. Tasks and recommendations | [x] | Make critical tasks and optional guidance feel distinct. | Complete, skip, snooze, dismiss, and task conversion paths are consistent. |
 | 6. Journal and Plant Life | [x] | Make progress history understandable and useful. | Check-ins, photos, summaries, edits, deletes, and empty states feel coherent. |
 | 7. Dr. Plant health flow | [x] | Make diagnosis/chat advice trustworthy and actionable. | Context, action cards, recovery plans, and status history have clear next steps. |
-| 8. Secondary surfaces | [ ] | Remove release-risk friction from community, household, settings, and admin. | Core actions are labelled, recoverable, and mobile-safe. |
+| 8. Secondary surfaces | [x] | Remove release-risk friction from community, household, settings, and admin. | Core actions are labelled, recoverable, and mobile-safe. |
 | 9. Accessibility hardening | [ ] | Close manual a11y gaps found during checkpoints 1-8. | Keyboard, screen-reader, contrast, zoom, dialog, and live-region checks pass. |
 | 10. Regression and private signoff | [ ] | Lock the pass with tests, docs, and hosted verification. | Tests/build/docs pass, private live signoff passes, and findings are documented. |
 
@@ -568,6 +568,18 @@ active versus recovered status clearer.
 - Secondary surfaces do not block private testing.
 - Admin review tools are usable enough for current review volume.
 - Permission and error states are clear.
+
+**Status (2026-07-06):** Secondary surfaces checkpoint shipped. Community post
+and comment forms now have clearer labels, practical posting guidance, stronger
+delete confirmations, cleaner loading/empty states, and plain like/comment copy.
+Household and garden-member invite flows now explain role permissions, per-plant
+sharing, and journal access more directly, with status messages announced to
+assistive tech. Settings now labels quiet-hours/timezone controls more clearly,
+announces save/error states, and requires both confirmation and typing `DELETE`
+before account deletion. Admin external species review now explains the save
+edits versus mark reviewed/curated sequence, asks for confirmation before status
+changes, and normalizes cramped review copy. Related web and user-guide docs were
+updated for current behavior.
 
 ## Checkpoint 9 - Accessibility hardening
 

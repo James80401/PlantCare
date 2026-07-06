@@ -55,7 +55,7 @@ export default function GardenMembers() {
       setMessage(
         data.emailSent
           ? 'Invite email sent. They can also use the token below.'
-          : 'Invite created — share the token below.',
+          : 'Invite created. Share the token below.',
       );
       await loadInvites();
     } catch {
@@ -105,7 +105,7 @@ export default function GardenMembers() {
       />
 
       {message ? (
-        <p className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <p className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status">
           {message}
         </p>
       ) : null}
@@ -149,9 +149,14 @@ export default function GardenMembers() {
         <>
           <Card padding="sm" className="space-y-3">
             <h2 className="font-semibold text-emerald-950">Invite someone</h2>
+            <p className="text-sm leading-6 text-gray-600">
+              Caretakers can complete tasks and update plants. Viewers can only read garden
+              details. Use per-plant sharing on Household when you do not want to share the whole
+              garden.
+            </p>
             <form onSubmit={handleInvite} className="space-y-3">
               <Input
-                label="Email (optional — sends an invite email if configured)"
+                label="Email (optional - sends an invite email if configured)"
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
@@ -164,12 +169,12 @@ export default function GardenMembers() {
                   onChange={(e) => setInviteRole(e.target.value as 'CAREGIVER' | 'VIEWER')}
                   className="rounded-2xl border border-emerald-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-400 focus:outline-none"
                 >
-                  <option value="CAREGIVER">Caretaker — can complete tasks & update plants</option>
-                  <option value="VIEWER">Viewer — can only look</option>
+                  <option value="CAREGIVER">Caretaker - can complete tasks and update plants</option>
+                  <option value="VIEWER">Viewer - can only look</option>
                 </select>
               </label>
               <Button type="submit" disabled={busy} aria-busy={busy}>
-                {busy ? 'Creating…' : 'Create invite'}
+                {busy ? 'Creating...' : 'Create invite'}
               </Button>
             </form>
             {lastToken ? (
@@ -179,7 +184,7 @@ export default function GardenMembers() {
                   {lastToken}
                 </code>
                 <p className="mt-1 text-xs text-emerald-700">
-                  Share this token — the invitee pastes it under “Join a garden”.
+                  Share this token. The invitee pastes it under Join a garden.
                 </p>
               </div>
             ) : null}
@@ -196,11 +201,11 @@ export default function GardenMembers() {
                         {inv.email || 'Anyone with the token'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {roleLabel(inv.role)} · expires {format(parseISO(inv.expiresAt), 'MMM d')}
+                        {roleLabel(inv.role)} - expires {format(parseISO(inv.expiresAt), 'MMM d')}
                       </p>
                     </div>
                     <code className="shrink-0 rounded bg-emerald-50 px-2 py-1 text-[11px] text-emerald-800">
-                      {inv.token.slice(0, 8)}…
+                      {inv.token.slice(0, 8)}...
                     </code>
                   </li>
                 ))}
@@ -240,7 +245,7 @@ function BackLink({ gardenId, name }: { gardenId?: string; name?: string }) {
       to={`/garden/gardens/${gardenId ?? ''}`}
       className="text-sm font-medium text-emerald-700 hover:underline"
     >
-      ← {name ?? 'Garden'}
+      Back to {name ?? 'Garden'}
     </Link>
   );
 }

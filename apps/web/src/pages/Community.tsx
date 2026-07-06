@@ -64,7 +64,7 @@ function PostComments({
   };
 
   const handleDelete = async (commentId: string) => {
-    if (!confirm('Delete this comment?')) return;
+    if (!confirm('Delete this comment? This removes it from the community feed.')) return;
     try {
       await communityApi.deleteComment(commentId);
       await load();
@@ -87,7 +87,7 @@ function PostComments({
       {open ? (
         <div id={`comments-${postId}`} className="mt-2 space-y-2" role="region" aria-label="Comments">
           {loading ? (
-            <p className="text-xs text-gray-500">Loading comments…</p>
+            <p className="text-xs text-gray-500">Loading comments...</p>
           ) : comments.length === 0 ? (
             <p className="text-xs text-gray-500">No comments yet.</p>
           ) : (
@@ -112,14 +112,18 @@ function PostComments({
             </ul>
           )}
           <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
+            <label className="sr-only" htmlFor={`comment-${postId}`}>
+              Add a comment
+            </label>
             <input
+              id={`comment-${postId}`}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Add a comment…"
+              placeholder="Add a comment..."
               className="min-w-0 flex-1 rounded-xl border border-emerald-100 px-3 py-2 text-sm"
             />
             <Button type="submit" size="sm" disabled={posting || !body.trim()}>
-              {posting ? '…' : 'Reply'}
+              {posting ? 'Posting...' : 'Reply'}
             </Button>
           </form>
           {error ? <FormError className="text-xs">{error}</FormError> : null}
@@ -230,7 +234,7 @@ export default function Community() {
   };
 
   const handleDelete = async (postId: string) => {
-    if (!confirm('Delete this post?')) return;
+    if (!confirm('Delete this post? This removes the post, photo, likes, and comments from the feed.')) return;
     try {
       await communityApi.deletePost(postId);
       await load();
@@ -258,15 +262,24 @@ export default function Community() {
       />
 
       <Card className="space-y-3">
-        <h2 className="font-semibold text-emerald-950">New post</h2>
+        <div>
+          <h2 className="font-semibold text-emerald-950">New post</h2>
+          <p className="mt-1 text-sm leading-6 text-gray-600">
+            Keep posts practical and plant-care focused. Photos are optional, and species tags help
+            other gardeners find relevant advice.
+          </p>
+        </div>
         <form onSubmit={handlePost} className="space-y-3">
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="What worked in your care routine this week?"
-            rows={4}
-            className="w-full rounded-2xl border border-emerald-100 px-3 py-2 text-sm"
-          />
+          <label className="block">
+            <span className="sr-only">Post body</span>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="What worked in your care routine this week?"
+              rows={4}
+              className="w-full rounded-2xl border border-emerald-100 px-3 py-2 text-sm"
+            />
+          </label>
           <div>
             <label className="text-xs font-semibold text-emerald-800">Species (optional)</label>
             <input
@@ -275,7 +288,7 @@ export default function Community() {
                 setSpeciesQuery(e.target.value);
                 setSpeciesId('');
               }}
-              placeholder="Search species to tag…"
+              placeholder="Search species to tag..."
               className="mt-1 w-full rounded-2xl border border-emerald-100 px-3 py-2 text-sm"
             />
             {speciesOptions.length > 0 ? (
@@ -331,7 +344,7 @@ export default function Community() {
             ) : null}
           </div>
           <Button type="submit" fullWidth disabled={posting || !body.trim()}>
-            {posting ? 'Posting…' : 'Share with community'}
+            {posting ? 'Posting...' : 'Share with community'}
           </Button>
         </form>
       </Card>
@@ -339,10 +352,10 @@ export default function Community() {
       {error ? <FormError>{error}</FormError> : null}
 
       {loading ? (
-        <StatusMessage>Loading feed…</StatusMessage>
+        <StatusMessage>Loading feed...</StatusMessage>
       ) : posts.length === 0 ? (
         <p className="rounded-2xl border border-emerald-100 bg-white p-6 text-center text-sm text-gray-500">
-          No posts yet — be the first to share a tip.
+          No posts yet. Share a practical care tip, plant win, or recovery note to start the feed.
         </p>
       ) : (
         <section aria-label="Community feed">
@@ -382,7 +395,7 @@ export default function Community() {
                     }`}
                     aria-pressed={Boolean(post.likedByMe)}
                   >
-                    {post.likedByMe ? '♥ Liked' : '♡ Like'} ({post._count?.likes ?? 0})
+                    {post.likedByMe ? 'Liked' : 'Like'} ({post._count?.likes ?? 0})
                   </button>
                   <span className="text-xs text-gray-500">
                     {post._count?.comments ?? 0} comments
@@ -397,6 +410,7 @@ export default function Community() {
                   <button
                     type="button"
                     onClick={() => handleDelete(post.id)}
+                    aria-label="Delete this community post"
                     className="text-xs font-semibold text-red-700 hover:underline"
                   >
                     Delete
@@ -416,7 +430,7 @@ export default function Community() {
               aria-busy={loadingMore}
               onClick={() => nextCursor && loadPage(nextCursor)}
             >
-              {loadingMore ? 'Loading…' : 'Load more posts'}
+              {loadingMore ? 'Loading...' : 'Load more posts'}
             </Button>
           </div>
         ) : null}

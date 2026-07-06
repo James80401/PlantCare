@@ -1,6 +1,6 @@
 # Household (shared care)
 
-> **Navigation:** [User guide INDEX](INDEX.md) · [Guide 10](../guides/10-end-user-product-guide.md#household-shared-care)
+> **Navigation:** [User guide INDEX](INDEX.md) - [Guide 10](../guides/10-end-user-product-guide.md#household-shared-care)
 
 ## What it is
 
@@ -8,14 +8,14 @@
 
 ## How to open it
 
-**Garden → Household** (or `/garden/household`).
+**Garden > Household** (or `/garden/household`).
 
 ## Typical workflow
 
-1. **Create a household** — give it a name (e.g. “Our apartment”).
-2. **Invite** someone — enter their email; they accept via invite link/token flow.
-3. **Share a plant** — pick a plant you own and add it to the household.
-4. **Activity** — see recent shares and care events.
+1. **Create a household** - give it a name (for example, "Our apartment").
+2. **Invite** someone - enter their email or share the generated token.
+3. **Share a plant** - pick a plant you own and choose whether caregivers can journal.
+4. **Activity** - see recent shares and care events.
 
 ## Dashboard filter
 
@@ -24,6 +24,7 @@ On the main garden page, use **All / My / Shared** to focus on plants you own vs
 ## Limits & privacy
 
 - Only plants you explicitly share are visible to the household.
+- Caregivers can complete shared care tasks. Viewers can only read shared garden details.
 - Invites expire per server rules on `CareInvite`.
 - You must be signed in; all actions use your account.
 
