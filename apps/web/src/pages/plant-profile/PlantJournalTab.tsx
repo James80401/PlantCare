@@ -858,6 +858,27 @@ function JournalForm() {
   const ctx = usePlantProfile();
   const isEditing = Boolean(ctx.editingJournalId);
   const hasContent = ctx.hasJournalContent;
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (isEditing) setOpen(true);
+  }, [isEditing]);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full flex-col items-start rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/30 p-4 text-left transition hover:border-emerald-300 hover:bg-emerald-50/60"
+      >
+        <span className="text-sm font-semibold text-emerald-950">+ Add a note</span>
+        <span className="mt-1 text-xs leading-5 text-gray-600">
+          Log an observation, measurement, or photo whenever it is useful. Nothing here is on a
+          schedule.
+        </span>
+      </button>
+    );
+  }
 
   return (
     <form
@@ -872,15 +893,13 @@ function JournalForm() {
           Use this for quick observations, measurements, or photos. Plant Check-Ins are the
           periodic health form above.
         </p>
-        {isEditing ? (
-          <button
-            type="button"
-            onClick={() => ctx.setEditingJournalId(null)}
-            className="mt-1 text-xs font-semibold text-emerald-700 hover:underline"
-          >
-            Cancel edit
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={() => (isEditing ? ctx.setEditingJournalId(null) : setOpen(false))}
+          className="mt-1 text-xs font-semibold text-emerald-700 hover:underline"
+        >
+          {isEditing ? 'Cancel edit' : 'Close'}
+        </button>
       </div>
 
       <label className="block">
