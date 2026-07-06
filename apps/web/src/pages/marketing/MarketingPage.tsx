@@ -145,6 +145,9 @@ function MarketingFooter() {
           <Link to="/privacy" className="font-semibold hover:text-[#1f4d3a]">
             Privacy
           </Link>
+          <Link to="/terms" className="font-semibold hover:text-[#1f4d3a]">
+            Terms
+          </Link>
           <Link to="/login" className="font-semibold hover:text-[#1f4d3a]">
             Sign in
           </Link>

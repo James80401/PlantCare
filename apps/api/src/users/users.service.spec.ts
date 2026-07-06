@@ -64,3 +64,82 @@ describe('UsersService.resolveLocationFields', () => {
     );
   });
 });
+
+describe('UsersService.exportData', () => {
+  const upload = {} as never;
+  const weather = {} as never;
+  const config = { get: () => undefined } as never;
+
+  const prisma = {
+    user: { findUnique: jest.fn() },
+    garden: { findMany: jest.fn().mockResolvedValue([]) },
+    gardenMember: { findMany: jest.fn().mockResolvedValue([]) },
+    plant: { findMany: jest.fn().mockResolvedValue([]) },
+    recommendation: { findMany: jest.fn().mockResolvedValue([]) },
+    communityPost: { findMany: jest.fn().mockResolvedValue([]) },
+    comment: { findMany: jest.fn().mockResolvedValue([]) },
+  };
+
+  let service: UsersService;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    prisma.garden.findMany.mockResolvedValue([]);
+    prisma.gardenMember.findMany.mockResolvedValue([]);
+    prisma.plant.findMany.mockResolvedValue([]);
+    prisma.recommendation.findMany.mockResolvedValue([]);
+    prisma.communityPost.findMany.mockResolvedValue([]);
+    prisma.comment.findMany.mockResolvedValue([]);
+    service = new UsersService(prisma as never, upload, weather, config);
+  });
+
+  it('throws when the user does not exist', async () => {
+    prisma.user.findUnique.mockResolvedValue(null);
+
+    await expect(service.exportData('missing')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('never selects credentials or internal tokens from the user row', async () => {
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.c' });
+
+    await service.exportData('u1');
+
+    const select = prisma.user.findUnique.mock.calls[0][0].select;
+    expect(select.passwordHash).toBeUndefined();
+    expect(select.emailVerificationToken).toBeUndefined();
+    expect(select.passwordResetToken).toBeUndefined();
+    expect(select.stripeCustomerId).toBeUndefined();
+  });
+
+  it('scopes every collection query to the requesting user and strips foreign keys from plants', async () => {
+    prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'a@b.c' });
+    prisma.plant.findMany.mockResolvedValue([
+      {
+        id: 'p1',
+        userId: 'u1',
+        speciesId: 's1',
+        gardenId: 'g1',
+        nickname: 'Monty',
+        species: { commonName: 'Monstera', scientificName: 'Monstera deliciosa' },
+        tasks: [],
+        journalEntries: [],
+        progressEntries: [],
+        diagnoses: [],
+        milestones: [],
+      },
+    ]);
+
+    const result = await service.exportData('u1');
+
+    expect(prisma.garden.findMany.mock.calls[0][0].where).toEqual({ ownerId: 'u1' });
+    expect(prisma.plant.findMany.mock.calls[0][0].where).toEqual({ userId: 'u1' });
+    expect(prisma.communityPost.findMany.mock.calls[0][0].where).toEqual({ authorId: 'u1' });
+    expect(prisma.comment.findMany.mock.calls[0][0].where).toEqual({ authorId: 'u1' });
+
+    expect(result.format).toBe('dr-plant-export/v1');
+    expect(result.plants[0].nickname).toBe('Monty');
+    expect(result.plants[0]).not.toHaveProperty('userId');
+    expect(result.plants[0]).not.toHaveProperty('speciesId');
+    expect(result.plants[0]).not.toHaveProperty('gardenId');
+  });
+});

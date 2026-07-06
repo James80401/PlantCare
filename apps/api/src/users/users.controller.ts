@@ -37,6 +37,11 @@ export class UsersController {
     return this.usersService.updateNotificationSettings(user.sub, body);
   }
 
+  @Get('me/export')
+  exportData(@CurrentUser() user: JwtPayload) {
+    return this.usersService.exportData(user.sub);
+  }
+
   @Delete('me')
   deleteAccount(@CurrentUser() user: JwtPayload) {
     return this.usersService.deleteAccount(user.sub);
