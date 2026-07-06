@@ -20,8 +20,9 @@ Sections:
 - Journal: note/photo form, Plant Check-Ins, observation prompts, growth
   measurements, Plant Life summaries, and a unified timeline of journal, care,
   check-in, and health events.
-- Health: recovery summary, Ask Dr. Plant header link, `DrPlantChat`
-  (`#dr-plant`), diagnosis history cards, and active/resolved status controls.
+- Health: recovery summary, "What Dr. Plant sees" context, structured symptom
+  check, `DrPlantChat` (`#dr-plant`), diagnosis history cards, draft action
+  confirmation, and active/resolved status controls.
 
 Plant-specific recommendations use the shared `RecommendationPanel` UX: source
 and priority labels, clear action copy, and a quiet empty state when Dr. Plant
@@ -34,5 +35,10 @@ overall condition, leaves/growth, soil/water and recent care, pests or concerns,
 and optional photo. Dr. Plant-generated Plant Life summaries are shown separately
 from the raw check-in entry so users can tell what was submitted versus what was
 analyzed.
+
+The Health tab distinguishes freeform chat from structured saved diagnosis.
+Diagnosis cards show what the result is based on and surface treatment safety
+notes when available. Dr. Plant chat reply actions are explicit save/schedule
+actions, while recovery tasks and action cards stay drafts until confirmed.
 
 **User guide:** [plant profile](../../user-guide/plant-profile.md) - **Tutorial:** [changing location](../../tutorials/changing-plant-location.md)

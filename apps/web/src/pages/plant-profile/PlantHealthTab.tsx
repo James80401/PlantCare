@@ -27,7 +27,7 @@ export default function PlantHealthTab() {
       <ProfileSection
         eyebrow="Plant health"
         title="Health"
-        description="Check symptoms, ask Dr. Plant follow-ups, and keep recovery tasks moving."
+        description="Check symptoms, ask Dr. Plant follow-ups, and turn health advice into confirmed recovery actions."
         help="plant-health"
       >
         <div className="space-y-5 pb-20 sm:pb-0">
@@ -46,7 +46,8 @@ export default function PlantHealthTab() {
                   Structured symptom check
                 </p>
                 <p className="mt-1 text-sm text-gray-600">
-                  Use this when you want one saved diagnosis with intake details and an optional photo.
+                  Use this when you want one saved health-history result with intake details,
+                  uncertainty, and an optional photo.
                 </p>
               </div>
               <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100">
@@ -99,7 +100,13 @@ export default function PlantHealthTab() {
           {ctx.diagnosisEntries.length ? (
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-semibold text-emerald-950">Past diagnoses</h3>
+                <div>
+                  <h3 className="font-semibold text-emerald-950">Health history</h3>
+                  <p className="mt-1 text-xs leading-5 text-gray-500">
+                    Active issues stay open until you mark recovery. Resolved items remain here for
+                    future context.
+                  </p>
+                </div>
                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
                   {ctx.activeDiagnosisCount} active
                 </span>
@@ -139,7 +146,7 @@ export default function PlantHealthTab() {
           ) : (
             <SectionEmptyState
               title="No diagnosis history"
-              body="If this plant looks stressed, start a Dr. Plant chat and add a clear photo."
+              body="If this plant looks stressed, start a structured symptom check for a saved result, or use Dr. Plant chat for follow-up questions."
             />
           )}
         </div>
@@ -165,11 +172,11 @@ function HealthWorkflowGuide({
     },
     {
       label: '2. Choose the lane',
-      body: 'Use structured diagnosis for a saved photo-backed result, or chat for follow-up questions and recovery planning.',
+      body: 'Use structured diagnosis for a saved result, or chat for follow-up questions and recovery planning.',
     },
     {
       label: '3. Track recovery',
-      body: 'Turn advice into health-check tasks, journal recovery notes, and mark the issue recovered when stable.',
+      body: 'Review drafts before creating tasks, log recovery notes, and mark the issue recovered when stable.',
     },
   ];
 
@@ -229,6 +236,9 @@ function RecoveryTimeline({
             Recovery timeline
           </p>
           <h3 className="mt-1 font-semibold text-emerald-950">Active follow-up tasks</h3>
+          <p className="mt-1 text-xs leading-5 text-gray-600">
+            These are recovery checks created from a diagnosis or Dr. Plant reply.
+          </p>
         </div>
         <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-lime-900 ring-1 ring-lime-100">
           {tasks.length} open

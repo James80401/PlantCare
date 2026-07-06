@@ -29,9 +29,9 @@ describe('DrPlantContextPanel', () => {
 
     expect(await screen.findByText('Care baseline')).toBeInTheDocument();
     expect(screen.getByText('Open issue: Overwatering')).toBeInTheDocument();
-    expect(screen.getByText(/What Dr\. Plant can use/)).toBeInTheDocument();
+    expect(screen.getByText(/What Dr\. Plant sees/)).toBeInTheDocument();
     expect(screen.getByText('2 signals')).toBeInTheDocument();
-    expect(screen.getByText(/saved care history/)).toBeInTheDocument();
+    expect(screen.getByText(/Plant Check-Ins/)).toBeInTheDocument();
     expect(getContextSummary).toHaveBeenCalledWith('plant-1');
   });
 
@@ -43,7 +43,7 @@ describe('DrPlantContextPanel', () => {
     const { container } = render(<DrPlantContextPanel plantId="plant-1" />);
 
     await waitFor(() => expect(getContextSummary).toHaveBeenCalled());
-    expect(screen.queryByText(/What Dr\. Plant can use/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/What Dr\. Plant sees/)).not.toBeInTheDocument();
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -53,7 +53,7 @@ describe('DrPlantContextPanel', () => {
     const { container } = render(<DrPlantContextPanel plantId="plant-1" />);
 
     await waitFor(() => expect(getContextSummary).toHaveBeenCalled());
-    expect(screen.queryByText(/What Dr\. Plant can use/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/What Dr\. Plant sees/)).not.toBeInTheDocument();
     expect(container).toBeEmptyDOMElement();
   });
 });

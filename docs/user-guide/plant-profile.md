@@ -28,3 +28,17 @@ Plant Check-Ins group answers by overall condition, leaves/growth, soil/water,
 recent care, pests or concerns, and optional photo. Editing a Plant Check-In
 refreshes its Dr. Plant summary. Deleting one removes that entry and updates the
 Plant Life history.
+
+## Health and Dr. Plant
+
+The Health tab has two lanes:
+
+- **Structured symptom check:** use this when you want a saved diagnosis result
+  in health history.
+- **Dr. Plant chat:** use this for follow-up questions, missing context, recovery
+  planning, and draft actions from a reply.
+
+Diagnosis cards show what the result is based on, confidence/source, treatment
+steps, safety notes when available, and recovery reminders. Chat reply actions
+are explicit: saving creates a journal note, scheduling creates a health-check
+task, and recovery/action-card drafts require confirmation before care changes.

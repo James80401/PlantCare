@@ -243,7 +243,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
         <div>
           <h2 className="font-semibold text-emerald-900">Dr. Plant</h2>
           <p className="text-xs text-gray-600">
-            Chat about symptoms for {plantName} — follow up anytime
+            Chat about symptoms for {plantName}. Advice uses this plant's saved context when available.
           </p>
         </div>
         <div className="flex gap-2">
@@ -279,7 +279,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
                 }`}
               >
                 {conversationPreview(c)}
-                {c._count.messages > 0 ? ` · ${c._count.messages} msgs` : ''}
+                {c._count.messages > 0 ? ` - ${c._count.messages} msgs` : ''}
               </span>
               <span
                 className={`mt-0.5 block text-[0.6rem] ${
@@ -334,11 +334,20 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
 
       {lastReplyAt && !loading && !error && messages.length > 0 && (
         <p className="mx-4 mt-2 text-xs font-medium text-emerald-700" role="status">
-          Dr. Plant replied · {format(new Date(lastReplyAt), 'h:mm a')}
+          Dr. Plant replied - {format(new Date(lastReplyAt), 'h:mm a')}
         </p>
       )}
 
       <div className="border-b border-emerald-50 bg-white px-4 py-3">
+        <div className="mb-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-3 py-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+            How Dr. Plant advice works
+          </p>
+          <p className="mt-1 text-xs leading-5 text-gray-600">
+            Ask questions freely here. Save a structured diagnosis when you want a result in health
+            history, and review every task or recommendation draft before it changes care.
+          </p>
+        </div>
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
@@ -403,7 +412,8 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
       <div className="h-72 sm:h-80 overflow-y-auto px-4 py-3 space-y-3 bg-[#f7f6f2]/50">
         {messages.length === 0 && !loading && (
           <p className="text-sm text-gray-500 text-center py-8">
-            Describe what you see — yellow leaves, spots, drooping — or attach a photo to start.
+            Describe what you see, such as yellow leaves, spots, or drooping. You can attach a
+            photo when visual symptoms matter.
           </p>
         )}
         {messages.map((m) => {
@@ -435,42 +445,47 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
                 </p>
                 {!isUser && activeId ? (
                   <>
-                  <div className="mt-2 flex flex-wrap gap-2 border-t border-emerald-50 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => saveReplyToJournal(m)}
-                      disabled={Boolean(actionLoading)}
-                      className="min-h-8 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
-                    >
-                      {actionLoading === `journal:${m.id}` ? 'Saving…' : 'Save to journal'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => scheduleHealthCheck(m, 3)}
-                      disabled={Boolean(actionLoading)}
-                      className="min-h-8 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
-                    >
-                      {actionLoading === `health:${m.id}:3` ? 'Scheduling...' : 'Health check in 3 days'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => scheduleHealthCheck(m, 7)}
-                      disabled={Boolean(actionLoading)}
-                      className="min-h-8 rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100 disabled:opacity-50"
-                    >
-                      {actionLoading === `health:${m.id}:7` ? 'Scheduling...' : 'Check again in 7 days'}
-                    </button>
-                  </div>
-                  <ChatRecoveryTasks
-                    plantId={plantId}
-                    conversationId={activeId}
-                    messageId={m.id}
-                  />
-                  <ChatActionCards
-                    plantId={plantId}
-                    conversationId={activeId}
-                    messageId={m.id}
-                  />
+                    <div className="mt-2 border-t border-emerald-50 pt-2">
+                      <p className="mb-2 text-[0.68rem] font-semibold uppercase tracking-wide text-emerald-700">
+                        Save or schedule from this reply
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => saveReplyToJournal(m)}
+                          disabled={Boolean(actionLoading)}
+                          className="min-h-8 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                        >
+                          {actionLoading === `journal:${m.id}` ? 'Saving...' : 'Save reply as journal note'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => scheduleHealthCheck(m, 3)}
+                          disabled={Boolean(actionLoading)}
+                          className="min-h-8 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                        >
+                          {actionLoading === `health:${m.id}:3` ? 'Scheduling...' : 'Schedule health check in 3 days'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => scheduleHealthCheck(m, 7)}
+                          disabled={Boolean(actionLoading)}
+                          className="min-h-8 rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100 disabled:opacity-50"
+                        >
+                          {actionLoading === `health:${m.id}:7` ? 'Scheduling...' : 'Schedule check in 7 days'}
+                        </button>
+                      </div>
+                    </div>
+                    <ChatRecoveryTasks
+                      plantId={plantId}
+                      conversationId={activeId}
+                      messageId={m.id}
+                    />
+                    <ChatActionCards
+                      plantId={plantId}
+                      conversationId={activeId}
+                      messageId={m.id}
+                    />
                   </>
                 ) : null}
               </div>
@@ -481,11 +496,11 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
           <div className="flex justify-start">
             <div className="bg-white border border-emerald-100 rounded-2xl px-4 py-3 text-sm text-gray-500">
               <span className="inline-flex gap-1">
-                <span className="animate-bounce">·</span>
-                <span className="animate-bounce [animation-delay:0.15s]">·</span>
-                <span className="animate-bounce [animation-delay:0.3s]">·</span>
+                <span className="animate-bounce">.</span>
+                <span className="animate-bounce [animation-delay:0.15s]">.</span>
+                <span className="animate-bounce [animation-delay:0.3s]">.</span>
               </span>
-              Dr. Plant is thinking…
+              Dr. Plant is thinking...
             </div>
           </div>
         )}
@@ -496,7 +511,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Dr. Plant…"
+          placeholder="Ask Dr. Plant..."
           rows={2}
           className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
         />
@@ -812,11 +827,17 @@ function ChatRecoveryTasks({
         onClick={toggleExpanded}
         className="min-h-8 rounded-full bg-lime-50 px-3 py-1 text-xs font-semibold text-lime-900 hover:bg-lime-100"
       >
-        {expanded ? 'Hide recovery tasks' : 'Add recovery tasks'}
+        {expanded ? 'Hide recovery task drafts' : 'Review recovery task drafts'}
       </button>
 
       {expanded ? (
         <div className="mt-2 rounded-2xl border border-lime-100 bg-lime-50/60 p-3">
+          <div className="mb-3">
+            <p className="text-xs font-semibold text-emerald-950">Recovery task drafts</p>
+            <p className="mt-0.5 text-xs leading-5 text-lime-900">
+              Select the follow-ups you want. Nothing is added to care tasks until you confirm.
+            </p>
+          </div>
           {loading ? (
             <p className="text-xs text-gray-600">Loading task ideas...</p>
           ) : suggestions.length === 0 ? (
@@ -875,7 +896,7 @@ function ChatRecoveryTasks({
               onClick={apply}
               className="mt-3 min-h-9 rounded-full bg-lime-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-lime-800 disabled:opacity-50"
             >
-              {applying ? 'Adding...' : `Add ${selected.size} task${selected.size === 1 ? '' : 's'}`}
+              {applying ? 'Adding...' : `Confirm ${selected.size} recovery task${selected.size === 1 ? '' : 's'}`}
             </button>
           ) : null}
         </div>
@@ -964,7 +985,7 @@ function ChatActionCards({
         onClick={toggleExpanded}
         className="min-h-8 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900 hover:bg-emerald-100"
       >
-        {expanded ? 'Hide action cards' : 'Draft action cards'}
+        {expanded ? 'Hide action card drafts' : 'Review action card drafts'}
       </button>
 
       {expanded ? (
@@ -993,7 +1014,8 @@ function ChatActionCards({
             <p className="mt-3 text-xs text-gray-600">Drafting action cards...</p>
           ) : drafts.length === 0 ? (
             <p className="mt-3 text-xs text-gray-600">
-              No action cards found in this reply yet.
+              No action cards found in this reply yet. You can still save the reply as a journal
+              note or ask Dr. Plant for more specific next steps.
             </p>
           ) : (
             <div className="mt-3 space-y-2">
@@ -1011,7 +1033,7 @@ function ChatActionCards({
                         <p className="mt-1 leading-5 text-gray-700">{draft.body}</p>
                       </div>
                       <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800">
-                        {isTask ? 'task draft' : 'recommendation draft'}
+                        {isTask ? 'task draft - needs confirmation' : 'recommendation draft - optional'}
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2 text-[0.68rem] text-gray-600">

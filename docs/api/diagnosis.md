@@ -1,6 +1,6 @@
 # API: Diagnosis & Dr. Plant chat
 
-> **Navigation:** [API INDEX](INDEX.md) · `apps/api/src/diagnosis/`
+> **Navigation:** [API INDEX](INDEX.md) - `apps/api/src/diagnosis/`
 
 ## One-shot
 
@@ -89,7 +89,7 @@ include the related task type when known. Shape:
 {
   "intro": "Dr. Plant tailors answers using your plant's recent care and conditions:",
   "items": [
-    { "category": "care", "label": "Care baseline", "detail": "Living room · medium pot · water ~every 7 days · light: Bright indirect" },
+    { "category": "care", "label": "Care baseline", "detail": "Living room - medium pot - water ~every 7 days - light: Bright indirect" },
     { "category": "health", "label": "Open issue: Overwatering", "detail": "Noted Jun 2" },
     { "category": "tasks", "label": "2 upcoming care tasks", "detail": "next: Water Jun 6" },
     { "category": "feedback", "label": "1 recent care observation", "detail": "Water: soil very dry" }
@@ -108,6 +108,10 @@ Chat actions are explicit user-confirmed actions from a Dr. Plant reply:
 - `drafts` returns task/recommendation action cards from a selected assistant reply without changing data.
 - `recommendation-draft` confirms one returned recommendation draft and saves it to the durable recommendations system.
 - `task-draft` confirms one returned task draft and creates a pending task.
+
+The web UI should present recovery suggestions and action cards as drafts until
+the confirmation endpoint succeeds. Chat replies can be saved or scheduled, but
+task and recommendation drafts must remain visibly review-before-confirm.
 
 Draft confirmation endpoints accept `messageId` plus `draftKey`. The server
 regenerates the draft from the selected reply before creating anything, so the

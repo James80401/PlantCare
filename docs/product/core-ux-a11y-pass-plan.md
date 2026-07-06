@@ -80,7 +80,7 @@ reduces duplicated UI behavior.
 | 4. Plant profile overview and care | [x] | Make a plant's status, care, and next action obvious. | Overview and Care tabs explain what matters without overwhelming the user. |
 | 5. Tasks and recommendations | [x] | Make critical tasks and optional guidance feel distinct. | Complete, skip, snooze, dismiss, and task conversion paths are consistent. |
 | 6. Journal and Plant Life | [x] | Make progress history understandable and useful. | Check-ins, photos, summaries, edits, deletes, and empty states feel coherent. |
-| 7. Dr. Plant health flow | [ ] | Make diagnosis/chat advice trustworthy and actionable. | Context, action cards, recovery plans, and status history have clear next steps. |
+| 7. Dr. Plant health flow | [x] | Make diagnosis/chat advice trustworthy and actionable. | Context, action cards, recovery plans, and status history have clear next steps. |
 | 8. Secondary surfaces | [ ] | Remove release-risk friction from community, household, settings, and admin. | Core actions are labelled, recoverable, and mobile-safe. |
 | 9. Accessibility hardening | [ ] | Close manual a11y gaps found during checkpoints 1-8. | Keyboard, screen-reader, contrast, zoom, dialog, and live-region checks pass. |
 | 10. Regression and private signoff | [ ] | Lock the pass with tests, docs, and hosted verification. | Tests/build/docs pass, private live signoff passes, and findings are documented. |
@@ -522,6 +522,19 @@ actions.
 - Chat actions never silently mutate tasks or recommendations.
 - Recovery guidance has a visible follow-through path.
 - Health-tab mobile layout remains usable with image uploads and long replies.
+
+**Status (2026-07-06):** Dr. Plant health-flow checkpoint shipped. The context
+panel now uses "What Dr. Plant sees" language and explains that saved care
+history, tasks, journal notes, Plant Check-Ins, and health records may inform
+advice without exposing prompt internals. The chat now clarifies the difference
+between freeform advice, structured saved diagnoses, and review-before-confirm
+task/recommendation drafts. Reply actions now read as explicit save/schedule
+actions, recovery-task creation is framed as selectable drafts, and action cards
+are labelled as drafts that require confirmation before changing care.
+Diagnosis result cards now show "What this is based on", keep uncertainty and
+source visible, surface beginner safety notes from treatment plans, and explain
+follow-up reminders as recovery comparison points. Health history copy now makes
+active versus recovered status clearer.
 
 ## Checkpoint 8 - Secondary surfaces
 

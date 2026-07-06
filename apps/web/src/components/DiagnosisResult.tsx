@@ -219,6 +219,12 @@ export default function DiagnosisResult({
   const intakeDetails = intakeLabel(detail);
   const treatmentPlan = detail?.treatmentPlan;
   const treatmentGuideLinks = guideLinksForTreatmentPlan(treatmentPlan);
+  const basisItems = [
+    diagnosis.symptomsText ? 'reported symptoms' : null,
+    diagnosis.imageUrl ? 'submitted photo' : null,
+    intakeDetails.length ? 'intake answers' : null,
+    diagnosis.source ? sourceLabel(diagnosis.source) : 'saved care context',
+  ].filter(Boolean);
 
   return (
     <div
@@ -268,6 +274,16 @@ export default function DiagnosisResult({
         {diagnosis.source && (
           <span className="text-xs text-emerald-700">{sourceLabel(diagnosis.source)}</span>
         )}
+      </div>
+
+      <div className="rounded-2xl border border-white/80 bg-white/80 px-3 py-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+          What this is based on
+        </p>
+        <p className="mt-1 text-xs leading-5 text-gray-600">
+          Dr. Plant considered {basisItems.join(', ')}. Treat this as plant-care guidance, then
+          watch the plant's response over the next few days.
+        </p>
       </div>
 
       {diagnosis.symptomsText ? (
@@ -429,6 +445,19 @@ export default function DiagnosisResult({
             </p>
           ) : null}
 
+          {treatmentPlan.beginnerSafetyNotes?.length ? (
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
+                Safety notes
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-4 text-xs leading-5 text-amber-950">
+                {treatmentPlan.beginnerSafetyNotes.slice(0, 4).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           {treatmentPlan.mistakesToAvoid?.length ? (
             <details className="text-xs text-gray-600">
               <summary className="cursor-pointer font-semibold text-emerald-800">
@@ -493,6 +522,10 @@ export default function DiagnosisResult({
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
             Recovery reminder
           </p>
+          <p className="text-xs leading-5 text-gray-600">
+            Schedule a follow-up so you can compare symptoms, update the plant story, and decide
+            whether the issue is recovering.
+          </p>
           {hasFollowUpTask ? (
             <p className="text-sm text-emerald-800">
               A health check follow-up is already on your task list.
@@ -521,7 +554,7 @@ export default function DiagnosisResult({
                     onClick={() => onCreateFollowUp(days, followUpNote.trim() || undefined)}
                     className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
                   >
-                    {followUpCreating ? 'Scheduling…' : `Remind in ${days} days`}
+                    {followUpCreating ? 'Scheduling...' : `Schedule follow-up in ${days} days`}
                   </button>
                 ))}
               </div>
