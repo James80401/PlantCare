@@ -162,6 +162,109 @@ export class UsersService {
     );
   }
 
+  /**
+   * Full personal-data export (GDPR/CCPA portability). Returns every record the
+   * user authored or owns as plain JSON; excludes credentials and internal
+   * tokens. Photos are referenced by URL rather than embedded.
+   */
+  async exportData(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        planTier: true,
+        latitude: true,
+        longitude: true,
+        locationLabel: true,
+        timezone: true,
+        temperatureUnit: true,
+        notifyPush: true,
+        notifyEmail: true,
+        notifySms: true,
+        phone: true,
+        quietHoursStart: true,
+        quietHoursEnd: true,
+        reminderHour: true,
+        experienceLevel: true,
+        defaultLightLevel: true,
+        createdAt: true,
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const [gardens, memberships, plants, recommendations, posts, comments] =
+      await Promise.all([
+        this.prisma.garden.findMany({
+          where: { ownerId: userId },
+          select: { id: true, name: true, location: true, createdAt: true },
+        }),
+        this.prisma.gardenMember.findMany({
+          where: { userId },
+          select: { role: true, joinedAt: true, garden: { select: { name: true } } },
+        }),
+        this.prisma.plant.findMany({
+          where: { userId },
+          include: {
+            species: { select: { commonName: true, scientificName: true } },
+            tasks: {
+              select: {
+                taskType: true,
+                dueDate: true,
+                status: true,
+                completedAt: true,
+                createdAt: true,
+              },
+            },
+            journalEntries: true,
+            progressEntries: true,
+            diagnoses: {
+              select: {
+                resultLabel: true,
+                symptomsText: true,
+                adviceText: true,
+                confidence: true,
+                imageUrl: true,
+                resolved: true,
+                createdAt: true,
+              },
+            },
+            milestones: true,
+          },
+        }),
+        this.prisma.recommendation.findMany({
+          where: { userId },
+          select: {
+            title: true,
+            body: true,
+            priority: true,
+            status: true,
+            createdAt: true,
+          },
+        }),
+        this.prisma.communityPost.findMany({
+          where: { authorId: userId },
+          select: { body: true, imageUrl: true, createdAt: true },
+        }),
+        this.prisma.comment.findMany({
+          where: { authorId: userId },
+          select: { body: true, postId: true, createdAt: true },
+        }),
+      ]);
+
+    return {
+      format: 'dr-plant-export/v1',
+      exportedAt: new Date().toISOString(),
+      profile: user,
+      gardens,
+      gardenMemberships: memberships,
+      plants: plants.map(({ userId: _userId, speciesId: _speciesId, gardenId: _gardenId, ...plant }) => plant),
+      recommendations,
+      community: { posts, comments },
+    };
+  }
+
   async deleteAccount(userId: string) {
     const plants = await this.prisma.plant.findMany({
       where: { userId },

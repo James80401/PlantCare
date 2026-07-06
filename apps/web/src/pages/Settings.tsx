@@ -81,6 +81,7 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [carePrefsSaved, setCarePrefsSaved] = useState(false);
   const [error, setError] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     usersApi.me().then(({ data }) => {
@@ -206,6 +207,27 @@ export default function Settings() {
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
         'Could not save settings.';
       setError(message);
+    }
+  };
+
+  const handleExport = async () => {
+    setError('');
+    setExporting(true);
+    try {
+      const { data } = await usersApi.exportData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `dr-plant-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(formatApiErrorMessage(err, 'Could not prepare your data export. Try again.'));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -553,6 +575,15 @@ export default function Settings() {
         {saved && <p className="text-emerald-600 text-sm text-center" role="status">Settings saved.</p>}
         {error && <p className="text-red-600 text-sm text-center" role="alert">{error}</p>}
       </form>
+
+      <button
+        type="button"
+        onClick={handleExport}
+        disabled={exporting}
+        className="w-full border border-emerald-300 text-emerald-800 py-2 rounded-lg text-sm disabled:opacity-50"
+      >
+        {exporting ? 'Preparing your data…' : 'Download my data (JSON)'}
+      </button>
 
       <button
         type="button"

@@ -556,6 +556,7 @@ export const usersApi = {
   updateSettings: (data: Record<string, unknown>) =>
     api.put('/users/me/notification-settings', data),
   deleteAccount: () => api.delete('/users/me'),
+  exportData: () => api.get('/users/me/export'),
   weatherAdviceStatus: () => api.get('/users/me/weather/advice/status'),
   fetchWeatherAdvice: () => api.post('/users/me/weather/advice', { confirmed: true }),
   searchWeatherLocations: (q: string) =>
