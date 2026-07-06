@@ -77,7 +77,7 @@ reduces duplicated UI behavior.
 | 1. Global shell and navigation | [~] | Make page framing, nav, focus, and mobile chrome consistent. | First shell fix shipped: nav focus styling and Escape close for More menu. Continue with manual route-by-route audit. |
 | 2. Dashboard command center | [x] | Make the home screen calmer and more action-oriented. | Critical care, recommendations, summaries, and empty states are easy to scan. |
 | 3. Add plant and discovery | [x] | Reduce friction from first plant search to saved plant. | Search, identify, external match confirmation, and empty/error states are clear. |
-| 4. Plant profile overview and care | [ ] | Make a plant's status, care, and next action obvious. | Overview and Care tabs explain what matters without overwhelming the user. |
+| 4. Plant profile overview and care | [x] | Make a plant's status, care, and next action obvious. | Overview and Care tabs explain what matters without overwhelming the user. |
 | 5. Tasks and recommendations | [ ] | Make critical tasks and optional guidance feel distinct. | Complete, skip, snooze, dismiss, and task conversion paths are consistent. |
 | 6. Journal and Plant Life | [ ] | Make progress history understandable and useful. | Check-ins, photos, summaries, edits, deletes, and empty states feel coherent. |
 | 7. Dr. Plant health flow | [ ] | Make diagnosis/chat advice trustworthy and actionable. | Context, action cards, recovery plans, and status history have clear next steps. |
@@ -338,6 +338,19 @@ details reassurance.
 - Care cards are scannable on mobile.
 - Important warnings are not color-only.
 - CTA language is consistent with dashboard and Dr. Plant.
+
+**Status (2026-07-06):** Plant profile overview and care checkpoint shipped.
+The profile hero now shows a direct current-status chip for active health
+follow-up, next care, or caught-up care, plus the growing environment when
+available. The Overview tab now starts with a "What matters now" panel that
+prioritizes health follow-up, next care, or journaling, with quick links to
+tasks, Dr. Plant, and observations. Overview status tiles summarize next care,
+health, and recent care, and safety copy is visible when toxicity data exists.
+The Care tab now leads with a care-at-a-glance panel, opens tasks and Dr. Plant
+from the top, and sorts care guide sections into a beginner-friendly order
+before reference topics. Care cards now include a topic-specific Dr. Plant
+handoff inside the card, and focused tests cover the handoff tracking and care
+section ordering.
 
 ## Checkpoint 5 - Tasks and recommendations
 

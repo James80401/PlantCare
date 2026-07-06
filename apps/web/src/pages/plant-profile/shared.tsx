@@ -121,8 +121,26 @@ export function CareGuideCard({
   drPlantPath?: string;
   plantId?: string;
 }) {
+  const drPlantLink = drPlantPath ? (
+    <Link
+      to={drPlantPath}
+      onClick={() =>
+        trackEvent('guide_dr_plant_click', {
+          surface: 'plant_care_card',
+          plantId,
+          sectionId: section.id,
+          sectionHeading: section.heading,
+          target: drPlantPath,
+        })
+      }
+      className="mt-4 inline-flex min-h-9 items-center justify-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+    >
+      Ask Dr. Plant about {section.heading}
+    </Link>
+  ) : null;
+
   return (
-    <div className="space-y-2">
+    <div>
       <StructuredCareSectionCard
         id={section.id}
         heading={section.heading}
@@ -131,24 +149,8 @@ export function CareGuideCard({
         advancedBody={section.advancedBody}
         warnings={section.warnings}
         defaultDetailLevel={defaultDetailLevel}
+        footer={drPlantLink}
       />
-      {drPlantPath ? (
-        <Link
-          to={drPlantPath}
-          onClick={() =>
-            trackEvent('guide_dr_plant_click', {
-              surface: 'plant_care_card',
-              plantId,
-              sectionId: section.id,
-              sectionHeading: section.heading,
-              target: drPlantPath,
-            })
-          }
-          className="inline-flex min-h-9 items-center justify-center rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100"
-        >
-          Ask Dr. Plant about this
-        </Link>
-      ) : null}
     </div>
   );
 }
