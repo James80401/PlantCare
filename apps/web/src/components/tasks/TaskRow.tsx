@@ -32,6 +32,9 @@ interface TaskRowProps {
   linkPlant?: boolean;
 }
 
+const taskActionFocusClass =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2';
+
 export default function TaskRow({
   task,
   animState,
@@ -221,7 +224,7 @@ export default function TaskRow({
               {task.taskType === 'HEALTH_CHECK' ? (
                 <Link
                   to={progressCheckInPath}
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-lime-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-lime-800"
+                  className={`inline-flex min-h-11 items-center justify-center rounded-full bg-lime-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-lime-800 ${taskActionFocusClass}`}
                 >
                   Record progress
                 </Link>
@@ -229,7 +232,7 @@ export default function TaskRow({
               <button
                 type="button"
                 onClick={() => setCompleteFeedbackOpen((open) => !open)}
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                className={`inline-flex min-h-11 items-center justify-center rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 ${taskActionFocusClass}`}
                 aria-expanded={completeFeedbackOpen}
                 aria-controls={completePanelId}
               >
@@ -238,7 +241,7 @@ export default function TaskRow({
               <button
                 type="button"
                 onClick={() => setFeedbackOpen((open) => !open)}
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
+                className={`inline-flex min-h-11 items-center justify-center rounded-full bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 ${taskActionFocusClass}`}
                 aria-expanded={feedbackOpen}
                 aria-controls={skipPanelId}
               >
@@ -248,7 +251,7 @@ export default function TaskRow({
                 <button
                   type="button"
                   onClick={() => setSnoozeOpen((open) => !open)}
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-800 transition hover:bg-sky-100"
+                  className={`inline-flex min-h-11 items-center justify-center rounded-full bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-800 transition hover:bg-sky-100 ${taskActionFocusClass}`}
                   aria-expanded={snoozeOpen}
                   aria-controls={snoozePanelId}
                 >
@@ -280,7 +283,7 @@ export default function TaskRow({
                         onSnooze(task.id, option.days);
                         setSnoozeOpen(false);
                       }}
-                      className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-900 ring-1 ring-sky-100 hover:bg-sky-100"
+                      className={`rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-900 ring-1 ring-sky-100 hover:bg-sky-100 ${taskActionFocusClass}`}
                     >
                       {option.label}
                     </button>
@@ -311,7 +314,7 @@ export default function TaskRow({
                         effectiveSkipReason === reason.value
                           ? 'border-amber-300 bg-white text-amber-950 shadow-sm'
                           : 'border-amber-100 bg-white/60 text-gray-700 hover:bg-white'
-                      }`}
+                      } focus-within:outline-none focus-within:ring-2 focus-within:ring-amber-400 focus-within:ring-offset-2`}
                     >
                       <input
                         type="radio"
@@ -345,21 +348,21 @@ export default function TaskRow({
                         note: note.trim() || undefined,
                       })
                     }
-                    className="rounded-full bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800"
+                    className={`rounded-full bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800 ${taskActionFocusClass}`}
                   >
                     Record reason & skip
                   </button>
                   <button
                     type="button"
                     onClick={() => setFeedbackOpen(false)}
-                    className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white ${taskActionFocusClass}`}
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={() => onSkip(task.id)}
-                    className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white ${taskActionFocusClass}`}
                   >
                     Skip without reason
                   </button>
@@ -389,7 +392,7 @@ export default function TaskRow({
                         effectiveCompleteReason === r.value
                           ? 'border-sky-300 bg-white text-sky-950 shadow-sm'
                           : 'border-sky-100 bg-white/60 text-gray-700 hover:bg-white'
-                      }`}
+                      } focus-within:outline-none focus-within:ring-2 focus-within:ring-sky-400 focus-within:ring-offset-2`}
                     >
                       <input
                         type="radio"
@@ -418,7 +421,7 @@ export default function TaskRow({
                   <button
                     type="button"
                     onClick={() => void completeWithObservation()}
-                    className="rounded-full bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800"
+                    className={`rounded-full bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800 ${taskActionFocusClass}`}
                   >
                     Save result & complete
                   </button>
@@ -431,7 +434,7 @@ export default function TaskRow({
                       setSaveCompleteNoteToJournal(false);
                       setJournalStatus('');
                     }}
-                    className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white"
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white ${taskActionFocusClass}`}
                   >
                     Complete without result
                   </button>

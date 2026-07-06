@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { tasksApi } from '../services/api';
 import { taskTypeLabel } from '../utils/tasks';
 import { formatApiErrorMessage } from '../utils/apiError';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 export interface TaskScheduleExplanationModalProps {
   taskId: string;
@@ -24,6 +25,7 @@ export default function TaskScheduleExplanationModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [explanation, setExplanation] = useState<ScheduleExplanation | null>(null);
+  const { titleId, initialFocusRef } = useDialogA11y(true, onClose);
 
   useEffect(() => {
     setLoading(true);
@@ -40,7 +42,7 @@ export default function TaskScheduleExplanationModal({
       className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="Why this date?"
+      aria-labelledby={titleId}
     >
       <button
         type="button"
@@ -52,31 +54,32 @@ export default function TaskScheduleExplanationModal({
         <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-lime-100 bg-white/95 px-4 py-3 backdrop-blur">
           <div className="min-w-0">
             <p className="truncate text-xs font-semibold uppercase tracking-wide text-lime-700">
-              {taskTypeLabel(taskType)} · {plantLabel}
+              {taskTypeLabel(taskType)} - {plantLabel}
             </p>
-            <h2 id="schedule-explanation-title" className="font-display text-lg font-bold text-emerald-950">
+            <h2 id={titleId} className="font-display text-lg font-bold text-emerald-950">
               Why this date?
             </h2>
           </div>
           <button
+            ref={initialFocusRef}
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-2xl leading-none text-gray-500 hover:bg-gray-100"
-            aria-label="Close"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-2xl leading-none text-gray-500 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500 focus-visible:ring-offset-2"
+            aria-label="Close schedule explanation"
           >
-            ×
+            x
           </button>
         </div>
 
         <div className="space-y-4 p-4">
           {loading && (
-            <div className="space-y-2">
+            <div className="space-y-2" role="status" aria-label="Loading schedule explanation">
               <div className="h-16 animate-pulse rounded-2xl bg-lime-50" />
               <div className="h-24 animate-pulse rounded-2xl bg-gray-100" />
             </div>
           )}
           {error && (
-            <p className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <p className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
               {error}
             </p>
           )}

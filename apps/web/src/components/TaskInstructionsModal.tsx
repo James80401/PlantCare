@@ -108,7 +108,7 @@ export default function TaskInstructionsModal({
             ref={initialFocusRef}
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-2xl leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-2xl leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
             aria-label="Close care instructions"
           >
             x
@@ -169,7 +169,7 @@ export default function TaskInstructionsModal({
                       <li key={sec.heading}>
                         <a
                           href={`#${sectionAnchor(sec.heading, i)}`}
-                          className="inline-flex rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+                          className="inline-flex rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                         >
                           {sec.heading}
                         </a>

@@ -31,7 +31,7 @@ function IconHelp(props: { className?: string }) {
 
 /** Self-contained "?" help button: owns its own open/close state, so a call
  *  site is just `<HelpButton topic="dashboard" />`. Opens a short, dismissible
- *  tip panel — nothing auto-shows and nothing needs to be remembered, by design. */
+ *  tip panel; nothing auto-shows and nothing needs to be remembered, by design. */
 export function HelpButton({ topic, className }: HelpButtonProps) {
   const [open, setOpen] = useState(false);
   const content = HELP_TOPICS[topic];
@@ -45,7 +45,7 @@ export function HelpButton({ topic, className }: HelpButtonProps) {
         onClick={() => setOpen(true)}
         aria-label={`Help: ${content.title}`}
         className={cn(
-          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-white/80 text-emerald-700 transition hover:bg-emerald-50',
+          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-white/80 text-emerald-700 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2',
           className,
         )}
       >
@@ -69,9 +69,9 @@ export function HelpButton({ topic, className }: HelpButtonProps) {
                 type="button"
                 onClick={close}
                 aria-label="Close help"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xl leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xl leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
-                ×
+                x
               </button>
             </div>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-700">
