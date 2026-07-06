@@ -95,13 +95,13 @@ export default function TaskInstructionsModal({
         <div className="sticky top-0 z-10 bg-white/95 border-b border-emerald-100 px-4 py-3 flex items-start justify-between gap-3 backdrop-blur">
           <div className="min-w-0">
             <p className="text-xs text-emerald-700 font-semibold uppercase tracking-wide truncate">
-              {taskTypeLabel(taskType)} · {plantLabel}
+              {taskTypeLabel(taskType)} - {plantLabel}
             </p>
             {!loading && guide && (
               <p className="text-xs text-gray-500 truncate">{guide.plantName}</p>
             )}
             <h2 id="guide-title" className="text-xl font-bold text-emerald-950 font-display">
-              {loading ? 'Loading…' : guide?.title ?? 'Care instructions'}
+              {loading ? 'Loading...' : guide?.title ?? 'Care instructions'}
             </h2>
           </div>
           <button
@@ -111,14 +111,14 @@ export default function TaskInstructionsModal({
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-2xl leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-800"
             aria-label="Close care instructions"
           >
-            ×
+            x
           </button>
         </div>
 
         <div className="p-4 space-y-5 sm:p-5">
           {loading ? (
             <>
-              <StatusMessage className="sr-only">Loading care instructions…</StatusMessage>
+              <StatusMessage className="sr-only">Loading care instructions...</StatusMessage>
               <div className="space-y-3" aria-hidden>
                 <div className="h-24 animate-pulse rounded-2xl bg-emerald-50" />
                 <div className="h-32 animate-pulse rounded-2xl bg-gray-100" />
@@ -135,6 +135,9 @@ export default function TaskInstructionsModal({
               <section className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-full bg-emerald-800 px-3 py-1 text-xs font-semibold text-white">
+                    Care-task guide
+                  </span>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100">
                     {guide.sections.length} care sections
                   </span>
                   <span
@@ -150,6 +153,10 @@ export default function TaskInstructionsModal({
                   </span>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-gray-700">{guide.summary}</p>
+                <p className="mt-2 text-xs leading-5 text-gray-500">
+                  Use these steps for context, then return to the task row to complete, skip, or
+                  snooze the reminder.
+                </p>
               </section>
               {showToc && (
                 <nav

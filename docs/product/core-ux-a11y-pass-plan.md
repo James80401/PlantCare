@@ -1,7 +1,7 @@
 # Core UX and accessibility pass plan
 
 > **Status:** active planning document, created 2026-07-03  
-> **Navigation:** [Roadmap](roadmap.md) | [Current feature implementation plan](current-feature-implementation-plan.md) | [Accessibility checklist](a11y-checklist.md) | [UAT checklist](uat-checklist.md)
+> **Navigation:** [Roadmap](roadmap.md) | [Current feature implementation plan](current-feature-implementation-plan.md) | [Audit worksheet](core-ux-a11y-audit.md) | [Accessibility checklist](a11y-checklist.md) | [UAT checklist](uat-checklist.md)
 
 This plan turns the next product priority into a practical implementation queue:
 run a manual UX and accessibility pass across the core Dr. Plant flows, then
@@ -73,15 +73,15 @@ reduces duplicated UI behavior.
 
 | Checkpoint | Status | Goal | Exit criteria |
 |------------|--------|------|---------------|
-| 0. Baseline audit setup | [ ] | Define viewports, flows, and issue categories. | Audit checklist exists and every core flow has an owner slice. |
-| 1. Global shell and navigation | [ ] | Make page framing, nav, focus, and mobile chrome consistent. | No traps, skip link works, nav labels and active state are clear. |
-| 2. Dashboard command center | [ ] | Make the home screen calmer and more action-oriented. | Critical care, recommendations, summaries, and empty states are easy to scan. |
-| 3. Add plant and discovery | [ ] | Reduce friction from first plant search to saved plant. | Search, identify, external match confirmation, and empty/error states are clear. |
-| 4. Plant profile overview and care | [ ] | Make a plant's status, care, and next action obvious. | Overview and Care tabs explain what matters without overwhelming the user. |
-| 5. Tasks and recommendations | [ ] | Make critical tasks and optional guidance feel distinct. | Complete, skip, snooze, dismiss, and task conversion paths are consistent. |
-| 6. Journal and Plant Life | [ ] | Make progress history understandable and useful. | Check-ins, photos, summaries, edits, deletes, and empty states feel coherent. |
-| 7. Dr. Plant health flow | [ ] | Make diagnosis/chat advice trustworthy and actionable. | Context, action cards, recovery plans, and status history have clear next steps. |
-| 8. Secondary surfaces | [ ] | Remove release-risk friction from community, household, settings, and admin. | Core actions are labelled, recoverable, and mobile-safe. |
+| 0. Baseline audit setup | [x] | Define viewports, flows, and issue categories. | Audit worksheet exists and every core flow has an owner slice. |
+| 1. Global shell and navigation | [~] | Make page framing, nav, focus, and mobile chrome consistent. | First shell fix shipped: nav focus styling and Escape close for More menu. Continue with manual route-by-route audit. |
+| 2. Dashboard command center | [x] | Make the home screen calmer and more action-oriented. | Critical care, recommendations, summaries, and empty states are easy to scan. |
+| 3. Add plant and discovery | [x] | Reduce friction from first plant search to saved plant. | Search, identify, external match confirmation, and empty/error states are clear. |
+| 4. Plant profile overview and care | [x] | Make a plant's status, care, and next action obvious. | Overview and Care tabs explain what matters without overwhelming the user. |
+| 5. Tasks and recommendations | [x] | Make critical tasks and optional guidance feel distinct. | Complete, skip, snooze, dismiss, and task conversion paths are consistent. |
+| 6. Journal and Plant Life | [x] | Make progress history understandable and useful. | Check-ins, photos, summaries, edits, deletes, and empty states feel coherent. |
+| 7. Dr. Plant health flow | [x] | Make diagnosis/chat advice trustworthy and actionable. | Context, action cards, recovery plans, and status history have clear next steps. |
+| 8. Secondary surfaces | [x] | Remove release-risk friction from community, household, settings, and admin. | Core actions are labelled, recoverable, and mobile-safe. |
 | 9. Accessibility hardening | [ ] | Close manual a11y gaps found during checkpoints 1-8. | Keyboard, screen-reader, contrast, zoom, dialog, and live-region checks pass. |
 | 10. Regression and private signoff | [ ] | Lock the pass with tests, docs, and hosted verification. | Tests/build/docs pass, private live signoff passes, and findings are documented. |
 
@@ -123,6 +123,11 @@ Use these labels while auditing and fixing:
 - Findings are grouped by issue category and flow.
 - No fixes are made before the first small batch is selected.
 
+**Status (2026-07-05):** baseline audit setup shipped. The reusable worksheet is
+[core-ux-a11y-audit.md](core-ux-a11y-audit.md); it defines viewports, test
+states, core flow ownership, issue categories, and the first global-shell issue
+log.
+
 ## Checkpoint 1 - Global shell and navigation
 
 ### Surfaces
@@ -159,6 +164,14 @@ Use these labels while auditing and fixing:
 - Mobile bottom nav never hides the last actionable control.
 - Focus rings are visible on buttons, links, tabs, chips, and icon controls.
 - Status messages are announced without stealing focus.
+
+**Status (2026-07-05):** shell slices shipped. Header links, desktop nav,
+mobile bottom nav, More menu links, and logout now share explicit visible focus
+treatment. Desktop and mobile More buttons expose popup state and close with
+Escape as well as outside click. The skip link now moves focus directly to
+`#main-content`, and More announces when it is the current section for routes
+inside the secondary navigation. Remaining Checkpoint 1 work is manual
+route-by-route visual review before marking the checkpoint fully done.
 
 ## Checkpoint 2 - Dashboard command center
 
@@ -209,6 +222,22 @@ Use these labels while auditing and fixing:
 - Dashboard is readable at 390 px width with no horizontal scroll.
 - Component tests cover changed empty/error/action states.
 
+**Status (2026-07-05):** Dashboard command-center checkpoint complete.
+Mobile now opens with compact quick stats and a details disclosure for the full
+metric grid. Critical due/overdue care now appears in a named Priority care
+section immediately after the hero and before optional guidance. The same
+section shows an all-caught-up state when an active garden has no urgent care.
+The closeout polish pass moved weather, Buddy, and seasonal context below the
+primary garden/recommendation work, tightened recommendation action density on
+mobile, and made plant cards, section headers, suggestion cards, attention
+items, and recommendation cards safer for long names and long labels. A hosted
+visual pass with a temporary approved UAT account covered desktop 1440 x 900 and
+mobile 390 x 844 with long garden and plant names. The pass found mobile
+horizontal overflow in the dashboard garden grid; `GardenCard` and the dashboard
+grid were tightened, redeployed, and rechecked. Final hosted measurements showed
+no horizontal overflow on desktop or mobile, and optional garden context remained
+below the primary care, garden, recommendation, and next-action sections.
+
 ## Checkpoint 3 - Add plant and discovery
 
 ### Surfaces
@@ -250,6 +279,22 @@ Use these labels while auditing and fixing:
 - Provisional external matches feel useful but honest.
 - Photo-ID failure states offer a clear alternate path.
 - Mobile form controls are comfortable and labelled.
+
+**Status (2026-07-05):** Add plant and discovery checkpoint shipped. The add
+plant entry screen now separates photo identification from name search with
+plain-language guidance, and manual search starts with a useful beginner state
+instead of a blank result area. No-result states point users toward shorter
+common names, filters, browsing, or photo identification. External photo matches
+now use confidence-based copy that frames provider results as provisional,
+explains that confirmation creates a reviewable species record, and clarifies
+that care guidance is approximate until reviewed. The details step now explains
+that only garden and species are required and that nickname, age, date, notes,
+and photo can be added later. Browse/recommended species cards now cap visible
+recommendation reasons, expose overflow counts, use text placeholders for
+missing photos, and recover from empty results with a clear photo-identification
+path. Focused component tests cover the add-plant first screen, manual search
+empty/no-result states, provisional external confirmation copy, and optional
+details reassurance.
 
 ## Checkpoint 4 - Plant profile overview and care
 
@@ -293,6 +338,19 @@ Use these labels while auditing and fixing:
 - Care cards are scannable on mobile.
 - Important warnings are not color-only.
 - CTA language is consistent with dashboard and Dr. Plant.
+
+**Status (2026-07-06):** Plant profile overview and care checkpoint shipped.
+The profile hero now shows a direct current-status chip for active health
+follow-up, next care, or caught-up care, plus the growing environment when
+available. The Overview tab now starts with a "What matters now" panel that
+prioritizes health follow-up, next care, or journaling, with quick links to
+tasks, Dr. Plant, and observations. Overview status tiles summarize next care,
+health, and recent care, and safety copy is visible when toxicity data exists.
+The Care tab now leads with a care-at-a-glance panel, opens tasks and Dr. Plant
+from the top, and sorts care guide sections into a beginner-friendly order
+before reference topics. Care cards now include a topic-specific Dr. Plant
+handoff inside the card, and focused tests cover the handoff tracking and care
+section ordering.
 
 ## Checkpoint 5 - Tasks and recommendations
 
@@ -338,6 +396,20 @@ Use these labels while auditing and fixing:
 - Optional feedback remains optional.
 - Recommendation actions are reversible or clearly explained.
 - Tests cover any changed action labels, success states, or confirmation states.
+
+**Status (2026-07-06):** Tasks and recommendations checkpoint shipped. Pending
+task rows now label themselves as care tasks, show shared task-purpose copy, and
+summarize the fast action model: complete when done, skip if not needed, snooze
+to move the reminder. Completion feedback is now explicitly optional, skip copy
+explains that skipping records why care was not needed today, and snooze copy
+clarifies that it only moves the reminder rather than completing care or changing
+the long-term routine by itself. The instructions modal now frames care steps
+as context and points users back to the row for complete/skip/snooze actions.
+Recommendations now use clearer "Create care task" language, task conversion
+confirmation distinguishes scheduled tasks from optional recommendations, and
+dismiss copy explains it only closes the current recommendation cycle. Focused
+tests cover task-row action copy, snooze explanation, recommendation task
+confirmation, and recommendation dismissal copy.
 
 ## Checkpoint 6 - Journal and Plant Life
 
@@ -392,6 +464,19 @@ Use these labels while auditing and fixing:
 - Edit/delete actions are safe and clearly confirmed where needed.
 - Mobile history controls do not crowd the content.
 
+**Status (2026-07-06):** Journal and Plant Life checkpoint shipped. The Journal
+tab now explains the difference between quick journal notes, task-backed care
+events, and periodic Plant Check-Ins. The Plant Check-In form is grouped into
+overall condition, leaves/growth, soil/water and recent care, pests or concerns,
+and optional photo, with notes and photos clearly framed as optional. Dr. Plant
+Plant Life summaries are visually distinct from raw check-in answers, including a
+summary-unavailable state when analysis is missing. Editing now tells users the
+Dr. Plant summary will refresh, deleting confirms that Plant Life history updates,
+and the history list repeats those consequences near the controls. The timeline
+now uses "Plant Life timeline" and "Plant Check-In" wording, keeps filters for
+long mixed histories, and explains empty timeline states with concrete next
+actions.
+
 ## Checkpoint 7 - Dr. Plant health flow
 
 ### Surfaces
@@ -438,6 +523,19 @@ Use these labels while auditing and fixing:
 - Recovery guidance has a visible follow-through path.
 - Health-tab mobile layout remains usable with image uploads and long replies.
 
+**Status (2026-07-06):** Dr. Plant health-flow checkpoint shipped. The context
+panel now uses "What Dr. Plant sees" language and explains that saved care
+history, tasks, journal notes, Plant Check-Ins, and health records may inform
+advice without exposing prompt internals. The chat now clarifies the difference
+between freeform advice, structured saved diagnoses, and review-before-confirm
+task/recommendation drafts. Reply actions now read as explicit save/schedule
+actions, recovery-task creation is framed as selectable drafts, and action cards
+are labelled as drafts that require confirmation before changing care.
+Diagnosis result cards now show "What this is based on", keep uncertainty and
+source visible, surface beginner safety notes from treatment plans, and explain
+follow-up reminders as recovery comparison points. Health history copy now makes
+active versus recovered status clearer.
+
 ## Checkpoint 8 - Secondary surfaces
 
 ### Surfaces
@@ -470,6 +568,18 @@ Use these labels while auditing and fixing:
 - Secondary surfaces do not block private testing.
 - Admin review tools are usable enough for current review volume.
 - Permission and error states are clear.
+
+**Status (2026-07-06):** Secondary surfaces checkpoint shipped. Community post
+and comment forms now have clearer labels, practical posting guidance, stronger
+delete confirmations, cleaner loading/empty states, and plain like/comment copy.
+Household and garden-member invite flows now explain role permissions, per-plant
+sharing, and journal access more directly, with status messages announced to
+assistive tech. Settings now labels quiet-hours/timezone controls more clearly,
+announces save/error states, and requires both confirmation and typing `DELETE`
+before account deletion. Admin external species review now explains the save
+edits versus mark reviewed/curated sequence, asks for confirmation before status
+changes, and normalizes cramped review copy. Related web and user-guide docs were
+updated for current behavior.
 
 ## Checkpoint 9 - Accessibility hardening
 

@@ -19,7 +19,7 @@ import type { CareDetailLevel, CareOverviewSection, PlantRecord, TimelineEvent }
 const TIMELINE_FILTERS: Array<{ key: TimelineFilter; label: string }> = [
   { key: 'all', label: 'All' },
   { key: 'journal', label: 'Journal' },
-  { key: 'progress', label: 'Progress' },
+  { key: 'progress', label: 'Plant Check-In' },
   { key: 'care', label: 'Care' },
   { key: 'diagnosis', label: 'Health' },
 ];
@@ -121,8 +121,26 @@ export function CareGuideCard({
   drPlantPath?: string;
   plantId?: string;
 }) {
+  const drPlantLink = drPlantPath ? (
+    <Link
+      to={drPlantPath}
+      onClick={() =>
+        trackEvent('guide_dr_plant_click', {
+          surface: 'plant_care_card',
+          plantId,
+          sectionId: section.id,
+          sectionHeading: section.heading,
+          target: drPlantPath,
+        })
+      }
+      className="mt-4 inline-flex min-h-9 items-center justify-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+    >
+      Ask Dr. Plant about {section.heading}
+    </Link>
+  ) : null;
+
   return (
-    <div className="space-y-2">
+    <div>
       <StructuredCareSectionCard
         id={section.id}
         heading={section.heading}
@@ -131,24 +149,8 @@ export function CareGuideCard({
         advancedBody={section.advancedBody}
         warnings={section.warnings}
         defaultDetailLevel={defaultDetailLevel}
+        footer={drPlantLink}
       />
-      {drPlantPath ? (
-        <Link
-          to={drPlantPath}
-          onClick={() =>
-            trackEvent('guide_dr_plant_click', {
-              surface: 'plant_care_card',
-              plantId,
-              sectionId: section.id,
-              sectionHeading: section.heading,
-              target: drPlantPath,
-            })
-          }
-          className="inline-flex min-h-9 items-center justify-center rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100"
-        >
-          Ask Dr. Plant about this
-        </Link>
-      ) : null}
     </div>
   );
 }
@@ -181,39 +183,48 @@ export function PlantTimeline({
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="font-semibold text-emerald-950">Plant timeline</h3>
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-semibold text-emerald-950">Plant Life timeline</h3>
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            Journal notes, Plant Check-Ins, care events, and health updates stay in one history.
+          </p>
+        </div>
         <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
           {events.length} event{events.length === 1 ? '' : 's'}
         </span>
       </div>
 
       {showFilters ? (
-        <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Filter timeline by type">
-          {TIMELINE_FILTERS.filter((option) => counts[option.key] > 0).map((option) => {
-            const active = filter === option.key;
-            return (
-              <button
-                key={option.key}
-                type="button"
-                onClick={() => setFilter(option.key)}
-                aria-pressed={active}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                  active
-                    ? 'bg-emerald-800 text-white'
-                    : 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100'
-                }`}
-              >
-                {option.label} {counts[option.key]}
-              </button>
-            );
-          })}
+        <div className="mb-4">
+          <p className="mb-2 text-xs font-medium text-gray-500">Filter long histories by type.</p>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Filter timeline by type">
+            {TIMELINE_FILTERS.filter((option) => counts[option.key] > 0).map((option) => {
+              const active = filter === option.key;
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setFilter(option.key)}
+                  aria-pressed={active}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                    active
+                      ? 'bg-emerald-800 text-white'
+                      : 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100'
+                  }`}
+                >
+                  {option.label} {counts[option.key]}
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : null}
 
       {visible.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-3 py-4 text-sm text-gray-500">
-          No {filter === 'all' ? '' : `${timelineTypeLabel(filter).toLowerCase()} `}events to show.
+          No {filter === 'all' ? '' : `${timelineTypeLabel(filter).toLowerCase()} `}events to show yet.
+          Add a journal note, save a Plant Check-In, or complete a care task to build this history.
         </p>
       ) : null}
 
@@ -419,7 +430,7 @@ export function appendJournalPrompt(
 
 function timelineTypeLabel(type: TimelineEvent['type']) {
   if (type === 'care') return 'Care action';
-  if (type === 'progress') return 'Progress';
+  if (type === 'progress') return 'Plant Check-In';
   if (type === 'diagnosis') return 'Diagnosis';
   return 'Journal';
 }

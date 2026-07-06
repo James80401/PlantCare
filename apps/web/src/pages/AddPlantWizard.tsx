@@ -43,6 +43,32 @@ interface ExternalSpeciesMatch {
 
 type Step = 'photo' | 'confirm' | 'search' | 'details';
 
+function normalizeConfidence(confidence: number | undefined) {
+  if (typeof confidence !== 'number' || Number.isNaN(confidence)) return null;
+  const percent = confidence <= 1 ? confidence * 100 : confidence;
+  return Math.max(0, Math.min(100, Math.round(percent)));
+}
+
+function confidenceTone(confidence: number | null) {
+  if (confidence == null) return 'Provider match';
+  if (confidence >= 80) return 'Strong visual match';
+  if (confidence >= 55) return 'Possible visual match';
+  return 'Low-confidence visual match';
+}
+
+function confidenceReviewCopy(confidence: number | null) {
+  if (confidence == null) {
+    return 'Review the name and photo before adding it. Dr. Plant will keep this match marked for review.';
+  }
+  if (confidence >= 80) {
+    return 'This looks likely, but it is still photo identification. Confirm only if the name and image fit your plant.';
+  }
+  if (confidence >= 55) {
+    return 'This is useful as a lead, not a final answer. Search manually if anything feels off.';
+  }
+  return 'This is uncertain. Search manually unless you recognize the plant from the name and photo.';
+}
+
 const PLANT_LIFE_STAGE_OPTIONS = [
   {
     value: 'SEED',
@@ -229,9 +255,7 @@ export default function AddPlantWizard() {
     setLimitError(null);
     try {
       const { data } = await plantsApi.identify(file);
-      setIdentifyConfidence(
-        typeof data.confidence === 'number' ? Math.round(data.confidence * 100) : null,
-      );
+      setIdentifyConfidence(normalizeConfidence(data.confidence));
       if (data.species) {
         const species = data.species as Species;
         setSpeciesId(species.id);
@@ -414,13 +438,18 @@ export default function AddPlantWizard() {
   const selectedGarden = gardens.find((g) => g.id === selectedGardenId);
   const identifiedMatch = selectedSpecies ?? externalMatch;
   const isExternalConfirmation = !selectedSpecies && Boolean(externalMatch);
+  const hasSearchCriteria = query.trim().length >= 2 || Object.values(activeFilters).some(Boolean);
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
       <PageHeader
         eyebrow="Grow your garden"
         title="Add a plant"
-        description={stepTitle}
+        description={
+          step === 'photo'
+            ? 'Use a photo when you are unsure, or search by name when you already know the plant.'
+            : stepTitle
+        }
         help="add-plant"
       />
       {gardens.length > 0 ? (
@@ -479,6 +508,20 @@ export default function AddPlantWizard() {
 
       {step === 'photo' && (
         <Card className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3">
+              <p className="text-sm font-semibold text-emerald-950">Identify from a photo</p>
+              <p className="mt-1 text-xs leading-5 text-gray-600">
+                Best when you do not know the plant name. You will review the match before anything is saved.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-3">
+              <p className="text-sm font-semibold text-sky-950">Search by name</p>
+              <p className="mt-1 text-xs leading-5 text-gray-600">
+                Fastest when you know a common name like pothos, basil, monstera, or snake plant.
+              </p>
+            </div>
+          </div>
           <PhotoCaptureZone
             label="Take or upload a photo"
             hint="We’ll suggest a species from the image"
@@ -488,7 +531,7 @@ export default function AddPlantWizard() {
             sourceMode="both"
           />
           <Button variant="secondary" fullWidth onClick={() => setStep('search')}>
-            Search by name instead
+            Search by name
           </Button>
           <Link
             to="/garden/plants/browse"
@@ -524,7 +567,7 @@ export default function AddPlantWizard() {
             <div className="min-w-0">
               {isExternalConfirmation ? (
                 <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                  External match - confirm before adding
+                  {confidenceTone(identifyConfidence)}
                 </p>
               ) : null}
               <p className="font-display text-xl font-bold text-emerald-950">
@@ -559,8 +602,12 @@ export default function AddPlantWizard() {
             </div>
           </div>
           {isExternalConfirmation ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-              Confirming creates a Dr. Plant species record for this match and keeps the provider confidence attached for review.
+            <div className="space-y-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+              <p className="font-semibold">Confirm only if this looks like your plant.</p>
+              <p>{confidenceReviewCopy(identifyConfidence)}</p>
+              <p>
+                Confirming adds this match to Dr. Plant as a provisional species record, saves the provider confidence for admin review, and starts with approximate care guidance until the species is reviewed.
+              </p>
             </div>
           ) : null}
           <Button
@@ -595,6 +642,7 @@ export default function AddPlantWizard() {
               setExternalMatch(null);
             }}
             placeholder="e.g. Monstera, Basil, Snake plant"
+            hint="Common names work. You do not need the scientific name."
           />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Filters</p>
@@ -628,7 +676,7 @@ export default function AddPlantWizard() {
               </p>
             ) : null}
           </div>
-          {speciesList.length > 0 && (
+          {speciesList.length > 0 ? (
             <ul className="max-h-72 space-y-2 overflow-auto">
               {speciesList.map((species) => (
                 <li key={species.id}>
@@ -645,7 +693,31 @@ export default function AddPlantWizard() {
                 </li>
               ))}
             </ul>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-emerald-100 bg-emerald-50/50 px-4 py-4 text-sm text-gray-700">
+              {hasSearchCriteria ? (
+                <>
+                  <p className="font-semibold text-emerald-950">No matching plants yet</p>
+                  <p className="mt-1 leading-6">
+                    Try a shorter common name, clear one filter, browse the catalog, or use photo identification if you are not sure what it is.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold text-emerald-950">Start with any common name</p>
+                  <p className="mt-1 leading-6">
+                    Type at least two letters, or use filters like pet-safe, low light, edible, or indoor.
+                  </p>
+                </>
+              )}
+            </div>
           )}
+          <Link
+            to="/garden/plants/browse"
+            className="block text-center text-sm font-semibold text-emerald-800 hover:underline"
+          >
+            Browse the full catalog
+          </Link>
           <Button variant="ghost" fullWidth onClick={() => setStep('photo')}>
             ← Back to photo
           </Button>
@@ -681,6 +753,12 @@ export default function AddPlantWizard() {
                 ) : null}
               </div>
             ) : null}
+            <div className="rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm text-sky-950">
+              <p className="font-semibold">Only garden and species are required.</p>
+              <p className="mt-1 leading-6">
+                Dr. Plant can start with safe defaults. Nickname, age, date, notes, and photo can all be added later.
+              </p>
+            </div>
             <Input
               label="Nickname (optional)"
               value={nickname}
@@ -730,7 +808,7 @@ export default function AddPlantWizard() {
                 placeholder="e.g. 3"
               />
               <p className="text-xs text-gray-500">
-                Age helps DrPlant tune reminders. Sprouts and seedlings skip harsh care tasks and get closer moisture checks.
+                Age helps Dr. Plant tune reminders. Sprouts and seedlings skip harsh care tasks and get closer moisture checks.
               </p>
             </div>
             <div>

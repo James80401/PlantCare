@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation, type To } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import TaskRow from '../components/tasks/TaskRow';
+import { TaskTypeIcon } from '../components/tasks/TaskTypeIcon';
 import {
   useDashboard,
   type DashboardAttention,
@@ -34,7 +35,8 @@ import {
   getMilestoneHighlights,
   getOldestPlantAgeDays,
 } from '../utils/engagement';
-import { TASK_TYPE_ICONS, type TaskItem } from '../utils/taskGroups';
+import type { TaskItem } from '../utils/taskGroups';
+import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
 import { taskTypeLabel } from '../utils/tasks';
 import { plantDrPlantPath } from './plant-profile/constants';
 import {
@@ -199,6 +201,12 @@ export default function Dashboard() {
   );
   const completedTodayCount =
     careSummary?.counts.completedToday ?? metrics?.completedToday ?? 0;
+  const priorityCareTasks =
+    todayCareTasks.length > 0
+      ? todayCareTasks
+      : dash?.todayTasks?.length
+        ? dash.todayTasks
+        : [...overdueTasks, ...todayTasks];
 
   const drPlantAction = useMemo((): To => {
     if (allGardenPlants.length === 1) {
@@ -240,6 +248,19 @@ export default function Dashboard() {
         actionTo: careSummary.actionTo,
       }
     : getSuggestedAction(plants, overdueTasks, todayTasks);
+  const hasGardenStarted = plantCount > 0 || gardenSummaries.length > 0;
+  const completeDashboardTask = (id: string, feedback?: TaskCompleteFeedback) => {
+    handleComplete(id, feedback);
+    window.setTimeout(() => void refreshAfterTask(), 700);
+  };
+  const skipDashboardTask = (id: string, feedback?: TaskSkipFeedback) => {
+    handleSkip(id, feedback);
+    window.setTimeout(() => void refreshAfterTask(), 700);
+  };
+  const snoozeDashboardTask = async (id: string, days: 1 | 3 | 7) => {
+    await handleSnooze(id, days);
+    await refreshAfterTask();
+  };
   const engagementContext = useMemo(
     () => ({
       plantCount,
@@ -277,26 +298,18 @@ export default function Dashboard() {
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
 
   return (
-    <div className="space-y-6 min-w-0">
-      <header className="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-emerald-800 to-lime-700 text-white shadow-xl shadow-emerald-900/15">
-        <div className="relative p-5 sm:p-7">
-          <div
-            className="absolute -right-14 -top-14 h-40 w-40 rounded-full bg-white/10 blur-2xl"
-            aria-hidden
-          />
-          <div
-            className="absolute -bottom-16 left-16 h-36 w-36 rounded-full bg-lime-300/20 blur-2xl"
-            aria-hidden
-          />
+    <div className="min-w-0 space-y-5 sm:space-y-6">
+      <header className="overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-emerald-950 via-emerald-800 to-lime-700 text-white shadow-xl shadow-emerald-900/15 sm:rounded-3xl">
+        <div className="relative p-4 sm:p-7">
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-sm font-medium text-emerald-100">
                 {dash?.greeting.dateLabel ?? format(new Date(), 'EEEE, MMM d')}
               </p>
-              <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl font-display">
+              <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-4xl font-display">
                 Hi, {firstName}
               </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-emerald-50/90">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-emerald-50/90 sm:text-base">
                 {dash?.greeting.statusLine ??
                   'Start your garden by adding a plant and Dr. Plant will build your daily routine.'}
               </p>
@@ -312,7 +325,30 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="relative mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <CompactDashboardFocus
+            dueTodayCount={dueTodayCount}
+            overdueCount={overdueCount}
+            dueCareAreas={dueCareAreas}
+            completedTodayCount={completedTodayCount}
+          />
+
+          <button
+            type="button"
+            onClick={() => setMetricsOpen((open) => !open)}
+            className="relative mt-3 flex w-full items-center justify-between rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-emerald-50 backdrop-blur transition hover:bg-white/15 sm:hidden"
+            aria-expanded={metricsOpen}
+            aria-controls="dashboard-metrics-grid"
+          >
+            <span>{metricsOpen ? 'Hide details' : 'Show details'}</span>
+            <span aria-hidden>{metricsOpen ? '-' : '+'}</span>
+          </button>
+
+          <div
+            id="dashboard-metrics-grid"
+            className={`relative mt-3 gap-2 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-5 ${
+              metricsOpen ? 'grid' : 'hidden'
+            }`}
+          >
             <DashboardMetric
               label="My Gardens"
               value={gardenSummariesLoading ? '...' : gardenSummaries.length}
@@ -376,26 +412,23 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {dash?.weather.hasLocation && dash.weather.cachedSummary ? (
-        <section className="max-h-28 overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm text-sky-950">
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">Weather</p>
-          <p className="mt-1 line-clamp-3 leading-6">{dash.weather.cachedSummary}</p>
-        </section>
-      ) : null}
-
-      <WeatherAdvicePanel />
-
-      {BUDDY_ENABLED ? (
-        <>
-          <BuddyDashboardPanel />
-          <SeasonalBanner />
-        </>
-      ) : null}
-
       {dashError ? (
         <FormError className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-rose-700">
           {dashError}
         </FormError>
+      ) : null}
+
+      {!dashboardLoading ? (
+        <PriorityCareSection
+          tasks={priorityCareTasks}
+          animating={animating}
+          hasGardenStarted={hasGardenStarted}
+          dueTodayCount={dueTodayCount}
+          overdueCount={overdueCount}
+          onComplete={completeDashboardTask}
+          onSkip={skipDashboardTask}
+          onSnooze={snoozeDashboardTask}
+        />
       ) : null}
 
       {(scheduleSuggestions.length > 0 || scheduleMessage) && (
@@ -441,8 +474,8 @@ export default function Dashboard() {
         <GardenStorySection story={healthStory} />
       ) : null}
 
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.75fr)]">
-        <div className="space-y-4">
+      <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.75fr)]">
+        <div className="min-w-0 space-y-4">
           <SectionHeader
             eyebrow="Start here"
             title="Your gardens"
@@ -484,48 +517,15 @@ export default function Dashboard() {
               />
             )
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
               {gardenSummaries.map((garden) => (
                 <GardenCard key={garden.id} garden={garden} />
               ))}
             </div>
           )}
-
-          {/* Today's care kept as a secondary quick-action list under the gardens. */}
-          {todayCareTasks.length > 0 ? (
-            <>
-              <SectionHeader
-                eyebrow="Due now"
-                title="Today's care"
-                actionLabel="View all"
-                actionTo="/garden/tasks"
-              />
-            <ul className="space-y-2">
-              {todayCareTasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  animState={animating[task.id] ?? null}
-                  onComplete={(id, feedback) => {
-                    handleComplete(id, feedback);
-                    window.setTimeout(() => void refreshAfterTask(), 700);
-                  }}
-                  onSkip={(id, feedback) => {
-                    handleSkip(id, feedback);
-                    window.setTimeout(() => void refreshAfterTask(), 700);
-                  }}
-                  onSnooze={async (id, days) => {
-                    await handleSnooze(id, days);
-                    await refreshAfterTask();
-                  }}
-                />
-              ))}
-            </ul>
-            </>
-          ) : null}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           <RecommendationPanel
             recommendations={recommendations}
             onChanged={reloadDash}
@@ -591,7 +591,7 @@ export default function Dashboard() {
         </aside>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
+      <section className="grid gap-3 sm:gap-4 lg:grid-cols-3">
         <SuggestionCard
           title={recommendedAction.title}
           body={recommendedAction.body}
@@ -624,6 +624,24 @@ export default function Dashboard() {
               : drPlantAction
           }
         />
+      </section>
+
+      <section className="space-y-3 sm:space-y-4" aria-label="Garden context">
+        {dash?.weather.hasLocation && dash.weather.cachedSummary ? (
+          <section className="max-h-28 overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/80 px-4 py-3 text-sm text-sky-950">
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">Weather</p>
+            <p className="mt-1 line-clamp-3 leading-6">{dash.weather.cachedSummary}</p>
+          </section>
+        ) : null}
+
+        <WeatherAdvicePanel />
+
+        {BUDDY_ENABLED ? (
+          <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+            <BuddyDashboardPanel />
+            <SeasonalBanner />
+          </div>
+        ) : null}
       </section>
 
       {plantCount > 0 && (
@@ -892,7 +910,7 @@ function DashboardMetric({
     sky: 'bg-sky-300/20 text-sky-50',
   };
 
-  const className = `block rounded-2xl border p-4 backdrop-blur transition ${accentClasses[accent]} ${
+  const className = `block rounded-2xl border p-3 backdrop-blur transition sm:p-4 ${accentClasses[accent]} ${
     urgent ? 'border-rose-200/60 ring-2 ring-rose-300/40' : highlight ? 'border-white/25' : 'border-white/10'
   } ${
     to
@@ -903,7 +921,7 @@ function DashboardMetric({
   const content = (
     <>
       <p className="text-xs font-semibold uppercase tracking-wide opacity-80">{label}</p>
-      <p className="mt-1 text-2xl font-bold">{value}</p>
+      <p className="mt-1 text-xl font-bold sm:text-2xl">{value}</p>
       <p className="mt-1 text-xs opacity-80">{helper}</p>
     </>
   );
@@ -919,6 +937,170 @@ function DashboardMetric({
   return <div className={className}>{content}</div>;
 }
 
+function CompactDashboardFocus({
+  dueTodayCount,
+  overdueCount,
+  dueCareAreas,
+  completedTodayCount,
+}: {
+  dueTodayCount: number;
+  overdueCount: number;
+  dueCareAreas: number;
+  completedTodayCount: number;
+}) {
+  const items = [
+    {
+      label: 'Today',
+      value: dueTodayCount,
+      helper: 'due',
+      to: '/garden/tasks',
+      tone: dueTodayCount > 0 ? 'bg-white text-emerald-950' : 'bg-white/10 text-emerald-50',
+      ariaLabel: `Today care: ${dueTodayCount} due`,
+    },
+    {
+      label: 'Late',
+      value: overdueCount,
+      helper: 'overdue',
+      to: '/garden/tasks/overdue',
+      tone: overdueCount > 0 ? 'bg-rose-50 text-rose-950' : 'bg-white/10 text-emerald-50',
+      ariaLabel: `Late care: ${overdueCount} overdue`,
+    },
+    {
+      label: 'Areas',
+      value: dueCareAreas,
+      helper: 'types',
+      to: '/garden/tasks',
+      tone: dueCareAreas > 0 ? 'bg-amber-50 text-amber-950' : 'bg-white/10 text-emerald-50',
+      ariaLabel: `Care type summary: ${dueCareAreas} areas`,
+    },
+    {
+      label: 'Done',
+      value: completedTodayCount,
+      helper: 'today',
+      to: '/garden/tasks/completed-today',
+      tone: completedTodayCount > 0 ? 'bg-sky-50 text-sky-950' : 'bg-white/10 text-emerald-50',
+      ariaLabel: `Completed today: ${completedTodayCount}`,
+    },
+  ];
+
+  return (
+    <nav className="relative mt-5 grid grid-cols-4 gap-2 sm:hidden" aria-label="Dashboard quick stats">
+      {items.map((item) => (
+        <Link
+          key={item.label}
+          to={item.to}
+          aria-label={item.ariaLabel}
+          className={`min-w-0 rounded-2xl px-2 py-2.5 text-center shadow-sm ring-1 ring-white/10 ${item.tone}`}
+        >
+          <span className="block text-[0.65rem] font-semibold uppercase tracking-wide opacity-80">
+            {item.label}
+          </span>
+          <span className="mt-0.5 block text-lg font-bold leading-none">{item.value}</span>
+          <span className="mt-0.5 block truncate text-[0.65rem] opacity-75">{item.helper}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+function PriorityCareSection({
+  tasks,
+  animating,
+  hasGardenStarted,
+  dueTodayCount,
+  overdueCount,
+  onComplete,
+  onSkip,
+  onSnooze,
+}: {
+  tasks: TaskItem[];
+  animating: Record<string, 'completing' | 'skipping' | 'snoozing'>;
+  hasGardenStarted: boolean;
+  dueTodayCount: number;
+  overdueCount: number;
+  onComplete: (id: string, feedback?: TaskCompleteFeedback) => void;
+  onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
+  onSnooze: (id: string, days: 1 | 3 | 7) => Promise<void>;
+}) {
+  if (!hasGardenStarted) return null;
+
+  const visibleTasks = tasks.slice(0, 4);
+  const hiddenCount = Math.max(0, tasks.length - visibleTasks.length);
+  const hasCriticalCare = tasks.length > 0;
+  const headline = overdueCount
+    ? 'Catch up gently'
+    : dueTodayCount
+      ? "Today's care"
+      : 'All caught up';
+  const body = overdueCount
+    ? `${overdueCount} overdue care item${overdueCount === 1 ? '' : 's'} should be handled before optional recommendations.`
+    : dueTodayCount
+      ? `${dueTodayCount} care item${dueTodayCount === 1 ? '' : 's'} due today.`
+      : 'No critical care tasks need action today. Optional recommendations can wait.';
+
+  return (
+    <section
+      className={`rounded-3xl border p-4 shadow-sm shadow-emerald-900/5 sm:p-5 ${
+        hasCriticalCare
+          ? 'border-amber-100 bg-amber-50/70'
+          : 'border-emerald-100 bg-emerald-50/70'
+      }`}
+      aria-labelledby="priority-care-heading"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p
+            className={`text-xs font-semibold uppercase tracking-wide ${
+              hasCriticalCare ? 'text-amber-800' : 'text-emerald-700'
+            }`}
+          >
+            Priority care
+          </p>
+          <h2 id="priority-care-heading" className="mt-1 text-lg font-semibold text-emerald-950 font-display">
+            {headline}
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-700">{body}</p>
+        </div>
+        <Link
+          to="/garden/tasks"
+          className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
+        >
+          {hasCriticalCare ? 'Open tasks' : 'View calendar'}
+        </Link>
+      </div>
+
+      {hasCriticalCare ? (
+        <div className="mt-4 space-y-3">
+          <ul className="space-y-2">
+            {visibleTasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                animState={animating[task.id] ?? null}
+                onComplete={onComplete}
+                onSkip={onSkip}
+                onSnooze={onSnooze}
+              />
+            ))}
+          </ul>
+          {hiddenCount > 0 ? (
+            <Link
+              to="/garden/tasks"
+              className="inline-flex text-sm font-semibold text-emerald-800 hover:underline"
+            >
+              View {hiddenCount} more care item{hiddenCount === 1 ? '' : 's'}
+            </Link>
+          ) : null}
+        </div>
+      ) : (
+        <div className="mt-4 rounded-2xl bg-white/80 px-4 py-3 text-sm text-emerald-900 ring-1 ring-emerald-100">
+          Keep an eye on recommendations below when you have time, but there is no urgent plant care waiting.
+        </div>
+      )}
+    </section>
+  );
+}
+
 function SectionHeader({
   eyebrow,
   title,
@@ -931,17 +1113,17 @@ function SectionHeader({
   actionTo?: string;
 }) {
   return (
-    <div className="flex items-end justify-between gap-4">
-      <div>
+    <div className="flex min-w-0 items-end justify-between gap-4">
+      <div className="min-w-0">
         <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{eyebrow}</p>
-        <h2 className="mt-1 text-xl font-semibold text-emerald-950 font-display">{title}</h2>
+        <h2 className="mt-1 break-words text-xl font-semibold text-emerald-950 font-display">{title}</h2>
       </div>
       {actionLabel && actionTo && (
         <Link
           to={actionTo}
-          className="shrink-0 rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
+          className="inline-flex max-w-[45%] shrink-0 rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
         >
-          {actionLabel}
+          <span className="truncate">{actionLabel}</span>
         </Link>
       )}
     </div>
@@ -1006,9 +1188,9 @@ function ScheduleSuggestionCard({
   onApply: () => void;
 }) {
   return (
-    <article className="rounded-2xl border border-lime-100 bg-white p-4 shadow-sm">
+    <article className="min-w-0 rounded-2xl border border-lime-100 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-lime-700">
             <Link
               to={`/garden/plants/${suggestion.plantId}`}
@@ -1018,7 +1200,7 @@ function ScheduleSuggestionCard({
             </Link>{' '}
             · {taskTypeLabel(suggestion.taskType)}
           </p>
-          <h3 className="mt-1 font-semibold text-emerald-950">{suggestion.title}</h3>
+          <h3 className="mt-1 break-words font-semibold text-emerald-950">{suggestion.title}</h3>
         </div>
         <span className="rounded-full bg-lime-100 px-2.5 py-1 text-xs font-semibold text-lime-900">
           {suggestion.confidence} confidence
@@ -1077,13 +1259,13 @@ function AttentionItemCard({
 
   return (
     <article
-      className={`rounded-2xl border p-3 transition hover:-translate-y-0.5 hover:shadow-sm ${toneClasses[item.priority]}`}
+      className={`min-w-0 rounded-2xl border p-3 transition hover:-translate-y-0.5 hover:shadow-sm ${toneClasses[item.priority]}`}
     >
       <div className="flex gap-3">
         {plant ? <PlantThumb plant={plant} size="sm" /> : null}
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{item.plantName}</p>
-          <p className="mt-0.5 text-xs opacity-80">{item.reason}</p>
+          <p className="break-words font-semibold">{item.plantName}</p>
+          <p className="mt-0.5 break-words text-xs opacity-80">{item.reason}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Link
               to={primaryTo}
@@ -1118,14 +1300,14 @@ function SuggestionCard({
   actionTo: To;
 }) {
   return (
-    <article className="rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm shadow-emerald-900/5">
-      <h2 className="text-lg font-semibold text-emerald-950 font-display">{title}</h2>
-      <p className="mt-2 text-sm leading-6 text-gray-600">{body}</p>
+    <article className="min-w-0 rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5 sm:p-5">
+      <h2 className="break-words text-lg font-semibold text-emerald-950 font-display">{title}</h2>
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-600">{body}</p>
       <Link
         to={actionTo}
-        className="mt-4 inline-flex rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100"
+        className="mt-3 inline-flex max-w-full rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100 sm:mt-4"
       >
-        {actionLabel}
+        <span className="truncate">{actionLabel}</span>
       </Link>
     </article>
   );
@@ -1146,23 +1328,25 @@ function PlantCard({
   const overdueCount = getOverdueTasks(plantTasks).length;
 
   return (
-    <article className="group overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
-      <div className="flex gap-4 p-4">
-        <Link to={`/garden/plants/${plant.id}`} className="flex min-w-0 flex-1 gap-4">
+    <article className="group min-w-0 overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
+      <div className="flex gap-3 p-3 sm:gap-4 sm:p-4">
+        <Link to={`/garden/plants/${plant.id}`} className="flex min-w-0 flex-1 gap-3 sm:gap-4">
           <PlantThumb plant={plant} size="lg" />
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold text-emerald-950">{name}</h3>
+            <h3 className="break-words font-semibold leading-snug text-emerald-950">{name}</h3>
             <p className="truncate text-sm text-gray-500">{plant.species.commonName}</p>
             {sharedMeta ? (
-              <span className="mt-1 inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-900">
+              <span className="mt-1 inline-block max-w-full truncate rounded-full bg-sky-100 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-900">
                 Shared · {sharedMeta.gardenName}
               </span>
             ) : null}
             <div className="mt-3 space-y-1.5 text-xs text-gray-600">
               {next ? (
-                <p className="font-medium text-emerald-800">
-                  <span aria-hidden>{TASK_TYPE_ICONS[next.taskType] ?? '🌿'} </span>
-                  Next: {taskTypeLabel(next.taskType)} on {format(parseISO(next.dueDate), 'MMM d')}
+                <p className="flex min-w-0 items-center gap-1.5 font-medium text-emerald-800">
+                  <TaskTypeIcon taskType={next.taskType} className="h-3.5 w-3.5 shrink-0" />
+                  <span className="min-w-0 break-words">
+                    Next: {taskTypeLabel(next.taskType)} on {format(parseISO(next.dueDate), 'MMM d')}
+                  </span>
                 </p>
               ) : (
                 <p className="font-medium text-amber-700">No upcoming task found</p>
@@ -1172,7 +1356,7 @@ function PlantCard({
             </div>
           </div>
         </Link>
-        <div className="flex shrink-0 flex-col items-end gap-1">
+        <div className="flex max-w-24 shrink-0 flex-col items-end gap-1 sm:max-w-28">
           {plant.unresolvedDiagnosis ? (
             <Link
               to={plantDrPlantPath(plant.id)}
@@ -1188,7 +1372,7 @@ function PlantCard({
           )}
         </div>
       </div>
-      <div className="border-t border-emerald-50 px-4 pb-3 pt-2">
+      <div className="flex items-center justify-between gap-3 border-t border-emerald-50 px-4 pb-3 pt-2">
         <Link
           to={plantDrPlantPath(plant.id)}
           className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-emerald-800 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-900"
@@ -1196,14 +1380,14 @@ function PlantCard({
           <span aria-hidden>🩺</span>
           Ask Dr. Plant
         </Link>
-        <p className="mt-1.5 text-[0.65rem] text-gray-500">Symptoms, photos, follow-ups</p>
+        <p className="hidden text-right text-[0.65rem] text-gray-500 sm:block">Symptoms, photos, follow-ups</p>
       </div>
     </article>
   );
 }
 
 function PlantThumb({ plant, size }: { plant: DashboardPlant; size: 'sm' | 'lg' }) {
-  const dimensions = size === 'sm' ? 'h-12 w-12 rounded-xl text-xl' : 'h-20 w-20 rounded-2xl text-3xl';
+  const dimensions = size === 'sm' ? 'h-12 w-12 rounded-xl text-xl' : 'h-16 w-16 rounded-2xl text-2xl sm:h-20 sm:w-20 sm:text-3xl';
   const imageUrl = resolveApiThumbnailUrl(
     plant.imageUrl ?? plant.species.defaultImageUrl ?? null,
     160,

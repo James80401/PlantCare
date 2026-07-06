@@ -26,6 +26,31 @@ export const TASK_SKIP_REASONS = [
   },
 ] as const;
 
+type TaskSkipReasonOption = (typeof TASK_SKIP_REASONS)[number];
+
+const GENERAL_TASK_SKIP_REASONS = [
+  {
+    value: 'PLANT_LOOKS_HEALTHY',
+    label: 'Not needed today',
+    helper: 'The plant looks fine and this non-critical care can wait.',
+  },
+  {
+    value: 'TOO_BUSY',
+    label: 'Too busy',
+    helper: 'Skip for now without changing care assumptions.',
+  },
+  {
+    value: 'OTHER',
+    label: 'Other reason',
+    helper: 'Capture anything else in the optional note.',
+  },
+] as const satisfies readonly TaskSkipReasonOption[];
+
+export const TASK_SKIP_REASONS_BY_TYPE: Partial<Record<string, readonly TaskSkipReasonOption[]>> = {
+  WATER: TASK_SKIP_REASONS,
+  CHECK_MOISTURE: TASK_SKIP_REASONS,
+};
+
 export type TaskSkipReason = (typeof TASK_SKIP_REASONS)[number]['value'];
 
 export interface TaskSkipFeedback {
@@ -36,6 +61,10 @@ export interface TaskSkipFeedback {
 export function skipReasonLabel(reason: string | undefined): string | null {
   if (!reason) return null;
   return TASK_SKIP_REASONS.find((r) => r.value === reason)?.label ?? reason;
+}
+
+export function skipReasonsForTask(taskType: string) {
+  return TASK_SKIP_REASONS_BY_TYPE[taskType] ?? GENERAL_TASK_SKIP_REASONS;
 }
 
 export const TASK_COMPLETE_REASONS = [
@@ -61,7 +90,36 @@ export const TASK_COMPLETE_REASONS = [
   },
 ] as const;
 
-export type TaskCompleteReason = (typeof TASK_COMPLETE_REASONS)[number]['value'];
+export const NON_WATER_COMPLETE_REASONS = [
+  {
+    value: 'ROUTINE_CARE_DONE',
+    label: 'Routine care done',
+    helper: 'The task was completed as planned.',
+  },
+  {
+    value: 'PLANT_LOOKS_HEALTHY',
+    label: 'Plant looked healthy',
+    helper: 'No urgent issue, just normal care.',
+  },
+  {
+    value: 'PLANT_LOOKS_STRESSED',
+    label: 'Plant needed attention',
+    helper: 'The plant showed stress or symptoms worth noting.',
+  },
+  {
+    value: 'OTHER',
+    label: 'Other result',
+    helper: 'Add details in the optional note.',
+  },
+] as const;
+
+export function completeReasonsForTask(taskType: string) {
+  return taskType === 'WATER' ? TASK_COMPLETE_REASONS : NON_WATER_COMPLETE_REASONS;
+}
+
+export type TaskCompleteReason =
+  | (typeof TASK_COMPLETE_REASONS)[number]['value']
+  | (typeof NON_WATER_COMPLETE_REASONS)[number]['value'];
 
 export interface TaskCompleteFeedback {
   reason?: TaskCompleteReason;
@@ -70,7 +128,10 @@ export interface TaskCompleteFeedback {
 
 export function completeReasonLabel(reason: string | undefined): string | null {
   if (!reason) return null;
-  return TASK_COMPLETE_REASONS.find((r) => r.value === reason)?.label ?? reason;
+  return (
+    [...TASK_COMPLETE_REASONS, ...NON_WATER_COMPLETE_REASONS].find((r) => r.value === reason)
+      ?.label ?? reason
+  );
 }
 
 export interface TaskFeedbackRecord {

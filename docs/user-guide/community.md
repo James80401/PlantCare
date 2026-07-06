@@ -1,10 +1,10 @@
 # Community feed
 
-> **Navigation:** [User guide INDEX](INDEX.md) · [Guide 10](../guides/10-end-user-product-guide.md#community)
+> **Navigation:** [User guide INDEX](INDEX.md) - [Guide 10](../guides/10-end-user-product-guide.md#community)
 
 ## What it is
 
-The **Community** page is an in-app feed where users post tips, photos, and growing updates. It is separate from your private garden — think of it as a lightweight social board for plant lovers.
+The **Community** page is an in-app feed where users post tips, photos, and growing updates. It is separate from your private garden - think of it as a lightweight social board for plant lovers.
 
 ## How to open it
 
@@ -13,14 +13,11 @@ The **Community** page is an in-app feed where users post tips, photos, and grow
 ## What you can do
 
 - **Read** recent posts from other users.
-- **Create** a post with text and optional image.
-- **Delete** your own posts.
+- **Create** a post with text, optional image, and optional species tag.
+- **Like** and comment on posts.
+- **Delete** your own posts or comments after confirmation.
 
-Posts may reference a species or plant from your garden when you choose to attach context.
-
-## What is not available yet
-
-Comments and likes exist in the database schema but are **not** in the current app UI or API. Only posts are supported today.
+Posts may reference a species when you choose to attach context. Shared photos are optional.
 
 ## Technical reference
 

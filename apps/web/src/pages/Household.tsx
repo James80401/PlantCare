@@ -84,8 +84,8 @@ export default function Household() {
         data.emailSent
           ? 'Invite email sent. They can also use the link or token below.'
           : inviteEmail.trim()
-            ? 'Invite created — email was not sent (SMTP may be off). Share the link or token below.'
-            : 'Invite created — share the link or token below.',
+            ? 'Invite created. Email was not sent, so share the link or token below.'
+            : 'Invite created. Share the link or token below.',
       );
       await load();
     } catch (err) {
@@ -120,7 +120,7 @@ export default function Household() {
     try {
       await gardensApi.acceptInvite(acceptToken.trim());
       setAcceptToken('');
-      setMessage('Invite accepted — welcome to the household.');
+      setMessage('Invite accepted. Welcome to the household.');
       await load();
     } catch (err) {
       setMessage(formatApiErrorMessage(err, 'Could not accept invite. Check the token and expiry.'));
@@ -134,21 +134,28 @@ export default function Household() {
       <PageHeader
         eyebrow="Care Share"
         title="Household"
-        description="Invite family or roommates to help with shared plants. Caregivers can complete tasks you assign."
+        description="Invite family or roommates to help with shared plants. Only plants you explicitly share are visible here."
         help="household"
       />
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {message ? (
-        <p className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <p className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status">
           {message}
         </p>
       ) : null}
 
       <Card className="space-y-3">
         <h2 className="font-semibold text-emerald-950">Join with invite</h2>
+        <p className="text-sm leading-6 text-gray-600">
+          Paste a household token from someone you trust. Your own private garden stays separate.
+        </p>
         <form onSubmit={handleAcceptInvite} className="flex flex-col gap-2 sm:flex-row">
+          <label className="sr-only" htmlFor="household-invite-token">
+            Invite token
+          </label>
           <input
+            id="household-invite-token"
             value={acceptToken}
             onChange={(e) => setAcceptToken(e.target.value)}
             placeholder="Paste invite token"
@@ -170,7 +177,7 @@ export default function Household() {
       </Card>
 
       {loading ? (
-        <p className="text-sm text-gray-500">Loading households…</p>
+        <p className="text-sm text-gray-500">Loading households...</p>
       ) : ownedGardens.length === 0 ? (
         <p className="text-sm text-gray-600">
           You have not created a household yet. Create one to share plants and send invites.
@@ -184,7 +191,7 @@ export default function Household() {
                   <div>
                     <h2 className="text-lg font-semibold text-emerald-950">{garden.name}</h2>
                     <p className="text-xs text-gray-500">
-                      {garden.members.length} member{garden.members.length === 1 ? '' : 's'} ·{' '}
+                      {garden.members.length} member{garden.members.length === 1 ? '' : 's'} -{' '}
                       {garden.plants.length} shared plant{garden.plants.length === 1 ? '' : 's'}
                     </p>
                   </div>
@@ -204,7 +211,7 @@ export default function Household() {
                   <ul className="mt-1 space-y-1 text-sm text-gray-700">
                     {garden.members.map((member) => (
                       <li key={member.id}>
-                        {member.user?.name || member.user?.email || member.userId} ·{' '}
+                        {member.user?.name || member.user?.email || member.userId} -{' '}
                         <span className="font-medium">{member.role}</span>
                       </li>
                     ))}
@@ -231,7 +238,7 @@ export default function Household() {
                               share.canJournal ? 'can journal' : null,
                             ]
                               .filter(Boolean)
-                              .join(' · ') || 'view only'}
+                              .join(' - ') || 'view only'}
                           </span>
                         </li>
                       ))}
@@ -248,7 +255,15 @@ export default function Household() {
                   className="space-y-2 rounded-2xl bg-emerald-50/60 p-3"
                 >
                   <p className="text-sm font-medium text-emerald-900">Share a plant</p>
+                  <p className="text-xs leading-5 text-gray-600">
+                    Shared plants can be seen by household members. Caregivers can complete shared
+                    tasks; journal access is controlled below.
+                  </p>
+                  <label className="sr-only" htmlFor={`share-plant-${garden.id}`}>
+                    Plant to share with {garden.name}
+                  </label>
                   <select
+                    id={`share-plant-${garden.id}`}
                     value={shareGardenId === garden.id ? sharePlantId : ''}
                     onChange={(e) => {
                       setShareGardenId(garden.id);
@@ -256,7 +271,7 @@ export default function Household() {
                     }}
                     className="w-full rounded-xl border border-emerald-100 px-3 py-2 text-sm"
                   >
-                    <option value="">Select your plant…</option>
+                    <option value="">Select your plant...</option>
                     {myPlants.map((plant) => (
                       <option key={plant.id} value={plant.id}>
                         {plant.nickname || plant.species.commonName}
@@ -291,7 +306,15 @@ export default function Household() {
                   className="space-y-2 rounded-2xl border border-emerald-100 p-3"
                 >
                   <p className="text-sm font-medium text-emerald-900">Invite someone</p>
+                  <p className="text-xs leading-5 text-gray-600">
+                    Caregivers can complete shared care tasks. Viewers can only read shared garden
+                    details.
+                  </p>
+                  <label className="sr-only" htmlFor={`invite-email-${garden.id}`}>
+                    Invite email
+                  </label>
                   <input
+                    id={`invite-email-${garden.id}`}
                     type="email"
                     value={inviteGardenId === garden.id ? inviteEmail : ''}
                     onChange={(e) => {
@@ -309,8 +332,8 @@ export default function Household() {
                     }}
                     className="w-full rounded-xl border border-emerald-100 px-3 py-2 text-sm"
                   >
-                    <option value="CAREGIVER">Caregiver — can complete shared tasks</option>
-                    <option value="VIEWER">Viewer — read only</option>
+                    <option value="CAREGIVER">Caregiver - can complete shared tasks</option>
+                    <option value="VIEWER">Viewer - read only</option>
                   </select>
                   <Button type="submit" variant="secondary" fullWidth>
                     Create invite

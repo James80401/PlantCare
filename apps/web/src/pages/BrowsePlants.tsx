@@ -198,8 +198,8 @@ export default function BrowsePlants() {
         title="Browse plants"
         description={
           total > 0 && !loading
-            ? `Explore ${total} species — filter, search, then add any plant to your garden.`
-            : 'Explore our catalog — filter, search, then add any plant to your garden.'
+            ? `Explore ${total} species. Filter, search, then add any plant to your garden.`
+            : 'Explore our catalog. Filter, search, then add any plant to your garden.'
         }
         help="browse-species"
         action={
@@ -231,7 +231,9 @@ export default function BrowsePlants() {
                         loading="lazy"
                       />
                     ) : (
-                      <span className="flex h-full items-center justify-center text-3xl">🌿</span>
+                      <span className="flex h-full items-center justify-center px-3 text-center text-xs font-semibold text-emerald-700">
+                        Photo coming
+                      </span>
                     )}
                   </Link>
                   <div className="p-2.5">
@@ -248,7 +250,7 @@ export default function BrowsePlants() {
                     ) : null}
                     {species.matchReasons?.length ? (
                       <ul className="mt-1.5 flex flex-wrap gap-1">
-                        {species.matchReasons.map((reason) => (
+                        {species.matchReasons.slice(0, 2).map((reason) => (
                           <li
                             key={reason}
                             className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[0.6rem] font-medium text-emerald-800 ring-1 ring-emerald-100"
@@ -256,6 +258,14 @@ export default function BrowsePlants() {
                             {reason}
                           </li>
                         ))}
+                        {species.matchReasons.length > 2 ? (
+                          <li
+                            className="rounded-full bg-gray-50 px-1.5 py-0.5 text-[0.6rem] font-medium text-gray-600 ring-1 ring-gray-100"
+                            aria-label={`${species.matchReasons.length - 2} more recommendation reasons`}
+                          >
+                            +{species.matchReasons.length - 2}
+                          </li>
+                        ) : null}
                       </ul>
                     ) : null}
                   </div>
@@ -356,11 +366,20 @@ export default function BrowsePlants() {
       {loading ? (
         <SkeletonGrid count={6} />
       ) : items.length === 0 ? (
-        <p className="rounded-3xl bg-white border border-emerald-100 px-5 py-8 text-center text-sm text-gray-500">
-          No plants match your search. Try clearing filters or a shorter name.
-        </p>
+        <div className="rounded-3xl bg-white border border-emerald-100 px-5 py-8 text-center text-sm text-gray-500">
+          <p className="font-semibold text-emerald-950">No plants match your search yet.</p>
+          <p className="mt-1">
+            Try clearing filters, using a shorter common name, or identifying from a photo.
+          </p>
+          <Link
+            to="/garden/plants/new"
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-900 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+          >
+            Identify from a photo
+          </Link>
+        </div>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:gap-4">
+        <ul className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4">
           {items.map((species) => (
             <li key={species.id}>
               <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5">
@@ -377,23 +396,25 @@ export default function BrowsePlants() {
                       loading="lazy"
                     />
                   ) : (
-                    <span className="text-5xl" aria-hidden>
-                      🌿
+                    <span className="px-3 text-center text-sm font-semibold text-emerald-700">
+                      No photo yet
                     </span>
                   )}
                 </Link>
                 <div className="flex flex-1 flex-col p-4">
                   <Link
                     to={`/garden/plants/browse/${species.id}`}
-                    className="font-semibold text-emerald-950 leading-snug hover:text-emerald-700"
+                    className="line-clamp-2 font-semibold text-emerald-950 leading-snug hover:text-emerald-700"
                   >
                     {species.commonName}
                   </Link>
                   {species.scientificName ? (
-                    <p className="mt-0.5 text-sm italic text-gray-400">{species.scientificName}</p>
+                    <p className="mt-0.5 line-clamp-1 text-sm italic text-gray-400">
+                      {species.scientificName}
+                    </p>
                   ) : null}
                   <p className="mt-2 text-xs text-gray-500">
-                    {species.sunlight || 'Light not specified'} · Water every{' '}
+                    {species.sunlight || 'Light not specified'} - Water every{' '}
                     {species.wateringFreqDays ?? 7} days
                   </p>
                   {(species.difficulty || species.toxicitySummary) && (

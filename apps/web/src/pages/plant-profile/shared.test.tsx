@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { trackEvent } from '../../utils/analytics';
 import { CareGuideCard } from './shared';
+import { sortCareSections } from './PlantCareTab';
 
 vi.mock('../../utils/analytics', () => ({
   trackEvent: vi.fn(),
@@ -27,7 +28,7 @@ describe('CareGuideCard', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('link', { name: 'Ask Dr. Plant about this' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Ask Dr. Plant about Water' }));
 
     expect(trackEvent).toHaveBeenCalledWith('guide_dr_plant_click', {
       surface: 'plant_care_card',
@@ -38,3 +39,34 @@ describe('CareGuideCard', () => {
     });
   });
 });
+
+describe('sortCareSections', () => {
+  it('orders care sections by beginner scan priority', () => {
+    const sections = [
+      section('toxicity', 'Safety'),
+      section('propagation', 'Propagation'),
+      section('water', 'Water'),
+      section('pests', 'Pests'),
+      section('light', 'Light'),
+    ];
+
+    expect(sortCareSections(sections).map((section) => section.id)).toEqual([
+      'water',
+      'light',
+      'pests',
+      'toxicity',
+      'propagation',
+    ]);
+  });
+});
+
+function section(id: Parameters<typeof sortCareSections>[0][number]['id'], heading: string) {
+  return {
+    id,
+    heading,
+    whyItMatters: `${heading} matters.`,
+    beginnerBody: `${heading} beginner guidance.`,
+    advancedBody: `${heading} advanced guidance.`,
+    warnings: [],
+  };
+}

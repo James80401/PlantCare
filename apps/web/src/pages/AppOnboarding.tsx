@@ -25,12 +25,12 @@ const tourSections = [
   },
   {
     title: 'Add Plant',
-    body: 'Add a plant when you are ready. Photos, life stage, garden area, and age help DrPlant tune suggestions.',
+    body: 'Add a plant when you are ready. Photos, life stage, garden area, and age help Dr. Plant tune suggestions.',
     to: '/garden/plants/new',
     action: 'Add a plant',
   },
   {
-    title: 'DrPlant',
+    title: 'Dr. Plant',
     body: 'Open a plant profile and use the Health tab to ask for diagnosis help, recovery steps, and follow-up care.',
     to: '/garden/plants/browse',
     action: 'Find a plant',
@@ -51,7 +51,7 @@ export default function AppOnboarding() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <PageHeader
           eyebrow="Quick tour"
-          title="Use DrPlant at your pace"
+          title="Use Dr. Plant at your pace"
           description="A fast map of what the app does. Nothing here is required, and you can come back any time from the menu."
         />
         <Link
@@ -84,7 +84,7 @@ export default function AppOnboarding() {
           <div>
             <h2 className="text-base font-semibold text-emerald-950">Guidance stays optional</h2>
             <p className="mt-1 text-sm leading-6 text-gray-700">
-              You can start with one plant, browse first, or ignore the tour entirely. DrPlant should support
+              You can start with one plant, browse first, or ignore the tour entirely. Dr. Plant should support
               your garden, not make you complete homework before you can use it.
             </p>
           </div>

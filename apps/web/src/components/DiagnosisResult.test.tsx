@@ -54,19 +54,26 @@ describe('DiagnosisResult', () => {
                 ],
                 expectedTimeline: 'Stabilization usually takes 1-2 weeks.',
                 mistakesToAvoid: ['Do not fertilize stressed roots.'],
+                beginnerSafetyNotes: ['Keep the plant away from pets while treating pests.'],
               },
             }),
+            symptomsText: 'Lower leaves are yellow.',
+            imageUrl: '/diagnosis/photo.jpg',
           }}
         />
       </MemoryRouter>,
     );
 
     expect(screen.getByText('Treatment plan')).toBeInTheDocument();
+    expect(screen.getByText('What this is based on')).toBeInTheDocument();
+    expect(screen.getByText(/reported symptoms, submitted photo, AI analysis/)).toBeInTheDocument();
     expect(screen.getAllByText('Overwatering or root rot risk')[0]).toBeInTheDocument();
     expect(screen.getByText('Act now')).toBeInTheDocument();
     expect(screen.getByText('Check soil moisture before watering again')).toBeInTheDocument();
     expect(screen.getByText('Today')).toBeInTheDocument();
     expect(screen.getByText(/Stabilization usually takes 1-2 weeks/)).toBeInTheDocument();
+    expect(screen.getByText('Safety notes')).toBeInTheDocument();
+    expect(screen.getByText('Keep the plant away from pets while treating pests.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open this plant\'s care guide' })).toHaveAttribute(
       'href',
       '/garden/plants/plant-1/care',

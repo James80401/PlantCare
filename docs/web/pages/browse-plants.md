@@ -10,6 +10,11 @@
 - Paginated species grid
 - Filters and sort controls
 - **Recommended** horizontal row (`GET /species/recommended`)
+- Recommended cards show up to two visible match reasons plus an overflow count
+  so the row stays compact on mobile.
+- Missing species photos use text placeholders instead of decorative-only icons.
+- Empty results point users toward shorter names, clearing filters, or photo
+  identification through the add-plant wizard.
 - Links to species detail
 
 ## SpeciesBrowseDetail

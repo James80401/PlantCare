@@ -54,8 +54,8 @@ describe('TaskRow', () => {
   it('still allows optional water feedback from the secondary action', async () => {
     const { onComplete } = renderRow({ task: makeTask({ taskType: 'WATER' as TaskItem['taskType'] }) });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add note' }));
-    fireEvent.click(screen.getByRole('button', { name: /Save feedback & complete/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add optional result' }));
+    fireEvent.click(screen.getByRole('button', { name: /Save result & complete/i }));
 
     await waitFor(() => {
       expect(onComplete).toHaveBeenCalledWith('task-1', {
@@ -68,12 +68,12 @@ describe('TaskRow', () => {
   it('can save a completion observation to the journal after completion succeeds', async () => {
     const { onComplete } = renderRow({ task: makeTask({ taskType: 'WATER' as TaskItem['taskType'] }) });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add note' }));
-    fireEvent.change(screen.getByPlaceholderText('Example: soil was dry 2 inches down'), {
+    fireEvent.click(screen.getByRole('button', { name: 'Add optional result' }));
+    fireEvent.change(screen.getByPlaceholderText(/soil moisture/i), {
       target: { value: 'Soil was dry and leaves perked up after watering' },
     });
     fireEvent.click(screen.getByLabelText(/Also save this note to journal/i));
-    fireEvent.click(screen.getByRole('button', { name: /Save feedback & complete/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Save result & complete/i }));
 
     await waitFor(() => {
       expect(onComplete).toHaveBeenCalledWith('task-1', {
@@ -90,16 +90,33 @@ describe('TaskRow', () => {
   it('skips with the default reason', () => {
     const { onSkip } = renderRow();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
-    fireEvent.click(screen.getByRole('button', { name: /Save reason & skip/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Skip if not needed' }));
+    fireEvent.click(screen.getByRole('button', { name: /Record reason & skip/i }));
 
-    expect(onSkip).toHaveBeenCalledWith('task-1', { reason: 'SOIL_STILL_WET', note: undefined });
+    expect(onSkip).toHaveBeenCalledWith('task-1', { reason: 'PLANT_LOOKS_HEALTHY', note: undefined });
+  });
+
+  it('uses general care result feedback for non-water tasks', async () => {
+    const { onComplete } = renderRow();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add optional result' }));
+    expect(screen.getByText('Routine care done')).toBeInTheDocument();
+    expect(screen.queryByText('Soil was very dry')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Save result & complete/i }));
+
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalledWith('task-1', {
+        reason: 'ROUTINE_CARE_DONE',
+        note: undefined,
+      });
+    });
   });
 
   it('snoozes for the chosen duration', () => {
     const { onSnooze } = renderRow();
 
     fireEvent.click(screen.getByRole('button', { name: 'Snooze' }));
+    expect(screen.getByText(/only moves the reminder/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'In 1 week' }));
 
     expect(onSnooze).toHaveBeenCalledWith('task-1', 7);
@@ -129,7 +146,7 @@ describe('TaskRow', () => {
       </MemoryRouter>,
     );
     expect(screen.getByText(/Completed/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Skip' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Skip if not needed' })).not.toBeInTheDocument();
 
     rerender(
       <MemoryRouter>
@@ -150,5 +167,13 @@ describe('TaskRow', () => {
   it('flags an overdue pending task', () => {
     renderRow({ task: makeTask({ dueDate: '2020-01-01T00:00:00.000Z' }) });
     expect(screen.getByText(/Overdue/)).toBeInTheDocument();
+  });
+
+  it('labels pending tasks as care tasks with optional action guidance', () => {
+    renderRow();
+
+    expect(screen.getByText('Care task')).toBeInTheDocument();
+    expect(screen.getByText(/Complete when done - skip if not needed - snooze/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nutrient care during active growth/i)).toBeInTheDocument();
   });
 });

@@ -36,15 +36,15 @@ vi.mock('../components/gardens/GardenCard', () => ({
 }));
 
 vi.mock('../components/weather/WeatherAdvicePanel', () => ({
-  WeatherAdvicePanel: () => null,
+  WeatherAdvicePanel: () => <section>Weather advice panel</section>,
 }));
 
 vi.mock('../components/buddy/BuddyDashboardPanel', () => ({
-  default: () => null,
+  default: () => <section>Buddy dashboard panel</section>,
 }));
 
 vi.mock('../components/buddy/SeasonalBanner', () => ({
-  default: () => null,
+  default: () => <section>Seasonal banner panel</section>,
 }));
 
 function renderDashboard() {
@@ -83,8 +83,46 @@ describe('Dashboard', () => {
     expect(screen.getByRole('link', { name: /Care areas: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Gardens ready: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Completed: 4/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Today care: 1 due/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Late care: 1 overdue/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Care type summary: 2 areas/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Show details/i })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Show details/i }));
+    expect(screen.getByRole('button', { name: /Hide details/i })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    expect(screen.getByRole('region', { name: /Catch up gently/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open tasks' })).toBeInTheDocument();
+    expect(screen.getByText('Priority care')).toBeInTheDocument();
     expect(screen.getByText('Kitchen herbs')).toBeInTheDocument();
     expect(screen.getByText('Porch plants')).toBeInTheDocument();
+  });
+
+  it('keeps optional context panels below the primary dashboard work', async () => {
+    mockUseDashboard.mockReturnValue({
+      data: dashboardPayload(),
+      loading: false,
+      error: '',
+      reload: vi.fn(),
+    });
+    mockSummaries.mockResolvedValue({
+      data: [{ id: 'garden-1', name: 'Kitchen herbs', tasksDueToday: 1, overdue: 0 }],
+    });
+
+    renderDashboard();
+
+    expect(await screen.findByText('Kitchen herbs')).toBeInTheDocument();
+
+    const priorityCare = screen.getByText('Priority care');
+    const recommendations = screen.getByRole('heading', { name: 'Recommendations' });
+    const gardenContext = screen.getByLabelText('Garden context');
+
+    expect(priorityCare.compareDocumentPosition(gardenContext)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(recommendations.compareDocumentPosition(gardenContext)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it('surfaces dashboard load failures as an alert while garden summaries can still render', async () => {
@@ -120,7 +158,7 @@ describe('Dashboard', () => {
     renderDashboard();
 
     expect(await screen.findByText('Garden summaries are unavailable')).toBeInTheDocument();
-    expect(screen.getByText('Catch up gently')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /Catch up gently/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry summaries' }));
 

@@ -83,7 +83,7 @@ export default function Subscription() {
         <Card className="space-y-3 text-sm text-gray-700">
           <p className="font-semibold text-emerald-950">Beta access is active</p>
           <p>
-            You can keep using DrPlant while subscriptions are being prepared.
+            You can keep using Dr. Plant while subscriptions are being prepared.
           </p>
         </Card>
       </div>
@@ -101,7 +101,7 @@ export default function Subscription() {
           <HelpButton topic="subscription" />
         </div>
         <p className="mt-1 text-sm text-gray-600">
-          Track more plants and identify more species with DrPlant Premium.
+          Track more plants and identify more species with Dr. Plant Premium.
         </p>
       </div>
 

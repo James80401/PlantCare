@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useLocation } from 'react-router-dom';
 import { GrowthMeasurementsPanel } from '../../components/journal/GrowthMeasurementsPanel';
@@ -54,7 +54,7 @@ export default function PlantJournalTab() {
     <ProfileSection
       eyebrow="History"
       title="Journal"
-      description="Capture observations, measurements, and photos. Edit or delete entries from the timeline."
+      description="Capture quick journal notes, periodic Plant Check-Ins, photos, and care history in one place."
       help="plant-journal"
     >
       <JournalProgressStory
@@ -64,6 +64,8 @@ export default function PlantJournalTab() {
         timelineCount={ctx.timelineEvents.length}
         latestEntry={latestJournalEntry}
       />
+
+      <JournalModeGuide />
 
       <ProgressCheckInPanel progressEntries={progressEntries} />
 
@@ -230,14 +232,20 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
       resetForm();
       await ctx.load();
     } catch {
-      setError(isEditing ? 'Could not update this progress check-in.' : 'Could not save this progress check-in.');
+      setError(isEditing ? 'Could not update this Plant Check-In.' : 'Could not save this Plant Check-In.');
     } finally {
       setSaving(false);
     }
   };
 
   const deleteEntry = async (entryId: string) => {
-    if (!window.confirm('Delete this progress check-in? This cannot be undone.')) return;
+    if (
+      !window.confirm(
+        'Delete this Plant Check-In? This removes the entry, refreshes Plant Life history, and cannot be undone.',
+      )
+    ) {
+      return;
+    }
     setBusyEntryId(entryId);
     setError('');
     try {
@@ -245,7 +253,7 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
       if (editingEntryId === entryId) resetForm();
       await ctx.load();
     } catch {
-      setError('Could not delete this progress check-in.');
+      setError('Could not delete this Plant Check-In.');
     } finally {
       setBusyEntryId(null);
     }
@@ -262,8 +270,8 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
             Check in on {ctx.plantLabel}
           </h3>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
-            Log a quick health snapshot. Dr. Plant compares it with previous check-ins and saves
-            the story to this plant's history.
+            Log a quick health snapshot every month or so. Dr. Plant compares it with previous
+            check-ins and saves the story to this plant's Plant Life history.
           </p>
         </div>
         <div className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-lime-900 ring-1 ring-lime-100">
@@ -279,7 +287,7 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-semibold text-emerald-950">
-              {isEditing ? 'Edit progress check-in' : 'New progress check-in'}
+              {isEditing ? 'Edit Plant Check-In' : 'New Plant Check-In'}
             </p>
             {isEditing ? (
               <button
@@ -291,7 +299,19 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
               </button>
             ) : null}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+
+          <p className="rounded-2xl bg-lime-50 px-3 py-2 text-xs leading-5 text-lime-950 ring-1 ring-lime-100">
+            Most check-ins only need the dropdowns. Notes and photos are optional, but helpful when
+            you are tracking symptoms or recovery.
+          </p>
+
+          {isEditing ? (
+            <p className="rounded-2xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900 ring-1 ring-amber-100">
+              Saving changes refreshes the Dr. Plant summary for this Plant Check-In.
+            </p>
+          ) : null}
+
+          <ProgressFieldGroup title="Overall condition">
             <ProgressSelect
               label="Overall health"
               value={overallHealth}
@@ -299,6 +319,9 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
               options={OVERALL_HEALTH_OPTIONS}
               required
             />
+          </ProgressFieldGroup>
+
+          <ProgressFieldGroup title="Leaves and growth">
             <ProgressSelect
               label="Growth change"
               value={growthChange}
@@ -311,17 +334,14 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
               onChange={setLeafCondition}
               options={LEAF_CONDITION_OPTIONS}
             />
+          </ProgressFieldGroup>
+
+          <ProgressFieldGroup title="Soil/water and recent care">
             <ProgressSelect
-              label="Soil"
+              label="Soil moisture"
               value={soilMoisture}
               onChange={setSoilMoisture}
               options={SOIL_MOISTURE_OPTIONS}
-            />
-            <ProgressSelect
-              label="Pests"
-              value={pestSigns}
-              onChange={setPestSigns}
-              options={PEST_SIGNS_OPTIONS}
             />
             <ProgressSelect
               label="Recent care"
@@ -329,21 +349,34 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
               onChange={setRecentCare}
               options={RECENT_CARE_OPTIONS}
             />
-          </div>
+          </ProgressFieldGroup>
 
-          <label className="block">
-            <span className="text-sm font-medium text-gray-700">Extra notes</span>
-            <textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              rows={3}
-              placeholder="What changed since the last check-in?"
-              className="mt-2 w-full rounded-2xl border border-lime-100 px-4 py-3 text-sm focus:border-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-100"
+          <ProgressFieldGroup title="Pests or concerns">
+            <ProgressSelect
+              label="Pest signs"
+              value={pestSigns}
+              onChange={setPestSigns}
+              options={PEST_SIGNS_OPTIONS}
             />
-          </label>
+            <label className="block sm:col-span-2">
+              <span className="text-sm font-medium text-gray-700">Notes</span>
+              <span className="ml-1 text-xs font-normal text-gray-500">(optional)</span>
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                rows={3}
+                placeholder="What changed since the last check-in?"
+                className="mt-2 w-full rounded-2xl border border-lime-100 px-4 py-3 text-sm focus:border-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-100"
+              />
+            </label>
+          </ProgressFieldGroup>
 
           <label className="block rounded-2xl border border-lime-100 bg-white p-3">
-            <span className="text-sm font-semibold text-emerald-950">Optional check-in photo</span>
+            <span className="text-sm font-semibold text-emerald-950">Optional photo</span>
+            <span className="mt-1 block text-xs leading-5 text-gray-600">
+              Helpful for color, leaf shape, pest, or recovery changes. You can save the check-in
+              without one.
+            </span>
             <input
               key={photoInputKey}
               type="file"
@@ -358,7 +391,7 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
               <div className="mt-3 space-y-2">
                 <img
                   src={previewUrl}
-                  alt="Progress check-in preview"
+                  alt="Plant Check-In photo preview"
                   className="max-h-48 w-full rounded-2xl border border-lime-100 object-cover"
                 />
                 <button
@@ -390,7 +423,7 @@ function ProgressCheckInPanel({ progressEntries }: { progressEntries: PlantRecor
             disabled={saving}
             className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-lime-700 px-5 py-2 text-sm font-semibold text-white hover:bg-lime-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {saving ? 'Checking in...' : isEditing ? 'Update progress check-in' : 'Save progress check-in'}
+            {saving ? 'Checking in...' : isEditing ? 'Update Plant Check-In' : 'Save Plant Check-In'}
           </button>
         </form>
 
@@ -443,13 +476,24 @@ function ProgressSelect({
   );
 }
 
+function ProgressFieldGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <fieldset className="rounded-2xl border border-lime-100 bg-white p-3">
+      <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-lime-800">
+        {title}
+      </legend>
+      <div className="mt-2 grid gap-3 sm:grid-cols-2">{children}</div>
+    </fieldset>
+  );
+}
+
 function ProgressSummaryCard({ entry }: { entry?: PlantRecord | null }) {
   if (!entry) {
     return (
       <div className="rounded-2xl border border-dashed border-lime-200 bg-white/70 p-4">
-        <p className="font-semibold text-emerald-950">No progress check-ins yet</p>
+        <p className="font-semibold text-emerald-950">No Plant Check-Ins yet</p>
         <p className="mt-1 text-sm leading-6 text-gray-600">
-          The first one becomes the baseline Dr. Plant uses for future plant-life summaries.
+          The first one becomes the baseline Dr. Plant uses for future Plant Life summaries.
         </p>
       </div>
     );
@@ -460,7 +504,7 @@ function ProgressSummaryCard({ entry }: { entry?: PlantRecord | null }) {
 
   return (
     <div className="rounded-2xl border border-lime-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">Latest story</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-lime-800">Latest Plant Life story</p>
       <div className="mt-1 flex flex-wrap items-center gap-2">
         <h4 className="font-semibold text-emerald-950">
           {progressHealthLabel(entry.overallHealth as string)}
@@ -476,14 +520,25 @@ function ProgressSummaryCard({ entry }: { entry?: PlantRecord | null }) {
           Logged {formatDistanceToNow(createdAt, { addSuffix: true })}
         </p>
       ) : null}
-      {entry.analysisSummary ? (
-        <p className="mt-2 text-sm leading-6 text-gray-700">{entry.analysisSummary as string}</p>
-      ) : null}
-      {entry.adviceText ? (
-        <p className="mt-3 rounded-2xl bg-lime-50 px-3 py-2 text-sm leading-6 text-lime-950 ring-1 ring-lime-100">
-          {entry.adviceText as string}
+      <div className="mt-3 rounded-2xl border border-lime-100 bg-lime-50/80 px-3 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-lime-900">Dr. Plant summary</p>
+        <p className="mt-1 text-xs leading-5 text-lime-950">
+          Generated from this Plant Check-In and prior Plant Life history.
         </p>
-      ) : null}
+        {entry.analysisSummary ? (
+          <p className="mt-2 text-sm leading-6 text-gray-700">{entry.analysisSummary as string}</p>
+        ) : (
+          <p className="mt-2 text-sm leading-6 text-gray-600">
+            Summary unavailable right now. The check-in is saved and can still anchor the next
+            Plant Life summary.
+          </p>
+        )}
+        {entry.adviceText ? (
+          <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-sm leading-6 text-lime-950 ring-1 ring-lime-100">
+            {entry.adviceText as string}
+          </p>
+        ) : null}
+      </div>
       {story.flags.length ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {story.flags.map((flag) => (
@@ -557,7 +612,7 @@ function ProgressMilestones({
         <div>
           <p className="text-sm font-semibold text-emerald-950">Plant Life milestones</p>
           <p className="mt-1 text-xs leading-5 text-gray-500">
-            Earned from this plant's check-ins and progress history.
+            Earned from this plant's Plant Check-Ins and Plant Life history.
           </p>
         </div>
         {milestones.length ? (
@@ -608,7 +663,11 @@ function ProgressHistoryList({
   if (!entries.length) return null;
   return (
     <div className="rounded-2xl border border-lime-100 bg-white p-4">
-      <p className="text-sm font-semibold text-emerald-950">Plant Life history</p>
+      <p className="text-sm font-semibold text-emerald-950">Plant Check-In history</p>
+      <p className="mt-1 text-xs leading-5 text-gray-500">
+        Editing refreshes the Dr. Plant summary. Deleting removes the entry and updates Plant Life
+        history.
+      </p>
       <div className="mt-3 space-y-3">
         {entries.map((entry) => (
           <div key={entry.id as string} className="border-t border-lime-50 pt-3 first:border-t-0 first:pt-0">
@@ -616,7 +675,7 @@ function ProgressHistoryList({
               {entry.photoUrl ? (
                 <img
                   src={resolveApiAssetUrl(entry.photoUrl as string) ?? undefined}
-                  alt="Progress check-in"
+                  alt="Plant Check-In"
                   className="h-14 w-14 rounded-xl object-cover"
                   loading="lazy"
                 />
@@ -642,6 +701,7 @@ function ProgressHistoryList({
                   <button
                     type="button"
                     onClick={() => onEdit(entry)}
+                    aria-label={`Edit Plant Check-In from ${format(new Date(entry.createdAt as string), 'MMM d')}`}
                     className="rounded-full bg-lime-50 px-3 py-1 text-xs font-semibold text-lime-800 hover:bg-lime-100"
                   >
                     Edit
@@ -650,6 +710,7 @@ function ProgressHistoryList({
                     type="button"
                     disabled={busyEntryId === entry.id}
                     onClick={() => onDelete(entry.id as string)}
+                    aria-label={`Delete Plant Check-In from ${format(new Date(entry.createdAt as string), 'MMM d')}`}
                     className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
                   >
                     {busyEntryId === entry.id ? 'Deleting...' : 'Delete'}
@@ -696,7 +757,7 @@ function JournalProgressStory({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            Progress story
+            Plant Life snapshot
           </p>
           <h3 className="mt-1 font-semibold text-emerald-950">
             {latestDate
@@ -745,6 +806,45 @@ function JournalProgressStory({
   );
 }
 
+function JournalModeGuide() {
+  return (
+    <section
+      className="mt-5 rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5"
+      aria-labelledby="journal-mode-guide"
+    >
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">What to log</p>
+        <h3 id="journal-mode-guide" className="mt-1 font-semibold text-emerald-950">
+          Notes, care events, and Plant Check-Ins each do a different job
+        </h3>
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-3">
+        <JournalModeCard
+          title="Journal note"
+          body="A quick observation, photo, or measurement you want to remember."
+        />
+        <JournalModeCard
+          title="Care event"
+          body="Completed, skipped, or snoozed care from the Tasks tab. These show in the timeline."
+        />
+        <JournalModeCard
+          title="Plant Check-In"
+          body="A periodic health snapshot Dr. Plant summarizes into this plant's Plant Life story."
+        />
+      </div>
+    </section>
+  );
+}
+
+function JournalModeCard({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-2xl bg-emerald-50/60 px-3 py-3">
+      <p className="text-sm font-semibold text-emerald-950">{title}</p>
+      <p className="mt-1 text-xs leading-5 text-gray-600">{body}</p>
+    </div>
+  );
+}
+
 function StoryCue({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-emerald-50/60 px-3 py-3">
@@ -766,10 +866,11 @@ function JournalForm() {
     >
       <div>
         <p className="text-sm font-semibold text-emerald-950">
-          {isEditing ? 'Edit journal entry' : 'New observation'}
+          {isEditing ? 'Edit journal note' : 'New journal note'}
         </p>
         <p className="mt-1 text-xs leading-5 text-gray-600">
-          A useful entry usually captures what changed, what you did, and what to check next.
+          Use this for quick observations, measurements, or photos. Plant Check-Ins are the
+          periodic health form above.
         </p>
         {isEditing ? (
           <button
@@ -857,9 +958,9 @@ function JournalForm() {
       </div>
 
       <label className="block rounded-2xl border border-emerald-100 bg-white/70 p-3">
-        <span className="text-sm font-semibold text-emerald-950">Progress photo</span>
+        <span className="text-sm font-semibold text-emerald-950">Optional journal photo</span>
         <span className="mt-1 block text-xs leading-5 text-gray-600">
-          Try to match angle and distance over time so comparisons are easier.
+          Optional. Try to match angle and distance over time so comparisons are easier.
         </span>
         <input
           key={ctx.journalPhotoInputKey}
@@ -1058,8 +1159,8 @@ function JournalSidebar({
           title="Photo comparison not ready"
           body={
             photoEntries.length === 1
-              ? 'Add one more progress photo to compare visual changes over time.'
-              : 'Add two progress photos to unlock side-by-side and slider comparison.'
+              ? 'Add one more optional journal photo to compare visual changes over time.'
+              : 'Add two optional journal photos to unlock side-by-side and slider comparison.'
           }
         />
       )}
@@ -1075,7 +1176,7 @@ function JournalSidebar({
       ) : (
         <SectionEmptyState
           title="No timeline events yet"
-          body="Add a note or complete a task to start building this plant's care history."
+          body="Add a journal note, save a Plant Check-In, or complete a care task to start building this plant's care history."
         />
       )}
     </div>
@@ -1149,7 +1250,7 @@ const PROGRESS_VALUE_LABELS = new Map(
 );
 
 function progressHealthLabel(value?: string) {
-  return value ? PROGRESS_VALUE_LABELS.get(value) || value : 'Progress check-in';
+  return value ? PROGRESS_VALUE_LABELS.get(value) || value : 'Plant Check-In';
 }
 
 function summarizeProgressEntry(entry: PlantRecord) {

@@ -1,8 +1,9 @@
 import { format, isToday } from 'date-fns';
 import type { TaskCompleteFeedback, TaskSkipFeedback } from '../../utils/taskFeedback';
-import { groupTasksByType, TASK_TYPE_ICONS, type DayGroup } from '../../utils/taskGroups';
+import { groupTasksByType, type DayGroup } from '../../utils/taskGroups';
 import { taskTypeLabel } from '../../utils/tasks';
 import TaskRow from './TaskRow';
+import { TaskTypeIcon } from './TaskTypeIcon';
 
 type AnimMap = Record<string, 'completing' | 'skipping' | 'snoozing'>;
 
@@ -87,7 +88,7 @@ export default function TaskDayGroup({
               {groupTasksByType(pending).map(({ taskType, tasks }) => (
                 <div key={taskType}>
                   <h4 className="mb-2 flex items-center gap-1.5 px-1 text-sm font-medium text-emerald-900">
-                    <span aria-hidden>{TASK_TYPE_ICONS[taskType] ?? '🌿'}</span>
+                    <TaskTypeIcon taskType={taskType} className="h-4 w-4 text-emerald-700" />
                     {taskTypeLabel(taskType)}
                     <span className="text-xs font-normal text-gray-500">({tasks.length})</span>
                   </h4>

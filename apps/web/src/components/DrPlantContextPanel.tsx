@@ -18,7 +18,7 @@ const CATEGORY_STYLE: Record<
 };
 
 /**
- * Compact, expandable "What Dr. Plant can use" panel. Surfaces the same recent-care
+ * Compact, expandable "What Dr. Plant sees" panel. Surfaces the same recent-care
  * and condition signals the assistant uses, so advice that references recent
  * events is understandable. Renders nothing if the context can't load.
  */
@@ -48,7 +48,7 @@ export default function DrPlantContextPanel({ plantId }: { plantId: string }) {
   return (
     <details className="group rounded-2xl border border-emerald-100 bg-white/80 p-3">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-emerald-900">
-        <span>What Dr. Plant can use</span>
+        <span>What Dr. Plant sees</span>
         <span className="text-xs font-medium text-emerald-700">
           {summary.items.length} signal{summary.items.length === 1 ? '' : 's'}
           <span className="ml-1 inline-block transition group-open:rotate-180" aria-hidden>
@@ -58,8 +58,8 @@ export default function DrPlantContextPanel({ plantId }: { plantId: string }) {
       </summary>
       <p className="mt-2 text-xs leading-5 text-gray-600">{summary.intro}</p>
       <p className="mt-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-900 ring-1 ring-emerald-100">
-        Dr. Plant uses this plant's saved care history, tasks, journal notes, and recent health
-        records. It is plant-care guidance, not emergency medical or veterinary advice.
+        Dr. Plant uses saved care history, tasks, journal notes, Plant Check-Ins, and recent
+        health records. It is plant-care guidance, not emergency medical or veterinary advice.
       </p>
       <ul className="mt-3 space-y-2">
         {summary.items.map((item, index) => {

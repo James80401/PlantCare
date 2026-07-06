@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   completeReasonLabel,
+  completeReasonsForTask,
   countSnoozeFeedback,
   pickTerminalFeedback,
+  skipReasonsForTask,
   skipReasonLabel,
 } from './taskFeedback';
 
@@ -10,7 +12,23 @@ describe('taskFeedback labels', () => {
   it('maps known skip and complete reasons to friendly labels', () => {
     expect(skipReasonLabel('SOIL_STILL_WET')).toBe('Soil still wet');
     expect(completeReasonLabel('SOIL_VERY_DRY')).toBe('Soil was very dry');
+    expect(completeReasonLabel('ROUTINE_CARE_DONE')).toBe('Routine care done');
     expect(skipReasonLabel(undefined)).toBeNull();
+  });
+
+  it('uses task-specific feedback choices for water vs routine care', () => {
+    expect(completeReasonsForTask('WATER').map((reason) => reason.value)).toContain(
+      'SOIL_VERY_DRY',
+    );
+    expect(completeReasonsForTask('FERTILIZE').map((reason) => reason.value)).toContain(
+      'ROUTINE_CARE_DONE',
+    );
+    expect(skipReasonsForTask('WATER').map((reason) => reason.value)).toContain(
+      'SOIL_STILL_WET',
+    );
+    expect(skipReasonsForTask('PRUNE').map((reason) => reason.value)).not.toContain(
+      'SOIL_STILL_WET',
+    );
   });
 });
 

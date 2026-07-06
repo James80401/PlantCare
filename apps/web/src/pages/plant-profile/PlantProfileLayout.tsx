@@ -36,6 +36,22 @@ function PlantProfileShell() {
   const gardenName = (plant?.garden as { name?: string } | undefined)?.name;
   const carePath = `/garden/plants/${ctx.id}/care`;
   const journalPath = `/garden/plants/${ctx.id}/journal`;
+  const profileStatus =
+    ctx.activeDiagnosisCount > 0
+      ? `${ctx.activeDiagnosisCount} active health follow-up${
+          ctx.activeDiagnosisCount === 1 ? '' : 's'
+        }`
+      : nextTask
+        ? `Next up: ${taskTypeLabel(nextTask.taskType as string)} ${formatDueRelative(
+            nextTask.dueDate as string,
+          ).toLowerCase()}`
+        : 'Care is caught up';
+  const profileStatusClass =
+    ctx.activeDiagnosisCount > 0
+      ? 'border-rose-100 bg-rose-50 text-rose-900'
+      : nextTask
+        ? 'border-emerald-100 bg-emerald-50 text-emerald-900'
+        : 'border-sky-100 bg-sky-50 text-sky-900';
   const plantImageUrl = resolveApiAssetUrl(
     ((plant.imageUrl as string | null) ?? (species.defaultImageUrl as string | null)) ?? null,
   );
@@ -101,6 +117,18 @@ function PlantProfileShell() {
                 <span className="italic"> - {species.scientificName as string}</span>
               ) : null}
             </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span
+                className={`inline-flex min-h-8 items-center rounded-full border px-3 py-1 text-xs font-semibold ${profileStatusClass}`}
+              >
+                {profileStatus}
+              </span>
+              {careOverview?.environmentLabel ? (
+                <span className="inline-flex min-h-8 items-center rounded-full border border-emerald-100 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
+                  {currentLocation} - {careOverview.environmentLabel}
+                </span>
+              ) : null}
+            </div>
 
             <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
               <DrillCard
@@ -170,20 +198,20 @@ function PlantProfileShell() {
             <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
               <Link
                 to={plantDrPlantPath(ctx.id)}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-900"
+                className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
               >
                 Ask Dr. Plant
               </Link>
               <Link
                 to={plantProfileDetailsPath(ctx.id)}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100"
+                className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
               >
                 Edit details
               </Link>
               <button
                 type="button"
                 onClick={() => ctx.setSharingPlant(true)}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100"
+                className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
               >
                 Share plant card
               </button>
@@ -227,7 +255,7 @@ function PlantProfileShell() {
                   isActive
                     ? 'bg-emerald-800 text-white'
                     : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-800'
-                }`
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2`
               }
             >
               <span>{section.label}</span>
@@ -351,7 +379,7 @@ function ActionBanner({
       </div>
       <Link
         to={to}
-        className={`inline-flex min-h-10 shrink-0 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold ${actionClass}`}
+        className={`inline-flex min-h-10 shrink-0 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${actionClass}`}
       >
         {action}
       </Link>
@@ -383,7 +411,7 @@ function DrillCard({
   return (
     <Link
       to={to}
-      className="group block rounded-2xl transition hover:ring-2 hover:ring-emerald-200"
+      className="group block rounded-2xl transition hover:ring-2 hover:ring-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
       aria-label={`${label}: ${value}. View details`}
     >
       <SummaryTile label={label} value={value} tone={tone} />

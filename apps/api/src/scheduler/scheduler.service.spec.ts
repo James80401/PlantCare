@@ -8,6 +8,10 @@ describe('SchedulerService', () => {
     service = new SchedulerService({} as never);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('calculates water interval with pot multiplier', () => {
     expect(service.getWaterIntervalDays(7, PotSize.SMALL)).toBe(6);
     expect(service.getWaterIntervalDays(7, PotSize.LARGE)).toBe(8);
@@ -20,6 +24,16 @@ describe('SchedulerService', () => {
     expect(dates[1].getTime() - dates[0].getTime()).toBe(7 * 24 * 60 * 60 * 1000);
   });
 
+  it('starts generated recurring dates after the first interval', () => {
+    const start = new Date('2025-01-01T12:00:00.000Z');
+    const dates = service.generateRecurringDates(start, 7, 3);
+    expect(dates.map((date) => date.toISOString().slice(0, 10))).toEqual([
+      '2025-01-08',
+      '2025-01-15',
+      '2025-01-22',
+    ]);
+  });
+
   it('detects growing season', () => {
     expect(service.isGrowingSeason(new Date('2025-06-15'))).toBe(true);
     expect(service.isGrowingSeason(new Date('2025-12-15'))).toBe(false);
@@ -27,10 +41,13 @@ describe('SchedulerService', () => {
 
   it('schedules extended care types including repot within 90 days', async () => {
     const created: { taskType: TaskType; dueDate: Date }[] = [];
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-07-05T12:00:00.000Z'));
     const prisma = {
       plant: {
         findUnique: jest.fn().mockResolvedValue({
           id: 'plant-1',
+          gardenId: 'garden-1',
           location: 'Living Room',
           potSize: PotSize.MEDIUM,
           datePlanted: null,
@@ -68,6 +85,28 @@ describe('SchedulerService', () => {
     const daysUntilRepot =
       (repot!.dueDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000);
     expect(daysUntilRepot).toBeLessThanOrEqual(90);
+
+    const firstDueDateByType = (taskType: TaskType) =>
+      created
+        .filter((task) => task.taskType === taskType)
+        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())[0]
+        ?.dueDate.toISOString()
+        .slice(0, 10);
+
+    expect(firstDueDateByType(TaskType.WATER)).toBe('2026-07-12');
+    expect(firstDueDateByType(TaskType.PRUNE)).toBe('2026-08-04');
+    expect(firstDueDateByType(TaskType.FERTILIZE)).toBe('2026-08-04');
+    expect(firstDueDateByType(TaskType.ROTATE)).toBe('2026-07-19');
+    expect(firstDueDateByType(TaskType.CLEAN_LEAVES)).toBe('2026-07-26');
+    expect(firstDueDateByType(TaskType.INSPECT_PESTS)).toBe('2026-07-12');
+    expect(firstDueDateByType(TaskType.REPOT)).toBe('2026-09-03');
+    expect(
+      created.some(
+        (task) =>
+          task.taskType !== TaskType.REPOT &&
+          task.dueDate.toISOString().slice(0, 10) === '2026-07-05',
+      ),
+    ).toBe(false);
   });
 
   it('uses plant life stage to protect seedlings from harsh care tasks', async () => {
