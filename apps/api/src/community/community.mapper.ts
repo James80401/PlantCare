@@ -6,10 +6,9 @@ type PostWithLikes = {
 export function mapCommunityPostsForViewer<T extends PostWithLikes>(
   posts: T[],
   viewerId?: string,
-): Array<Omit<T, 'likes'> & { likedByMe?: boolean }> {
-  if (!viewerId) return posts;
+): Array<Omit<T, 'likes'> & { likedByMe: boolean }> {
   return posts.map(({ likes, ...post }) => ({
     ...post,
-    likedByMe: (likes?.length ?? 0) > 0,
+    likedByMe: Boolean(viewerId) && (likes?.length ?? 0) > 0,
   }));
 }
