@@ -13,7 +13,7 @@ import {
   type TaskCompleteFeedback,
   type TaskCompleteReason,
 } from '../../utils/taskFeedback';
-import { taskJournalPrompt, taskTypeLabel } from '../../utils/tasks';
+import { taskJournalPrompt, taskTypeDescription, taskTypeLabel } from '../../utils/tasks';
 import { SNOOZE_OPTIONS } from '../../utils/taskSnooze';
 import type { TaskItem } from '../../utils/taskGroups';
 import { TaskTypeIcon } from './TaskTypeIcon';
@@ -59,6 +59,8 @@ export default function TaskRow({
   const overdue = isPending && isPast(due) && !isToday(due);
   const plantLabel = task.plant.nickname || task.plant.species.commonName;
   const dueLabel = isToday(due) ? 'Due today' : `Due ${format(due, 'MMM d')}`;
+  const taskLabel = taskTypeLabel(task.taskType);
+  const taskDescription = taskTypeDescription(task.taskType);
   const skipPanelId = `skip-panel-${task.id}`;
   const snoozePanelId = `snooze-panel-${task.id}`;
   const completePanelId = `complete-panel-${task.id}`;
@@ -103,7 +105,7 @@ export default function TaskRow({
             onClick={() => void onComplete(task.id)}
             disabled={!!animState}
             className="task-check flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-400 bg-white text-transparent transition hover:border-emerald-600 hover:bg-emerald-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50"
-            aria-label={`Mark ${taskTypeLabel(task.taskType)} for ${plantLabel} as done`}
+            aria-label={`Mark ${taskLabel} for ${plantLabel} as done`}
           >
             <span className="text-xl font-bold text-emerald-700" aria-hidden>✓</span>
           </button>
@@ -145,7 +147,7 @@ export default function TaskRow({
               {!groupedByType && (
                 <TaskTypeIcon taskType={task.taskType} className="mr-1.5 inline h-4 w-4 align-[-0.125em] text-emerald-700" />
               )}
-              {groupedByType ? plantLabel : taskTypeLabel(task.taskType)}
+              {groupedByType ? plantLabel : taskLabel}
             </span>
           )}
           {!groupedByType &&
@@ -165,6 +167,17 @@ export default function TaskRow({
               </span>
             ))}
         </div>
+
+        {isPending ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-800 ring-1 ring-emerald-100">
+              Care task
+            </span>
+            <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-gray-600 ring-1 ring-gray-100">
+              Complete when done - skip if not needed - snooze to move the reminder
+            </span>
+          </div>
+        ) : null}
 
         {isDone && task.completedAt && (
           <p className="mt-0.5 text-xs text-emerald-700/80">
@@ -188,6 +201,9 @@ export default function TaskRow({
         {isPending && !overdue && (
           <p className="mt-0.5 text-xs font-medium text-emerald-700/80">{dueLabel}</p>
         )}
+        {isPending ? (
+          <p className="mt-1 text-xs leading-5 text-gray-500">{taskDescription}</p>
+        ) : null}
 
         {isPending && !animState && (
           <div className="mt-3 space-y-3">
@@ -217,7 +233,7 @@ export default function TaskRow({
                 aria-expanded={completeFeedbackOpen}
                 aria-controls={completePanelId}
               >
-                Add note
+                Add optional result
               </button>
               <button
                 type="button"
@@ -226,7 +242,7 @@ export default function TaskRow({
                 aria-expanded={feedbackOpen}
                 aria-controls={skipPanelId}
               >
-                Skip
+                Skip if not needed
               </button>
               {onSnooze ? (
                 <button
@@ -249,7 +265,11 @@ export default function TaskRow({
                 className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
-                  Remind me
+                  Snooze this care task
+                </p>
+                <p className="mt-1 text-xs leading-5 text-sky-900/80">
+                  This only moves the reminder. It does not mark care complete or change the
+                  plant's long-term routine by itself.
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {SNOOZE_OPTIONS.map((option) => (
@@ -277,7 +297,11 @@ export default function TaskRow({
                 className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
-                  Why skip this task?
+                  Why is this task not needed today?
+                </p>
+                <p className="mt-1 text-xs leading-5 text-amber-900/80">
+                  Skipping records that you intentionally did not do this care task. It helps Dr.
+                  Plant understand whether the schedule may need adjustment later.
                 </p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   {skipReasons.map((reason) => (
@@ -323,7 +347,7 @@ export default function TaskRow({
                     }
                     className="rounded-full bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800"
                   >
-                    Save reason & skip
+                    Record reason & skip
                   </button>
                   <button
                     type="button"
@@ -351,7 +375,11 @@ export default function TaskRow({
                 className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3"
               >
                 <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
-                  Care result
+                  Optional care result
+                </p>
+                <p className="mt-1 text-xs leading-5 text-sky-900/80">
+                  Completion stays quick. Add a result only when it helps explain how the plant
+                  responded.
                 </p>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   {completeReasons.map((r) => (

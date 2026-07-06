@@ -169,7 +169,7 @@ function actionMessage(action: 'done' | 'snooze' | 'dismiss' | 'task') {
   if (action === 'task') return 'Task created and added to your care list.';
   if (action === 'done') return 'Marked done for this recommendation cycle.';
   if (action === 'snooze') return 'Paused until tomorrow.';
-  return 'Dismissed. Dr. Plant will not keep nudging this item.';
+  return 'Dismissed for this cycle. Similar guidance can still appear later if it becomes useful again.';
 }
 
 function RecommendationCard({
@@ -241,7 +241,7 @@ function RecommendationCard({
             aria-controls={confirmationId}
             className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
           >
-            Create task
+            Create care task
           </button>
         ) : null}
         <button
@@ -277,11 +277,15 @@ function RecommendationCard({
           role="group"
           aria-label="Confirm task creation"
         >
-          <p className="text-sm font-semibold text-emerald-950">Create this as a care task?</p>
+          <p className="text-sm font-semibold text-emerald-950">Create this as a time-based care task?</p>
           <p className="mt-1 text-xs leading-5 text-emerald-900/80">
             Dr. Plant will add a {taskTypeLabel(recommendation.suggestedTaskType).toLowerCase()}{' '}
             task {dueLabel(recommendation.suggestedTaskDueInDays)} and mark this recommendation
             done.
+          </p>
+          <p className="mt-1 text-xs leading-5 text-emerald-900/80">
+            Keep it as a recommendation if it is useful but not something you need on the care
+            schedule.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button

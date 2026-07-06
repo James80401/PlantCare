@@ -109,12 +109,15 @@ describe('RecommendationPanel', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create task' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create care task' }));
 
     expect(recommendationsApi.convertToTask).not.toHaveBeenCalled();
-    expect(screen.getByText('Create this as a care task?')).toBeInTheDocument();
+    expect(screen.getByText('Create this as a time-based care task?')).toBeInTheDocument();
     expect(
       screen.getByText(/Dr\. Plant will add a health check task in 2 days/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Keep it as a recommendation if it is useful but not something/i),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm task' }));
@@ -152,5 +155,25 @@ describe('RecommendationPanel', () => {
     expect(
       screen.getByText('No extra recommendations right now. Keep up with your care tasks.'),
     ).toBeInTheDocument();
+  });
+
+  it('explains that dismiss only closes the current recommendation cycle', async () => {
+    const onChanged = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <RecommendationPanel recommendations={[recommendation]} onChanged={onChanged} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+
+    await waitFor(() => {
+      expect(recommendationsApi.dismiss).toHaveBeenCalledWith('rec-1');
+      expect(onChanged).toHaveBeenCalled();
+    });
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Dismissed for this cycle. Similar guidance can still appear later if it becomes useful again.',
+    );
   });
 });

@@ -78,7 +78,7 @@ reduces duplicated UI behavior.
 | 2. Dashboard command center | [x] | Make the home screen calmer and more action-oriented. | Critical care, recommendations, summaries, and empty states are easy to scan. |
 | 3. Add plant and discovery | [x] | Reduce friction from first plant search to saved plant. | Search, identify, external match confirmation, and empty/error states are clear. |
 | 4. Plant profile overview and care | [x] | Make a plant's status, care, and next action obvious. | Overview and Care tabs explain what matters without overwhelming the user. |
-| 5. Tasks and recommendations | [ ] | Make critical tasks and optional guidance feel distinct. | Complete, skip, snooze, dismiss, and task conversion paths are consistent. |
+| 5. Tasks and recommendations | [x] | Make critical tasks and optional guidance feel distinct. | Complete, skip, snooze, dismiss, and task conversion paths are consistent. |
 | 6. Journal and Plant Life | [ ] | Make progress history understandable and useful. | Check-ins, photos, summaries, edits, deletes, and empty states feel coherent. |
 | 7. Dr. Plant health flow | [ ] | Make diagnosis/chat advice trustworthy and actionable. | Context, action cards, recovery plans, and status history have clear next steps. |
 | 8. Secondary surfaces | [ ] | Remove release-risk friction from community, household, settings, and admin. | Core actions are labelled, recoverable, and mobile-safe. |
@@ -396,6 +396,20 @@ section ordering.
 - Optional feedback remains optional.
 - Recommendation actions are reversible or clearly explained.
 - Tests cover any changed action labels, success states, or confirmation states.
+
+**Status (2026-07-06):** Tasks and recommendations checkpoint shipped. Pending
+task rows now label themselves as care tasks, show shared task-purpose copy, and
+summarize the fast action model: complete when done, skip if not needed, snooze
+to move the reminder. Completion feedback is now explicitly optional, skip copy
+explains that skipping records why care was not needed today, and snooze copy
+clarifies that it only moves the reminder rather than completing care or changing
+the long-term routine by itself. The instructions modal now frames care steps
+as context and points users back to the row for complete/skip/snooze actions.
+Recommendations now use clearer "Create care task" language, task conversion
+confirmation distinguishes scheduled tasks from optional recommendations, and
+dismiss copy explains it only closes the current recommendation cycle. Focused
+tests cover task-row action copy, snooze explanation, recommendation task
+confirmation, and recommendation dismissal copy.
 
 ## Checkpoint 6 - Journal and Plant Life
 
