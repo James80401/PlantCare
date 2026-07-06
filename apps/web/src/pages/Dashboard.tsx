@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation, type To } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
-import TaskRow from '../components/tasks/TaskRow';
+import { CareRoundCard, careRoundKey } from '../components/tasks/CareRoundCard';
 import { TaskTypeIcon } from '../components/tasks/TaskTypeIcon';
 import {
   useDashboard,
@@ -35,8 +35,8 @@ import {
   getMilestoneHighlights,
   getOldestPlantAgeDays,
 } from '../utils/engagement';
-import type { TaskItem } from '../utils/taskGroups';
-import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
+import { groupDueTasksIntoCareRounds, type TaskItem } from '../utils/taskGroups';
+import type { SnoozeDays } from '../utils/taskSnooze';
 import { taskTypeLabel } from '../utils/tasks';
 import { plantDrPlantPath } from './plant-profile/constants';
 import {
@@ -105,9 +105,8 @@ export default function Dashboard() {
     tasks: todayCareTasks,
     animating,
     syncTasks,
-    handleComplete,
-    handleSkip,
     handleSnooze,
+    handleBulkComplete,
   } = useDashboardTaskActions(dash?.todayTasks ?? [], refreshAfterTask);
 
   useEffect(() => {
@@ -261,16 +260,12 @@ export default function Dashboard() {
       }
     : getSuggestedAction(plants, overdueTasks, todayTasks);
   const hasGardenStarted = plantCount > 0 || gardenSummaries.length > 0;
-  const completeDashboardTask = (id: string, feedback?: TaskCompleteFeedback) => {
-    handleComplete(id, feedback);
-    window.setTimeout(() => void refreshAfterTask(), 700);
+  const completeDashboardRoundTasks = async (ids: string[]) => {
+    await handleBulkComplete(ids);
+    await refreshAfterTask();
   };
-  const skipDashboardTask = (id: string, feedback?: TaskSkipFeedback) => {
-    handleSkip(id, feedback);
-    window.setTimeout(() => void refreshAfterTask(), 700);
-  };
-  const snoozeDashboardTask = async (id: string, days: 1 | 3 | 7) => {
-    await handleSnooze(id, days);
+  const snoozeDashboardRoundTasks = async (ids: string[], days: SnoozeDays) => {
+    await Promise.all(ids.map((id) => handleSnooze(id, days)));
     await refreshAfterTask();
   };
   const engagementContext = useMemo(
@@ -706,9 +701,8 @@ export default function Dashboard() {
           hasGardenStarted={hasGardenStarted}
           dueTodayCount={dueTodayCount}
           overdueCount={overdueCount}
-          onComplete={completeDashboardTask}
-          onSkip={skipDashboardTask}
-          onSnooze={snoozeDashboardTask}
+          onCompleteRound={completeDashboardRoundTasks}
+          onSnoozeRound={snoozeDashboardRoundTasks}
         />
       ) : null}
 
@@ -1112,30 +1106,46 @@ function CompactDashboardFocus({
   );
 }
 
+const PRIORITY_CARE_VISIBLE_ROUNDS = 2;
+
 function PriorityCareSection({
   tasks,
   animating,
   hasGardenStarted,
   dueTodayCount,
   overdueCount,
-  onComplete,
-  onSkip,
-  onSnooze,
+  onCompleteRound,
+  onSnoozeRound,
 }: {
   tasks: TaskItem[];
   animating: Record<string, 'completing' | 'skipping' | 'snoozing'>;
   hasGardenStarted: boolean;
   dueTodayCount: number;
   overdueCount: number;
-  onComplete: (id: string, feedback?: TaskCompleteFeedback) => void;
-  onSkip: (id: string, feedback?: TaskSkipFeedback) => void;
-  onSnooze: (id: string, days: 1 | 3 | 7) => Promise<void>;
+  onCompleteRound: (ids: string[]) => Promise<void>;
+  onSnoozeRound: (ids: string[], days: SnoozeDays) => Promise<void>;
 }) {
-  if (!hasGardenStarted) return null;
+  const flatRounds = useMemo(
+    () =>
+      groupDueTasksIntoCareRounds(tasks).flatMap((garden) =>
+        garden.careTypes.map((careType) => ({
+          gardenId: garden.gardenId,
+          gardenName: garden.gardenName,
+          careType,
+        })),
+      ),
+    [tasks],
+  );
+  const [openRound, setOpenRound] = useState<string | null>(null);
+  const [busyGroup, setBusyGroup] = useState<string | null>(null);
 
-  const visibleTasks = tasks.slice(0, 4);
-  const hiddenCount = Math.max(0, tasks.length - visibleTasks.length);
-  const hasCriticalCare = tasks.length > 0;
+  const hasCriticalCare = flatRounds.length > 0;
+  const visibleRounds = flatRounds.slice(0, PRIORITY_CARE_VISIBLE_ROUNDS);
+  const hiddenRounds = flatRounds.slice(PRIORITY_CARE_VISIBLE_ROUNDS);
+  const hiddenPlantCount = hiddenRounds.reduce(
+    (sum, round) => sum + round.careType.plants.length,
+    0,
+  );
   const headline = overdueCount
     ? 'Catch up gently'
     : dueTodayCount
@@ -1146,6 +1156,20 @@ function PriorityCareSection({
     : dueTodayCount
       ? `${dueTodayCount} care item${dueTodayCount === 1 ? '' : 's'} due today.`
       : 'No critical care tasks need action today. Optional recommendations can wait.';
+
+  const completeRound = async (key: string, ids: string[]) => {
+    setBusyGroup(key);
+    await onCompleteRound(ids);
+    setBusyGroup(null);
+  };
+
+  const snoozeRound = async (key: string, ids: string[], days: SnoozeDays) => {
+    setBusyGroup(key);
+    await onSnoozeRound(ids, days);
+    setBusyGroup(null);
+  };
+
+  if (!hasGardenStarted) return null;
 
   return (
     <section
@@ -1180,24 +1204,42 @@ function PriorityCareSection({
 
       {hasCriticalCare ? (
         <div className="mt-4 space-y-3">
-          <ul className="space-y-2">
-            {visibleTasks.map((task) => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                animState={animating[task.id] ?? null}
-                onComplete={onComplete}
-                onSkip={onSkip}
-                onSnooze={onSnooze}
+          {visibleRounds.map(({ gardenId, gardenName, careType }) => {
+            const key = careRoundKey(gardenId, careType.taskType);
+            return (
+              <CareRoundCard
+                key={key}
+                gardenName={gardenName}
+                careType={careType}
+                open={openRound === key}
+                onToggleOpen={() => setOpenRound((current) => (current === key ? null : key))}
+                busy={busyGroup === key}
+                isPlantBusy={(item) =>
+                  item.tasks.some((task) => Boolean(animating[task.id])) ||
+                  busyGroup === `${key}:${item.plant.id}` ||
+                  busyGroup === `${key}:${item.plant.id}:snooze`
+                }
+                onCompleteRound={() => void completeRound(key, careType.taskIds)}
+                onCompletePlant={(item) =>
+                  void completeRound(`${key}:${item.plant.id}`, item.tasks.map((task) => task.id))
+                }
+                onSnoozePlant={(item, days) =>
+                  void snoozeRound(
+                    `${key}:${item.plant.id}:snooze`,
+                    item.tasks.map((task) => task.id),
+                    days,
+                  )
+                }
               />
-            ))}
-          </ul>
-          {hiddenCount > 0 ? (
+            );
+          })}
+          {hiddenRounds.length > 0 ? (
             <Link
               to="/garden/tasks"
               className="inline-flex text-sm font-semibold text-emerald-800 hover:underline"
             >
-              View {hiddenCount} more care item{hiddenCount === 1 ? '' : 's'}
+              View {hiddenPlantCount} more plant{hiddenPlantCount === 1 ? '' : 's'} in{' '}
+              {hiddenRounds.length} more round{hiddenRounds.length === 1 ? '' : 's'}
             </Link>
           ) : null}
         </div>

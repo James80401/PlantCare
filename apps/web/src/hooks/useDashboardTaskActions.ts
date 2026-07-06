@@ -76,6 +76,32 @@ export function useDashboardTaskActions(
     }
   };
 
+  const handleBulkComplete = async (ids: string[]) => {
+    const uniqueIds = [...new Set(ids)];
+    setAnimating((current) => ({
+      ...current,
+      ...Object.fromEntries(uniqueIds.map((id) => [id, 'completing' as const])),
+    }));
+    try {
+      const { data } = await tasksApi.bulkComplete(uniqueIds);
+      setTasks((current) =>
+        current.map((task) =>
+          data.taskIds.includes(task.id)
+            ? { ...task, status: 'DONE', completedAt: data.completedAt }
+            : task,
+        ),
+      );
+    } catch {
+      await onRefresh();
+    } finally {
+      setAnimating((current) => {
+        const next = { ...current };
+        uniqueIds.forEach((id) => delete next[id]);
+        return next;
+      });
+    }
+  };
+
   return {
     tasks,
     animating,
@@ -83,6 +109,7 @@ export function useDashboardTaskActions(
     handleComplete,
     handleSkip,
     handleSnooze,
+    handleBulkComplete,
     COMPLETE_ANIM_MS,
     SNOOZE_ANIM_MS,
   };
