@@ -82,7 +82,7 @@ reduces duplicated UI behavior.
 | 6. Journal and Plant Life | [x] | Make progress history understandable and useful. | Check-ins, photos, summaries, edits, deletes, and empty states feel coherent. |
 | 7. Dr. Plant health flow | [x] | Make diagnosis/chat advice trustworthy and actionable. | Context, action cards, recovery plans, and status history have clear next steps. |
 | 8. Secondary surfaces | [x] | Remove release-risk friction from community, household, settings, and admin. | Core actions are labelled, recoverable, and mobile-safe. |
-| 9. Accessibility hardening | [ ] | Close manual a11y gaps found during checkpoints 1-8. | Keyboard, screen-reader, contrast, zoom, dialog, and live-region checks pass. |
+| 9. Accessibility hardening | [~] | Close manual a11y gaps found during checkpoints 1-8. | Shared dialog focus, structural a11y coverage, and visible focus fixes shipped; manual keyboard/zoom/contrast pass remains. |
 | 10. Regression and private signoff | [ ] | Lock the pass with tests, docs, and hosted verification. | Tests/build/docs pass, private live signoff passes, and findings are documented. |
 
 ## Issue categories
@@ -631,6 +631,17 @@ This checkpoint closes findings from the earlier flow checks and updates
 - Manual checklist is updated with pass/fail notes.
 - No known blocker-level keyboard or screen-reader issue remains.
 - Contrast issues are fixed or explicitly deferred with rationale.
+
+**Status (2026-07-06):** Accessibility hardening is underway. The shared
+`useDialogA11y` hook now restores focus to the opener after close, and the task
+schedule explanation modal now uses the same Escape, initial-focus, labelled
+dialog, loading-status, and error-alert pattern as other task dialogs.
+Recommendation action controls, task-row action controls, task radio cards,
+help buttons, care-instruction controls, and schedule/care dialog controls now
+have visible keyboard focus treatment. Structural `jest-axe` coverage expanded
+to include HelpButton focus restoration, BottomSheet, and RecommendationPanel
+task-confirmation states. Remaining checkpoint work is the manual keyboard,
+screen-reader spot, 200% zoom, and contrast pass across the primary flows.
 
 ## Checkpoint 10 - Regression and private signoff
 

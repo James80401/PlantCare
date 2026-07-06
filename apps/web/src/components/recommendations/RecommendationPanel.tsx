@@ -25,6 +25,9 @@ const sourceLabels: Record<string, string> = {
   SYSTEM: 'Dr. Plant',
 };
 
+const actionFocusClass =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2';
+
 export function RecommendationPanel({
   title = 'Recommendations',
   description = 'Helpful next steps that are useful, but not urgent care tasks.',
@@ -227,7 +230,7 @@ function RecommendationCard({
         {recommendation.actionPath && recommendation.actionLabel ? (
           <Link
             to={recommendation.actionPath}
-            className="col-span-2 inline-flex min-h-10 min-w-0 items-center justify-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50 sm:col-span-1 sm:justify-start"
+            className={`col-span-2 inline-flex min-h-10 min-w-0 items-center justify-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50 sm:col-span-1 sm:justify-start ${actionFocusClass}`}
           >
             <span className="truncate">{recommendation.actionLabel}</span>
           </Link>
@@ -239,7 +242,7 @@ function RecommendationCard({
             onClick={onStartTaskConfirmation}
             aria-expanded={confirmingTask}
             aria-controls={confirmationId}
-            className="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
+            className={`inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50 ${actionFocusClass}`}
           >
             Create care task
           </button>
@@ -248,7 +251,7 @@ function RecommendationCard({
           type="button"
           disabled={busy}
           onClick={() => void onAction(recommendation, 'done')}
-          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
+          className={`inline-flex min-h-10 items-center justify-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50 ${actionFocusClass}`}
         >
           Mark done
         </button>
@@ -256,7 +259,7 @@ function RecommendationCard({
           type="button"
           disabled={busy}
           onClick={() => void onAction(recommendation, 'snooze')}
-          className="inline-flex min-h-10 items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-80 ring-1 ring-current hover:opacity-100 disabled:opacity-50"
+          className={`inline-flex min-h-10 items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-80 ring-1 ring-current hover:opacity-100 disabled:opacity-50 ${actionFocusClass}`}
         >
           Remind tomorrow
         </button>
@@ -264,7 +267,7 @@ function RecommendationCard({
           type="button"
           disabled={busy}
           onClick={() => void onAction(recommendation, 'dismiss')}
-          className="inline-flex min-h-10 items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-70 hover:opacity-100 disabled:opacity-50"
+          className={`inline-flex min-h-10 items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold opacity-70 hover:opacity-100 disabled:opacity-50 ${actionFocusClass}`}
         >
           Dismiss
         </button>
@@ -292,7 +295,7 @@ function RecommendationCard({
               type="button"
               disabled={busy}
               onClick={() => void onAction(recommendation, 'task')}
-              className="inline-flex min-h-10 items-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
+              className={`inline-flex min-h-10 items-center rounded-full bg-emerald-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50 ${actionFocusClass}`}
             >
               Confirm task
             </button>
@@ -300,7 +303,7 @@ function RecommendationCard({
               type="button"
               disabled={busy}
               onClick={onCancelTaskConfirmation}
-              className="inline-flex min-h-10 items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50"
+              className={`inline-flex min-h-10 items-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-100 hover:bg-emerald-50 disabled:opacity-50 ${actionFocusClass}`}
             >
               Keep as recommendation
             </button>

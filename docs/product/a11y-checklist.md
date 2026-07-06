@@ -1,13 +1,13 @@
 # Accessibility checklist (H2)
 
-> **Navigation:** [improvement-recommendations.md](improvement-recommendations.md) · [uat-checklist.md](uat-checklist.md)
+> **Navigation:** [improvement-recommendations.md](improvement-recommendations.md) | [uat-checklist.md](uat-checklist.md)
 
 Patterns used across Dr. Plant web. Re-run this list when adding major UI.
 
 ## Global shell
 
 - [x] `lang="en"` on `<html>` (`index.html`)
-- [x] **Skip link** → `#main-content` (`SkipLink` in `Layout.tsx`)
+- [x] **Skip link** -> `#main-content` (`SkipLink` in `Layout.tsx`)
 - [x] One `<main id="main-content">` per authenticated page
 - [x] Desktop nav `aria-label="Main"`; mobile bottom nav `aria-label="Primary"`
 - [x] Active routes: `aria-current="page"` on nav links
@@ -32,9 +32,10 @@ Patterns used across Dr. Plant web. Re-run this list when adding major UI.
 - [x] `aria-labelledby` on task instructions and bottom sheet
 - [x] Escape closes dialogs (`useDialogA11y`)
 - [x] Initial focus in modal (close button or sheet panel)
+- [x] Dialogs using `useDialogA11y` restore focus to the opener after close.
 - [x] Contextual "?" help panels (`HelpButton`): same dialog pattern, `aria-label`
       on the trigger names the topic ("Help: Settings"), close button labeled
-      "Close help"
+      "Close help", and trigger/close controls have visible keyboard focus.
 
 ## Media
 
@@ -57,7 +58,7 @@ Patterns used across Dr. Plant web. Re-run this list when adding major UI.
 
 ## Manual QA (each release)
 
-- [ ] Tab through dashboard, plant profile, and tasks — no keyboard traps
+- [ ] Tab through dashboard, plant profile, and tasks - no keyboard traps
 - [ ] VoiceOver / NVDA: announce errors when forms fail
 - [ ] 200% zoom: no horizontal scroll on dashboard (see UAT e2e)
 - [ ] Focus ring visible on buttons and links
@@ -66,22 +67,28 @@ Patterns used across Dr. Plant web. Re-run this list when adding major UI.
 
 - [x] Playwright: landmarks + skip link (`tests/e2e/uat.spec.ts`)
 - [x] Vitest + `jest-axe`: structural axe scan on key rendered surfaces
-  (`apps/web/src/a11y.test.tsx` — TaskRow, DrPlantContextPanel). Runs in the web
-  unit suite; `color-contrast` is disabled there (jsdom has no layout) and stays
-  on the manual pass.
-- [ ] Optional: `@axe-core/playwright` on `/garden` in CI (add when ready) — for
+  (`apps/web/src/a11y.test.tsx` - TaskRow, DrPlantContextPanel, HelpButton,
+  BottomSheet, and RecommendationPanel confirmation states). Runs in the web unit
+  suite; `color-contrast` is disabled there (jsdom has no layout) and stays on
+  the manual pass.
+- [ ] Optional: `@axe-core/playwright` on `/garden` in CI (add when ready) - for
   contrast + full-page rules a headless browser can evaluate.
 
 ## Code audit log
 
 - **2026-06-05 (code-level sweep):** no defects found across the standard
-  categories — every `<img>` has `alt`; no click handlers on non-interactive
+  categories - every `<img>` has `alt`; no click handlers on non-interactive
   elements; all `<select>`/`<input>` are labelled (wrapped `<label>` or
   `id`+`htmlFor`); icon-only controls carry an accessible name; `index.html` has
   `lang="en"`, a `<title>`, and a zoomable viewport (`initial-scale=1`, no
   `maximum-scale`/`user-scalable=no`). Added the `jest-axe` guard above to catch
   structural regressions automatically. Manual keyboard/screen-reader/contrast
   passes remain a per-release human step.
+- **2026-07-06 (checkpoint 9 hardening slice):** `useDialogA11y` now restores
+  focus to the opener, task schedule/care dialogs use consistent focus and status
+  patterns, recommendation/task action buttons expose visible keyboard focus, and
+  `apps/web/src/a11y.test.tsx` covers help focus restoration, bottom sheets, and
+  recommendation confirmation cards.
 
 ## Related components
 

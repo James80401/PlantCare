@@ -7,6 +7,9 @@ export function useDialogA11y(open: boolean, onClose: () => void) {
 
   useEffect(() => {
     if (!open) return;
+    const previouslyFocused = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
@@ -17,6 +20,9 @@ export function useDialogA11y(open: boolean, onClose: () => void) {
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previousOverflow;
+      if (previouslyFocused?.isConnected) {
+        previouslyFocused.focus();
+      }
     };
   }, [open, onClose]);
 
