@@ -349,13 +349,15 @@ export default function Settings() {
             ))}
           </select>
         </label>
-        <LightMeterButton onApply={(level) => setDefaultLightLevel(level)} />
-        <button
-          type="submit"
-          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
-        >
-          Save care preferences
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <LightMeterButton onApply={(level) => setDefaultLightLevel(level)} />
+          <button
+            type="submit"
+            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+          >
+            Save care preferences
+          </button>
+        </div>
         {carePrefsSaved ? <p className="text-sm text-emerald-700">Care preferences saved.</p> : null}
       </form>
 

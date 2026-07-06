@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { FormError } from '../components/a11y/FormError';
 import { StatusMessage } from '../components/a11y/StatusMessage';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { resolveApiAssetUrl } from '../utils/apiAssets';
 import { formatApiErrorMessage } from '../utils/apiError';
+import { ReshareIcon } from '../components/icons/ReshareIcon';
 
 function PostComments({
   postId,
@@ -133,8 +134,17 @@ function PostComments({
   );
 }
 
-function ReportPostForm({ postId, onReported }: { postId: string; onReported: (hidden: boolean) => void }) {
-  const [open, setOpen] = useState(false);
+function ReportPostForm({
+  postId,
+  open,
+  onClose,
+  onReported,
+}: {
+  postId: string;
+  open: boolean;
+  onClose: () => void;
+  onReported: (hidden: boolean) => void;
+}) {
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -160,17 +170,7 @@ function ReportPostForm({ postId, onReported }: { postId: string; onReported: (h
     return <p className="text-xs text-gray-500">Report submitted. Thanks for flagging this.</p>;
   }
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="text-xs font-semibold text-gray-500 hover:underline"
-      >
-        Report
-      </button>
-    );
-  }
+  if (!open) return null;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 rounded-xl bg-gray-50 p-2 sm:flex-row">
@@ -185,12 +185,111 @@ function ReportPostForm({ postId, onReported }: { postId: string; onReported: (h
         <Button type="submit" size="sm" disabled={submitting || !reason.trim()}>
           {submitting ? '…' : 'Submit'}
         </Button>
-        <Button type="button" size="sm" variant="secondary" onClick={() => setOpen(false)}>
+        <Button type="button" size="sm" variant="secondary" onClick={onClose}>
           Cancel
         </Button>
       </div>
       {error ? <FormError className="text-xs">{error}</FormError> : null}
     </form>
+  );
+}
+
+/** Groups the moderation/destructive actions (Block, Report, Delete) behind a
+ *  single "..." trigger so they read as secondary to Like/Reshare rather than
+ *  sitting at the same visual weight — also cuts the chance of an accidental
+ *  tap on a destructive action. Mirrors Layout.tsx's outside-click+Escape
+ *  dropdown pattern. */
+function PostActionsMenu({
+  isOwnPost,
+  authorName,
+  onBlock,
+  onReport,
+  onDelete,
+}: {
+  isOwnPost: boolean;
+  authorName: string;
+  onBlock: () => void;
+  onReport: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false);
+    }
+    function onPointerDown(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('mousedown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mousedown', onPointerDown);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative ml-auto" ref={menuRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label="More actions for this post"
+        className="flex min-h-9 min-w-9 items-center justify-center rounded-full text-lg leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+      >
+        <span aria-hidden>&#8943;</span>
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          aria-label="Post actions"
+          className="absolute right-0 z-10 mt-1 w-44 rounded-xl border border-gray-100 bg-white p-1 text-left shadow-lg"
+        >
+          {isOwnPost ? (
+            <button
+              role="menuitem"
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onDelete();
+              }}
+              className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-700 hover:bg-red-50"
+            >
+              Delete post
+            </button>
+          ) : (
+            <>
+              <button
+                role="menuitem"
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onBlock();
+                }}
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Block {authorName}
+              </button>
+              <button
+                role="menuitem"
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onReport();
+                }}
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Report post
+              </button>
+            </>
+          )}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -212,6 +311,7 @@ export default function Community() {
   const [speciesOptions, setSpeciesOptions] = useState<Array<{ id: string; commonName: string }>>([]);
   const [posting, setPosting] = useState(false);
   const [scope, setScope] = useState<'all' | 'following'>('all');
+  const [reportingPostId, setReportingPostId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!imageFile) {
@@ -481,8 +581,9 @@ export default function Community() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     {post.originalPost ? (
-                      <p className="text-xs font-semibold text-gray-500">
-                        🔁 {post.author?.name || 'Gardener'} reshared
+                      <p className="flex items-center gap-1 text-xs font-semibold text-gray-500">
+                        <ReshareIcon />
+                        {post.author?.name || 'Gardener'} reshared
                       </p>
                     ) : null}
                     <p id={`post-${post.id}-author`} className="text-sm font-semibold text-emerald-900">
@@ -547,43 +648,35 @@ export default function Community() {
                   <button
                     type="button"
                     onClick={() => handleReshare(post.id)}
-                    className="inline-flex min-h-11 items-center text-xs font-semibold text-emerald-800 hover:underline"
+                    className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-emerald-800 hover:underline"
                   >
-                    🔁 Reshare
+                    <ReshareIcon />
+                    Reshare
                   </button>
-                  {post.author?.id !== user?.id ? (
-                    <button
-                      type="button"
-                      onClick={() => handleBlock(post.author!.id, post.author?.name || 'this gardener')}
-                      className="text-xs font-semibold text-gray-500 hover:underline"
-                    >
-                      Block
-                    </button>
-                  ) : null}
-                  {post.author?.id !== user?.id ? (
-                    <ReportPostForm
-                      postId={post.id}
-                      onReported={(hidden) => {
-                        if (hidden) load();
-                      }}
-                    />
-                  ) : null}
+                  <PostActionsMenu
+                    isOwnPost={post.author?.id === user?.id}
+                    authorName={post.author?.name || 'this gardener'}
+                    onBlock={() => handleBlock(post.author!.id, post.author?.name || 'this gardener')}
+                    onReport={() => setReportingPostId(post.id)}
+                    onDelete={() => handleDelete(post.id)}
+                  />
                 </div>
+                {post.author?.id !== user?.id ? (
+                  <ReportPostForm
+                    postId={post.id}
+                    open={reportingPostId === post.id}
+                    onClose={() => setReportingPostId(null)}
+                    onReported={(hidden) => {
+                      setReportingPostId(null);
+                      if (hidden) load();
+                    }}
+                  />
+                ) : null}
                 <PostComments
                   postId={post.id}
                   commentCount={post._count?.comments ?? 0}
                   currentUserId={user?.id}
                 />
-                {post.author?.id === user?.id ? (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(post.id)}
-                    aria-label="Delete this community post"
-                    className="text-xs font-semibold text-red-700 hover:underline"
-                  >
-                    Delete
-                  </button>
-                ) : null}
               </Card>
               </article>
             </li>
