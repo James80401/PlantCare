@@ -297,6 +297,79 @@ export default function Dashboard() {
   const gardensLoading = dashLoading || gardenSummariesLoading;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
 
+  // Recommendations, "needs attention," and the 7-day preview have nothing
+  // real to say yet for a brand-new, zero-plant account — every one of them
+  // renders as generic filler text. Tuck them behind a closed disclosure so a
+  // new user's dashboard leads with the "Add your first plant" prompt instead
+  // of three empty-state cards. Once there's a plant, this renders exactly as
+  // before, unwrapped.
+  const secondaryPanels = (
+    <>
+      <RecommendationPanel
+        recommendations={recommendations}
+        onChanged={reloadDash}
+        emptyText="No extra recommendations right now. Keep up with your care tasks."
+      />
+
+      <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
+        <h2 className="text-base font-semibold text-emerald-950 font-display">
+          {attentionSummary?.headline ?? 'Needs attention'}
+        </h2>
+        <p className="mt-1 text-sm text-gray-600">
+          {attentionSummary?.body ??
+            (needsAttentionCount
+              ? `${needsAttentionCount} plant${needsAttentionCount === 1 ? '' : 's'} may need a closer look.`
+              : 'No major issues detected from your current schedule.')}
+        </p>
+
+        <div className="mt-4 space-y-3">
+          {attentionItems.length === 0 ? (
+            <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              {attentionSummary?.body ??
+                'Add more photos, notes, and care feedback over time to make this smarter.'}
+            </p>
+          ) : (
+            attentionItems.map((item) => (
+              <AttentionItemCard
+                key={item.plantId}
+                item={item}
+                plant={plants.find((p) => p.id === item.plantId)}
+              />
+            ))
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
+        <h2 className="text-base font-semibold text-emerald-950 font-display">
+          {weekSummary?.headline ?? 'Next seven days'}
+        </h2>
+        <p className="mt-1 text-sm text-gray-600">
+          {weekSummary?.body ?? 'Upcoming care tasks for the next seven days.'}
+        </p>
+        <div className="mt-4 grid grid-cols-7 gap-1.5">
+          {weekPreview.map((day) => (
+            <Link
+              key={day.date}
+              to="/garden/calendar"
+              className={`rounded-2xl px-1.5 py-2 text-center transition hover:ring-2 hover:ring-emerald-200 ${
+                day.count
+                  ? 'bg-emerald-800 text-white'
+                  : 'bg-emerald-50 text-emerald-900'
+              }`}
+            >
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wide">
+                {day.label}
+              </p>
+              <p className="mt-0.5 text-[0.65rem] opacity-80">{day.dateLabel}</p>
+              <p className="mt-1 text-lg font-bold">{day.count}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
       <header className="overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-emerald-950 via-emerald-800 to-lime-700 text-white shadow-xl shadow-emerald-900/15 sm:rounded-3xl">
@@ -526,68 +599,19 @@ export default function Dashboard() {
         </div>
 
         <aside className="min-w-0 space-y-4">
-          <RecommendationPanel
-            recommendations={recommendations}
-            onChanged={reloadDash}
-            emptyText="No extra recommendations right now. Keep up with your care tasks."
-          />
-
-          <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
-            <h2 className="text-base font-semibold text-emerald-950 font-display">
-              {attentionSummary?.headline ?? 'Needs attention'}
-            </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              {attentionSummary?.body ??
-                (needsAttentionCount
-                  ? `${needsAttentionCount} plant${needsAttentionCount === 1 ? '' : 's'} may need a closer look.`
-                  : 'No major issues detected from your current schedule.')}
-            </p>
-
-            <div className="mt-4 space-y-3">
-              {attentionItems.length === 0 ? (
-                <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                  {attentionSummary?.body ??
-                    'Add more photos, notes, and care feedback over time to make this smarter.'}
-                </p>
-              ) : (
-                attentionItems.map((item) => (
-                  <AttentionItemCard
-                    key={item.plantId}
-                    item={item}
-                    plant={plants.find((p) => p.id === item.plantId)}
-                  />
-                ))
-              )}
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
-            <h2 className="text-base font-semibold text-emerald-950 font-display">
-              {weekSummary?.headline ?? 'Next seven days'}
-            </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              {weekSummary?.body ?? 'Upcoming care tasks for the next seven days.'}
-            </p>
-            <div className="mt-4 grid grid-cols-7 gap-1.5">
-              {weekPreview.map((day) => (
-                <Link
-                  key={day.date}
-                  to="/garden/calendar"
-                  className={`rounded-2xl px-1.5 py-2 text-center transition hover:ring-2 hover:ring-emerald-200 ${
-                    day.count
-                      ? 'bg-emerald-800 text-white'
-                      : 'bg-emerald-50 text-emerald-900'
-                  }`}
-                >
-                  <p className="text-[0.65rem] font-semibold uppercase tracking-wide">
-                    {day.label}
-                  </p>
-                  <p className="mt-0.5 text-[0.65rem] opacity-80">{day.dateLabel}</p>
-                  <p className="mt-1 text-lg font-bold">{day.count}</p>
-                </Link>
-              ))}
-            </div>
-          </section>
+          {plantCount === 0 ? (
+            <details className="group rounded-3xl border border-emerald-100 bg-white/70 p-4 shadow-sm shadow-emerald-900/5">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-emerald-800 [&::-webkit-details-marker]:hidden">
+                See more suggestions
+                <span aria-hidden className="transition group-open:rotate-180">
+                  ▾
+                </span>
+              </summary>
+              <div className="mt-4 space-y-4">{secondaryPanels}</div>
+            </details>
+          ) : (
+            secondaryPanels
+          )}
         </aside>
       </section>
 
