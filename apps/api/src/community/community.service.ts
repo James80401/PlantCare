@@ -89,6 +89,27 @@ const postInclude = (viewerId?: string) => ({
 export class CommunityService {
   constructor(private prisma: PrismaService) {}
 
+  /** Toggles a row in a uniquely-constrained join table (like/follow/block):
+   *  delete it if it exists, create it if it doesn't. Returns whether the
+   *  relation now exists (i.e. whether this call created it). */
+  private async toggleRelation<Where extends object, Data extends object>(
+    delegate: {
+      findUnique(args: { where: Where }): Promise<{ id: string } | null>;
+      create(args: { data: Data }): Promise<unknown>;
+      delete(args: { where: { id: string } }): Promise<unknown>;
+    },
+    where: Where,
+    data: Data,
+  ): Promise<boolean> {
+    const existing = await delegate.findUnique({ where });
+    if (existing) {
+      await delegate.delete({ where: { id: existing.id } });
+      return false;
+    }
+    await delegate.create({ data });
+    return true;
+  }
+
   async listPosts(
     limit = 20,
     viewerId?: string,
@@ -154,20 +175,12 @@ export class CommunityService {
     if (userId === targetUserId) {
       throw new ForbiddenException('You cannot follow yourself');
     }
-
-    const existing = await this.prisma.follow.findUnique({
-      where: { followerId_followingId: { followerId: userId, followingId: targetUserId } },
-    });
-
-    if (existing) {
-      await this.prisma.follow.delete({ where: { id: existing.id } });
-      return { following: false };
-    }
-
-    await this.prisma.follow.create({
-      data: { followerId: userId, followingId: targetUserId },
-    });
-    return { following: true };
+    const following = await this.toggleRelation(
+      this.prisma.follow,
+      { followerId_followingId: { followerId: userId, followingId: targetUserId } },
+      { followerId: userId, followingId: targetUserId },
+    );
+    return { following };
   }
 
   createPost(userId: string, dto: CreatePostDto) {
@@ -250,20 +263,12 @@ export class CommunityService {
     if (userId === targetUserId) {
       throw new ForbiddenException('You cannot block yourself');
     }
-
-    const existing = await this.prisma.blockedUser.findUnique({
-      where: { blockerId_blockedId: { blockerId: userId, blockedId: targetUserId } },
-    });
-
-    if (existing) {
-      await this.prisma.blockedUser.delete({ where: { id: existing.id } });
-      return { blocked: false };
-    }
-
-    await this.prisma.blockedUser.create({
-      data: { blockerId: userId, blockedId: targetUserId },
-    });
-    return { blocked: true };
+    const blocked = await this.toggleRelation(
+      this.prisma.blockedUser,
+      { blockerId_blockedId: { blockerId: userId, blockedId: targetUserId } },
+      { blockerId: userId, blockedId: targetUserId },
+    );
+    return { blocked };
   }
 
   async listComments(postId: string) {
@@ -297,18 +302,13 @@ export class CommunityService {
     const post = await this.prisma.communityPost.findUnique({ where: { id: postId } });
     if (!post) throw new NotFoundException('Post not found');
 
-    const existing = await this.prisma.postLike.findUnique({
-      where: { postId_userId: { postId, userId } },
-    });
-
-    if (existing) {
-      await this.prisma.postLike.delete({ where: { id: existing.id } });
-    } else {
-      await this.prisma.postLike.create({ data: { postId, userId } });
-    }
-
+    const liked = await this.toggleRelation(
+      this.prisma.postLike,
+      { postId_userId: { postId, userId } },
+      { postId, userId },
+    );
     const count = await this.prisma.postLike.count({ where: { postId } });
-    return { liked: !existing, likeCount: count };
+    return { liked, likeCount: count };
   }
 
   async deleteComment(userId: string, commentId: string) {
