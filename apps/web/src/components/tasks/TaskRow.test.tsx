@@ -51,9 +51,27 @@ describe('TaskRow', () => {
     expect(onComplete).toHaveBeenCalledWith('task-1');
   });
 
+  it('keeps only the checkmark and Snooze visible until Details is opened', () => {
+    renderRow();
+
+    expect(screen.queryByRole('button', { name: 'Care steps' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Why this date/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add optional result' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Skip if not needed' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Snooze' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Details' }));
+
+    expect(screen.getByRole('button', { name: 'Care steps' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Why this date/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add optional result' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Skip if not needed' })).toBeInTheDocument();
+  });
+
   it('still allows optional water feedback from the secondary action', async () => {
     const { onComplete } = renderRow({ task: makeTask({ taskType: 'WATER' as TaskItem['taskType'] }) });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Details' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add optional result' }));
     fireEvent.click(screen.getByRole('button', { name: /Save result & complete/i }));
 
@@ -68,6 +86,7 @@ describe('TaskRow', () => {
   it('can save a completion observation to the journal after completion succeeds', async () => {
     const { onComplete } = renderRow({ task: makeTask({ taskType: 'WATER' as TaskItem['taskType'] }) });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Details' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add optional result' }));
     fireEvent.change(screen.getByPlaceholderText(/soil moisture/i), {
       target: { value: 'Soil was dry and leaves perked up after watering' },
@@ -90,6 +109,7 @@ describe('TaskRow', () => {
   it('skips with the default reason', () => {
     const { onSkip } = renderRow();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Details' }));
     fireEvent.click(screen.getByRole('button', { name: 'Skip if not needed' }));
     fireEvent.click(screen.getByRole('button', { name: /Record reason & skip/i }));
 
@@ -99,6 +119,7 @@ describe('TaskRow', () => {
   it('uses general care result feedback for non-water tasks', async () => {
     const { onComplete } = renderRow();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Details' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add optional result' }));
     expect(screen.getByText('Routine care done')).toBeInTheDocument();
     expect(screen.queryByText('Soil was very dry')).not.toBeInTheDocument();

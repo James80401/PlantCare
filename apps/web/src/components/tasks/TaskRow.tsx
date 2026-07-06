@@ -46,6 +46,7 @@ export default function TaskRow({
 }: TaskRowProps) {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [snoozeOpen, setSnoozeOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedReason, setSelectedReason] = useState<TaskSkipReason>('SOIL_STILL_WET');
   const [note, setNote] = useState('');
   const [completeFeedbackOpen, setCompleteFeedbackOpen] = useState(false);
@@ -67,6 +68,7 @@ export default function TaskRow({
   const skipPanelId = `skip-panel-${task.id}`;
   const snoozePanelId = `snooze-panel-${task.id}`;
   const completePanelId = `complete-panel-${task.id}`;
+  const detailsPanelId = `details-panel-${task.id}`;
   const progressCheckInPath = `/garden/plants/${task.plant.id}/journal?progressTask=${encodeURIComponent(
     task.id,
   )}#progress-check-in`;
@@ -211,16 +213,6 @@ export default function TaskRow({
         {isPending && !animState && (
           <div className="mt-3 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <TaskInstructionsLink
-                taskId={task.id}
-                taskType={task.taskType}
-                plantLabel={plantLabel}
-              />
-              <TaskScheduleExplanationLink
-                taskId={task.id}
-                taskType={task.taskType}
-                plantLabel={plantLabel}
-              />
               {task.taskType === 'HEALTH_CHECK' ? (
                 <Link
                   to={progressCheckInPath}
@@ -229,24 +221,6 @@ export default function TaskRow({
                   Record progress
                 </Link>
               ) : null}
-              <button
-                type="button"
-                onClick={() => setCompleteFeedbackOpen((open) => !open)}
-                className={`inline-flex min-h-11 items-center justify-center rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 ${taskActionFocusClass}`}
-                aria-expanded={completeFeedbackOpen}
-                aria-controls={completePanelId}
-              >
-                Add optional result
-              </button>
-              <button
-                type="button"
-                onClick={() => setFeedbackOpen((open) => !open)}
-                className={`inline-flex min-h-11 items-center justify-center rounded-full bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 ${taskActionFocusClass}`}
-                aria-expanded={feedbackOpen}
-                aria-controls={skipPanelId}
-              >
-                Skip if not needed
-              </button>
               {onSnooze ? (
                 <button
                   type="button"
@@ -258,6 +232,15 @@ export default function TaskRow({
                   Snooze
                 </button>
               ) : null}
+              <button
+                type="button"
+                onClick={() => setDetailsOpen((open) => !open)}
+                className={`inline-flex min-h-11 items-center justify-center rounded-full bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 ${taskActionFocusClass}`}
+                aria-expanded={detailsOpen}
+                aria-controls={detailsPanelId}
+              >
+                {detailsOpen ? 'Hide details' : 'Details'}
+              </button>
             </div>
 
             {snoozeOpen && onSnooze ? (
@@ -292,173 +275,213 @@ export default function TaskRow({
               </div>
             ) : null}
 
-            {feedbackOpen ? (
+            {detailsOpen ? (
               <div
-                id={skipPanelId}
+                id={detailsPanelId}
                 role="region"
-                aria-label="Skip task feedback"
-                className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3"
+                aria-label="More task details"
+                className="space-y-3 rounded-2xl border border-gray-100 bg-gray-50/60 p-3"
               >
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
-                  Why is this task not needed today?
-                </p>
-                <p className="mt-1 text-xs leading-5 text-amber-900/80">
-                  Skipping records that you intentionally did not do this care task. It helps Dr.
-                  Plant understand whether the schedule may need adjustment later.
-                </p>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {skipReasons.map((reason) => (
-                    <label
-                      key={reason.value}
-                      className={`cursor-pointer rounded-xl border px-3 py-2 text-xs transition ${
-                        effectiveSkipReason === reason.value
-                          ? 'border-amber-300 bg-white text-amber-950 shadow-sm'
-                          : 'border-amber-100 bg-white/60 text-gray-700 hover:bg-white'
-                      } focus-within:outline-none focus-within:ring-2 focus-within:ring-amber-400 focus-within:ring-offset-2`}
-                    >
-                      <input
-                        type="radio"
-                        name={`skip-reason-${task.id}`}
-                        value={reason.value}
-                        checked={effectiveSkipReason === reason.value}
-                        onChange={() => setSelectedReason(reason.value)}
-                        className="sr-only"
-                      />
-                      <span className="font-semibold">{reason.label}</span>
-                      <span className="mt-0.5 block leading-5 text-gray-500">{reason.helper}</span>
-                    </label>
-                  ))}
-                </div>
-                <label className="mt-3 block">
-                  <span className="text-xs font-medium text-gray-600">Optional note</span>
-                  <input
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    maxLength={240}
-                    placeholder="Example: soil was damp two inches down"
-                    className="mt-1 w-full rounded-xl border border-amber-100 bg-white px-3 py-2 text-sm focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-100"
+                <div className="flex flex-wrap items-center gap-2">
+                  <TaskInstructionsLink
+                    taskId={task.id}
+                    taskType={task.taskType}
+                    plantLabel={plantLabel}
                   />
-                </label>
-                <div className="mt-3 flex flex-wrap gap-2">
+                  <TaskScheduleExplanationLink
+                    taskId={task.id}
+                    taskType={task.taskType}
+                    plantLabel={plantLabel}
+                  />
                   <button
                     type="button"
-                    onClick={() =>
-                      onSkip(task.id, {
-                        reason: effectiveSkipReason,
-                        note: note.trim() || undefined,
-                      })
-                    }
-                    className={`rounded-full bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800 ${taskActionFocusClass}`}
+                    onClick={() => setCompleteFeedbackOpen((open) => !open)}
+                    className={`inline-flex min-h-11 items-center justify-center rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 ${taskActionFocusClass}`}
+                    aria-expanded={completeFeedbackOpen}
+                    aria-controls={completePanelId}
                   >
-                    Record reason & skip
+                    Add optional result
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFeedbackOpen(false)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white ${taskActionFocusClass}`}
+                    onClick={() => setFeedbackOpen((open) => !open)}
+                    className={`inline-flex min-h-11 items-center justify-center rounded-full bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 ${taskActionFocusClass}`}
+                    aria-expanded={feedbackOpen}
+                    aria-controls={skipPanelId}
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSkip(task.id)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white ${taskActionFocusClass}`}
-                  >
-                    Skip without reason
+                    Skip if not needed
                   </button>
                 </div>
-              </div>
-            ) : null}
 
-            {completeFeedbackOpen ? (
-              <div
-                id={completePanelId}
-                role="region"
-                aria-label="Complete task feedback"
-                className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
-                  Optional care result
-                </p>
-                <p className="mt-1 text-xs leading-5 text-sky-900/80">
-                  Completion stays quick. Add a result only when it helps explain how the plant
-                  responded.
-                </p>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {completeReasons.map((r) => (
-                    <label
-                      key={r.value}
-                      className={`cursor-pointer rounded-xl border px-3 py-2 text-xs transition ${
-                        effectiveCompleteReason === r.value
-                          ? 'border-sky-300 bg-white text-sky-950 shadow-sm'
-                          : 'border-sky-100 bg-white/60 text-gray-700 hover:bg-white'
-                      } focus-within:outline-none focus-within:ring-2 focus-within:ring-sky-400 focus-within:ring-offset-2`}
-                    >
+                {feedbackOpen ? (
+                  <div
+                    id={skipPanelId}
+                    role="region"
+                    aria-label="Skip task feedback"
+                    className="rounded-2xl border border-amber-100 bg-amber-50/60 p-3"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
+                      Why is this task not needed today?
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-amber-900/80">
+                      Skipping records that you intentionally did not do this care task. It helps Dr.
+                      Plant understand whether the schedule may need adjustment later.
+                    </p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      {skipReasons.map((reason) => (
+                        <label
+                          key={reason.value}
+                          className={`cursor-pointer rounded-xl border px-3 py-2 text-xs transition ${
+                            effectiveSkipReason === reason.value
+                              ? 'border-amber-300 bg-white text-amber-950 shadow-sm'
+                              : 'border-amber-100 bg-white/60 text-gray-700 hover:bg-white'
+                          } focus-within:outline-none focus-within:ring-2 focus-within:ring-amber-400 focus-within:ring-offset-2`}
+                        >
+                          <input
+                            type="radio"
+                            name={`skip-reason-${task.id}`}
+                            value={reason.value}
+                            checked={effectiveSkipReason === reason.value}
+                            onChange={() => setSelectedReason(reason.value)}
+                            className="sr-only"
+                          />
+                          <span className="font-semibold">{reason.label}</span>
+                          <span className="mt-0.5 block leading-5 text-gray-500">{reason.helper}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <label className="mt-3 block">
+                      <span className="text-xs font-medium text-gray-600">Optional note</span>
                       <input
-                        type="radio"
-                        name={`complete-reason-${task.id}`}
-                        value={r.value}
-                        checked={effectiveCompleteReason === r.value}
-                        onChange={() => setSelectedCompleteReason(r.value)}
-                        className="sr-only"
+                        value={note}
+                        onChange={(event) => setNote(event.target.value)}
+                        maxLength={240}
+                        placeholder="Example: soil was damp two inches down"
+                        className="mt-1 w-full rounded-xl border border-amber-100 bg-white px-3 py-2 text-sm focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-100"
                       />
-                      <span className="font-semibold">{r.label}</span>
-                      <span className="mt-0.5 block leading-5 text-gray-500">{r.helper}</span>
                     </label>
-                  ))}
-                </div>
-                <label className="mt-3 block">
-                  <span className="text-xs font-medium text-gray-600">Optional note</span>
-                  <input
-                    value={completeNote}
-                    onChange={(event) => setCompleteNote(event.target.value)}
-                    maxLength={240}
-                    placeholder={`Example: ${taskJournalPrompt(task.taskType)}`}
-                    className="mt-1 w-full rounded-xl border border-sky-100 bg-white px-3 py-2 text-sm focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-100"
-                  />
-                </label>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void completeWithObservation()}
-                    className={`rounded-full bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800 ${taskActionFocusClass}`}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onSkip(task.id, {
+                            reason: effectiveSkipReason,
+                            note: note.trim() || undefined,
+                          })
+                        }
+                        className={`rounded-full bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800 ${taskActionFocusClass}`}
+                      >
+                        Record reason & skip
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFeedbackOpen(false)}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white ${taskActionFocusClass}`}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onSkip(task.id)}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white ${taskActionFocusClass}`}
+                      >
+                        Skip without reason
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {completeFeedbackOpen ? (
+                  <div
+                    id={completePanelId}
+                    role="region"
+                    aria-label="Complete task feedback"
+                    className="rounded-2xl border border-sky-100 bg-sky-50/60 p-3"
                   >
-                    Save result & complete
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void onComplete(task.id);
-                      setCompleteFeedbackOpen(false);
-                      setCompleteNote('');
-                      setSaveCompleteNoteToJournal(false);
-                      setJournalStatus('');
-                    }}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white ${taskActionFocusClass}`}
-                  >
-                    Complete without result
-                  </button>
-                </div>
-                <label className="mt-3 flex items-start gap-2 rounded-xl bg-white/70 px-3 py-2 text-xs leading-5 text-sky-950 ring-1 ring-sky-100">
-                  <input
-                    type="checkbox"
-                    checked={saveCompleteNoteToJournal}
-                    disabled={!trimmedCompleteNote}
-                    onChange={(event) => setSaveCompleteNoteToJournal(event.target.checked)}
-                    className="mt-1"
-                  />
-                  <span>
-                    <span className="font-semibold">Also save this note to journal</span>
-                    <span className="block text-gray-600">
-                      Useful for observations you want in the plant timeline, not just task
-                      feedback.
-                    </span>
-                  </span>
-                </label>
-                {journalStatus ? (
-                  <p className="mt-2 text-xs font-medium text-sky-900" role="status">
-                    {journalStatus}
-                  </p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
+                      Optional care result
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-sky-900/80">
+                      Completion stays quick. Add a result only when it helps explain how the plant
+                      responded.
+                    </p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      {completeReasons.map((r) => (
+                        <label
+                          key={r.value}
+                          className={`cursor-pointer rounded-xl border px-3 py-2 text-xs transition ${
+                            effectiveCompleteReason === r.value
+                              ? 'border-sky-300 bg-white text-sky-950 shadow-sm'
+                              : 'border-sky-100 bg-white/60 text-gray-700 hover:bg-white'
+                          } focus-within:outline-none focus-within:ring-2 focus-within:ring-sky-400 focus-within:ring-offset-2`}
+                        >
+                          <input
+                            type="radio"
+                            name={`complete-reason-${task.id}`}
+                            value={r.value}
+                            checked={effectiveCompleteReason === r.value}
+                            onChange={() => setSelectedCompleteReason(r.value)}
+                            className="sr-only"
+                          />
+                          <span className="font-semibold">{r.label}</span>
+                          <span className="mt-0.5 block leading-5 text-gray-500">{r.helper}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <label className="mt-3 block">
+                      <span className="text-xs font-medium text-gray-600">Optional note</span>
+                      <input
+                        value={completeNote}
+                        onChange={(event) => setCompleteNote(event.target.value)}
+                        maxLength={240}
+                        placeholder={`Example: ${taskJournalPrompt(task.taskType)}`}
+                        className="mt-1 w-full rounded-xl border border-sky-100 bg-white px-3 py-2 text-sm focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-100"
+                      />
+                    </label>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void completeWithObservation()}
+                        className={`rounded-full bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800 ${taskActionFocusClass}`}
+                      >
+                        Save result & complete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void onComplete(task.id);
+                          setCompleteFeedbackOpen(false);
+                          setCompleteNote('');
+                          setSaveCompleteNoteToJournal(false);
+                          setJournalStatus('');
+                        }}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-white ${taskActionFocusClass}`}
+                      >
+                        Complete without result
+                      </button>
+                    </div>
+                    <label className="mt-3 flex items-start gap-2 rounded-xl bg-white/70 px-3 py-2 text-xs leading-5 text-sky-950 ring-1 ring-sky-100">
+                      <input
+                        type="checkbox"
+                        checked={saveCompleteNoteToJournal}
+                        disabled={!trimmedCompleteNote}
+                        onChange={(event) => setSaveCompleteNoteToJournal(event.target.checked)}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="font-semibold">Also save this note to journal</span>
+                        <span className="block text-gray-600">
+                          Useful for observations you want in the plant timeline, not just task
+                          feedback.
+                        </span>
+                      </span>
+                    </label>
+                    {journalStatus ? (
+                      <p className="mt-2 text-xs font-medium text-sky-900" role="status">
+                        {journalStatus}
+                      </p>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             ) : null}
