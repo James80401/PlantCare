@@ -20,6 +20,8 @@ describe('PlantTimeline filters', () => {
     );
 
     expect(screen.queryByRole('group', { name: /filter timeline/i })).not.toBeInTheDocument();
+    expect(screen.getByText('Plant Life timeline')).toBeInTheDocument();
+    expect(screen.getByText(/journal notes, plant check-ins, care events/i)).toBeInTheDocument();
     expect(screen.getByText('Note one')).toBeInTheDocument();
   });
 
@@ -30,6 +32,7 @@ describe('PlantTimeline filters', () => {
       event('journal', 'j3', 'Journal C'),
       event('care', 'c1', 'Care A'),
       event('care', 'c2', 'Care B'),
+      event('progress', 'p1', 'Plant Check-In A'),
       event('diagnosis', 'd1', 'Diagnosis A'),
     ];
     render(<PlantTimeline events={events} />);
@@ -37,8 +40,10 @@ describe('PlantTimeline filters', () => {
     const group = screen.getByRole('group', { name: /filter timeline/i });
     expect(group).toBeInTheDocument();
     // Chip labels include per-type counts.
-    expect(screen.getByRole('button', { name: 'All 6' })).toBeInTheDocument();
+    expect(screen.getByText('Filter long histories by type.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'All 7' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Care 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Plant Check-In 1' })).toBeInTheDocument();
 
     // Everything visible under "All".
     expect(screen.getByText('Journal A')).toBeInTheDocument();

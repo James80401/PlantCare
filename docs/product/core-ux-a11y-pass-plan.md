@@ -79,7 +79,7 @@ reduces duplicated UI behavior.
 | 3. Add plant and discovery | [x] | Reduce friction from first plant search to saved plant. | Search, identify, external match confirmation, and empty/error states are clear. |
 | 4. Plant profile overview and care | [x] | Make a plant's status, care, and next action obvious. | Overview and Care tabs explain what matters without overwhelming the user. |
 | 5. Tasks and recommendations | [x] | Make critical tasks and optional guidance feel distinct. | Complete, skip, snooze, dismiss, and task conversion paths are consistent. |
-| 6. Journal and Plant Life | [ ] | Make progress history understandable and useful. | Check-ins, photos, summaries, edits, deletes, and empty states feel coherent. |
+| 6. Journal and Plant Life | [x] | Make progress history understandable and useful. | Check-ins, photos, summaries, edits, deletes, and empty states feel coherent. |
 | 7. Dr. Plant health flow | [ ] | Make diagnosis/chat advice trustworthy and actionable. | Context, action cards, recovery plans, and status history have clear next steps. |
 | 8. Secondary surfaces | [ ] | Remove release-risk friction from community, household, settings, and admin. | Core actions are labelled, recoverable, and mobile-safe. |
 | 9. Accessibility hardening | [ ] | Close manual a11y gaps found during checkpoints 1-8. | Keyboard, screen-reader, contrast, zoom, dialog, and live-region checks pass. |
@@ -463,6 +463,19 @@ confirmation, and recommendation dismissal copy.
 - The latest plant story is easy to find.
 - Edit/delete actions are safe and clearly confirmed where needed.
 - Mobile history controls do not crowd the content.
+
+**Status (2026-07-06):** Journal and Plant Life checkpoint shipped. The Journal
+tab now explains the difference between quick journal notes, task-backed care
+events, and periodic Plant Check-Ins. The Plant Check-In form is grouped into
+overall condition, leaves/growth, soil/water and recent care, pests or concerns,
+and optional photo, with notes and photos clearly framed as optional. Dr. Plant
+Plant Life summaries are visually distinct from raw check-in answers, including a
+summary-unavailable state when analysis is missing. Editing now tells users the
+Dr. Plant summary will refresh, deleting confirms that Plant Life history updates,
+and the history list repeats those consequences near the controls. The timeline
+now uses "Plant Life timeline" and "Plant Check-In" wording, keeps filters for
+long mixed histories, and explains empty timeline states with concrete next
+actions.
 
 ## Checkpoint 7 - Dr. Plant health flow
 
