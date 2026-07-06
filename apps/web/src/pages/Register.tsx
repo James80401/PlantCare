@@ -104,6 +104,17 @@ export default function Register() {
           <Button type="submit" fullWidth disabled={loading}>
             {loading ? 'Creating account…' : 'Create account'}
           </Button>
+          <p className="text-center text-xs leading-5 text-gray-500">
+            By creating an account you agree to the{' '}
+            <Link to="/terms" className="font-semibold text-emerald-800 hover:underline">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="font-semibold text-emerald-800 hover:underline">
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </form>
       ) : null}
     </AuthShell>

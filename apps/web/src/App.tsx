@@ -36,6 +36,7 @@ const Household = lazy(() => import('./pages/Household'));
 const Community = lazy(() => import('./pages/Community'));
 const Subscription = lazy(() => import('./pages/Subscription'));
 const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
 const BuddyOnboarding = lazy(() => import('./pages/buddy/onboarding'));
 const BuddyHome = lazy(() => import('./pages/buddy/index'));
 const BuddyJourneyPage = lazy(() => import('./pages/buddy/journey'));
@@ -85,6 +86,7 @@ export default function App() {
         <Route path="/plant-care-guides" element={<MarketingRoutePage />} />
         <Route path="/plant-care-guides/:speciesSlug" element={<MarketingRoutePage />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
