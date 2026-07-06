@@ -65,7 +65,7 @@ export function WeatherAdvicePanel() {
         setStatus(data);
         if (data.cachedAdvice) {
           setAdvice(data.cachedAdvice);
-          setExpanded(true);
+          setExpanded(false);
         }
       })
       .catch((err) => setError(formatApiErrorMessage(err, 'Could not load weather status.')))
@@ -88,7 +88,7 @@ export function WeatherAdvicePanel() {
     try {
       const { data } = await usersApi.fetchWeatherAdvice();
       setAdvice(data);
-      setExpanded(true);
+      setExpanded(false);
       loadStatus();
     } catch (err: unknown) {
       const message =
@@ -144,7 +144,7 @@ export function WeatherAdvicePanel() {
   }
 
   return (
-    <section className="max-h-[min(70vh,28rem)] overflow-y-auto rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-4 shadow-sm">
+    <section className="rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-emerald-950 font-display">Weather advice</h2>
@@ -173,7 +173,7 @@ export function WeatherAdvicePanel() {
               onClick={() => setExpanded((value) => !value)}
               className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-100 hover:bg-emerald-50"
             >
-              {expanded ? 'Hide' : "View today's advice"}
+              {expanded ? 'Hide plant details' : 'Show plant details'}
             </button>
           )}
           <button
@@ -192,7 +192,9 @@ export function WeatherAdvicePanel() {
               ? 'Loading…'
               : status.canFetchToday
                 ? 'Advise by weather'
-                : "View today's advice"}
+                : advice
+                  ? 'Show plant details'
+                  : "View today's advice"}
           </button>
         </div>
       </div>
@@ -203,6 +205,13 @@ export function WeatherAdvicePanel() {
         <p className="mt-2 text-xs text-sky-900/80">
           Daily check used. You can view results again today; next new forecast tomorrow.
         </p>
+      ) : null}
+
+      {advice ? (
+        <WeatherAdviceSummary
+          advice={advice}
+          temperatureUnit={temperatureUnit}
+        />
       ) : null}
 
       {expanded && advice ? (
@@ -255,6 +264,48 @@ export function WeatherAdvicePanel() {
   );
 }
 
+function WeatherAdviceSummary({
+  advice,
+  temperatureUnit,
+}: {
+  advice: WeatherAdvicePayload;
+  temperatureUnit: TemperatureUnit;
+}) {
+  const plantAdviceGroups = groupPlantAdvice(advice.plants);
+  const largestGroup = plantAdviceGroups[0];
+  const hasHeatAlert = advice.overviewAlerts.some((alert) => alert.type === 'heat');
+  const hasRainAlert = advice.overviewAlerts.some((alert) => alert.type === 'rain');
+  const today = advice.summary.days[0];
+  const weatherLead = [
+    hasHeatAlert ? 'Hot conditions may dry pots faster.' : null,
+    hasRainAlert ? 'Rain may make outdoor watering unnecessary; check soil before watering.' : null,
+  ].filter(Boolean).join(' ');
+  const range = today
+    ? `Today: ${formatTemperatureRange(today.tempMinC, today.tempMaxC, temperatureUnit)}.`
+    : '';
+
+  return (
+    <div className="mt-4 rounded-2xl border border-sky-100 bg-white/85 p-3 text-sm text-sky-950">
+      <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">Today summary</p>
+      <p className="mt-1 leading-6">
+        {weatherLead || 'Weather is checked for your saved location.'} {range}
+      </p>
+      {largestGroup ? (
+        <p className="mt-2 leading-6 text-gray-700">
+          {advice.plants.length} plant{advice.plants.length === 1 ? '' : 's'} checked.{' '}
+          {largestGroup.plants.length > 1
+            ? `${largestGroup.plants.length} share the same advice: ${largestGroup.advice}`
+            : `Top plant note: ${largestGroup.plants[0].plantName} - ${largestGroup.advice}`}
+        </p>
+      ) : (
+        <p className="mt-2 leading-6 text-gray-700">
+          Add plants to your garden to get plant-specific weather advice.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function AdviceResults({
   advice,
   temperatureUnit,
@@ -263,6 +314,7 @@ function AdviceResults({
   temperatureUnit: TemperatureUnit;
 }) {
   const hasRainAlert = advice.overviewAlerts.some((alert) => alert.type === 'rain');
+  const plantAdviceGroups = groupPlantAdvice(advice.plants);
 
   return (
     <div className="mt-4 space-y-4">
@@ -306,33 +358,68 @@ function AdviceResults({
 
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">Per plant</p>
-        <ul className="mt-2 space-y-2">
+        <div className="mt-2 space-y-2">
           {advice.plants.length === 0 ? (
-            <li className="rounded-2xl bg-white px-3 py-2 text-sm text-gray-600 ring-1 ring-sky-100">
+            <div className="rounded-2xl bg-white px-3 py-2 text-sm text-gray-600 ring-1 ring-sky-100">
               Add plants to your garden to see tailored lines.
-            </li>
+            </div>
           ) : (
-            advice.plants.map((plant) => (
-              <li
-                key={plant.plantId}
+            plantAdviceGroups.map((group) => (
+              <details
+                key={`${group.severity}-${group.advice}`}
                 className={`rounded-2xl px-3 py-2 text-sm ring-1 ${
-                  plant.severity === 'warning'
+                  group.severity === 'warning'
                     ? 'bg-amber-50 text-amber-950 ring-amber-100'
                     : 'bg-white text-gray-700 ring-sky-100'
                 }`}
               >
-                <Link
-                  to={`/garden/plants/${plant.plantId}`}
-                  className="font-semibold text-emerald-950 hover:underline"
-                >
-                  {plant.plantName}
-                </Link>
-                <p className="mt-0.5 leading-6">{plant.advice}</p>
-              </li>
+                <summary className="cursor-pointer list-none font-semibold text-emerald-950 [&::-webkit-details-marker]:hidden">
+                  {group.plants.length} plant{group.plants.length === 1 ? '' : 's'} - {group.advice}
+                </summary>
+                <ul className="mt-2 space-y-1">
+                  {group.plants.map((plant) => (
+                    <li key={plant.plantId}>
+                      <Link
+                        to={`/garden/plants/${plant.plantId}`}
+                        className="font-semibold text-emerald-950 hover:underline"
+                      >
+                        {plant.plantName}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             ))
           )}
-        </ul>
+        </div>
       </div>
     </div>
   );
+}
+
+function groupPlantAdvice(advice: WeatherAdvicePayload['plants']) {
+  const groups = new Map<
+    string,
+    {
+      advice: string;
+      severity: 'info' | 'warning';
+      plants: WeatherAdvicePayload['plants'];
+    }
+  >();
+
+  for (const plant of advice) {
+    const key = `${plant.severity}:${plant.advice}`;
+    const group = groups.get(key);
+    if (group) {
+      group.plants.push(plant);
+    } else {
+      groups.set(key, {
+        advice: plant.advice,
+        severity: plant.severity,
+        plants: [plant],
+      });
+    }
+  }
+
+  return Array.from(groups.values()).sort((a, b) => b.plants.length - a.plants.length);
 }

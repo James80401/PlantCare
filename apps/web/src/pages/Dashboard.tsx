@@ -9,9 +9,8 @@ import {
   type DashboardHealthStory,
 } from '../hooks/useDashboard';
 import { useDashboardTaskActions } from '../hooks/useDashboardTaskActions';
-import { tasksApi, gardensApi, type GardenSummaryCard } from '../services/api';
+import { tasksApi, gardensApi, type GardenSummaryCard, type RecommendationItem } from '../services/api';
 import { GardenCard } from '../components/gardens/GardenCard';
-import type { SharedPlantView } from '../utils/household';
 import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
 import BuddyDashboardPanel from '../components/buddy/BuddyDashboardPanel';
 import SeasonalBanner from '../components/buddy/SeasonalBanner';
@@ -62,16 +61,11 @@ interface ScheduleSuggestion {
   reversible: boolean;
 }
 
-type PlantScope = 'all' | 'mine' | 'shared';
-
 export default function Dashboard() {
   const location = useLocation();
-  const [plantScope, setPlantScope] = useState<PlantScope>('all');
   const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null);
   const [scheduleMessage, setScheduleMessage] = useState('');
   const [metricsOpen, setMetricsOpen] = useState(false);
-  const [recommendationsExpanded, setRecommendationsExpanded] = useState(false);
-  const [attentionExpanded, setAttentionExpanded] = useState(false);
 
   const { data: dash, loading: dashLoading, error: dashError, reload: reloadDash } =
     useDashboard();
@@ -131,11 +125,6 @@ export default function Dashboard() {
 
   const scheduleSuggestions = dash?.scheduleSuggestions ?? [];
   const recommendations = dash?.recommendations ?? [];
-  const RECOMMENDATIONS_PREVIEW_COUNT = 3;
-  const visibleRecommendations = recommendationsExpanded
-    ? recommendations
-    : recommendations.slice(0, RECOMMENDATIONS_PREVIEW_COUNT);
-  const hiddenRecommendationsCount = recommendations.length - visibleRecommendations.length;
   const firstName = dash?.greeting.name ?? 'there';
   const plants = dash?.plants ?? [];
   const sharedPlants = dash?.sharedPlants ?? [];
@@ -160,12 +149,6 @@ export default function Dashboard() {
     };
   }, []);
 
-  const visiblePlants = useMemo((): Array<DashboardPlant | SharedPlantView> => {
-    if (plantScope === 'mine') return plants;
-    if (plantScope === 'shared') return sharedPlants;
-    return [...plants, ...sharedPlants];
-  }, [plantScope, plants, sharedPlants]);
-
   const allGardenPlants = useMemo(
     () => [...plants, ...sharedPlants],
     [plants, sharedPlants],
@@ -173,7 +156,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (location.hash.replace('#', '') !== 'plants') return;
-    document.getElementById('plants')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('gardens')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [location.hash, location.pathname]);
 
   const overdueTasks = useMemo(
@@ -189,11 +172,6 @@ export default function Dashboard() {
   const weekPreview = dash?.weekPreview ?? [];
   const weekSummary = dash?.weekSummary;
   const attentionItems = dash?.attention ?? [];
-  const ATTENTION_PREVIEW_COUNT = 3;
-  const visibleAttentionItems = attentionExpanded
-    ? attentionItems
-    : attentionItems.slice(0, ATTENTION_PREVIEW_COUNT);
-  const hiddenAttentionCount = attentionItems.length - visibleAttentionItems.length;
   const metrics = dash?.metrics;
   const healthStory = dash?.healthStory;
   const careSummary = dash?.careSummary;
@@ -229,7 +207,7 @@ export default function Dashboard() {
     if (diagnosisPlant) {
       return plantDrPlantPath(diagnosisPlant.plantId);
     }
-    return { pathname: '/garden', hash: '#plants' };
+    return '/garden/gardens';
   }, [allGardenPlants, attentionItems]);
 
   const drPlantShortcut = useMemo(() => {
@@ -303,82 +281,82 @@ export default function Dashboard() {
   const dashboardLoading = dashLoading;
   const gardensLoading = dashLoading || gardenSummariesLoading;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
+  const recommendationSummary = getRecommendationSummary(recommendations);
+  const attentionDisclosureSummary =
+    attentionSummary?.body ??
+    (needsAttentionCount
+      ? `${needsAttentionCount} plant${needsAttentionCount === 1 ? '' : 's'} may need a closer look.`
+      : 'No major issues detected from your current schedule.');
+  const totalWeekItems = weekPreview.reduce((sum, day) => sum + day.count, 0);
+  const weekDisclosureSummary =
+    weekSummary?.body ??
+    (totalWeekItems
+      ? `${totalWeekItems} care item${totalWeekItems === 1 ? '' : 's'} across the next seven days.`
+      : 'No scheduled care items are waiting in the next seven days.');
+  const gardenDisclosureSummary =
+    gardenSummaries.length > 0
+      ? `${gardenSummaries.length} garden${gardenSummaries.length === 1 ? '' : 's'} with ${
+          plantCount
+        } plant${plantCount === 1 ? '' : 's'}. Open a garden to browse its plants.`
+      : 'Create a garden, then add plants into it.';
 
-  // Recommendations, "needs attention," and the 7-day preview have nothing
-  // real to say yet for a brand-new, zero-plant account — every one of them
-  // renders as generic filler text. Tuck them behind a closed disclosure so a
-  // new user's dashboard leads with the "Add your first plant" prompt instead
-  // of three empty-state cards. Once there's a plant, this renders exactly as
-  // before, unwrapped.
+  // Keep optional context as summaries first. Users can expand when they want
+  // the full recommendation, attention, or calendar lists.
   const secondaryPanels = (
     <>
-      <RecommendationPanel
-        recommendations={visibleRecommendations}
-        onChanged={reloadDash}
-        emptyText="No extra recommendations right now. Keep up with your care tasks."
-      />
-      {hiddenRecommendationsCount > 0 || recommendationsExpanded ? (
-        <button
-          type="button"
-          onClick={() => setRecommendationsExpanded((expanded) => !expanded)}
-          className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
-        >
-          {recommendationsExpanded
-            ? 'Show fewer recommendations'
-            : `Show ${hiddenRecommendationsCount} more recommendation${hiddenRecommendationsCount === 1 ? '' : 's'}`}
-        </button>
-      ) : null}
+      <DashboardDisclosure
+        eyebrow="Recommendations"
+        title="Recommendations"
+        summary={recommendationSummary}
+        countLabel={
+          recommendations.length
+            ? `${recommendations.length} recommendation${recommendations.length === 1 ? '' : 's'}`
+            : 'Optional'
+        }
+      >
+        <RecommendationPanel
+          title="Recommendation details"
+          recommendations={recommendations}
+          onChanged={reloadDash}
+          emptyText="No extra recommendations right now. Keep up with your care tasks."
+        />
+      </DashboardDisclosure>
 
-      <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
-        <h2 className="text-base font-semibold text-emerald-950 font-display">
-          {attentionSummary?.headline ?? 'Needs attention'}
-        </h2>
-        <p className="mt-1 text-sm text-gray-600">
-          {attentionSummary?.body ??
-            (needsAttentionCount
-              ? `${needsAttentionCount} plant${needsAttentionCount === 1 ? '' : 's'} may need a closer look.`
-              : 'No major issues detected from your current schedule.')}
-        </p>
-
-        <div className="mt-4 space-y-3">
+      <DashboardDisclosure
+        eyebrow="Attention"
+        title={attentionSummary?.headline ?? 'Needs attention'}
+        summary={attentionDisclosureSummary}
+        countLabel={
+          needsAttentionCount
+            ? `${needsAttentionCount} item${needsAttentionCount === 1 ? '' : 's'}`
+            : 'All clear'
+        }
+      >
+        <div className="space-y-3">
           {attentionItems.length === 0 ? (
             <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
               {attentionSummary?.body ??
                 'Add more photos, notes, and care feedback over time to make this smarter.'}
             </p>
           ) : (
-            <>
-              {visibleAttentionItems.map((item) => (
-                <AttentionItemCard
-                  key={item.plantId}
-                  item={item}
-                  plant={plants.find((p) => p.id === item.plantId)}
-                />
-              ))}
-              {hiddenAttentionCount > 0 || attentionExpanded ? (
-                <button
-                  type="button"
-                  onClick={() => setAttentionExpanded((expanded) => !expanded)}
-                  className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
-                >
-                  {attentionExpanded
-                    ? 'Show fewer'
-                    : `Show ${hiddenAttentionCount} more`}
-                </button>
-              ) : null}
-            </>
+            attentionItems.map((item) => (
+              <AttentionItemCard
+                key={item.plantId}
+                item={item}
+                plant={plants.find((p) => p.id === item.plantId)}
+              />
+            ))
           )}
         </div>
-      </section>
+      </DashboardDisclosure>
 
-      <section className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
-        <h2 className="text-base font-semibold text-emerald-950 font-display">
-          {weekSummary?.headline ?? 'Next seven days'}
-        </h2>
-        <p className="mt-1 text-sm text-gray-600">
-          {weekSummary?.body ?? 'Upcoming care tasks for the next seven days.'}
-        </p>
-        <div className="mt-4 grid grid-cols-7 gap-1.5">
+      <DashboardDisclosure
+        eyebrow="Calendar"
+        title={weekSummary?.headline ?? 'Next seven days'}
+        summary={weekDisclosureSummary}
+        countLabel="Schedule"
+      >
+        <div className="grid grid-cols-7 gap-1.5">
           {weekPreview.map((day) => (
             <Link
               key={day.date}
@@ -397,95 +375,67 @@ export default function Dashboard() {
             </Link>
           ))}
         </div>
-      </section>
+      </DashboardDisclosure>
     </>
   );
 
-  // Moved directly under Priority Care — plants are the core content of this
-  // page, and previously sat below seven other sections (adaptive scheduling,
-  // health story, gardens, recommendations, tips, weather, progress).
-  const plantsSection = (
-    <section id="plants" className="space-y-4 scroll-mt-24">
-      <SectionHeader
-        eyebrow="Garden"
-        title="Your plants"
-        actionLabel="Add plant"
-        actionTo="/garden/plants/new"
-      />
-
-      {(plants.length > 0 || sharedPlants.length > 0) && (
-        <div>
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                ['all', 'All plants'],
-                ['mine', 'My plants'],
-                ['shared', 'Shared with me'],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setPlantScope(key)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                  plantScope === key
-                    ? 'bg-emerald-800 text-white'
-                    : 'bg-white border border-emerald-100 text-emerald-800 hover:bg-emerald-50'
-                }`}
-              >
-                {label}
-                {key === 'shared' && sharedPlants.length > 0 ? ` (${sharedPlants.length})` : ''}
-              </button>
-            ))}
-          </div>
-          {sharedPlants.length > 0 ? (
-            <p className="text-xs text-gray-500">
-              Shared plants come from households you joined.{' '}
-              <Link to="/garden/household" className="font-semibold text-emerald-700 hover:underline">
-                Manage Care Share
-              </Link>
+  // Keep plant inventory one level deeper: Dashboard -> Gardens -> Plants.
+  // The front page should summarize the garden and let users drill in.
+  const gardenAccessSection = (
+    <DashboardDisclosure
+      id="gardens"
+      eyebrow="Start here"
+      title="Your gardens"
+      summary={gardenDisclosureSummary}
+      countLabel={
+        gardenSummariesLoading
+          ? 'Loading'
+          : `${gardenSummaries.length} garden${gardenSummaries.length === 1 ? '' : 's'}`
+      }
+      actionLabel="Open gardens"
+      actionTo="/garden/gardens"
+    >
+      {gardenSummaries.length === 0 ? (
+        gardensLoading ? (
+          <>
+            <StatusMessage className="sr-only">Loading gardens...</StatusMessage>
+            <DashboardSkeleton />
+          </>
+        ) : gardenSummariesError ? (
+          <section
+            role="status"
+            aria-live="polite"
+            className="rounded-3xl border border-amber-100 bg-amber-50/80 p-5 shadow-sm shadow-emerald-900/5"
+          >
+            <h3 className="font-semibold text-amber-950">Garden summaries are unavailable</h3>
+            <p className="mt-1 text-sm leading-6 text-amber-900">
+              Your dashboard can still load care tasks and plants. Try the summaries again when
+              the connection settles.
             </p>
-          ) : null}
-        </div>
-      )}
-
-      {dashboardLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {[0, 1, 2].map((index) => (
-            <div
-              key={index}
-              className="h-36 animate-pulse rounded-3xl border border-emerald-100 bg-white"
-            />
-          ))}
-        </div>
-      ) : visiblePlants.length === 0 ? (
-        <EmptyState
-          title={plantScope === 'shared' ? 'No shared plants yet' : 'No plants yet'}
-          body={
-            plantScope === 'shared'
-              ? 'Accept a household invite to see plants others share with you.'
-              : 'Add a plant and Dr. Plant will create a schedule, care guide, and profile you can track over time.'
-          }
-          actionLabel={plantScope === 'shared' ? 'Household settings' : 'Add your first plant'}
-          actionTo={plantScope === 'shared' ? '/garden/household' : '/garden/plants/new'}
-        />
+            <button
+              type="button"
+              onClick={loadGardenSummaries}
+              className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-amber-900 ring-1 ring-amber-200 hover:bg-amber-50"
+            >
+              Retry summaries
+            </button>
+          </section>
+        ) : (
+          <EmptyState
+            title="Create your first garden"
+            body="Gardens group your plants and the people who help care for them. Create one, then add plants into it."
+            actionLabel="Create a garden"
+            actionTo="/garden/gardens"
+          />
+        )
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {visiblePlants.map((plant) => (
-            <PlantCard
-              key={plant.id}
-              plant={plant}
-              tasks={pendingTasks}
-              sharedMeta={
-                'shared' in plant && plant.shared
-                  ? { gardenName: plant.gardenName, role: plant.memberRole }
-                  : undefined
-              }
-            />
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+          {gardenSummaries.map((garden) => (
+            <GardenCard key={garden.id} garden={garden} />
           ))}
         </div>
       )}
-    </section>
+    </DashboardDisclosure>
   );
 
   // Adaptive scheduling, the health/journal story, and progress/milestones are
@@ -706,61 +656,10 @@ export default function Dashboard() {
         />
       ) : null}
 
-      {plantsSection}
-
       {moreInsightsSection}
 
       <section className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.75fr)]">
-        <div className="min-w-0 space-y-4">
-          <SectionHeader
-            eyebrow="Start here"
-            title="Your gardens"
-            actionLabel="My Gardens"
-            actionTo="/garden/gardens"
-          />
-
-          {gardenSummaries.length === 0 ? (
-            gardensLoading ? (
-              <>
-                <StatusMessage className="sr-only">Loading gardens…</StatusMessage>
-                <DashboardSkeleton />
-              </>
-            ) : gardenSummariesError ? (
-              <section
-                role="status"
-                aria-live="polite"
-                className="rounded-3xl border border-amber-100 bg-amber-50/80 p-5 shadow-sm shadow-emerald-900/5"
-              >
-                <h3 className="font-semibold text-amber-950">Garden summaries are unavailable</h3>
-                <p className="mt-1 text-sm leading-6 text-amber-900">
-                  Your dashboard can still load care tasks and plants. Try the summaries again when
-                  the connection settles.
-                </p>
-                <button
-                  type="button"
-                  onClick={loadGardenSummaries}
-                  className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-amber-900 ring-1 ring-amber-200 hover:bg-amber-50"
-                >
-                  Retry summaries
-                </button>
-              </section>
-            ) : (
-              <EmptyState
-                title="Create your first garden"
-                body="Gardens group your plants and the people who help care for them. Create one, then add plants into it."
-                actionLabel="Create a garden"
-                actionTo="/garden/gardens"
-              />
-            )
-          ) : (
-            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
-              {gardenSummaries.map((garden) => (
-                <GardenCard key={garden.id} garden={garden} />
-              ))}
-            </div>
-          )}
-        </div>
-
+        <div className="min-w-0 space-y-4">{gardenAccessSection}</div>
         <aside className="min-w-0 space-y-4">
           {plantCount === 0 ? (
             <details className="group rounded-3xl border border-emerald-100 bg-white/70 p-4 shadow-sm shadow-emerald-900/5">
@@ -1138,6 +1037,7 @@ function PriorityCareSection({
   );
   const [openRound, setOpenRound] = useState<string | null>(null);
   const [busyGroup, setBusyGroup] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const hasCriticalCare = flatRounds.length > 0;
   const visibleRounds = flatRounds.slice(0, PRIORITY_CARE_VISIBLE_ROUNDS);
@@ -1194,15 +1094,25 @@ function PriorityCareSection({
           </h2>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-700">{body}</p>
         </div>
-        <Link
-          to="/garden/tasks"
-          className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
-        >
-          {hasCriticalCare ? 'Open tasks' : 'View calendar'}
-        </Link>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setShowDetails((value) => !value)}
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
+            aria-expanded={showDetails}
+          >
+            {showDetails ? 'Hide details' : hasCriticalCare ? 'Show care rounds' : 'Show summary'}
+          </button>
+          <Link
+            to="/garden/tasks"
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
+          >
+            {hasCriticalCare ? 'Open tasks' : 'View calendar'}
+          </Link>
+        </div>
       </div>
 
-      {hasCriticalCare ? (
+      {showDetails && hasCriticalCare ? (
         <div className="mt-4 space-y-3">
           {visibleRounds.map(({ gardenId, gardenName, careType }) => {
             const key = careRoundKey(gardenId, careType.taskType);
@@ -1243,42 +1153,90 @@ function PriorityCareSection({
             </Link>
           ) : null}
         </div>
-      ) : (
+      ) : showDetails ? (
         <div className="mt-4 rounded-2xl bg-white/80 px-4 py-3 text-sm text-emerald-900 ring-1 ring-emerald-100">
           Keep an eye on recommendations below when you have time, but there is no urgent plant care waiting.
         </div>
-      )}
+      ) : null}
     </section>
   );
 }
 
-function SectionHeader({
+function DashboardDisclosure({
+  id,
   eyebrow,
   title,
+  summary,
+  countLabel,
   actionLabel,
   actionTo,
+  children,
 }: {
+  id?: string;
   eyebrow: string;
   title: string;
+  summary: string;
+  countLabel?: string;
   actionLabel?: string;
   actionTo?: string;
+  children: ReactNode;
 }) {
   return (
-    <div className="flex min-w-0 items-end justify-between gap-4">
-      <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{eyebrow}</p>
-        <h2 className="mt-1 break-words text-xl font-semibold text-emerald-950 font-display">{title}</h2>
-      </div>
-      {actionLabel && actionTo && (
-        <Link
-          to={actionTo}
-          className="inline-flex max-w-[45%] shrink-0 rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-emerald-800 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
-        >
-          <span className="truncate">{actionLabel}</span>
-        </Link>
-      )}
-    </div>
+    <details
+      id={id}
+      className="group min-w-0 rounded-3xl border border-emerald-100 bg-white/80 p-4 shadow-sm shadow-emerald-900/5"
+    >
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{eyebrow}</p>
+          <h2 className="mt-1 break-words text-lg font-semibold text-emerald-950 font-display">
+            {title}
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-gray-600">{summary}</p>
+          {actionLabel && actionTo ? (
+            <Link
+              to={actionTo}
+              className="mt-3 inline-flex min-h-9 items-center justify-center rounded-full bg-emerald-800 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-900"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {actionLabel}
+            </Link>
+          ) : null}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {countLabel ? (
+            <span className="hidden rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100 sm:inline-flex">
+              {countLabel}
+            </span>
+          ) : null}
+          <span
+            aria-hidden
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-lg font-bold text-emerald-800 transition group-open:rotate-45"
+          >
+            +
+          </span>
+        </div>
+      </summary>
+      <div className="mt-4 min-w-0 space-y-4">{children}</div>
+    </details>
   );
+}
+
+function getRecommendationSummary(recommendations: RecommendationItem[]) {
+  if (recommendations.length === 0) {
+    return 'No optional recommendations are waiting. Critical care tasks still stay separate above.';
+  }
+
+  const taskConversions = recommendations.filter((item) => item.suggestedTaskType);
+  const top = recommendations[0];
+  if (taskConversions.length > 0) {
+    const taskLabel = taskTypeLabel(taskConversions[0].suggestedTaskType!);
+    return `Suggested next step: add or review ${taskLabel.toLowerCase()} guidance. Open details when you want the full recommendation list.`;
+  }
+
+  return `${recommendations.length} optional recommendation${
+    recommendations.length === 1 ? '' : 's'
+  } available. Top suggestion: ${top.title}`;
 }
 
 function EmptyState({
