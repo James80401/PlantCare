@@ -13,6 +13,22 @@ export function getLocalDateKey(timezone: string, now = new Date()): string {
   }).format(now);
 }
 
+/** Hour of day (0-23) in the user's timezone — for anything gated on "is it
+ *  currently the user's quiet hours / reminder hour," which must use the
+ *  user's own clock, not the server process's. */
+export function getLocalHour(timezone: string, now = new Date()): number {
+  const hour = parseInt(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone || 'UTC',
+      hour: 'numeric',
+      hour12: false,
+    }).format(now),
+    10,
+  );
+  // Some ICU implementations render midnight as "24" with hour12: false.
+  return hour === 24 ? 0 : hour;
+}
+
 /**
  * Start (local midnight, to the nearest hour) of the calendar day `daysFromNow` days
  * ahead, in the given timezone. Used anywhere a "due in N days" needs to land on the

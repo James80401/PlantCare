@@ -40,6 +40,44 @@ describe('NotificationsService', () => {
     recommendationUpdateMany.mockResolvedValue({ count: 0 });
   });
 
+  describe('timezone-aware hour checks', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('isReminderHourDue converts to the user\'s own timezone, not the server\'s', () => {
+      // 2026-01-15T13:00:00Z is 8am in America/New_York (UTC-5 in January) and
+      // 10pm (22:00) in Asia/Tokyo (UTC+9) — three different local hours for the
+      // same instant, so this pins down real timezone conversion rather than
+      // coincidentally matching whatever timezone the test runner happens to be in.
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-01-15T13:00:00.000Z'));
+      const service = createService();
+
+      expect(service.isReminderHourDue({ reminderHour: 8, timezone: 'America/New_York' })).toBe(true);
+      expect(service.isReminderHourDue({ reminderHour: 13, timezone: 'America/New_York' })).toBe(false);
+      expect(service.isReminderHourDue({ reminderHour: 22, timezone: 'Asia/Tokyo' })).toBe(true);
+      expect(service.isReminderHourDue({ reminderHour: 13, timezone: null })).toBe(true);
+    });
+
+    it('isQuietHours converts to the user\'s own timezone, not the server\'s', () => {
+      // Same instant as above: 8am in New York, 1pm UTC, 10pm in Tokyo.
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-01-15T13:00:00.000Z'));
+      const service = createService();
+
+      expect(
+        service.isQuietHours({ quietHoursStart: 22, quietHoursEnd: 7, timezone: 'America/New_York' }),
+      ).toBe(false);
+      expect(
+        service.isQuietHours({ quietHoursStart: 20, quietHoursEnd: 23, timezone: 'Asia/Tokyo' }),
+      ).toBe(true);
+      expect(
+        service.isQuietHours({ quietHoursStart: 20, quietHoursEnd: 23, timezone: null }),
+      ).toBe(false);
+    });
+  });
+
   it('logs mock push when user has no device tokens', async () => {
     deviceFindMany.mockResolvedValue([]);
     const service = createService();

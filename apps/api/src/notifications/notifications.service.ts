@@ -10,6 +10,7 @@ import {
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { effectivePlanTier } from '../config/premium-policy';
+import { getLocalHour } from '../weather/weather-cache.util';
 import { resolveFcmTransport, sendFcmNotification } from './fcm.client';
 import { resolveSmsTransport, sendSmsNotification } from './sms.client';
 import { buildCareReminderPush, type TaskReminderRow } from './task-reminder-copy';
@@ -23,9 +24,13 @@ export class NotificationsService {
     private config: ConfigService,
   ) {}
 
-  isQuietHours(user: { quietHoursStart: number | null; quietHoursEnd: number | null }): boolean {
+  isQuietHours(user: {
+    quietHoursStart: number | null;
+    quietHoursEnd: number | null;
+    timezone: string | null;
+  }): boolean {
     if (user.quietHoursStart == null || user.quietHoursEnd == null) return false;
-    const hour = new Date().getHours();
+    const hour = getLocalHour(user.timezone || 'UTC');
     if (user.quietHoursStart <= user.quietHoursEnd) {
       return hour >= user.quietHoursStart && hour < user.quietHoursEnd;
     }
@@ -33,11 +38,11 @@ export class NotificationsService {
   }
 
   /** Daily reminder digests (tasks, recommendations) fire once, at the user's
-   *  chosen hour (default 9am) — the hourly cron calls this to decide whether
-   *  this run is that user's moment, since notifiedAt gating means a skipped
-   *  hour is simply picked up on a later run. */
-  isReminderHourDue(user: { reminderHour: number | null }): boolean {
-    return (user.reminderHour ?? 9) === new Date().getHours();
+   *  chosen hour in their own timezone (default 9am) — the hourly cron calls
+   *  this to decide whether this run is that user's moment, since notifiedAt
+   *  gating means a skipped hour is simply picked up on a later run. */
+  isReminderHourDue(user: { reminderHour: number | null; timezone: string | null }): boolean {
+    return (user.reminderHour ?? 9) === getLocalHour(user.timezone || 'UTC');
   }
 
   async sendDueTaskReminders() {
