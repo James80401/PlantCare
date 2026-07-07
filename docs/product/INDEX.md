@@ -5,6 +5,7 @@
 | Document | Audience | Purpose |
 |----------|----------|---------|
 | [roadmap.md](roadmap.md) | PM / dev / release | Canonical consolidated roadmap and source-of-truth status |
+| [dr-plant-onboarding-study-guide.md](dr-plant-onboarding-study-guide.md) | PM / dev / QA / support | Extensive onboarding and study guide covering the full application |
 | [current-feature-implementation-plan.md](current-feature-implementation-plan.md) | PM / dev | Active implementation plan for improving shipped features |
 | [plant-intelligence-expansion.md](plant-intelligence-expansion.md) | PM / dev | Checkpoint tracker for diagnosis, treatment, catalog, and guide intelligence |
 | [core-ux-a11y-pass-plan.md](core-ux-a11y-pass-plan.md) | PM / dev / QA | Active checkpoint plan for the core UX and accessibility pass |
