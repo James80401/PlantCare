@@ -8,10 +8,12 @@ RUN npm ci --workspace=@plant-care/api --include-workspace-root
 COPY packages/shared ./packages/shared/
 COPY apps/api ./apps/api/
 RUN npm run build -w @plant-care/shared \
-  && npx prisma generate --schema=prisma/schema.postgresql.prisma \
+  && npx prisma generate --schema=prisma/postgresql/schema.prisma \
   && npm run build -w @plant-care/api
 
 FROM node:22-alpine
+ARG APP_COMMIT_SHA=unknown
+LABEL org.opencontainers.image.revision=$APP_COMMIT_SHA
 RUN apk add --no-cache wget
 WORKDIR /app
 ENV NODE_ENV=production

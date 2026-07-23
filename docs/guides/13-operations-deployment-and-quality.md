@@ -19,7 +19,7 @@
 | Service | Port | Image |
 |---------|------|--------|
 | postgres | 5433 → 5432 | postgres:16-alpine |
-| api | 3001 | `plantcare-api` (Nest + seed on start) |
+| api | 3001 | `plantcare-api` (runtime-only Nest API) |
 | web | 8080 → 80 | `plantcare-web` (nginx + static Vite build) |
 
 **Commands:**
@@ -35,17 +35,18 @@ npm run staging:down
 
 **Windows:** scripts use `scripts/docker-cli.ps1` to find Docker Desktop binary.
 
-**API entrypoint:** `apps/api/docker-entrypoint.sh` — `prisma db push`, `tsx prisma/seed.ts`, start Node.
+**API entrypoint:** `apps/api/docker-entrypoint.sh` starts Node only. Migrations
+and idempotent catalog synchronization are explicit deploy steps.
 
 ---
 
 ## Production checklist
 
 - Strong `JWT_SECRET` / `JWT_REFRESH_SECRET`
-- Managed PostgreSQL; `schema.postgresql.prisma`
+- PostgreSQL; `prisma/postgresql/schema.prisma` and its checked-in migrations
 - `FRONTEND_URL` + `CORS_ORIGIN` match public web origin exactly
 - `VITE_API_BASE_URL` reachable from users’ browsers
-- S3 for uploads at scale
+- Verified backups for the canonical local upload volume
 - Stripe webhook URL configured
 - SMTP for transactional email
 - Run migrations + seed on deploy

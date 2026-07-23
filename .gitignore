@@ -4,6 +4,7 @@ build/
 .env
 .env.staging
 .env.production
+.deployed-sha
 .env.local
 .env.*.local
 *.log

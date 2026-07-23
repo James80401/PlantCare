@@ -304,7 +304,8 @@ npm run production:check
 npm run production:up
 ```
 
-First boot runs `prisma db push` and adds `accountApprovalStatus` (existing users stay **APPROVED**).
+Deployment runs the checked-in PostgreSQL migrations before API startup;
+existing approved users retain their status.
 
 ### F3 — How access works
 

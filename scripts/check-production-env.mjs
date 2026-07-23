@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Validate .env.production before docker production:up.
+ * Validate .env.production before any container or database mutation.
  * Usage: node scripts/check-production-env.mjs [.env.production]
  */
 import { existsSync, readFileSync } from 'fs';
@@ -9,137 +9,133 @@ import { fileURLToPath } from 'url';
 import { parseEnvText } from './lib/parse-env.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const envPath = resolve(root, process.argv[2] || '.env.production');
-const examplePath = resolve(root, '.env.production.example');
+const args = process.argv.slice(2);
+const allowLegacyDatabasePassword = args.includes('--allow-legacy-database-password');
+const envArg = args.find((arg) => !arg.startsWith('--')) || '.env.production';
+const envPath = resolve(root, envArg);
 
 if (!existsSync(envPath)) {
-  if (existsSync(examplePath)) {
-    console.error(`Missing ${envPath}`);
-    console.error(`Copy: cp .env.production.example .env.production`);
-  }
+  console.error(`Missing ${envPath}`);
+  console.error('Copy .env.production.example to .env.production and supply real values.');
   process.exit(1);
 }
 
 const vars = parseEnvText(readFileSync(envPath, 'utf8'));
-const placeholder = /yourdomain|replace-with|change-me/i;
-
-const required = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'FRONTEND_URL', 'VITE_API_BASE_URL'];
-const missing = required.filter((k) => {
-  const v = vars[k];
-  return !v || placeholder.test(v);
-});
-
-const warnings = [];
+const placeholder = /yourdomain|replace-with|change-me|you@example\.com/i;
 const errors = [];
+const warnings = [];
 
-if (!vars.CORS_ORIGINS && !vars.CORS_ORIGIN) {
-  warnings.push('CORS_ORIGINS not set — API will use FRONTEND_URL only (OK for single web origin)');
+const required = [
+  'POSTGRES_USER',
+  'POSTGRES_PASSWORD',
+  'POSTGRES_DB',
+  'DATABASE_URL',
+  'JWT_SECRET',
+  'JWT_REFRESH_SECRET',
+  'FRONTEND_URL',
+  'CORS_ORIGINS',
+  'VITE_API_BASE_URL',
+];
+for (const key of required) {
+  const value = vars[key]?.trim();
+  const permittedLegacyValue =
+    allowLegacyDatabasePassword && ['POSTGRES_PASSWORD', 'DATABASE_URL'].includes(key);
+  if (!value || (placeholder.test(value) && !permittedLegacyValue)) {
+    errors.push(`${key} is missing or still a placeholder`);
+  }
 }
 
-const frontend = vars.FRONTEND_URL || '';
+function isTrue(key) {
+  return vars[key]?.trim().toLowerCase() === 'true';
+}
+
+const frontend = vars.FRONTEND_URL?.trim() || '';
+const apiBase = vars.VITE_API_BASE_URL?.trim() || '';
 if (frontend && !frontend.startsWith('https://')) {
-  errors.push('FRONTEND_URL should use https:// in production');
+  errors.push('FRONTEND_URL must use https://');
+}
+if (apiBase && (!apiBase.startsWith('https://') || !apiBase.endsWith('/api/v1'))) {
+  errors.push('VITE_API_BASE_URL must use https:// and end with /api/v1');
+}
+if (vars.DATABASE_URL && !vars.DATABASE_URL.startsWith('postgresql://')) {
+  errors.push('DATABASE_URL must be a PostgreSQL URL');
 }
 
-const apiBase = vars.VITE_API_BASE_URL || '';
-if (apiBase && !apiBase.endsWith('/api/v1')) {
-  errors.push('VITE_API_BASE_URL should end with /api/v1');
-}
-if (apiBase && !apiBase.startsWith('https://')) {
-  errors.push('VITE_API_BASE_URL should use https:// in production');
-}
-
-const corsOriginsRaw = vars.CORS_ORIGINS || vars.CORS_ORIGIN || '';
-const corsOrigins = corsOriginsRaw
+const corsOrigins = (vars.CORS_ORIGINS || '')
   .split(',')
-  .map((v) => v.trim())
+  .map((value) => value.trim())
   .filter(Boolean);
-if (frontend && corsOrigins.length && !corsOrigins.includes(frontend)) {
-  errors.push('CORS_ORIGINS/CORS_ORIGIN must include FRONTEND_URL exactly');
+if (frontend && !corsOrigins.includes(frontend)) {
+  errors.push('CORS_ORIGINS must include FRONTEND_URL exactly');
 }
 
-const hasFcmV1 =
-  vars.FIREBASE_PROJECT_ID &&
-  (vars.GOOGLE_APPLICATION_CREDENTIALS ||
-    vars.FIREBASE_SERVICE_ACCOUNT_PATH ||
-    (vars.FIREBASE_CLIENT_EMAIL && vars.FIREBASE_PRIVATE_KEY));
-if (!hasFcmV1 && !vars.FCM_SERVER_KEY) {
-  warnings.push(
-    'FCM not configured — set FIREBASE_PROJECT_ID + service account (v1) or FCM_SERVER_KEY (legacy)',
-  );
-} else if (hasFcmV1) {
-  console.log('  ✓ FCM HTTP v1 credentials detected');
-} else if (vars.FCM_SERVER_KEY) {
-  warnings.push('Using legacy FCM_SERVER_KEY — prefer HTTP v1 service account for new Firebase projects');
+if (isTrue('ENABLE_PLANT_BUDDY')) {
+  errors.push('ENABLE_PLANT_BUDDY must remain false during the improvement roadmap');
 }
-if (!vars.OPENAI_API_KEY) {
-  warnings.push('OPENAI_API_KEY unset — Dr. Plant and diagnosis will not work');
+if (isTrue('ENABLE_PREMIUM_BILLING')) {
+  const stripeKeys = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_ID_PREMIUM'];
+  for (const key of stripeKeys) {
+    if (!vars[key]?.trim()) errors.push(`${key} is required when Premium billing is enabled`);
+  }
+}
+if (isTrue('SEED_DEMO_DATA')) {
+  errors.push('SEED_DEMO_DATA must be false in production');
 }
 
-const allUsersPremium = vars.ALL_USERS_PREMIUM?.trim().toLowerCase() === 'true';
-if (!allUsersPremium) {
-  for (const key of ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_ID_PREMIUM']) {
-    if (!vars[key]?.trim()) {
-      errors.push(`${key} is required when ALL_USERS_PREMIUM is not true`);
-    }
+const smtpValues = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM'].filter(
+  (key) => Boolean(vars[key]?.trim()),
+);
+if (smtpValues.length > 0 && smtpValues.length < 4) {
+  errors.push('SMTP_HOST, SMTP_USER, SMTP_PASS, and EMAIL_FROM must be configured together');
+}
+if (isTrue('REGISTRATION_REQUIRES_ADMIN_APPROVAL')) {
+  for (const key of ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM', 'ADMIN_EMAILS']) {
+    if (!vars[key]?.trim()) errors.push(`${key} is required when registration approval is enabled`);
+  }
+}
+if (vars.SMTP_HOST?.trim().toLowerCase() === 'smtp.sendgrid.net') {
+  if (vars.SMTP_USER?.trim() !== 'apikey') {
+    errors.push('Twilio SendGrid SMTP requires SMTP_USER=apikey');
+  }
+  if (!vars.SMTP_PASS?.trim().replace(/\s+/g, '').startsWith('SG.')) {
+    errors.push('Twilio SendGrid SMTP requires an SG.-prefixed API key');
+  }
+  if (String(vars.SMTP_PORT || '').trim() !== '2525') {
+    warnings.push('Use SMTP_PORT=2525 for Twilio SendGrid on DigitalOcean');
   }
 }
 
-if (!vars.SMTP_USER || !vars.SMTP_PASS) {
-  warnings.push('SMTP unset — email verification and password reset use auto-verify in dev only');
-} else {
-  console.log('  ✓ SMTP credentials detected');
-  const smtpHost = (vars.SMTP_HOST || '').trim().toLowerCase();
-  const smtpUser = (vars.SMTP_USER || '').trim();
-  const smtpPass = (vars.SMTP_PASS || '').trim().replace(/\s+/g, '');
-  if (smtpHost === 'smtp.sendgrid.net') {
-    if (smtpUser !== 'apikey') {
-      errors.push('Twilio SendGrid SMTP requires SMTP_USER=apikey');
-    }
-    if (!smtpPass.startsWith('SG.')) {
-      errors.push('Twilio SendGrid SMTP requires SMTP_PASS to be a SendGrid API key starting with SG.');
-    }
-    if (vars.SMTP_PORT && String(vars.SMTP_PORT).trim() !== '2525') {
-      warnings.push('DigitalOcean blocks common SMTP ports — use SMTP_PORT=2525 for Twilio SendGrid on DO');
-    }
-  }
+const firebaseKeys = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'];
+const firebaseCount = firebaseKeys.filter((key) => Boolean(vars[key]?.trim())).length;
+if (firebaseCount > 0 && firebaseCount < firebaseKeys.length) {
+  errors.push('Firebase HTTP v1 project ID, client email, and private key must be configured together');
+}
+if (firebaseCount === 0 && !vars.FCM_SERVER_KEY?.trim()) {
+  warnings.push('Push delivery is unavailable because FCM is not configured');
 }
 
-const adminApprovalExplicit = vars.REGISTRATION_REQUIRES_ADMIN_APPROVAL?.trim().toLowerCase();
-const adminApprovalEnabled =
-  adminApprovalExplicit !== 'false' &&
-  (adminApprovalExplicit === 'true' || Boolean(vars.SMTP_USER?.trim() && vars.SMTP_PASS?.trim()));
-
-if (adminApprovalEnabled) {
-  if (!vars.SMTP_USER || !vars.SMTP_PASS) {
-    errors.push('Admin approval requires SMTP_USER and SMTP_PASS');
-  }
-  if (!vars.ADMIN_EMAILS?.trim()) {
-    errors.push('Admin approval requires ADMIN_EMAILS (comma-separated admin login emails)');
-  } else {
-    console.log('  ✓ Admin approval enabled (new users need email verify + admin approve)');
-  }
+const twilioKeys = ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM_NUMBER'];
+const twilioCount = twilioKeys.filter((key) => Boolean(vars[key]?.trim())).length;
+if (twilioCount > 0 && twilioCount < twilioKeys.length) {
+  errors.push('Twilio account SID, auth token, and from number must be configured together');
 }
-
-if (missing.length) {
-  console.error('Fix required values in .env.production:');
-  for (const k of missing) console.error(`  - ${k}`);
-  process.exit(1);
+if (!vars.OPENAI_API_KEY?.trim()) {
+  warnings.push('OPENAI_API_KEY is absent; AI-assisted existing features will be unavailable');
+}
+if (allowLegacyDatabasePassword && placeholder.test(vars.POSTGRES_PASSWORD || '')) {
+  warnings.push('Legacy database password is temporarily allowed for the controlled rotation step');
 }
 
 if (errors.length) {
-  console.error('Fix production URL/CORS settings:');
-  for (const e of errors) console.error(`  - ${e}`);
+  console.error('Production configuration is not deployable:');
+  for (const error of errors) console.error(`  - ${error}`);
   process.exit(1);
 }
 
-console.log('✓ .env.production required fields look valid');
-for (const w of warnings) console.log(`  ⚠ ${w}`);
-
-const apiUrl = apiBase.replace(/\/$/, '');
-console.log('\nAfter deploy:');
-console.log(`  API_URL=${apiUrl} npm run verify`);
-console.log(`  API_URL=${apiUrl} npm run smoke:buddy`);
-console.log(`  UAT_WEB_URL=${frontend} API_URL=${apiUrl} npm run uat:e2e`);
-console.log('  npm run production:signoff   # env + live probes + verify + smoke');
-console.log('\nGuide: docs/operations/production-signoff.md');
+console.log('Production configuration preflight PASS');
+console.log(`  web origin: ${frontend}`);
+console.log(`  API base: ${apiBase}`);
+console.log(`  PostgreSQL database: ${vars.POSTGRES_DB}`);
+console.log(`  Buddy enabled: ${isTrue('ENABLE_PLANT_BUDDY')}`);
+console.log(`  Premium billing enabled: ${isTrue('ENABLE_PREMIUM_BILLING')}`);
+for (const warning of warnings) console.log(`  warning: ${warning}`);

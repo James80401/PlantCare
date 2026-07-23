@@ -1,80 +1,61 @@
 # Deployment
 
-> **Navigation:** [Operations INDEX](INDEX.md) · [private-online-setup.md](private-online-setup.md) · [DEPLOY.md](../DEPLOY.md)
+> **Navigation:** [Operations INDEX](INDEX.md) ·
+> [Production sign-off](production-signoff.md)
 
-## API Docker
+## Release contract
 
-`apps/api/Dockerfile` — multi-stage Node 22 build.
+GitHub Actions deploys only a full commit SHA that has a successful `CI` push
+run. Production deploy concurrency never cancels an in-progress release.
 
-## Database
+The remote release script performs, in order:
 
-Production: PostgreSQL (`docker-compose.yml` or managed). Update `schema.prisma` provider + `DATABASE_URL`.
+1. configuration and Compose validation;
+2. verified database/uploads backup;
+3. preservation of the current application images;
+4. build of the exact tested SHA;
+5. guarded PostgreSQL baseline reconciliation and `migrate deploy`;
+6. explicit idempotent catalog synchronization with before/after counts;
+7. one-time legacy database-password rotation when required;
+8. container start, readiness, and non-mutating live sign-off.
 
-## Checklist
+If application readiness or sign-off fails after containers change, the
+preserved API/web images are restored. The rollback overlay starts even a
+legacy API image with the runtime-only entrypoint, so rollback cannot invoke
+the removed `db push` behavior. Database changes follow expand/contract rules
+and are not rolled back automatically.
 
-- Strong `JWT_*` secrets
-- `CORS_ORIGIN` / `FRONTEND_URL` production URLs (must match the public web origin exactly)
-- Run `db:migrate` or `db:push` + `db:seed`
-- Configure OpenAI, SMTP, Stripe as needed
-- S3 for uploads at scale
+Production configuration must pass:
 
-## Local Docker staging (recommended before a public host)
+```sh
+node scripts/check-production-env.mjs .env.production
+docker compose -f docker-compose.production.yml \
+  --env-file .env.production config --quiet
+```
 
-Runs Postgres + API + nginx web on **localhost** with production-like env vars:
+Database names, user, password, and URL are explicit. Buddy, demo data, and
+Premium billing remain disabled. Supported FCM, Twilio, SMTP, AI, plant, and
+Sentry settings are passed to the API; incomplete credential groups fail
+preflight or are reported unavailable.
 
-| Service | URL |
-|---------|-----|
-| Web | http://localhost:8080 |
-| API | http://localhost:3001/api/v1 |
+## Staging
 
 ```powershell
-# From repo root (Windows)
 copy .env.staging.example .env.staging
 npm run staging:check
 npm run staging:smoke
 ```
 
-`staging:smoke` runs `verify`, `smoke:buddy`, and Playwright against the Docker stack.
+The staging script starts PostgreSQL first, prepares the checked-in PostgreSQL
+migration history, seeds explicitly, starts the application, and then runs
+integration and Playwright checks. Production sign-off never creates users or
+mutates application data.
 
-`staging:smoke` builds containers, waits for health, seeds 440+ species, then runs `verify` + Playwright with `STAGING_E2E=1`.
+## Database and storage
 
-Manual control:
+- PostgreSQL schema: `prisma/postgresql/schema.prisma`
+- PostgreSQL migrations: `prisma/postgresql/migrations`
+- Managed uploads: `plantcare_prod_uploads`
+- Backup/restore procedure: [backups.md](backups.md)
 
-```bash
-copy .env.staging.example .env.staging   # or cp on macOS/Linux
-npm run staging:up
-npm run db:generate:postgres
-set DATABASE_URL=postgresql://plantcare:plantcare@localhost:5433/plantcare?schema=public
-set API_URL=http://localhost:3001/api/v1
-set UAT_WEB_URL=http://localhost:8080
-set STAGING_E2E=1
-npm run verify
-npm run uat:e2e
-npm run staging:down
-```
-
-First API start runs `db push` + `db:seed` inside the container (several minutes).
-
-## UAT / staging before sharing a link
-
-Set in API `.env` (and redeploy):
-
-```env
-FRONTEND_URL=https://your-app.example.com
-CORS_ORIGIN=https://your-app.example.com
-```
-
-Web build for production should use `VITE_API_BASE_URL` pointing at your public API.
-
-After deploy, run smoke checks against staging:
-
-```bash
-API_URL=https://api.your-app.example.com/api/v1 npm run verify
-UAT_WEB_URL=https://your-app.example.com STAGING_E2E=1 npm run uat:e2e
-```
-
-For remote hosts, point `DATABASE_URL` at the same Postgres as the API when running `verify` / Playwright global setup (or use `npm run db:generate:postgres` first).
-
-Mark UAT checklist section F when URLs are live.
-
-**Production sign-off (G3):** [production-signoff.md](production-signoff.md) — `npm run production:signoff` after `production:check`.
+The API container entrypoint only starts Node. It never migrates or seeds.

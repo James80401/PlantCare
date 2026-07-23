@@ -37,6 +37,8 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-staging-change-me-refresh}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      ENABLE_PLANT_BUDDY: ${ENABLE_PLANT_BUDDY:-false}
+      SEED_DEMO_DATA: 'false'
       ALL_USERS_PREMIUM: ${ALL_USERS_PREMIUM:-true}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       SMTP_HOST: ${SMTP_HOST:-}
@@ -57,7 +59,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
-      start_period: 120s
+      start_period: 60s
 
   web:
     build:

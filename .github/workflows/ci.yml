@@ -16,24 +16,23 @@ jobs:
       TZ: UTC
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
 
       - run: npm ci
+      - run: npm audit --audit-level=high
       - run: npm run db:generate
       - run: npx prisma db push
       - run: npm run db:seed
       - run: npm run typecheck
-      - run: npm run build -w @plant-care/shared
       - run: npm run test -w @plant-care/api
       - run: npm run build -w @plant-care/api
       - run: npm run test -w @plant-care/web
       - run: npm run build -w @plant-care/web
       - run: npm run verify:docs
-      # Guardrail: a default/private build must be noindex with an empty sitemap.
       - run: npm run assert:seo-private -w @plant-care/web
 
       - name: Buddy hidden-by-default smoke
@@ -76,20 +75,30 @@ jobs:
       JWT_REFRESH_SECRET: test-refresh-secret
       UPLOAD_DIR: /tmp/plantcare-uploads
       PORT: 3001
+      NODE_ENV: test
+      SEED_DEMO_DATA: 'false'
       TZ: UTC
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
+
       - run: npm ci
       - run: mkdir -p "$UPLOAD_DIR"
       - run: npm run db:generate:postgres
-      - run: npx prisma db push --schema=prisma/schema.postgresql.prisma
+      - name: Deploy PostgreSQL migrations
+        run: npm run db:migrate:postgres
+      - name: Verify PostgreSQL schema matches Prisma
+        run: npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/postgresql/schema.prisma --exit-code
       - run: npm run db:seed
+      - name: Verify catalog seed idempotency
+        run: npm run db:seed
       - run: npm run build -w @plant-care/shared
       - run: npm run build -w @plant-care/api
+
       - name: PostgreSQL readiness smoke
         run: |
           node apps/api/dist/main.js &
@@ -105,7 +114,6 @@ jobs:
 
       - name: Buddy enabled-contract smoke
         env:
-          PORT: 3001
           FRONTEND_URL: http://localhost:5173
           CORS_ORIGIN: http://localhost:5173
         run: |

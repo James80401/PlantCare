@@ -116,7 +116,7 @@ packages/
 
 prisma/
   schema.prisma              SQLite dev schema
-  schema.postgresql.prisma   Production/staging schema
+  postgresql/schema.prisma  Production/staging schema
   data/                      Species catalog and guide seed data
   migrations/                Database migrations
   seed.ts                    Seed script

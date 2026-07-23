@@ -1,4 +1,4 @@
-// Local dev uses SQLite. Docker staging/production uses prisma/schema.postgresql.prisma.
+// Local dev and fast tests use SQLite. Production/staging use postgresql/schema.prisma.
 generator client {
   provider = "prisma-client-js"
 }
