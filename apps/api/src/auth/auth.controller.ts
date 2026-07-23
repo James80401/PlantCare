@@ -1,45 +1,103 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Param, Post, Req, Res } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags } from '@nestjs/swagger';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import {
+  assertCookieAuthOrigin,
+  clearRefreshCookie,
+  readRefreshCookie,
+  setRefreshCookie,
+} from './refresh-cookie';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private config: ConfigService,
+  ) {}
+
+  private withRefreshCookie<T extends object>(
+    response: Response,
+    result: T,
+  ): T {
+    const refreshToken =
+      'refreshToken' in result && typeof result.refreshToken === 'string'
+        ? result.refreshToken
+        : undefined;
+    if (refreshToken) {
+      setRefreshCookie(
+        response,
+        this.config,
+        refreshToken,
+        this.authService.refreshTokenLifetimeMs(),
+      );
+    }
+    return result;
+  }
 
   @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.withRefreshCookie(response, await this.authService.register(dto));
   }
 
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.withRefreshCookie(response, await this.authService.login(dto));
   }
 
   @Post('refresh')
-  refresh(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refresh(refreshToken);
+  async refresh(
+    @Req() request: Request,
+    @Body() dto: RefreshTokenDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    assertCookieAuthOrigin(request);
+    const refreshToken = readRefreshCookie(request) ?? dto.refreshToken;
+    const result = await this.authService.refresh(refreshToken ?? '');
+    return this.withRefreshCookie(response, result);
   }
 
   @Post('logout')
-  logout(@Body('refreshToken') refreshToken: string) {
-    return this.authService.logout(refreshToken);
+  async logout(
+    @Req() request: Request,
+    @Body() dto: RefreshTokenDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    assertCookieAuthOrigin(request);
+    const refreshToken = readRefreshCookie(request) ?? dto.refreshToken;
+    const result = await this.authService.logout(refreshToken ?? '');
+    clearRefreshCookie(response, this.config);
+    return result;
   }
 
   @Post('verify-email')
-  verifyEmail(@Body() dto: VerifyEmailDto) {
-    return this.authService.verifyEmail(dto.token);
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.withRefreshCookie(response, await this.authService.verifyEmail(dto.token));
   }
 
   @Post('verify-email/:token')
-  verifyEmailFromLink(@Param('token') token: string) {
-    return this.authService.verifyEmail(token);
+  async verifyEmailFromLink(
+    @Param('token') token: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.withRefreshCookie(response, await this.authService.verifyEmail(token));
   }
 
   @Post('resend-verification')
@@ -53,7 +111,12 @@ export class AuthController {
   }
 
   @Post('reset-password')
-  resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto.token, dto.password);
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.resetPassword(dto.token, dto.password);
+    clearRefreshCookie(response, this.config);
+    return result;
   }
 }

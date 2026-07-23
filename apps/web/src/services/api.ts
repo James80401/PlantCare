@@ -15,6 +15,7 @@ const api = axios.create({
   baseURL: apiBaseURL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 60_000,
+  withCredentials: true,
 });
 
 /** Public auth routes — no Bearer token (avoids refresh loops on forgot-password). */
@@ -55,7 +56,11 @@ api.interceptors.response.use(
       if (refresh && !error.config._retry) {
         error.config._retry = true;
         try {
-          const { data } = await axios.post(`${apiBaseURL}/auth/refresh`, { refreshToken: refresh });
+          const { data } = await axios.post(
+            `${apiBaseURL}/auth/refresh`,
+            { refreshToken: refresh },
+            { withCredentials: true },
+          );
           localStorage.setItem('accessToken', data.accessToken);
           localStorage.setItem('refreshToken', data.refreshToken);
           error.config.headers.Authorization = `Bearer ${data.accessToken}`;
