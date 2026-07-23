@@ -1,6 +1,10 @@
-# Current feature improvement implementation plan
+# Historical feature improvement implementation plan
 
-> **Status:** active implementation plan, created 2026-06-03  
+> **Superseded:** Active execution moved to the
+> [existing-systems improvement roadmap](improvements-roadmap.md) on
+> 2026-07-23. This file remains design and acceptance-history context only.
+
+> **Status:** historical implementation plan, created 2026-06-03  
 > **Navigation:** [Roadmap](roadmap.md) · [Product INDEX](INDEX.md) · [UAT checklist](uat-checklist.md)
 
 This plan turns the consolidated roadmap into concrete engineering slices. The

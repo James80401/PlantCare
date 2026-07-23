@@ -1,6 +1,10 @@
-# Dr. Plant roadmap
+# Dr. Plant historical consolidated roadmap
 
-> **Status:** canonical consolidated roadmap, last consolidated 2026-06-03  
+> **Current execution source:** Active work and verified status moved to the
+> [existing-systems improvement roadmap](improvements-roadmap.md) on
+> 2026-07-23. This file remains product-history context.
+
+> **Status:** historical consolidated roadmap, last consolidated 2026-06-03  
 > **Navigation:** [Product INDEX](INDEX.md) · [Current feature implementation plan](current-feature-implementation-plan.md) · [Improvement recommendations](improvement-recommendations.md) · [UAT checklist](uat-checklist.md) · [Production sign-off](../operations/production-signoff.md)
 
 This is the single roadmap source of truth for Dr. Plant. Older roadmap,
