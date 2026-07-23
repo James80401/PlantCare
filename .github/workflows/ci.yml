@@ -34,6 +34,16 @@ jobs:
       - run: npm run build -w @plant-care/web
       - run: npm run verify:docs
       - run: npm run assert:seo-private -w @plant-care/web
+      - name: Verify production API image runtime dependencies
+        run: |
+          docker build --build-arg APP_COMMIT_SHA="$GITHUB_SHA" -f apps/api/Dockerfile -t plantcare-api-ci .
+          docker run --rm --entrypoint node plantcare-api-ci -e "
+            const dependencies = Object.keys(require('./apps/api/package.json').dependencies);
+            for (const dependency of dependencies) {
+              require.resolve(dependency, { paths: ['/app/apps/api'] });
+            }
+            console.log('Resolved', dependencies.length, 'API runtime dependencies');
+          "
 
       - name: Buddy hidden-by-default smoke
         env:

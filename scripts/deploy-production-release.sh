@@ -37,12 +37,28 @@ rollback() {
 
   echo "Deployment failed; restoring application commit $PREVIOUS_SHA" >&2
   if [ -n "$PREVIOUS_SHA" ] && git cat-file -e "$PREVIOUS_SHA^{commit}" 2>/dev/null; then
-    git checkout --detach "$PREVIOUS_SHA"
     export APP_COMMIT_SHA="$PREVIOUS_SHA"
     if [ "$APPLICATION_CHANGED" = "true" ]; then
       $ROLLBACK_COMPOSE up -d --no-build api web
+      rollback_ready=false
+      rollback_attempt=0
+      while [ "$rollback_attempt" -lt 60 ]; do
+        if curl --fail --silent --show-error http://127.0.0.1:3001/api/v1/health/ready >/dev/null; then
+          rollback_ready=true
+          break
+        fi
+        rollback_attempt=$((rollback_attempt + 1))
+        sleep 2
+      done
+      if [ "$rollback_ready" != "true" ]; then
+        $ROLLBACK_COMPOSE logs --tail=150 api
+        echo "Rollback API did not become ready; retaining the release checkout for recovery tooling." >&2
+        exit "$status"
+      fi
     fi
-    $COMPOSE ps
+    $ROLLBACK_COMPOSE ps
+    printf '%s\n' "$PREVIOUS_SHA" > .deployed-sha
+    git checkout --detach "$PREVIOUS_SHA"
   else
     echo "Previous commit is unavailable; containers were not changed again." >&2
   fi
@@ -62,10 +78,12 @@ echo "==> pre-deploy backup"
 bash scripts/backup-production.sh
 
 echo "==> preserve current application images for rollback"
-docker image inspect plantcare-api >/dev/null
-docker image inspect plantcare-web >/dev/null
-docker image tag plantcare-api "$ROLLBACK_API_IMAGE"
-docker image tag plantcare-web "$ROLLBACK_WEB_IMAGE"
+CURRENT_API_IMAGE="$(docker inspect --format '{{.Image}}' plantcare-api-1)"
+CURRENT_WEB_IMAGE="$(docker inspect --format '{{.Image}}' plantcare-web-1)"
+docker image inspect "$CURRENT_API_IMAGE" >/dev/null
+docker image inspect "$CURRENT_WEB_IMAGE" >/dev/null
+docker image tag "$CURRENT_API_IMAGE" "$ROLLBACK_API_IMAGE"
+docker image tag "$CURRENT_WEB_IMAGE" "$ROLLBACK_WEB_IMAGE"
 
 echo "==> build exact application commit $DEPLOY_SHA"
 $COMPOSE build api web
