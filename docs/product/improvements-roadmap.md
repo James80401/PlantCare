@@ -22,8 +22,9 @@ Supporting evidence:
 | Phase | State | Evidence |
 |---|---|---|
 | 0 - source of truth | Complete | Canonical roadmap, baseline, and release-evidence template committed in `94dc86c`. |
-| 1 - engineering truth | CI confirmation pending | Local clean install, zero-error typecheck, 400 API tests, 184 web tests, builds, docs, private SEO, Docker builds, and zero-vulnerability audit pass. |
-| 2-8 | Queued | Work begins only after the preceding release-safety gate is recorded. |
+| 1 - engineering truth | Complete | Commit `50df663`: [CI run 30042439894](https://github.com/James80401/PlantCare/actions/runs/30042439894) passed `test` and `postgres`; both checks are required on protected `main`. Local clean install, zero-error typecheck, 400 API tests, 184 web tests, builds, docs, private SEO, Docker builds, and zero-vulnerability audit also pass. |
+| 2 - data and deployment safety | In progress | PostgreSQL migration history, deployment, backup, rollback, and restore-drill work is active. |
+| 3-8 | Queued | Work begins only after the preceding release-safety gate is recorded. |
 
 ## Release policy
 
