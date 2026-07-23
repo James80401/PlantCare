@@ -25,6 +25,11 @@ legacy API image with the runtime-only entrypoint, so rollback cannot invoke
 the removed `db push` behavior. Database changes follow expand/contract rules
 and are not rolled back automatically.
 
+The last successful application SHA is recorded in `.deployed-sha`. Rollback
+tags are made from the images used by the running containers, not mutable local
+image tags. The release checkout remains available until the rollback API is
+healthy, so recovery tooling cannot disappear during rollback.
+
 Production configuration must pass:
 
 ```sh

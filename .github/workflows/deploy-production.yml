@@ -67,7 +67,11 @@ jobs:
           script: |
             set -eu
             cd /root/PlantCare
-            previous_sha="$(git rev-parse HEAD)"
+            if [ -s .deployed-sha ]; then
+              previous_sha="$(cat .deployed-sha)"
+            else
+              previous_sha="$(git rev-parse HEAD)"
+            fi
             if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
               echo "Tracked production checkout is dirty; refusing to deploy." >&2
               exit 1
