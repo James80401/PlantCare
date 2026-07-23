@@ -23,8 +23,9 @@ Supporting evidence:
 |---|---|---|
 | 0 - source of truth | Complete | Canonical roadmap, baseline, and release-evidence template committed in `94dc86c`. |
 | 1 - engineering truth | Complete | Commit `50df663`: [CI run 30042439894](https://github.com/James80401/PlantCare/actions/runs/30042439894) passed `test` and `postgres`; both checks are required on protected `main`. Local clean install, zero-error typecheck, 400 API tests, 184 web tests, builds, docs, private SEO, Docker builds, and zero-vulnerability audit also pass. |
-| 2 - data and deployment safety | In progress | PostgreSQL migration history, deployment, backup, rollback, and restore-drill work is active. |
-| 3-8 | Queued | Work begins only after the preceding release-safety gate is recorded. |
+| 2 - data and deployment safety | Complete | [Phase 2 release evidence](../operations/release-evidence-2026-07-23-phase-2.md): fresh/existing PostgreSQL validation, checksummed backups, restore drill, rollback recovery, and [automated deploy 30047269307](https://github.com/James80401/PlantCare/actions/runs/30047269307) all passed. |
+| 3 - auth, security, legal, media | In progress | Cookie-authentication and security/media hardening is active. |
+| 4-8 | Queued | Work begins only after the preceding release-safety gate is recorded. |
 
 ## Release policy
 
@@ -194,17 +195,3 @@ remain disabled pending separate explicit activation decisions.
   but an iOS store launch is outside this roadmap.
 - Local upload storage and verified backups remain canonical; object storage is
   not added.
-
-## Execution status
-
-| Phase | Status | Evidence |
-|---|---|---|
-| 0 | In progress | Baseline and release-evidence documents created |
-| 1 | Pending | |
-| 2 | Pending | |
-| 3 | Pending | |
-| 4 | Pending | |
-| 5 | Pending | |
-| 6 | Pending | |
-| 7 | Pending | |
-| 8 | Pending | |
