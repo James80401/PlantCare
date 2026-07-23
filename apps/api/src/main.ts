@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import { ExpressAdapter, NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { existsSync } from 'fs';
@@ -20,7 +20,11 @@ const logger = new Logger('Bootstrap');
 async function bootstrap() {
   assertProductionSecrets();
   await initSentry();
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule,
+    new ExpressAdapter(),
+    { rawBody: true },
+  );
   app.set('trust proxy', 1);
   // Correlation id first, so every downstream log line and error carries it.
   app.use(requestIdMiddleware);
