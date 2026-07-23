@@ -6,7 +6,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { CookieAuthDto } from './dto/cookie-auth.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import {
@@ -27,7 +27,7 @@ export class AuthController {
   private withRefreshCookie<T extends object>(
     response: Response,
     result: T,
-  ): T {
+  ): Omit<T, 'refreshToken'> {
     const refreshToken =
       'refreshToken' in result && typeof result.refreshToken === 'string'
         ? result.refreshToken
@@ -40,7 +40,10 @@ export class AuthController {
         this.authService.refreshTokenLifetimeMs(),
       );
     }
-    return result;
+    const { refreshToken: _removed, ...safeResult } = result as T & {
+      refreshToken?: unknown;
+    };
+    return safeResult as Omit<T, 'refreshToken'>;
   }
 
   @Post('register')
@@ -62,11 +65,11 @@ export class AuthController {
   @Post('refresh')
   async refresh(
     @Req() request: Request,
-    @Body() dto: RefreshTokenDto,
+    @Body() _dto: CookieAuthDto,
     @Res({ passthrough: true }) response: Response,
   ) {
     assertCookieAuthOrigin(request);
-    const refreshToken = readRefreshCookie(request) ?? dto.refreshToken;
+    const refreshToken = readRefreshCookie(request);
     const result = await this.authService.refresh(refreshToken ?? '');
     return this.withRefreshCookie(response, result);
   }
@@ -74,11 +77,11 @@ export class AuthController {
   @Post('logout')
   async logout(
     @Req() request: Request,
-    @Body() dto: RefreshTokenDto,
+    @Body() _dto: CookieAuthDto,
     @Res({ passthrough: true }) response: Response,
   ) {
     assertCookieAuthOrigin(request);
-    const refreshToken = readRefreshCookie(request) ?? dto.refreshToken;
+    const refreshToken = readRefreshCookie(request);
     const result = await this.authService.logout(refreshToken ?? '');
     clearRefreshCookie(response, this.config);
     return result;

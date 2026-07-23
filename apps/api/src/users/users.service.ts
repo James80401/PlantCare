@@ -5,6 +5,7 @@ import { isAdminEmail } from '../config/registration-policy';
 import { UploadService } from '../upload/upload.service';
 import { WeatherService } from '../weather/weather.service';
 import { effectivePlanTier } from '../config/premium-policy';
+import type { UpdateCarePreferencesDto } from './dto/update-care-preferences.dto';
 
 @Injectable()
 export class UsersService {
@@ -51,7 +52,7 @@ export class UsersService {
 
   async updateCarePreferences(
     userId: string,
-    data: { experienceLevel?: string; defaultLightLevel?: string },
+    data: UpdateCarePreferencesDto,
   ) {
     return this.prisma.user.update({
       where: { id: userId },

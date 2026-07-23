@@ -43,8 +43,8 @@
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/register` | Create account; may return `requiresVerification` |
-| POST | `/login` | Access + refresh tokens |
-| POST | `/refresh` | New access token |
+| POST | `/login` | Access token + HttpOnly refresh cookie |
+| POST | `/refresh` | Rotated refresh cookie + new access token |
 | GET | `/verify-email/:token` | Confirm email |
 | POST | `/resend-verification` | Resend email |
 | POST | `/forgot-password` | Start reset flow |

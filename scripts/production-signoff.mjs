@@ -101,8 +101,35 @@ try {
     response.ok && contentType.includes('text/html'),
     `HTTP ${response.status} ${contentType.split(';')[0]}`,
   );
+  const requiredHeaders = [
+    ['content-security-policy', (value) => value.includes("default-src 'self'")],
+    ['strict-transport-security', (value) => value.includes('max-age=')],
+    ['x-frame-options', (value) => value.toUpperCase() === 'DENY'],
+    ['x-content-type-options', (value) => value.toLowerCase() === 'nosniff'],
+    ['referrer-policy', (value) => value.length > 0],
+    ['permissions-policy', (value) => value.length > 0],
+  ];
+  const missing = requiredHeaders
+    .filter(([name, valid]) => !valid(response.headers.get(name) || ''))
+    .map(([name]) => name);
+  record(
+    'Web security headers',
+    missing.length === 0,
+    missing.length === 0 ? 'approved header set present' : `missing/invalid: ${missing.join(', ')}`,
+  );
 } catch (error) {
   record('Web static application', false, error.message);
+  record('Web security headers', false, error.message);
+}
+
+try {
+  const apiOrigin = new URL(apiUrl).origin;
+  const response = await fetchWithTimeout(`${apiOrigin}/api/docs`, {
+    redirect: 'manual',
+  });
+  record('Production Swagger disabled', response.status === 404, `HTTP ${response.status}`);
+} catch (error) {
+  record('Production Swagger disabled', false, error.message);
 }
 
 finish();

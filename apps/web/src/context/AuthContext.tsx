@@ -8,6 +8,12 @@ import {
   type ReactNode,
 } from 'react';
 import { authApi, usersApi } from '../services/api';
+import {
+  announceAuthLogout,
+  clearLegacyAuthStorage,
+  setAccessToken,
+  subscribeToAuthLogout,
+} from '../services/authSession';
 import { unregisterPushNative } from '../lib/unregisterPushNative';
 
 interface User {
@@ -41,54 +47,73 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function getStoredToken(key: string) {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function hasStoredAccessToken() {
-  return Boolean(getStoredToken('accessToken'));
+function toUser(data: Record<string, unknown>): User {
+  return {
+    id: String(data.id),
+    email: String(data.email),
+    name: typeof data.name === 'string' ? data.name : undefined,
+    planTier: data.planTier === 'PREMIUM' ? 'PREMIUM' : 'FREE',
+    isAdmin: Boolean(data.isAdmin),
+    experienceLevel:
+      typeof data.experienceLevel === 'string' ? data.experienceLevel : null,
+    defaultLightLevel:
+      typeof data.defaultLightLevel === 'string' ? data.defaultLightLevel : null,
+    phone: typeof data.phone === 'string' ? data.phone : null,
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(hasStoredAccessToken);
+  const [loading, setLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
-    const token = getStoredToken('accessToken');
-    if (!token) {
-      setUser(null);
-      return;
-    }
     try {
       const { data } = await usersApi.me();
-      setUser({
-        id: data.id,
-        email: data.email,
-        name: data.name,
-        planTier: data.planTier,
-        isAdmin: Boolean(data.isAdmin),
-        experienceLevel: data.experienceLevel,
-        defaultLightLevel: data.defaultLightLevel,
-        phone: data.phone,
-      });
+      setUser(toUser(data));
     } catch {
-      localStorage.clear();
+      setAccessToken(null);
       setUser(null);
+      throw new Error('Could not restore the signed-in user');
     }
   }, []);
 
   useEffect(() => {
-    refreshUser().finally(() => setLoading(false));
+    let active = true;
+    clearLegacyAuthStorage();
+
+    void authApi
+      .refresh()
+      .then(async (session) => {
+        if (!active) return;
+        setAccessToken(session.accessToken);
+        if (session.user) {
+          setUser(toUser(session.user as unknown as Record<string, unknown>));
+        } else {
+          await refreshUser();
+        }
+      })
+      .catch(() => {
+        if (!active) return;
+        setAccessToken(null);
+        setUser(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    const unsubscribe = subscribeToAuthLogout(() => {
+      setAccessToken(null);
+      setUser(null);
+    });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, [refreshUser]);
 
   const login = async (email: string, password: string) => {
     const { data } = await authApi.login(email, password);
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
+    setAccessToken(data.accessToken);
     await refreshUser();
   };
 
@@ -100,21 +125,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data.requiresAdminApproval) {
       return { requiresAdminApproval: true, message: data.message };
     }
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    setUser(data.user);
+    setAccessToken(data.accessToken);
+    setUser(toUser(data.user));
     return {};
   };
 
   const logout = () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
-      authApi.logout(refreshToken).catch(() => {
-        // best-effort revoke; fall through to client-side clear regardless
-      });
-    }
+    void authApi.logout().catch(() => {
+      // Revocation is best effort; the local session always ends immediately.
+    });
     void unregisterPushNative();
-    localStorage.clear();
+    setAccessToken(null);
+    clearLegacyAuthStorage();
+    announceAuthLogout();
     setUser(null);
   };
 

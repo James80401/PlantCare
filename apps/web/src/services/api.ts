@@ -8,8 +8,22 @@ import type {
 import type { ShopItem } from '../hooks/buddy/shopTypes';
 import { trackEvent } from '../utils/analytics';
 import type { TaskCompleteFeedback, TaskSkipFeedback } from '../utils/taskFeedback';
+import {
+  announceAuthLogout,
+  clearLegacyAuthStorage,
+  createSingleFlight,
+  getAccessToken,
+  setAccessToken,
+} from './authSession';
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api/v1';
+
+const authClient = axios.create({
+  baseURL: apiBaseURL,
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 60_000,
+  withCredentials: true,
+});
 
 const api = axios.create({
   baseURL: apiBaseURL,
@@ -38,7 +52,7 @@ api.interceptors.request.use((config) => {
     config.headers.delete('Authorization');
     (config as { skipAuthRefresh?: boolean }).skipAuthRefresh = true;
   } else {
-    const token = localStorage.getItem('accessToken');
+    const token = getAccessToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
   }
   // FormData needs a multipart boundary; a preset Content-Type breaks uploads and fields.
@@ -48,26 +62,41 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+interface RefreshSessionResponse {
+  accessToken: string;
+  user?: {
+    id: string;
+    email: string;
+    name?: string | null;
+    planTier: 'FREE' | 'PREMIUM';
+    emailVerified?: boolean;
+  } | null;
+}
+
+const refreshSession = createSingleFlight(async () => {
+  const { data } = await authClient.post<RefreshSessionResponse>('/auth/refresh', {});
+  if (!data.accessToken) throw new Error('Refresh response did not include an access token');
+  setAccessToken(data.accessToken);
+  return data;
+});
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     if (error.response?.status === 401 && !(error.config as { skipAuthRefresh?: boolean })?.skipAuthRefresh) {
-      const refresh = localStorage.getItem('refreshToken');
-      if (refresh && !error.config._retry) {
+      if (!error.config._retry) {
         error.config._retry = true;
         try {
-          const { data } = await axios.post(
-            `${apiBaseURL}/auth/refresh`,
-            { refreshToken: refresh },
-            { withCredentials: true },
-          );
-          localStorage.setItem('accessToken', data.accessToken);
-          localStorage.setItem('refreshToken', data.refreshToken);
+          const data = await refreshSession();
           error.config.headers.Authorization = `Bearer ${data.accessToken}`;
           return api.request(error.config);
         } catch {
-          localStorage.clear();
-          window.location.href = '/login';
+          setAccessToken(null);
+          clearLegacyAuthStorage();
+          announceAuthLogout();
+          if (window.location.pathname !== '/login') {
+            window.location.assign('/login');
+          }
         }
       }
     }
@@ -85,8 +114,8 @@ export const authApi = {
     api.post('/auth/forgot-password', { email }, { timeout: 30_000, skipAuthRefresh: true }),
   resetPassword: (token: string, password: string) =>
     api.post('/auth/reset-password', { token, password }),
-  logout: (refreshToken: string) =>
-    api.post('/auth/logout', { refreshToken }, { skipAuthRefresh: true }),
+  refresh: refreshSession,
+  logout: () => authClient.post('/auth/logout', {}),
 };
 
 export const adminApi = {

@@ -20,8 +20,8 @@ Production access gate:
 - Admins manage access at `/admin/registrations`; disabling an account blocks JWT-protected app content.
 
 Credentialed web/native requests use the `drplant_refresh` cookie on auth
-routes. During the compatibility release, refresh/logout also accept the former
-body token while updated clients roll out. Browser origins are checked against
-the configured web and Capacitor CORS origins.
+routes. Refresh and logout reject the former body token, and no response
+exposes the raw refresh credential. Browser origins are checked against the
+configured web and Capacitor CORS origins.
 
 **Service:** `auth.service.ts` - bcrypt, JWT signing, email tokens.

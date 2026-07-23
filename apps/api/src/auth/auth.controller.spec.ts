@@ -1,9 +1,12 @@
 import type { ConfigService } from '@nestjs/config';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import type { Request, Response } from 'express';
 import { AuthController } from './auth.controller';
 import type { AuthService } from './auth.service';
+import { CookieAuthDto } from './dto/cookie-auth.dto';
 
-describe('AuthController refresh-cookie compatibility', () => {
+describe('AuthController cookie-only refresh', () => {
   function createController() {
     const auth = {
       login: jest.fn().mockResolvedValue({
@@ -32,7 +35,7 @@ describe('AuthController refresh-cookie compatibility', () => {
     };
   }
 
-  it('sets a refresh cookie on login while retaining the compatibility response', async () => {
+  it('sets the cookie on login without exposing the refresh token in JSON', async () => {
     const { controller, response } = createController();
 
     const result = await controller.login(
@@ -45,13 +48,11 @@ describe('AuthController refresh-cookie compatibility', () => {
       'refresh-new',
       expect.objectContaining({ httpOnly: true, secure: true }),
     );
-    expect(result).toMatchObject({
-      accessToken: 'access',
-      refreshToken: 'refresh-new',
-    });
+    expect(result).toMatchObject({ accessToken: 'access' });
+    expect(result).not.toHaveProperty('refreshToken');
   });
 
-  it('prefers the cookie over the legacy refresh body and rotates it', async () => {
+  it('reads and rotates only the HttpOnly refresh cookie', async () => {
     const { controller, auth, response } = createController();
     const request = {
       headers: {
@@ -60,7 +61,7 @@ describe('AuthController refresh-cookie compatibility', () => {
       },
     } as Request;
 
-    await controller.refresh(request, { refreshToken: 'refresh-body' }, response);
+    const result = await controller.refresh(request, {}, response);
 
     expect(auth.refresh).toHaveBeenCalledWith('refresh-cookie');
     expect(response.cookie).toHaveBeenCalledWith(
@@ -68,18 +69,32 @@ describe('AuthController refresh-cookie compatibility', () => {
       'refresh-rotated',
       expect.any(Object),
     );
+    expect(result).not.toHaveProperty('refreshToken');
   });
 
-  it('accepts a legacy body when no cookie exists and clears cookies on logout', async () => {
+  it('revokes the cookie token and clears the cookie on logout', async () => {
     const { controller, auth, response } = createController();
-    const request = { headers: {} } as Request;
+    const request = {
+      headers: { cookie: 'drplant_refresh=refresh-cookie' },
+    } as Request;
 
-    await controller.logout(request, { refreshToken: 'legacy-token' }, response);
+    await controller.logout(request, {}, response);
 
-    expect(auth.logout).toHaveBeenCalledWith('legacy-token');
+    expect(auth.logout).toHaveBeenCalledWith('refresh-cookie');
     expect(response.clearCookie).toHaveBeenCalledWith(
       'drplant_refresh',
       expect.objectContaining({ httpOnly: true }),
     );
+  });
+
+  it('rejects the removed legacy refreshToken request field', async () => {
+    const dto = plainToInstance(CookieAuthDto, { refreshToken: 'legacy' });
+    const errors = await validate(dto, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0].property).toBe('refreshToken');
   });
 });

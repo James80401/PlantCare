@@ -20,5 +20,9 @@
 - Credentialed CORS reads `CORS_ORIGINS`, `CORS_ORIGIN`, and `FRONTEND_URL`,
   plus the existing Capacitor origins. Cookie-auth endpoints also validate the
   request `Origin`.
+- The production web container sends CSP, HSTS, frame, MIME-sniffing, referrer,
+  and permissions-policy headers. Swagger is disabled in production unless an
+  explicit operations flag enables it; the improvement roadmap preflight
+  rejects that flag.
 
 **Do not** commit `.env` files or log secrets.

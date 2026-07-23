@@ -104,15 +104,15 @@ Refresh tokens are invalidated server-side on:
 | Admin reject / disable account | all of the user's tokens | `AdminRegistrationsService.reject/disable` |
 | Reuse detected | the whole token family | `AuthService.refresh` |
 
-The frontend `AuthContext.logout` calls `POST /auth/logout` (best-effort, with
-`skipAuthRefresh` so a 401 doesn't trigger a refresh loop). Logout clears the
-cookie using the same attributes with which it was set.
+The frontend `AuthContext.logout` calls `POST /auth/logout` as a credentialed,
+best-effort request. Logout clears the cookie using the same attributes with
+which it was set. Refresh and logout are cookie-only: the former body token is
+rejected, and refresh tokens never appear in JSON responses.
 
-During the compatibility release, refresh/logout still accept the former
-`refreshToken` request field and token-issuing responses still include that
-field. Updated clients send credentialed requests and receive the cookie. The
-legacy request/response token is removed after the updated web/native clients
-are deployed.
+The access token is retained only in application memory. On page reload,
+`AuthContext` restores the session through the cookie, and concurrent 401s
+share a single refresh request. A storage event broadcasts logout between tabs
+without storing credentials.
 
 > **Access-token caveat:** revoking refresh tokens does not invalidate an
 > already-issued *access* token, which stays valid until its own `exp`. Keep
@@ -138,6 +138,8 @@ Set strong secrets in every non-local environment.
 
 `auth.service.spec.ts` covers the family-revoke-on-replay path and the
 grace-window-allows-concurrent-refresh path. `auth.controller.spec.ts` and
-`refresh-cookie.spec.ts` cover issuance, rotation, legacy fallback, native/web
-origin checks, and cookie attributes. `admin-registrations.service.spec.ts`
+`refresh-cookie.spec.ts` cover issuance, rotation, cookie-only validation,
+native/web origin checks, and cookie attributes. Client auth tests cover reload,
+memory-only access tokens, scoped cleanup, cross-tab signaling, and
+single-flight refresh. `admin-registrations.service.spec.ts`
 asserts reject/disable revoke all tokens.

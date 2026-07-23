@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { WeatherService } from './weather.service';
+import { FetchWeatherAdviceDto } from './dto/fetch-weather-advice.dto';
 
 @ApiTags('weather')
 @ApiBearerAuth()
@@ -19,7 +20,7 @@ export class WeatherController {
   @Post('advice')
   fetchAdvice(
     @CurrentUser() user: JwtPayload,
-    @Body() body: { confirmed?: boolean },
+    @Body() body: FetchWeatherAdviceDto,
   ) {
     return this.weather.fetchPlantAdvice(user.sub, {
       confirmed: body?.confirmed === true,

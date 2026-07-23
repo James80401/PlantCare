@@ -62,7 +62,8 @@ Canonical routing doc: [web/routing.md](../web/routing.md).
 
 ## Auth & session
 
-1. Login/register stores `accessToken` (+ `refreshToken`) in `localStorage`.
+1. Login/register keeps the access token in memory; the API sets the refresh
+   token in an HttpOnly cookie.
 2. `AuthContext` exposes `user`, `login`, `logout`.
 3. `api.ts` attaches Bearer header; handles 401 → refresh or logout.
 4. `ProtectedRoute` redirects anonymous users to `/login`.

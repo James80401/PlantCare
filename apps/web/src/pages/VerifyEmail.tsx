@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { authApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { setAccessToken } from '../services/authSession';
 
 export default function VerifyEmail() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
@@ -16,7 +19,7 @@ export default function VerifyEmail() {
     }
     authApi
       .verifyEmail(token)
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (data.requiresAdminApproval) {
           setStatus('ok');
           setMessage(
@@ -25,9 +28,9 @@ export default function VerifyEmail() {
           );
           return;
         }
-        if (data.accessToken && data.refreshToken) {
-          localStorage.setItem('accessToken', data.accessToken);
-          localStorage.setItem('refreshToken', data.refreshToken);
+        if (data.accessToken) {
+          setAccessToken(data.accessToken);
+          await refreshUser();
         }
         setStatus('ok');
         setMessage(data.message || 'Email verified!');
@@ -39,7 +42,7 @@ export default function VerifyEmail() {
           err.response?.data?.message || 'This verification link is invalid or has expired.',
         );
       });
-  }, [token, navigate]);
+  }, [token, navigate, refreshUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-emerald-100 to-emerald-50">
