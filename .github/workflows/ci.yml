@@ -28,6 +28,8 @@ jobs:
       - run: npx prisma db push
       - run: npm run db:seed
       - run: npm run typecheck
+      - run: npm run test:media-audit
+      - run: npm run media:audit
       - run: npm run test -w @plant-care/api
       - run: npm run build -w @plant-care/api
       - run: npm run test -w @plant-care/web
@@ -106,6 +108,7 @@ jobs:
       - run: npm run db:seed
       - name: Verify catalog seed idempotency
         run: npm run db:seed
+      - run: npm run media:audit
       - run: npm run build -w @plant-care/shared
       - run: npm run build -w @plant-care/api
 
