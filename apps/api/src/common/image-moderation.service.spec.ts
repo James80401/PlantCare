@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { ImageModerationService } from './image-moderation.service';
 import axios from 'axios';
 
@@ -99,24 +99,22 @@ describe('ImageModerationService', () => {
     expect(mockedAxios.post).not.toHaveBeenCalled();
   });
 
-  it('fails open when OpenAI itself errors out (does not lock out users)', async () => {
+  it('fails closed when the configured moderation provider is unavailable', async () => {
     const svc = makeService();
     mockedAxios.post.mockRejectedValueOnce(new Error('connection refused'));
 
-    const verdict = await svc.assertImageAllowed(makeFile());
-
-    expect(verdict?.isPlant).toBe(true);
-    expect(verdict?.isExplicit).toBe(false);
+    await expect(svc.assertImageAllowed(makeFile())).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
   });
 
-  it('fails open on unparseable response', async () => {
+  it('fails closed on an unparseable moderation response', async () => {
     const svc = makeService();
     mockOpenAiReply('not json at all');
 
-    const verdict = await svc.assertImageAllowed(makeFile());
-
-    expect(verdict?.isPlant).toBe(true);
-    expect(verdict?.isExplicit).toBe(false);
+    await expect(svc.assertImageAllowed(makeFile())).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'IMAGE_MODERATION_UNAVAILABLE' }),
+    });
   });
 
   it('uses the configured base URL and model', async () => {

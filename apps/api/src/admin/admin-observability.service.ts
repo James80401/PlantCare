@@ -195,9 +195,21 @@ function summarizeAiGroups(
   }));
   return {
     total: byStatus.reduce((sum, row) => sum + row.count, 0),
-    allowed: byStatus.find((row) => row.status === 'ALLOWED')?.count ?? 0,
+    allowed: byStatus
+      .filter((row) => ['ALLOWED', 'SUCCEEDED'].includes(row.status))
+      .reduce((sum, row) => sum + row.count, 0),
+    succeeded: byStatus.find((row) => row.status === 'SUCCEEDED')?.count ?? 0,
+    failed: byStatus.find((row) => row.status === 'FAILED')?.count ?? 0,
+    fallback: byStatus.find((row) => row.status === 'FALLBACK')?.count ?? 0,
     blocked: byStatus
-      .filter((row) => row.status !== 'ALLOWED')
+      .filter((row) =>
+        [
+          'BLOCKED_OFF_TOPIC',
+          'RATE_LIMITED',
+          'PAUSED',
+          'MONTHLY_LIMIT_REACHED',
+        ].includes(row.status),
+      )
       .reduce((sum, row) => sum + row.count, 0),
     promptChars: byStatus.reduce((sum, row) => sum + row.promptChars, 0),
     imageCount: byStatus.reduce((sum, row) => sum + row.imageCount, 0),

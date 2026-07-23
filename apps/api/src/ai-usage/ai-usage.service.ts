@@ -17,6 +17,9 @@ export interface AiUsageContext {
   imageCount?: number;
 }
 
+export type AiUsageOutcome = 'SUCCEEDED' | 'FAILED' | 'FALLBACK';
+const COUNTED_USAGE_STATUSES = ['ALLOWED', 'RESERVED', 'SUCCEEDED'];
+
 const PLANT_TERMS = [
   'plant',
   'plants',
@@ -144,7 +147,7 @@ export class AiUsageService {
     const current = await this.prisma.aiUsageEvent.count({
       where: {
         userId: ctx.userId,
-        status: 'ALLOWED',
+        status: { in: COUNTED_USAGE_STATUSES },
         createdAt: { gte: since },
       },
     });
@@ -163,7 +166,20 @@ export class AiUsageService {
       throw this.pausedException(pausedUntil);
     }
 
-    await this.record({ ...ctx, status: 'ALLOWED' });
+    const reservation = await this.record({ ...ctx, status: 'RESERVED' });
+    return reservation.id;
+  }
+
+  async completeCall(
+    reservationId: string | null | undefined,
+    outcome: AiUsageOutcome,
+    reason?: string,
+  ) {
+    if (!reservationId) return;
+    await this.prisma.aiUsageEvent.update({
+      where: { id: reservationId },
+      data: { status: outcome, reason },
+    });
   }
 
   /** Free-plan monthly caps per feature, on top of the rolling rate limit above.
@@ -188,7 +204,7 @@ export class AiUsageService {
       where: {
         userId: ctx.userId,
         feature: ctx.feature,
-        status: 'ALLOWED',
+        status: { in: COUNTED_USAGE_STATUSES },
         createdAt: { gte: since },
       },
     });
@@ -239,11 +255,16 @@ export class AiUsageService {
 
   private async record(
     ctx: AiUsageContext & {
-      status: 'ALLOWED' | 'BLOCKED_OFF_TOPIC' | 'RATE_LIMITED' | 'PAUSED' | 'MONTHLY_LIMIT_REACHED';
+      status:
+        | 'RESERVED'
+        | 'BLOCKED_OFF_TOPIC'
+        | 'RATE_LIMITED'
+        | 'PAUSED'
+        | 'MONTHLY_LIMIT_REACHED';
       reason?: string;
     },
   ) {
-    await this.prisma.aiUsageEvent.create({
+    return this.prisma.aiUsageEvent.create({
       data: {
         userId: ctx.userId,
         feature: ctx.feature,

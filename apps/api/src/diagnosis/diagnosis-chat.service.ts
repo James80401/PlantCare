@@ -5,7 +5,11 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { addDays, format, startOfDay, subDays } from 'date-fns';
-import { RecommendationPriority, TaskType } from '@prisma/client';
+import {
+  type DiagnosisMessage,
+  RecommendationPriority,
+  TaskType,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { WeatherService } from '../weather/weather.service';
@@ -14,7 +18,11 @@ import { AiUsageService } from '../ai-usage/ai-usage.service';
 import { sharedPlantInclude, userCanCompletePlantTask } from '../gardens/task-access';
 import { RecommendationsService } from '../recommendations/recommendations.service';
 import { LlmDiagnosisService, type ChatTurn, type PlantContext } from './llm-diagnosis.service';
-import { OpenAiRequestError } from './openai-errors';
+import {
+  mayUseRulesFallback,
+  OpenAiRequestError,
+  openAiHttpException,
+} from './openai-errors';
 import {
   buildDrPlantContextSummary,
   type DrPlantContextSummary,
@@ -440,18 +448,48 @@ export class DiagnosisChatService {
     plantId: string,
     messageText?: string,
     file?: Express.Multer.File,
+    requestId?: string,
   ) {
     const plant = await this.getPlantForUser(userId, plantId);
+    if (requestId) {
+      const existing = await this.prisma.diagnosisConversation.findFirst({
+        where: { userId, clientRequestId: requestId },
+        select: { id: true, plantId: true },
+      });
+      if (existing) {
+        if (existing.plantId !== plantId) {
+          throw new BadRequestException('Request key belongs to another plant.');
+        }
+        if (messageText?.trim() || file) {
+          await this.sendMessage(
+            userId,
+            plantId,
+            existing.id,
+            messageText ?? '',
+            file,
+            requestId,
+          );
+        }
+        return this.getConversation(userId, plantId, existing.id);
+      }
+    }
     const title =
       messageText?.trim().slice(0, 80) ||
       (file ? 'Photo diagnosis' : 'New consultation');
 
     const conv = await this.prisma.diagnosisConversation.create({
-      data: { plantId, userId, title },
+      data: { plantId, userId, title, clientRequestId: requestId },
     });
 
     if (messageText?.trim() || file) {
-      await this.sendMessage(userId, plantId, conv.id, messageText ?? '', file);
+      await this.sendMessage(
+        userId,
+        plantId,
+        conv.id,
+        messageText ?? '',
+        file,
+        requestId,
+      );
       return this.getConversation(userId, plantId, conv.id);
     }
 
@@ -464,6 +502,7 @@ export class DiagnosisChatService {
     conversationId: string,
     messageText: string,
     file?: Express.Multer.File,
+    requestId?: string,
   ) {
     const plant = await this.getPlantForUser(userId, plantId);
     const conv = await this.prisma.diagnosisConversation.findFirst({
@@ -481,6 +520,24 @@ export class DiagnosisChatService {
     const text = messageText.trim() || (file ? 'What do you see in this photo?' : '');
     if (!text && !file) {
       throw new ServiceUnavailableException('Message text or image is required.');
+    }
+
+    if (requestId) {
+      const cached = await this.prisma.diagnosisMessage.findMany({
+        where: { conversationId, clientRequestId: requestId },
+        orderBy: { createdAt: 'asc' },
+      });
+      const userMessage = cached.find((message) => message.role === 'user');
+      const assistantMessage = cached.find((message) => message.role === 'assistant');
+      if (userMessage && assistantMessage) {
+        return {
+          conversationId,
+          userMessage,
+          assistantMessage,
+          source: assistantMessage.source ?? 'rules',
+          model: this.llm.isAvailable() ? this.llm.getModelName() : null,
+        };
+      }
     }
 
     await this.aiUsage.assertPlantIntentOrThrow({
@@ -503,20 +560,10 @@ export class DiagnosisChatService {
         feature: 'dr_plant_chat',
         userId,
       });
-      imageUrl = await this.upload.saveFile(file);
       const img = await this.imageToBase64(file);
       imageBase64 = img.base64;
       imageMimeType = img.mime;
     }
-
-    const userMsg = await this.prisma.diagnosisMessage.create({
-      data: {
-        conversationId,
-        role: 'user',
-        content: text,
-        imageUrl,
-      },
-    });
 
     const history: ChatTurn[] = [];
     for (const m of conv.messages) {
@@ -537,6 +584,7 @@ export class DiagnosisChatService {
 
     let assistantContent: string;
     let source = 'openai';
+    let reservationId: string | undefined;
 
     try {
       if (!this.llm.isAvailable()) {
@@ -545,7 +593,7 @@ export class DiagnosisChatService {
           'missing_api_key',
         );
       }
-      await this.aiUsage.reserveCall({
+      reservationId = await this.aiUsage.reserveCall({
         feature: 'diagnosis_chat',
         userId,
         plantId,
@@ -558,48 +606,81 @@ export class DiagnosisChatService {
         history,
         { text, imageBase64, imageMimeType },
       );
+      await this.aiUsage.completeCall(reservationId, 'SUCCEEDED');
     } catch (err) {
       if (err instanceof OpenAiRequestError) {
-        throw new ServiceUnavailableException(err.message);
+        if (!mayUseRulesFallback(err)) {
+          await this.aiUsage.completeCall(reservationId, 'FAILED', err.code);
+          throw openAiHttpException(err);
+        }
+        await this.aiUsage.completeCall(reservationId, 'FALLBACK', err.code);
+        source = 'rules';
+        assistantContent =
+          'The AI service is temporarily unavailable. In the meantime, inspect soil moisture, light exposure, and pests on leaf undersides, then try again.';
+      } else {
+        await this.aiUsage.completeCall(
+          reservationId,
+          'FAILED',
+          err instanceof Error ? err.message.slice(0, 240) : 'unknown error',
+        );
+        throw err;
       }
-      source = 'rules';
-      assistantContent =
-        'I cannot reach the AI service right now. Check your OpenAI API key and billing, then try again. ' +
-        'In the meantime: inspect soil moisture, light exposure, and pests on leaf undersides.';
     }
 
-    const assistantMsg = await this.prisma.diagnosisMessage.create({
-      data: {
-        conversationId,
-        role: 'assistant',
-        content: assistantContent,
-      },
-    });
-
-    await this.prisma.diagnosisConversation.update({
-      where: { id: conversationId },
-      data: { updatedAt: new Date() },
-    });
-
     const isFirstExchange = conv.messages.length === 0;
-    if (isFirstExchange && source === 'openai') {
-      await this.prisma.diagnosis.create({
-        data: {
-          plantId,
-          imageUrl,
-          symptomsText: text,
-          resultLabel: 'Dr. Plant consultation',
-          confidence: null,
-          adviceText: assistantContent.slice(0, 2000),
-          source: 'openai',
-        },
+    if (file) imageUrl = await this.upload.saveFile(file);
+
+    let persisted:
+      | { userMessage: DiagnosisMessage; assistantMessage: DiagnosisMessage }
+      | undefined;
+    try {
+      persisted = await this.prisma.$transaction(async (tx) => {
+        const userMessage = await tx.diagnosisMessage.create({
+          data: {
+            conversationId,
+            role: 'user',
+            content: text,
+            imageUrl,
+            clientRequestId: requestId,
+          },
+        });
+        const assistantMessage = await tx.diagnosisMessage.create({
+          data: {
+            conversationId,
+            role: 'assistant',
+            content: assistantContent,
+            clientRequestId: requestId,
+            source,
+          },
+        });
+        await tx.diagnosisConversation.update({
+          where: { id: conversationId },
+          data: { updatedAt: new Date() },
+        });
+        if (isFirstExchange && source === 'openai') {
+          await tx.diagnosis.create({
+            data: {
+              plantId,
+              imageUrl,
+              symptomsText: text,
+              resultLabel: 'Dr. Plant consultation',
+              confidence: null,
+              adviceText: assistantContent.slice(0, 2000),
+              source: 'openai',
+            },
+          });
+        }
+        return { userMessage, assistantMessage };
       });
+    } catch (error) {
+      if (imageUrl) await this.upload.deleteByUrl(imageUrl).catch(() => {});
+      throw error;
     }
 
     return {
       conversationId,
-      userMessage: userMsg,
-      assistantMessage: assistantMsg,
+      userMessage: persisted.userMessage,
+      assistantMessage: persisted.assistantMessage,
       source,
       model: this.llm.isAvailable() ? this.llm.getModelName() : null,
     };

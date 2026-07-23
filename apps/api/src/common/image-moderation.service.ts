@@ -1,6 +1,20 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import {
+  providerMaxRetries,
+  providerTimeoutMs,
+  withBoundedRetry,
+} from './bounded-retry';
+import {
+  isTransientOpenAiError,
+  parseOpenAiError,
+} from '../diagnosis/openai-errors';
 
 export interface ImageModerationVerdict {
   isPlant: boolean;
@@ -28,6 +42,8 @@ export class ImageModerationService {
   private readonly apiKey: string | undefined;
   private readonly model: string;
   private readonly baseUrl: string;
+  private readonly timeoutMs: number;
+  private readonly maxRetries: number;
 
   constructor(private config: ConfigService) {
     this.apiKey = this.config.get<string>('OPENAI_API_KEY')?.trim();
@@ -35,6 +51,8 @@ export class ImageModerationService {
     this.baseUrl = (
       this.config.get<string>('OPENAI_BASE_URL', 'https://api.openai.com/v1') ?? ''
     ).replace(/\/$/, '');
+    this.timeoutMs = providerTimeoutMs(this.config);
+    this.maxRetries = providerMaxRetries(this.config);
   }
 
   isAvailable(): boolean {
@@ -107,47 +125,56 @@ export class ImageModerationService {
     const mime = file.mimetype || 'image/jpeg';
 
     try {
-      const { data } = await axios.post(
-        `${this.baseUrl}/chat/completions`,
-        {
-          model: this.model,
-          temperature: 0,
-          max_tokens: 200,
-          response_format: { type: 'json_object' },
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
+      const { data } = await withBoundedRetry(
+        () =>
+          axios.post(
+            `${this.baseUrl}/chat/completions`,
             {
-              role: 'user',
-              content: [
-                { type: 'text', text: 'Classify this image.' },
+              model: this.model,
+              temperature: 0,
+              max_tokens: 200,
+              response_format: { type: 'json_object' },
+              messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
                 {
-                  type: 'image_url',
-                  image_url: { url: `data:${mime};base64,${base64}` },
+                  role: 'user',
+                  content: [
+                    { type: 'text', text: 'Classify this image.' },
+                    {
+                      type: 'image_url',
+                      image_url: { url: `data:${mime};base64,${base64}` },
+                    },
+                  ],
                 },
               ],
             },
-          ],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 30000,
-        },
+            {
+              headers: {
+                Authorization: `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+              },
+              timeout: this.timeoutMs,
+            },
+          ),
+        isTransientOpenAiError,
+        this.maxRetries,
       );
 
       const raw = data.choices?.[0]?.message?.content;
       if (!raw) {
-        this.logger.warn('Moderation returned empty content; failing open.');
-        return this.failOpen('empty response');
+        throw new Error('Image moderation returned an empty response.');
       }
       return this.parseVerdict(raw);
     } catch (err) {
-      // Fail-open: if moderation itself is broken, we don't want to lock users out
-      // of uploading legitimate photos. Log loudly so this is visible in production.
-      this.logger.error(`Image moderation request failed; failing open: ${err}`);
-      return this.failOpen('moderation unreachable');
+      const parsed = parseOpenAiError(err);
+      this.logger.error(
+        `Image moderation request failed (${parsed.code}): ${parsed.message}`,
+      );
+      throw new ServiceUnavailableException({
+        code: 'IMAGE_MODERATION_UNAVAILABLE',
+        message:
+          'Image safety checks are temporarily unavailable. Please try this photo again shortly.',
+      });
     }
   }
 
@@ -161,11 +188,7 @@ export class ImageModerationService {
         reason: typeof parsed.reason === 'string' ? parsed.reason.slice(0, 200) : '',
       };
     } catch {
-      return this.failOpen('unparseable response');
+      throw new Error('Image moderation returned an invalid response.');
     }
-  }
-
-  private failOpen(reason: string): ImageModerationVerdict {
-    return { isPlant: true, isExplicit: false, confidence: 0, reason };
   }
 }

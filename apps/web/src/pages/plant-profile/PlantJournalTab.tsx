@@ -525,6 +525,13 @@ function ProgressSummaryCard({ entry }: { entry?: PlantRecord | null }) {
         <p className="mt-1 text-xs leading-5 text-lime-950">
           Generated from this Plant Check-In and prior Plant Life history.
         </p>
+        {story.source ? (
+          <p className="mt-2 text-[0.68rem] font-semibold uppercase tracking-wide text-emerald-700">
+            {story.source === 'openai'
+              ? 'AI-assisted summary'
+              : 'Rules-based care summary'}
+          </p>
+        ) : null}
         {entry.analysisSummary ? (
           <p className="mt-2 text-sm leading-6 text-gray-700">{entry.analysisSummary as string}</p>
         ) : (
@@ -1286,18 +1293,27 @@ function summarizeProgressEntry(entry: PlantRecord) {
 
 function parseProgressStory(value: unknown): {
   trend?: 'improving' | 'stable' | 'watch' | 'declining';
+  source?: 'openai' | 'rules';
   flags: string[];
 } {
   if (typeof value !== 'string' || !value.trim()) return { flags: [] };
   try {
-    const parsed = JSON.parse(value) as { trend?: string; flags?: unknown };
+    const parsed = JSON.parse(value) as {
+      trend?: string;
+      source?: string;
+      flags?: unknown;
+    };
     const trend = ['improving', 'stable', 'watch', 'declining'].includes(parsed.trend || '')
       ? (parsed.trend as 'improving' | 'stable' | 'watch' | 'declining')
       : undefined;
     const flags = Array.isArray(parsed.flags)
       ? parsed.flags.filter((flag): flag is string => typeof flag === 'string').slice(0, 4)
       : [];
-    return { trend, flags };
+    const source =
+      parsed.source === 'openai' || parsed.source === 'rules'
+        ? parsed.source
+        : undefined;
+    return { trend, source, flags };
   } catch {
     return { flags: [] };
   }

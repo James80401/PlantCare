@@ -75,7 +75,10 @@ describe('PlantProgressService', () => {
       deleteByUrl: jest.fn().mockResolvedValue(undefined),
     };
     const imageModeration = { assertImageAllowed: jest.fn().mockResolvedValue(null) };
-    const aiUsage = { reserveCall: jest.fn().mockResolvedValue(null) };
+    const aiUsage = {
+      reserveCall: jest.fn().mockResolvedValue(null),
+      completeCall: jest.fn().mockResolvedValue(undefined),
+    };
     const config = {
       get: jest.fn((_key: string, fallback?: string) => fallback),
     };

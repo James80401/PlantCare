@@ -20,6 +20,7 @@ import {
   ChatJournalActionDto,
   ChatRecoveryTasksDto,
 } from './dto/chat-action.dto';
+import { SendDiagnosisMessageDto } from './dto/send-diagnosis-message.dto';
 
 @ApiTags('diagnoses')
 @ApiBearerAuth()
@@ -38,10 +39,16 @@ export class DiagnosisChatController {
   create(
     @CurrentUser() user: JwtPayload,
     @Param('plantId') plantId: string,
-    @Body('message') message?: string,
+    @Body() body: SendDiagnosisMessageDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.chat.createConversation(user.sub, plantId, message, file);
+    return this.chat.createConversation(
+      user.sub,
+      plantId,
+      body.message,
+      file,
+      body.requestId,
+    );
   }
 
   @Get(':conversationId')
@@ -68,15 +75,16 @@ export class DiagnosisChatController {
     @CurrentUser() user: JwtPayload,
     @Param('plantId') plantId: string,
     @Param('conversationId') conversationId: string,
-    @Body('message') message?: string,
+    @Body() body: SendDiagnosisMessageDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.chat.sendMessage(
       user.sub,
       plantId,
       conversationId,
-      message ?? '',
+      body.message ?? '',
       file,
+      body.requestId,
     );
   }
 
