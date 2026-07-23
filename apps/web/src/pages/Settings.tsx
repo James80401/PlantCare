@@ -1,7 +1,10 @@
 import { Capacitor } from '@capacitor/core';
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { usersApi } from '../services/api';
+import {
+  usersApi,
+  type NotificationCapabilities,
+} from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useBuddyCompanion } from '../context/BuddyCompanionContext';
 import { registerPushNative } from '../lib/registerPushNative';
@@ -59,6 +62,8 @@ export default function Settings() {
   const [notifyPush, setNotifyPush] = useState(true);
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [notifySms, setNotifySms] = useState(false);
+  const [notificationCapabilities, setNotificationCapabilities] =
+    useState<NotificationCapabilities | null>(null);
   const [phone, setPhone] = useState('');
   const [timezone, setTimezone] = useState('America/New_York');
   const [locationQuery, setLocationQuery] = useState('');
@@ -92,6 +97,7 @@ export default function Settings() {
       setNotifyPush(data.notifyPush);
       setNotifyEmail(data.notifyEmail);
       setNotifySms(data.notifySms);
+      setNotificationCapabilities(data.notificationCapabilities ?? null);
       if (data.phone) setPhone(data.phone);
       setTimezone(data.timezone || 'America/New_York');
       if (data.locationLabel) setLocationLabel(data.locationLabel);
@@ -175,15 +181,20 @@ export default function Settings() {
     const lng = longitude ? parseFloat(longitude) : undefined;
     const hasCoords =
       lat !== undefined && !Number.isNaN(lat) && lng !== undefined && !Number.isNaN(lng);
-    const wantsSms = notifySms && isPremium;
+    const emailAvailable =
+      notificationCapabilities?.email.available ?? true;
+    const pushAvailable =
+      notificationCapabilities?.push.available ?? true;
+    const smsAvailable = notificationCapabilities?.sms.available ?? true;
+    const wantsSms = notifySms && isPremium && smsAvailable;
     if (wantsSms && !E164_PATTERN.test(phone.trim())) {
       setError('Enter a valid phone number in international format (e.g. +15551234567).');
       return;
     }
     try {
       await usersApi.updateSettings({
-        notifyPush,
-        notifyEmail,
+        notifyPush: notifyPush && pushAvailable,
+        notifyEmail: notifyEmail && emailAvailable,
         notifySms,
         phone: wantsSms ? phone.trim() : undefined,
         timezone,
@@ -201,7 +212,7 @@ export default function Settings() {
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-      if (notifyPush && Capacitor.isNativePlatform()) {
+      if (notifyPush && pushAvailable && Capacitor.isNativePlatform()) {
         void registerPushNative();
       } else if (!notifyPush) {
         void unregisterPushNative();
@@ -393,9 +404,22 @@ export default function Settings() {
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-emerald-100 p-6 space-y-4">
         <h2 className="font-semibold">Notifications</h2>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={notifyPush} onChange={(e) => setNotifyPush(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={
+              notifyPush &&
+              (notificationCapabilities?.push.available ?? true)
+            }
+            disabled={notificationCapabilities?.push.available === false}
+            onChange={(e) => setNotifyPush(e.target.checked)}
+          />
           Push notifications
         </label>
+        {notificationCapabilities?.push.available === false ? (
+          <p className="text-xs leading-relaxed text-amber-700">
+            {notificationCapabilities.push.reason}
+          </p>
+        ) : null}
         {notifyPush && (
           <p className="text-xs leading-relaxed text-gray-600">
             {Capacitor.isNativePlatform() ? (
@@ -411,19 +435,42 @@ export default function Settings() {
           </p>
         )}
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={notifyEmail} onChange={(e) => setNotifyEmail(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={
+              notifyEmail &&
+              (notificationCapabilities?.email.available ?? true)
+            }
+            disabled={notificationCapabilities?.email.available === false}
+            onChange={(e) => setNotifyEmail(e.target.checked)}
+          />
           Email reminders
         </label>
+        {notificationCapabilities?.email.available === false ? (
+          <p className="text-xs leading-relaxed text-amber-700">
+            {notificationCapabilities.email.reason}
+          </p>
+        ) : null}
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
-            checked={notifySms}
-            disabled={!isPremium}
+            checked={
+              notifySms &&
+              (notificationCapabilities?.sms.available ?? true)
+            }
+            disabled={
+              !isPremium ||
+              notificationCapabilities?.sms.available === false
+            }
             onChange={(e) => setNotifySms(e.target.checked)}
           />
           SMS (Premium)
         </label>
-        {!isPremium ? (
+        {notificationCapabilities?.sms.available === false ? (
+          <p className="text-xs leading-relaxed text-amber-700">
+            {notificationCapabilities.sms.reason}
+          </p>
+        ) : !isPremium ? (
           <p className="text-xs leading-relaxed text-gray-600">
             SMS reminders are a Premium perk.{' '}
             <Link to="/garden/subscription" className="text-emerald-700 hover:underline">

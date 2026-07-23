@@ -156,7 +156,7 @@ Core entities in [prisma/schema.prisma](../prisma/schema.prisma):
 
 ### Notifications
 
-[apps/api/src/notifications/notifications.cron.ts](../apps/api/src/notifications/notifications.cron.ts) — daily cron (~9:00) for due-task reminders via email (and hooks for SMS/push). Respects user `notifyEmail`, `notifyPush`, quiet hours.
+[apps/api/src/notifications/notifications.cron.ts](../apps/api/src/notifications/notifications.cron.ts) — hourly sweep that selects each user's local reminder hour and exact local-day task window. SMTP email, FCM push, and eligible Twilio SMS deliveries are deduplicated per channel and record real outcomes.
 
 ---
 
@@ -241,7 +241,7 @@ Configured via [.env.example](../.env.example) — app runs without them using m
 | SMTP | `SMTP_*`, `EMAIL_FROM` | Verification, password reset, reminders |
 | Stripe | `STRIPE_*` | Premium subscription |
 | Local uploads | `UPLOAD_DIR` | Managed user media; backed up with PostgreSQL |
-| Twilio / SendGrid / Firebase | various | SMS, email alt, push hooks |
+| Twilio / Firebase | `TWILIO_*`, `FIREBASE_*` / `FCM_SERVER_KEY` | SMS and push delivery |
 
 Docs: [integrations/INDEX.md](integrations/INDEX.md).
 

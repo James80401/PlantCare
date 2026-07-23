@@ -143,5 +143,10 @@ describe('AdminObservabilityService', () => {
         where: { createdAt: { gte: expect.any(Date) } },
       }),
     );
+    expect(prisma.notificationLog.groupBy).toHaveBeenCalledWith({
+      by: ['channel', 'status'],
+      where: { attemptedAt: { gte: expect.any(Date) } },
+      _count: { _all: true },
+    });
   });
 });

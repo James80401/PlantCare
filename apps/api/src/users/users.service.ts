@@ -8,6 +8,7 @@ import { WeatherService } from '../weather/weather.service';
 import { effectivePlanTier } from '../config/premium-policy';
 import type { UpdateCarePreferencesDto } from './dto/update-care-preferences.dto';
 import { BillingService } from '../billing/billing.service';
+import { resolveNotificationCapabilities } from '../notifications/notification-capabilities';
 
 @Injectable()
 export class UsersService {
@@ -50,6 +51,7 @@ export class UsersService {
       ...user,
       planTier: effectivePlanTier(this.config, user.planTier),
       isAdmin: isAdminEmail(this.config, user.email),
+      notificationCapabilities: resolveNotificationCapabilities(this.config),
     };
   }
 
@@ -105,7 +107,7 @@ export class UsersService {
     if (locationChanged) {
       await this.weather.invalidateAdviceCache(userId);
     }
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: resolved,
       select: {
@@ -123,6 +125,10 @@ export class UsersService {
         locationLabel: true,
       },
     });
+    return {
+      ...user,
+      notificationCapabilities: resolveNotificationCapabilities(this.config),
+    };
   }
 
   private async resolveLocationFields(data: {

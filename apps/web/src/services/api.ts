@@ -581,8 +581,43 @@ export const diagnosisChatApi = {
     }),
 };
 
+export interface NotificationCapability {
+  available: boolean;
+  reason: string | null;
+}
+
+export interface NotificationCapabilities {
+  email: NotificationCapability;
+  push: NotificationCapability;
+  sms: NotificationCapability;
+}
+
+export interface UserSettingsResponse {
+  id: string;
+  email: string;
+  name?: string | null;
+  planTier: 'FREE' | 'PREMIUM';
+  isAdmin?: boolean;
+  notifyPush: boolean;
+  notifyEmail: boolean;
+  notifySms: boolean;
+  phone?: string | null;
+  timezone?: string | null;
+  locationLabel?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  quietHoursStart?: number | null;
+  quietHoursEnd?: number | null;
+  reminderHour?: number | null;
+  temperatureUnit?: string | null;
+  experienceLevel?: string | null;
+  defaultLightLevel?: string | null;
+  notificationCapabilities: NotificationCapabilities;
+  [key: string]: unknown;
+}
+
 export const usersApi = {
-  me: () => api.get('/users/me'),
+  me: () => api.get<UserSettingsResponse>('/users/me'),
   updateCarePreferences: (data: {
     experienceLevel?: string;
     defaultLightLevel?: string;

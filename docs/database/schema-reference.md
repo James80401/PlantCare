@@ -24,7 +24,7 @@
 | `Diagnosis` | One-shot results |
 | `DiagnosisConversation` | Chat thread |
 | `DiagnosisMessage` | Chat messages |
-| `NotificationLog` | Sent notifications |
+| `NotificationLog` | Per-channel notification attempts and delivery outcomes |
 | `DeviceToken` | Push tokens |
 
 Detail: [models/INDEX.md](models/INDEX.md)

@@ -22,7 +22,7 @@ Keep both files aligned when adding models or relations.
 | `User` | Account, email, password hash, onboarding prefs, location, plan |
 | `Subscription` | Stripe customer/subscription state |
 | `DeviceToken` | FCM/APNs token for push (future-heavy) |
-| `NotificationLog` | Sent notification audit |
+| `NotificationLog` | Deduplicated notification attempts and real delivery status |
 
 Doc: [database/models/user-and-subscription.md](../database/models/user-and-subscription.md).
 
