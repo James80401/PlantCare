@@ -1,202 +1,140 @@
 #!/usr/bin/env node
 /**
- * G3 production deploy sign-off: validate env, probe live URLs, run verify/smoke (optional e2e).
- *
- * Usage:
- *   npm run production:signoff
- *   npm run production:signoff -- --e2e
- *   API_URL=https://api.example.com/api/v1 FRONTEND_URL=https://app.example.com npm run production:signoff -- --live-only
- *
- * Options:
- *   --env <path>       Env file (default: .env.production)
- *   --live-only        Skip static env file checks; require API_URL + FRONTEND_URL in env
- *   --skip-verify      Only static + live probes (no verify/smoke/e2e)
- *   --e2e              Also run Playwright uat:e2e (needs UAT_WEB_URL)
- *   --write <path>     Append markdown summary to file
+ * Non-mutating production sign-off. This script never registers users, writes
+ * database rows, uploads files, or invokes Playwright setup.
  */
-import { spawnSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { spawnSync } from 'child_process';
 import { loadEnvFile } from './lib/parse-env.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
-
-function flag(name) {
-  return args.includes(name);
-}
-
-function optValue(name) {
-  const i = args.indexOf(name);
-  return i >= 0 && args[i + 1] ? args[i + 1] : null;
-}
-
-const envPath = resolve(root, optValue('--env') || '.env.production');
-const liveOnly = flag('--live-only');
-const skipVerify = flag('--skip-verify');
-const runE2e = flag('--e2e');
-const writePath = optValue('--write');
-
+const option = (name) => {
+  const index = args.indexOf(name);
+  return index >= 0 ? args[index + 1] : null;
+};
+const liveOnly = args.includes('--live-only');
+const envPath = resolve(root, option('--env') || '.env.production');
+const writePath = option('--write');
 const steps = [];
-let failed = false;
+let apiUrl = '';
+let frontendUrl = '';
 
-function step(name, ok, detail = '') {
+function record(name, ok, detail = '') {
   steps.push({ name, ok, detail });
-  const mark = ok ? '✓' : '✗';
-  console.log(`${mark} ${name}${detail ? `: ${detail}` : ''}`);
-  if (!ok) failed = true;
-}
-
-function run(cmd, cmdArgs, env = {}) {
-  const result = spawnSync(cmd, cmdArgs, {
-    cwd: root,
-    env: { ...process.env, ...env },
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-  });
-  return result.status === 0;
-}
-
-const fileVars = liveOnly ? {} : loadEnvFile(envPath) || {};
-if (!liveOnly && !Object.keys(fileVars).length) {
-  console.error(`Missing or empty ${envPath}`);
-  console.error('Copy .env.production.example → .env.production, or use --live-only with API_URL + FRONTEND_URL.');
-  process.exit(1);
+  console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`);
 }
 
 if (!liveOnly) {
-  const check = run('node', [resolve(root, 'scripts/check-production-env.mjs'), envPath]);
-  step('Static production env (.env.production)', check);
-  if (!check) {
-    printSummary();
-    process.exit(1);
-  }
+  const preflight = spawnSync(
+    process.execPath,
+    [resolve(root, 'scripts/check-production-env.mjs'), envPath],
+    { cwd: root, stdio: 'inherit' },
+  );
+  record('Static production configuration', preflight.status === 0);
+  if (preflight.status !== 0) finish();
 }
 
-const apiUrl = (process.env.API_URL || fileVars.VITE_API_BASE_URL || '').replace(/\/$/, '');
-const frontendUrl = (process.env.FRONTEND_URL || process.env.UAT_WEB_URL || fileVars.FRONTEND_URL || '').replace(
-  /\/$/,
-  '',
-);
-
+const fileVars = liveOnly ? {} : loadEnvFile(envPath) || {};
+apiUrl = (process.env.API_URL || fileVars.VITE_API_BASE_URL || '').replace(/\/$/, '');
+frontendUrl = (
+  process.env.FRONTEND_URL ||
+  process.env.UAT_WEB_URL ||
+  fileVars.FRONTEND_URL ||
+  ''
+).replace(/\/$/, '');
 if (!apiUrl || !frontendUrl) {
-  console.error('Set API_URL and FRONTEND_URL (or UAT_WEB_URL) in env or .env.production');
+  console.error('Set API_URL and FRONTEND_URL or provide a valid production env file.');
   process.exit(1);
 }
 
-console.log(`\nLive probes → API ${apiUrl} · Web ${frontendUrl}\n`);
+async function fetchWithTimeout(url, options = {}) {
+  return fetch(url, { ...options, signal: AbortSignal.timeout(20_000) });
+}
 
-async function probeHealth() {
+async function probeJson(name, path, predicate) {
   try {
-    const res = await fetch(`${apiUrl}/health`, { signal: AbortSignal.timeout(20_000) });
-    const data = await res.json().catch(() => ({}));
-    step('API health GET /health', res.ok && data.status === 'ok', `HTTP ${res.status}`);
-  } catch (err) {
-    step('API health GET /health', false, err.message);
+    const response = await fetchWithTimeout(`${apiUrl}${path}`);
+    const body = await response.json().catch(() => ({}));
+    record(name, response.ok && predicate(body), `HTTP ${response.status}`);
+  } catch (error) {
+    record(name, false, error.message);
   }
 }
 
-async function probeCors() {
-  try {
-    const res = await fetch(`${apiUrl}/health`, {
-      method: 'GET',
-      headers: { Origin: frontendUrl },
-      signal: AbortSignal.timeout(20_000),
-    });
-    const acao = res.headers.get('access-control-allow-origin');
-    const ok =
-      res.ok &&
-      (acao === frontendUrl || acao === '*' || (acao && acao.includes(frontendUrl.replace(/^https?:\/\//, ''))));
-    step(
-      'CORS allows FRONTEND_URL',
-      ok,
-      acao ? `Access-Control-Allow-Origin: ${acao}` : 'no ACAO header (check API CORS_ORIGINS)',
-    );
-  } catch (err) {
-    step('CORS allows FRONTEND_URL', false, err.message);
-  }
+await probeJson('API health', '/health', (body) => body.status === 'ok');
+await probeJson(
+  'Release identity and feature gates',
+  '/health',
+  (body) =>
+    body.commit &&
+    body.commit !== 'unknown' &&
+    body.features?.plantBuddy === false &&
+    body.features?.premiumBilling === false,
+);
+await probeJson(
+  'API readiness',
+  '/health/ready',
+  (body) => body.status === 'ready' && body.checks?.database?.ok && body.checks?.uploads?.ok,
+);
+
+try {
+  const response = await fetchWithTimeout(`${apiUrl}/health`, {
+    headers: { Origin: frontendUrl },
+  });
+  record(
+    'CORS allows production web origin',
+    response.ok && response.headers.get('access-control-allow-origin') === frontendUrl,
+    response.headers.get('access-control-allow-origin') || 'missing header',
+  );
+} catch (error) {
+  record('CORS allows production web origin', false, error.message);
 }
 
-async function probeWeb() {
-  try {
-    const res = await fetch(frontendUrl, {
-      method: 'GET',
-      redirect: 'follow',
-      signal: AbortSignal.timeout(20_000),
-    });
-    const contentType = res.headers.get('content-type') || '';
-    const ok = res.ok && (contentType.includes('text/html') || contentType.includes('text/plain'));
-    step('Web app reachable', ok, `HTTP ${res.status} ${contentType.split(';')[0]}`);
-  } catch (err) {
-    step('Web app reachable', false, err.message);
-  }
+try {
+  const response = await fetchWithTimeout(frontendUrl, { redirect: 'follow' });
+  const contentType = response.headers.get('content-type') || '';
+  record(
+    'Web static application',
+    response.ok && contentType.includes('text/html'),
+    `HTTP ${response.status} ${contentType.split(';')[0]}`,
+  );
+} catch (error) {
+  record('Web static application', false, error.message);
 }
 
-await probeHealth();
-await probeCors();
-await probeWeb();
+finish();
 
-if (!skipVerify && !failed) {
-  console.log('\nIntegration checks\n');
-  const verifyOk = run('npm', ['run', 'verify'], { API_URL: apiUrl });
-  step('npm run verify', verifyOk);
+function finish() {
+  const passed = steps.length > 0 && steps.every((step) => step.ok);
+  const timestamp = new Date().toISOString();
+  console.log(`Production sign-off ${passed ? 'PASS' : 'FAIL'} — ${timestamp}`);
 
-  const smokeOk = verifyOk && run('npm', ['run', 'smoke:buddy'], { API_URL: apiUrl });
-  step('npm run smoke:buddy', smokeOk);
-
-  if (runE2e) {
-    const e2eOk =
-      verifyOk &&
-      run('npm', ['run', 'uat:e2e'], {
-        API_URL: apiUrl,
-        UAT_WEB_URL: process.env.UAT_WEB_URL || frontendUrl,
-      });
-    step('npm run uat:e2e', e2eOk);
-  } else {
-    console.log('\n  (Skip e2e — pass --e2e to run Playwright against production web)\n');
-  }
-} else if (skipVerify) {
-  console.log('\n  (--skip-verify: live probes only)\n');
-} else {
-  console.log('\n  Skipping verify/smoke because a live probe failed.\n');
-}
-
-printSummary(writePath);
-
-process.exit(failed ? 1 : 0);
-
-function printSummary(writeTo) {
-  const date = new Date().toISOString().slice(0, 10);
-  const allOk = steps.every((s) => s.ok);
-  console.log('\n--- Sign-off summary ---');
-  console.log(allOk ? 'PASS — production sign-off checks passed' : 'FAIL — fix items above and re-run');
-  console.log(`API: ${apiUrl}`);
-  console.log(`Web: ${frontendUrl}`);
-  console.log(`Date: ${date}`);
-
-  if (writeTo) {
-    const out = resolve(root, writeTo);
-    mkdirSync(dirname(out), { recursive: true });
-    const md = [
-      `# Production sign-off — ${date}`,
+  if (writePath) {
+    const output = resolve(root, writePath);
+    mkdirSync(dirname(output), { recursive: true });
+    const markdown = [
+      `# Production sign-off — ${timestamp}`,
       '',
-      `| Check | Result | Detail |`,
-      `|-------|--------|--------|`,
-      ...steps.map((s) => `| ${s.name} | ${s.ok ? 'PASS' : 'FAIL'} | ${s.detail || '—'} |`),
+      '| Check | Result | Detail |',
+      '|---|---|---|',
+      ...steps.map(
+        (step) =>
+          `| ${step.name} | ${step.ok ? 'PASS' : 'FAIL'} | ${step.detail || '—'} |`,
+      ),
       '',
-      `**Overall:** ${allOk ? 'PASS' : 'FAIL'}`,
+      `**Overall:** ${passed ? 'PASS' : 'FAIL'}`,
       '',
-      `- API: \`${apiUrl}\``,
-      `- Web: \`${frontendUrl}\``,
-      '',
-      'Signed: _____________________  Date: __________',
+      `- API: \`${apiUrl || 'not resolved'}\``,
+      `- Web: \`${frontendUrl || 'not resolved'}\``,
+      '- Mutation policy: health/readiness/CORS/feature/static GET probes only',
       '',
     ].join('\n');
-    writeFileSync(out, md, 'utf8');
-    console.log(`\nWrote ${out}`);
-  } else {
-    console.log('\nRecord sign-off: copy output into docs/product/uat-checklist.md §F or run with:');
-    console.log('  npm run production:signoff -- --write docs/operations/signoffs/latest.md');
+    writeFileSync(output, markdown, 'utf8');
+    console.log(`Evidence written to ${output}`);
   }
+
+  process.exit(passed ? 0 : 1);
 }

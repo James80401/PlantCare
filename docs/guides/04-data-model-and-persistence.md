@@ -7,7 +7,7 @@
 | File | Provider | Used by |
 |------|----------|---------|
 | `prisma/schema.prisma` | SQLite | Local dev, `npm run db:*` default |
-| `prisma/schema.postgresql.prisma` | PostgreSQL | Docker API container, production |
+| `prisma/postgresql/schema.prisma` | PostgreSQL | Docker API container, staging, production |
 
 Keep both files aligned when adding models or relations.
 
@@ -109,7 +109,8 @@ Full enum list: [database/schema-reference.md](../database/schema-reference.md).
 npm run db:seed
 ```
 
-Docker API entrypoint also runs `db push` + seed on container start.
+Staging and production deploy migrations and seed catalogs explicitly before
+starting the runtime-only API container.
 
 Details: [database/seeding.md](../database/seeding.md).
 

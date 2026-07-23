@@ -29,12 +29,31 @@ const speciesPhotosDir = join(
 );
 const speciesPhotoManifest = loadSpeciesPhotoManifest();
 
+async function catalogCounts() {
+  const [species, careGuides, careGuideImages, shopItems, quests, challenges] =
+    await Promise.all([
+      prisma.plantSpecies.count(),
+      prisma.careGuide.count(),
+      prisma.careGuideImage.count(),
+      prisma.shopItem.count(),
+      prisma.quest.count(),
+      prisma.monthlyChallenge.count(),
+    ]);
+
+  return { species, careGuides, careGuideImages, shopItems, quests, challenges };
+}
 
 async function main() {
-  // Remove old seed rows that nothing references (avoids duplicate search hits)
+  console.log(`Catalog counts before seed: ${JSON.stringify(await catalogCounts())}`);
+
+  // Remove only obsolete seed rows that nothing references. Current canonical
+  // rows must survive repeated deploys so catalog synchronization is idempotent.
+  const canonicalSpeciesIds = speciesCatalog.map((species) =>
+    speciesSeedId(species.commonName, species.scientificName),
+  );
   await prisma.plantSpecies.deleteMany({
     where: {
-      id: { startsWith: 'seed-' },
+      id: { startsWith: 'seed-', notIn: canonicalSpeciesIds },
       plants: { none: {} },
     },
   });
@@ -76,7 +95,17 @@ async function main() {
   await seedCareGuides();
   await seedBuddyShop(prisma);
   await seedBuddyQuests(prisma);
-  await seedDemoGarden(prisma);
+
+  const demoSetting = process.env.SEED_DEMO_DATA?.trim().toLowerCase();
+  const shouldSeedDemo =
+    demoSetting === 'true' || (demoSetting !== 'false' && process.env.NODE_ENV !== 'production');
+  if (shouldSeedDemo) {
+    await seedDemoGarden(prisma);
+  } else {
+    console.log('Demo garden seed skipped.');
+  }
+
+  console.log(`Catalog counts after seed: ${JSON.stringify(await catalogCounts())}`);
 }
 
 main()

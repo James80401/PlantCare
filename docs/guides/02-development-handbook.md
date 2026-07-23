@@ -44,7 +44,7 @@ npm run uat:e2e
 | Mode | Schema file | When |
 |------|-------------|------|
 | **SQLite** | `prisma/schema.prisma` | Default local dev |
-| **PostgreSQL** | `prisma/schema.postgresql.prisma` | Docker staging, production |
+| **PostgreSQL** | `prisma/postgresql/schema.prisma` | Docker staging, production |
 
 Commands:
 
@@ -63,7 +63,7 @@ npm run docker:postgres
 # DATABASE_URL=postgresql://plantcare:plantcare@localhost:5433/plantcare?schema=public
 ```
 
-**Important:** Keep both schema files in sync when adding models. Staging Docker uses Postgres; a missing relation on `schema.postgresql.prisma` will break `docker:build`.
+**Important:** Keep both schema files in sync when adding models. Staging Docker uses Postgres; a missing relation in `prisma/postgresql/schema.prisma` will break migration validation.
 
 ---
 

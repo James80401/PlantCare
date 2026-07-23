@@ -12,13 +12,27 @@ describe('HealthController', () => {
       // A path that exists and is writable in the test runner CWD.
       getUploadDir: jest.fn(() => opts.uploadDir ?? process.cwd()),
     };
-    return { controller: new HealthController(prisma as never, upload as never), prisma, upload };
+    const config = {
+      get: jest.fn((key: string, fallback: string) => {
+        if (key === 'APP_VERSION') return '1.2.3';
+        if (key === 'APP_COMMIT_SHA') return 'abc123';
+        return fallback;
+      }),
+    };
+    return {
+      controller: new HealthController(prisma as never, upload as never, config as never),
+      prisma,
+      upload,
+    };
   }
 
   it('liveness returns ok without touching dependencies', () => {
     const { controller, prisma } = make();
     const res = controller.check();
     expect(res.status).toBe('ok');
+    expect(res.version).toBe('1.2.3');
+    expect(res.commit).toBe('abc123');
+    expect(res.features).toEqual({ plantBuddy: false, premiumBilling: false });
     expect(prisma.$queryRaw).not.toHaveBeenCalled();
   });
 

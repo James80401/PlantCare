@@ -24,7 +24,7 @@ User
        └── PlantShare (additive)           cross-garden plant sharing (kept)
 ```
 
-Key fields (`prisma/schema.prisma` + `schema.postgresql.prisma`):
+Key fields (`prisma/schema.prisma` + `prisma/postgresql/schema.prisma`):
 
 - **`Plant.gardenId`** (required) — the plant's **home garden**. `Plant.userId` stays as
   the creator/adder.

@@ -1,16 +1,8 @@
 #!/bin/sh
-set -e
+set -eu
+
 cd /app
 
-echo "Applying database schema..."
-npx prisma db push --schema=prisma/schema.postgresql.prisma --accept-data-loss
-
-echo "Seeding species and care guides (first run may take a minute)..."
-npx tsx prisma/seed.ts
-
-echo "Starting API..."
-if [ -f apps/api/dist/main.js ]; then
-  exec node apps/api/dist/main.js
-fi
-
-exec node apps/api/dist/apps/api/src/main.js
+# Migrations and catalog synchronization are explicit deployment steps.
+# Runtime containers only start the already-validated application artifact.
+exec node apps/api/dist/main.js

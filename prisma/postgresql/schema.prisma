@@ -1,5 +1,6 @@
 // Docker staging / production — keep in sync with schema.prisma (datasource only differs).
 generator client {
+  // Keep the generated client shared across API builds.
   provider = "prisma-client-js"
 }
 

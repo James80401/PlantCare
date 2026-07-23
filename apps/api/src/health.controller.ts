@@ -1,4 +1,5 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags } from '@nestjs/swagger';
 import { promises as fs, constants as fsConstants } from 'fs';
 import { PrismaService } from './prisma/prisma.service';
@@ -10,6 +11,7 @@ export class HealthController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly upload: UploadService,
+    private readonly config: ConfigService,
   ) {}
 
   /**
@@ -18,7 +20,11 @@ export class HealthController {
    */
   @Get()
   check() {
-    return { status: 'ok', timestamp: new Date().toISOString() };
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      ...this.releaseStatus(),
+    };
   }
 
   /**
@@ -42,12 +48,26 @@ export class HealthController {
       status: ok ? 'ready' : 'unavailable',
       timestamp: new Date().toISOString(),
       checks,
+      ...this.releaseStatus(),
     };
 
     if (!ok) {
       throw new ServiceUnavailableException(body);
     }
     return body;
+  }
+
+  private releaseStatus() {
+    return {
+      version: this.config.get<string>('APP_VERSION', '0.0.0'),
+      commit: this.config.get<string>('APP_COMMIT_SHA', 'unknown'),
+      features: {
+        plantBuddy:
+          this.config.get<string>('ENABLE_PLANT_BUDDY', 'false').toLowerCase() === 'true',
+        premiumBilling:
+          this.config.get<string>('ENABLE_PREMIUM_BILLING', 'false').toLowerCase() === 'true',
+      },
+    };
   }
 
   private async checkDatabase(): Promise<{ ok: boolean; error?: string }> {

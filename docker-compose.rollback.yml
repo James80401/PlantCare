@@ -1,0 +1,8 @@
+# Application-only rollback overlay. The explicit API entrypoint prevents a
+# legacy image from mutating the database during rollback.
+services:
+  api:
+    image: ${ROLLBACK_API_IMAGE:?Set ROLLBACK_API_IMAGE}
+    entrypoint: ['node', 'apps/api/dist/main.js']
+  web:
+    image: ${ROLLBACK_WEB_IMAGE:?Set ROLLBACK_WEB_IMAGE}

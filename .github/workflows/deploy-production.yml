@@ -1,32 +1,79 @@
 name: Deploy production
 
 on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      deploy_sha:
+        description: Full commit SHA with a successful CI push run
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
 
 concurrency:
   group: deploy-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    if: >-
+      github.repository == 'James80401/PlantCare' &&
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
-    if: github.repository == 'James80401/PlantCare'
+    env:
+      DEPLOY_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.deploy_sha }}
+      GH_TOKEN: ${{ github.token }}
+
     steps:
-      - name: Deploy to droplet
+      - name: Validate exact tested commit
+        shell: bash
+        run: |
+          if [[ ! "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "deploy_sha must be a full Git commit SHA" >&2
+            exit 1
+          fi
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            successful_runs="$(
+              gh api --method GET \
+                "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=$DEPLOY_SHA&status=success&event=push" \
+                --jq '.total_count'
+            )"
+            if [[ "$successful_runs" -lt 1 ]]; then
+              echo "No successful CI push run exists for $DEPLOY_SHA" >&2
+              exit 1
+            fi
+          fi
+
+      - name: Deploy exact commit to droplet
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_SHA: ${{ env.DEPLOY_SHA }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: root
           key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.DEPLOY_SSH_PASSPHRASE }}
+          envs: DEPLOY_SHA
           script_stop: true
           command_timeout: 45m
           script: |
-            set -e
+            set -eu
             cd /root/PlantCare
-            git fetch origin main
-            git reset --hard origin/main
-            bash scripts/caddy-remove-basic-auth.sh
-            node scripts/check-production-env.mjs .env.production
-            docker compose -f docker-compose.production.yml --env-file .env.production up -d --build
-            docker compose -f docker-compose.production.yml --env-file .env.production ps
+            previous_sha="$(git rev-parse HEAD)"
+            if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+              echo "Tracked production checkout is dirty; refusing to deploy." >&2
+              exit 1
+            fi
+            git fetch origin "$DEPLOY_SHA"
+            git cat-file -e "$DEPLOY_SHA^{commit}"
+            git checkout --detach "$DEPLOY_SHA"
+            PREVIOUS_SHA="$previous_sha" DEPLOY_SHA="$DEPLOY_SHA" \
+              sh scripts/deploy-production-release.sh
