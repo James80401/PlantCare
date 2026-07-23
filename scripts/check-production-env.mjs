@@ -72,6 +72,9 @@ if (frontend && !corsOrigins.includes(frontend)) {
 if (isTrue('ENABLE_PLANT_BUDDY')) {
   errors.push('ENABLE_PLANT_BUDDY must remain false during the improvement roadmap');
 }
+if (isTrue('ENABLE_SWAGGER')) {
+  errors.push('ENABLE_SWAGGER must remain false during the improvement roadmap');
+}
 if (isTrue('ENABLE_PREMIUM_BILLING')) {
   const stripeKeys = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_ID_PREMIUM'];
   for (const key of stripeKeys) {

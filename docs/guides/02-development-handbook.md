@@ -99,7 +99,8 @@ Full list: [reference/npm-scripts.md](../reference/npm-scripts.md).
 
 - Routes: `apps/web/src/App.tsx` — see [07 — Web application](07-web-application.md).
 - API client: `apps/web/src/services/api.ts` — base URL from `VITE_API_BASE_URL`.
-- Auth: `AuthContext` + `ProtectedRoute`; token in `localStorage`.
+- Auth: `AuthContext` + `ProtectedRoute`; access token in memory and refresh
+  token in the API's HttpOnly cookie.
 - Styling: Tailwind + component classes in `apps/web/src/components/`.
 - Unit tests: `npm run test -w @plant-care/web` (Vitest).
 

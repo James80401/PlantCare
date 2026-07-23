@@ -1,4 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import {
+  clearDrPlantOwnedStorage,
+  setAccessToken,
+} from '../services/authSession';
 
 interface Props {
   children: ReactNode;
@@ -29,7 +33,8 @@ export class RootErrorBoundary extends Component<Props, State> {
             type="button"
             className="rounded-full bg-emerald-800 px-5 py-2 text-sm font-medium text-white"
             onClick={() => {
-              localStorage.clear();
+              setAccessToken(null);
+              clearDrPlantOwnedStorage();
               window.location.href = '/';
             }}
           >

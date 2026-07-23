@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { UpdateNotificationSettingsDto } from './dto/update-notification-settings.dto';
+import { UpdateCarePreferencesDto } from './dto/update-care-preferences.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('users')
@@ -20,11 +21,7 @@ export class UsersController {
   @Put('me/care-preferences')
   updateCarePreferences(
     @CurrentUser() user: JwtPayload,
-    @Body()
-    body: {
-      experienceLevel?: string;
-      defaultLightLevel?: string;
-    },
+    @Body() body: UpdateCarePreferencesDto,
   ) {
     return this.usersService.updateCarePreferences(user.sub, body);
   }

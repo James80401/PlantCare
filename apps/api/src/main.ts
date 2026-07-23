@@ -104,12 +104,16 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const config = new DocumentBuilder()
-    .setTitle('Dr. Plant API')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
+  const swaggerEnabled =
+    process.env.NODE_ENV !== 'production' || process.env.ENABLE_SWAGGER === 'true';
+  if (swaggerEnabled) {
+    const config = new DocumentBuilder()
+      .setTitle('Dr. Plant API')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
+  }
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

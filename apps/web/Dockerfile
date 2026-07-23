@@ -15,5 +15,6 @@ FROM nginx:alpine
 ARG APP_COMMIT_SHA=unknown
 LABEL org.opencontainers.image.revision=$APP_COMMIT_SHA
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY apps/web/security-headers.conf /etc/nginx/security-headers.conf
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 EXPOSE 80
