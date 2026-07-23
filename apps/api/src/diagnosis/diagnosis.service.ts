@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import type { Task } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
@@ -23,7 +22,11 @@ import {
   type RecoveryTaskSuggestion,
 } from './diagnosis-recovery.mapper';
 import { LlmDiagnosisService } from './llm-diagnosis.service';
-import { OpenAiRequestError } from './openai-errors';
+import {
+  mayUseRulesFallback,
+  OpenAiRequestError,
+  openAiHttpException,
+} from './openai-errors';
 import { buildTreatmentPlan } from '../plant-intelligence/treatment-plan';
 
 export type RecoverySuggestionView = RecoveryTaskSuggestion & {
@@ -89,23 +92,13 @@ export class DiagnosisService {
       imageCount: file ? 1 : 0,
     });
 
-    // Kick off image moderation in parallel with the slow upstream calls below
-    // (HuggingFace classify + OpenAI diagnose). On accept this saves the moderation
-    // round-trip from the user's wait time; on reject we throw before persisting.
-    // The HF + OpenAI calls may still complete after a moderation reject, paying for
-    // those tokens — acceptable since rejections are rare relative to total volume.
-    const moderationPromise: Promise<unknown> | undefined = file
-      ? this.imageModeration
-          .assertImageAllowed(file, { feature: 'diagnose', userId })
-          .catch((err) => {
-            // Wrap rejections so we can distinguish moderation errors from upstream model errors.
-            throw err;
-          })
-      : undefined;
-
-    const imageHintPromise: Promise<{ label: string; confidence: number } | undefined> = file
-      ? this.classifyImage(file)
-      : Promise.resolve(undefined);
+    // Complete safety moderation before any downstream model receives the image.
+    if (file) {
+      await this.imageModeration.assertImageAllowed(file, {
+        feature: 'diagnose',
+        userId,
+      });
+    }
 
     let source: DiagnosisSource = 'rules';
     let resultLabel: string;
@@ -115,20 +108,21 @@ export class DiagnosisService {
 
     const intakeSummary = this.formatIntakeSummary(intake);
 
-    const imageHint = await imageHintPromise;
+    const imageHint = file ? await this.classifyImage(file) : undefined;
     resultLabel = imageHint?.label ?? 'General plant health review';
     confidence = imageHint?.confidence ?? 0.65;
 
     if (this.llm.isAvailable()) {
+      let reservationId: string | undefined;
       try {
-        await this.aiUsage.reserveCall({
+        reservationId = await this.aiUsage.reserveCall({
           feature: 'diagnosis',
           userId,
           plantId,
           promptChars: symptomsText?.length ?? 0,
           imageCount: file ? 1 : 0,
         });
-        const structuredPromise = this.llm.diagnose({
+        const structured = await this.llm.diagnose({
           commonName: plant.species.commonName,
           scientificName: plant.species.scientificName,
           sunlight: plant.species.sunlight,
@@ -145,20 +139,19 @@ export class DiagnosisService {
           imageMimeType: file?.mimetype,
         });
 
-        // Await diagnosis and moderation together so total latency = max() not sum().
-        // If moderation rejects, its rejection propagates here.
-        const [structured] = await Promise.all([
-          structuredPromise,
-          moderationPromise ?? Promise.resolve(),
-        ]);
-
         if (structured) {
+          await this.aiUsage.completeCall(reservationId, 'SUCCEEDED');
           source = 'openai';
           resultLabel = structured.issueName;
           confidence = structured.confidence;
           adviceText = this.llm.formatAdviceText(structured);
           detailJson = JSON.stringify({ ...structured, intake });
         } else {
+          await this.aiUsage.completeCall(
+            reservationId,
+            'FALLBACK',
+            'invalid structured provider response',
+          );
           ({ resultLabel, confidence, adviceText, source } = this.rulesFallback(
             imageHint,
             symptomsText,
@@ -166,13 +159,27 @@ export class DiagnosisService {
         }
       } catch (err) {
         if (err instanceof OpenAiRequestError) {
-          throw new ServiceUnavailableException(err.message);
+          if (mayUseRulesFallback(err)) {
+            await this.aiUsage.completeCall(reservationId, 'FALLBACK', err.code);
+            ({ resultLabel, confidence, adviceText, source } = this.rulesFallback(
+              imageHint,
+              symptomsText,
+            ));
+          } else {
+            await this.aiUsage.completeCall(reservationId, 'FAILED', err.code);
+            throw openAiHttpException(err);
+          }
+        } else {
+          await this.aiUsage.completeCall(
+            reservationId,
+            'FAILED',
+            err instanceof Error ? err.message.slice(0, 240) : 'unknown error',
+          );
+          throw err;
         }
-        throw err;
       }
     } else {
       // No LLM available — still respect moderation if we have a file.
-      if (moderationPromise) await moderationPromise;
       if (imageHint) {
         source = 'huggingface';
         resultLabel = formatLabel(imageHint.label);

@@ -92,61 +92,61 @@ enum AccountApprovalStatus {
 }
 
 model User {
-  id                    String         @id @default(cuid())
-  email                 String         @unique
-  passwordHash          String
-  name                  String?
-  planTier              PlanTier       @default(FREE)
-  stripeCustomerId      String?
-  latitude              Float?
-  longitude             Float?
-  locationLabel         String?
-  timezone              String         @default("America/New_York")
-  temperatureUnit       String         @default("C")
-  notifyPush            Boolean        @default(true)
-  notifyEmail           Boolean        @default(true)
-  notifySms             Boolean        @default(false)
-  phone                 String?
-  quietHoursStart       Int?
-  quietHoursEnd         Int?
-  reminderHour          Int?
-  identifyCountThisMonth Int           @default(0)
-  identifyCountResetAt  DateTime       @default(now())
-  emailVerified         Boolean        @default(true)
-  accountApprovalStatus AccountApprovalStatus @default(APPROVED)
-  emailVerificationToken String?       @unique
+  id                       String                @id @default(cuid())
+  email                    String                @unique
+  passwordHash             String
+  name                     String?
+  planTier                 PlanTier              @default(FREE)
+  stripeCustomerId         String?
+  latitude                 Float?
+  longitude                Float?
+  locationLabel            String?
+  timezone                 String                @default("America/New_York")
+  temperatureUnit          String                @default("C")
+  notifyPush               Boolean               @default(true)
+  notifyEmail              Boolean               @default(true)
+  notifySms                Boolean               @default(false)
+  phone                    String?
+  quietHoursStart          Int?
+  quietHoursEnd            Int?
+  reminderHour             Int?
+  identifyCountThisMonth   Int                   @default(0)
+  identifyCountResetAt     DateTime              @default(now())
+  emailVerified            Boolean               @default(true)
+  accountApprovalStatus    AccountApprovalStatus @default(APPROVED)
+  emailVerificationToken   String?               @unique
   emailVerificationExpires DateTime?
-  passwordResetToken    String?        @unique
-  passwordResetExpires  DateTime?
-  aiPausedUntil         DateTime?
-  experienceLevel       String?
-  defaultLightLevel     String?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  plants                Plant[]
-  subscriptions         Subscription[]
-  notificationLogs      NotificationLog[]
-  deviceTokens          DeviceToken[]
-  taskFeedback          TaskFeedback[]
-  weatherAdviceCache    WeatherAdviceCache?
-  ownedGardens          Garden[]           @relation("GardenOwner")
-  gardenMemberships     GardenMember[]
-  communityPosts        CommunityPost[]
-  comments              Comment[]
-  postLikes             PostLike[]
-  postReports           PostReport[]
-  blockedUsers          BlockedUser[]      @relation("Blocker")
-  blockedByUsers        BlockedUser[]      @relation("Blocked")
-  following             Follow[]           @relation("Follower")
-  followers             Follow[]           @relation("Following")
-  activityEvents        ActivityEvent[]
-  buddy                 Buddy?
-  plantMilestones       PlantMilestone[]
-  recommendations       Recommendation[]
-  refreshTokens         RefreshToken[]
-  aiUsageEvents         AiUsageEvent[]
-  plantProgressEntries  PlantProgressEntry[]
-  adminAuditLogs        AdminAuditLog[] @relation("AdminAuditActor")
+  passwordResetToken       String?               @unique
+  passwordResetExpires     DateTime?
+  aiPausedUntil            DateTime?
+  experienceLevel          String?
+  defaultLightLevel        String?
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+  plants                   Plant[]
+  subscriptions            Subscription[]
+  notificationLogs         NotificationLog[]
+  deviceTokens             DeviceToken[]
+  taskFeedback             TaskFeedback[]
+  weatherAdviceCache       WeatherAdviceCache?
+  ownedGardens             Garden[]              @relation("GardenOwner")
+  gardenMemberships        GardenMember[]
+  communityPosts           CommunityPost[]
+  comments                 Comment[]
+  postLikes                PostLike[]
+  postReports              PostReport[]
+  blockedUsers             BlockedUser[]         @relation("Blocker")
+  blockedByUsers           BlockedUser[]         @relation("Blocked")
+  following                Follow[]              @relation("Follower")
+  followers                Follow[]              @relation("Following")
+  activityEvents           ActivityEvent[]
+  buddy                    Buddy?
+  plantMilestones          PlantMilestone[]
+  recommendations          Recommendation[]
+  refreshTokens            RefreshToken[]
+  aiUsageEvents            AiUsageEvent[]
+  plantProgressEntries     PlantProgressEntry[]
+  adminAuditLogs           AdminAuditLog[]       @relation("AdminAuditActor")
 }
 
 model AdminAuditLog {
@@ -182,7 +182,7 @@ model AiUsageEvent {
   plantId        String?
   conversationId String?
   promptChars    Int      @default(0)
-  imageCount      Int      @default(0)
+  imageCount     Int      @default(0)
   status         String
   reason         String?
   createdAt      DateTime @default(now())
@@ -193,18 +193,18 @@ model AiUsageEvent {
 }
 
 model RefreshToken {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash   String    @unique
-  familyId    String
-  parentId    String?
-  replacedBy  String?
-  revokedAt   DateTime?
-  expiresAt   DateTime
-  createdAt   DateTime  @default(now())
-  userAgent   String?
-  ip          String?
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  familyId   String
+  parentId   String?
+  replacedBy String?
+  revokedAt  DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  userAgent  String?
+  ip         String?
 
   @@index([userId])
   @@index([familyId])
@@ -221,49 +221,49 @@ model WeatherAdviceCache {
 }
 
 model Subscription {
-  id               String             @id @default(cuid())
-  userId           String
-  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  planName         String
-  status           SubscriptionStatus @default(ACTIVE)
-  stripeId         String?
-  startDate        DateTime           @default(now())
-  endDate          DateTime?
-  createdAt        DateTime           @default(now())
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planName  String
+  status    SubscriptionStatus @default(ACTIVE)
+  stripeId  String?
+  startDate DateTime           @default(now())
+  endDate   DateTime?
+  createdAt DateTime           @default(now())
 }
 
 model PlantSpecies {
-  id                String   @id @default(cuid())
-  perenualId        Int?     @unique
-  commonName        String
-  scientificName    String?
-  sunlight          String?
-  wateringFreqDays  Int      @default(7)
-  toxicity          String?
-  phMin             Float?
-  phMax             Float?
-  careNotes         String?
-  defaultImageUrl   String?
-  metadataJson      String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  plants            Plant[]
-  careGuides        CareGuide[]
-  communityPosts    CommunityPost[]
+  id               String          @id @default(cuid())
+  perenualId       Int?            @unique
+  commonName       String
+  scientificName   String?
+  sunlight         String?
+  wateringFreqDays Int             @default(7)
+  toxicity         String?
+  phMin            Float?
+  phMax            Float?
+  careNotes        String?
+  defaultImageUrl  String?
+  metadataJson     String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  plants           Plant[]
+  careGuides       CareGuide[]
+  communityPosts   CommunityPost[]
 
   @@index([commonName])
 }
 
 model CareGuide {
-  id           String          @id
+  id           String           @id
   taskType     TaskType
   speciesId    String?
-  species      PlantSpecies?   @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  species      PlantSpecies?    @relation(fields: [speciesId], references: [id], onDelete: Cascade)
   title        String
   summary      String
   sectionsJson String
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
   images       CareGuideImage[]
 
   @@unique([taskType, speciesId])
@@ -283,26 +283,26 @@ model CareGuideImage {
 }
 
 model Plant {
-  id          String       @id @default(cuid())
-  userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gardenId    String
-  garden      Garden       @relation("GardenPlants", fields: [gardenId], references: [id], onDelete: Cascade)
-  speciesId   String
-  species     PlantSpecies @relation(fields: [speciesId], references: [id])
-  nickname    String?
-  location    String?
-  potSize     PotSize      @default(MEDIUM)
-  lifeStage   PlantLifeStage @default(ESTABLISHED)
-  approximateAgeMonths Int?
-  datePlanted DateTime?
-  imageUrl    String?
-  notes       String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  tasks       Task[]
-  journalEntries JournalEntry[]
-  progressEntries      PlantProgressEntry[]
+  id                     String                  @id @default(cuid())
+  userId                 String
+  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gardenId               String
+  garden                 Garden                  @relation("GardenPlants", fields: [gardenId], references: [id], onDelete: Cascade)
+  speciesId              String
+  species                PlantSpecies            @relation(fields: [speciesId], references: [id])
+  nickname               String?
+  location               String?
+  potSize                PotSize                 @default(MEDIUM)
+  lifeStage              PlantLifeStage          @default(ESTABLISHED)
+  approximateAgeMonths   Int?
+  datePlanted            DateTime?
+  imageUrl               String?
+  notes                  String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  tasks                  Task[]
+  journalEntries         JournalEntry[]
+  progressEntries        PlantProgressEntry[]
   diagnoses              Diagnosis[]
   diagnosisConversations DiagnosisConversation[]
   shares                 PlantShare[]
@@ -329,19 +329,19 @@ model PlantMilestone {
 }
 
 model Task {
-  id                String     @id @default(cuid())
+  id                String         @id @default(cuid())
   plantId           String
-  plant             Plant      @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  plant             Plant          @relation(fields: [plantId], references: [id], onDelete: Cascade)
   gardenId          String?
-  garden            Garden?    @relation("GardenTasks", fields: [gardenId], references: [id], onDelete: Cascade)
+  garden            Garden?        @relation("GardenTasks", fields: [gardenId], references: [id], onDelete: Cascade)
   taskType          TaskType
   dueDate           DateTime
   completedAt       DateTime?
-  status            TaskStatus @default(PENDING)
+  status            TaskStatus     @default(PENDING)
   notifiedAt        DateTime?
   sourceDiagnosisId String?
-  sourceDiagnosis   Diagnosis? @relation("DiagnosisFollowUpTasks", fields: [sourceDiagnosisId], references: [id], onDelete: SetNull)
-  createdAt         DateTime   @default(now())
+  sourceDiagnosis   Diagnosis?     @relation("DiagnosisFollowUpTasks", fields: [sourceDiagnosisId], references: [id], onDelete: SetNull)
+  createdAt         DateTime       @default(now())
   feedback          TaskFeedback[]
 
   @@index([dueDate, status])
@@ -367,31 +367,31 @@ model TaskFeedback {
 }
 
 model Recommendation {
-  id                    String                 @id @default(cuid())
-  userId                String
-  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plantId               String?
-  plant                 Plant?                 @relation(fields: [plantId], references: [id], onDelete: Cascade)
-  gardenId              String?
-  garden                Garden?                @relation(fields: [gardenId], references: [id], onDelete: Cascade)
-  source                RecommendationSource
-  sourceKey             String
-  priority              RecommendationPriority @default(MEDIUM)
-  status                RecommendationStatus   @default(ACTIVE)
-  title                 String
-  body                  String
-  actionLabel           String?
-  actionPath            String?
-  suggestedTaskType     TaskType?
+  id                     String                 @id @default(cuid())
+  userId                 String
+  user                   User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plantId                String?
+  plant                  Plant?                 @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  gardenId               String?
+  garden                 Garden?                @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  source                 RecommendationSource
+  sourceKey              String
+  priority               RecommendationPriority @default(MEDIUM)
+  status                 RecommendationStatus   @default(ACTIVE)
+  title                  String
+  body                   String
+  actionLabel            String?
+  actionPath             String?
+  suggestedTaskType      TaskType?
   suggestedTaskDueInDays Int?
-  metadataJson          String?
-  snoozedUntil          DateTime?
-  completedAt           DateTime?
-  dismissedAt           DateTime?
-  notifiedAt            DateTime?
-  lastRefreshedAt       DateTime               @default(now())
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
+  metadataJson           String?
+  snoozedUntil           DateTime?
+  completedAt            DateTime?
+  dismissedAt            DateTime?
+  notifiedAt             DateTime?
+  lastRefreshedAt        DateTime               @default(now())
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
 
   @@unique([userId, sourceKey])
   @@index([userId, status, priority])
@@ -417,24 +417,24 @@ model JournalEntry {
 
 model PlantProgressEntry {
   id              String   @id @default(cuid())
-  plantId          String
-  plant            Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
-  userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  taskId           String?
-  photoUrl         String?
-  overallHealth    String
-  growthChange     String?
-  leafCondition    String?
-  soilMoisture     String?
-  pestSigns        String?
-  recentCare       String?
-  notes            String?
-  analysisSummary  String?
-  adviceText       String?
-  storyJson        String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  plantId         String
+  plant           Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId          String?
+  photoUrl        String?
+  overallHealth   String
+  growthChange    String?
+  leafCondition   String?
+  soilMoisture    String?
+  pestSigns       String?
+  recentCare      String?
+  notes           String?
+  analysisSummary String?
+  adviceText      String?
+  storyJson       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([plantId, createdAt])
   @@index([userId, createdAt])
@@ -461,28 +461,33 @@ model Diagnosis {
 }
 
 model DiagnosisConversation {
-  id        String             @id @default(cuid())
-  plantId   String
-  plant     Plant              @relation(fields: [plantId], references: [id], onDelete: Cascade)
-  userId    String
-  title     String?
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  messages  DiagnosisMessage[]
+  id              String             @id @default(cuid())
+  plantId         String
+  plant           Plant              @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  userId          String
+  title           String?
+  clientRequestId String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  messages        DiagnosisMessage[]
 
+  @@unique([userId, clientRequestId])
   @@index([plantId])
   @@index([userId])
 }
 
 model DiagnosisMessage {
-  id             String                @id @default(cuid())
-  conversationId String
-  conversation   DiagnosisConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  role           String
-  content        String
-  imageUrl       String?
-  createdAt      DateTime              @default(now())
+  id              String                @id @default(cuid())
+  conversationId  String
+  conversation    DiagnosisConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role            String
+  content         String
+  imageUrl        String?
+  clientRequestId String?
+  source          String?
+  createdAt       DateTime              @default(now())
 
+  @@unique([conversationId, clientRequestId, role])
   @@index([conversationId])
 }
 
@@ -520,19 +525,19 @@ model DeviceToken {
 }
 
 model Garden {
-  id        String         @id @default(cuid())
-  name      String
-  location  String?
-  ownerId   String
-  owner     User           @relation("GardenOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  members   GardenMember[]
-  homePlants Plant[]       @relation("GardenPlants")
-  tasks     Task[]         @relation("GardenTasks")
-  plants    PlantShare[]
-  invites   CareInvite[]
-  activity  ActivityEvent[]
+  id              String           @id @default(cuid())
+  name            String
+  location        String?
+  ownerId         String
+  owner           User             @relation("GardenOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  members         GardenMember[]
+  homePlants      Plant[]          @relation("GardenPlants")
+  tasks           Task[]           @relation("GardenTasks")
+  plants          PlantShare[]
+  invites         CareInvite[]
+  activity        ActivityEvent[]
   recommendations Recommendation[]
 
   @@index([ownerId])
@@ -580,12 +585,12 @@ model CareInvite {
 }
 
 model CommunityPost {
-  id             String         @id @default(cuid())
+  id             String          @id @default(cuid())
   authorId       String
-  author         User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author         User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
   body           String
   speciesId      String?
-  species        PlantSpecies?  @relation(fields: [speciesId], references: [id], onDelete: SetNull)
+  species        PlantSpecies?   @relation(fields: [speciesId], references: [id], onDelete: SetNull)
   imageUrl       String?
   tagsJson       String?
   originalPostId String?
@@ -593,8 +598,8 @@ model CommunityPost {
   reshares       CommunityPost[] @relation("PostReshares")
   hiddenAt       DateTime?
   reports        PostReport[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   comments       Comment[]
   likes          PostLike[]
 
@@ -705,45 +710,45 @@ enum BuddyMood {
 }
 
 model Buddy {
-  id                  String      @id @default(cuid())
-  userId              String      @unique
-  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name                String
-  speciesId           String      @default("monstera")
-  trait               BuddyTrait  @default(RESILIENT)
-  growthStage         GrowthStage @default(SEED)
-  journeyCount        Int         @default(0)
-  dewdrops            Int         @default(0)
-  experiencePoints    Int         @default(0)
-  bloomTokens         Int         @default(0)
-  lastPerfectDayKey   String?
-  sunlightToday       Int         @default(0)
-  tasksToday          Int         @default(0)
-  lastResetDate       DateTime?
-  mood                BuddyMood   @default(HAPPY)
-  lastTaskDate        DateTime?
-  streakDays          Int         @default(0)
-  longestStreak       Int         @default(0)
-  lastActiveDate      DateTime?
-  equippedItems       Json        @default("{}")
-  unlockedSpecies     Json        @default("[\"monstera\"]")
-  currentBiome        String      @default("seed_garden")
-  unlockedBiomes      Json        @default("[\"seed_garden\"]")
-  personalityChoices  Json        @default("[]")
-  terrariumLayout     Json        @default("{}")
-  terrariumBackground String      @default("sunny_windowsill")
-  floatingCompanionMode String    @default("hidden")
-  gardenCode          String      @unique
-  showLastActive      Boolean     @default(true)
-  journeys            BuddyJourney[]
-  inventory           BuddyInventory[]
-  activities          BuddyActivity[]
-  questProgress       BuddyQuestProgress[]
-  challengeProgress   BuddyChallengeProgress[]
-  friendshipsFrom     BuddyFriendship[] @relation("FriendshipFrom")
-  friendshipsTo       BuddyFriendship[] @relation("FriendshipTo")
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
+  id                    String                   @id @default(cuid())
+  userId                String                   @unique
+  user                  User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                  String
+  speciesId             String                   @default("monstera")
+  trait                 BuddyTrait               @default(RESILIENT)
+  growthStage           GrowthStage              @default(SEED)
+  journeyCount          Int                      @default(0)
+  dewdrops              Int                      @default(0)
+  experiencePoints      Int                      @default(0)
+  bloomTokens           Int                      @default(0)
+  lastPerfectDayKey     String?
+  sunlightToday         Int                      @default(0)
+  tasksToday            Int                      @default(0)
+  lastResetDate         DateTime?
+  mood                  BuddyMood                @default(HAPPY)
+  lastTaskDate          DateTime?
+  streakDays            Int                      @default(0)
+  longestStreak         Int                      @default(0)
+  lastActiveDate        DateTime?
+  equippedItems         Json                     @default("{}")
+  unlockedSpecies       Json                     @default("[\"monstera\"]")
+  currentBiome          String                   @default("seed_garden")
+  unlockedBiomes        Json                     @default("[\"seed_garden\"]")
+  personalityChoices    Json                     @default("[]")
+  terrariumLayout       Json                     @default("{}")
+  terrariumBackground   String                   @default("sunny_windowsill")
+  floatingCompanionMode String                   @default("hidden")
+  gardenCode            String                   @unique
+  showLastActive        Boolean                  @default(true)
+  journeys              BuddyJourney[]
+  inventory             BuddyInventory[]
+  activities            BuddyActivity[]
+  questProgress         BuddyQuestProgress[]
+  challengeProgress     BuddyChallengeProgress[]
+  friendshipsFrom       BuddyFriendship[]        @relation("FriendshipFrom")
+  friendshipsTo         BuddyFriendship[]        @relation("FriendshipTo")
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
 }
 
 model BuddyJourney {
@@ -802,21 +807,21 @@ enum BuddySpeciesUnlockType {
 }
 
 model ShopItem {
-  id              String         @id
+  id              String           @id
   name            String
   description     String
   category        ItemCategory
   tier            Int
   cost            Int
-  bloomTokenCost  Int            @default(0)
+  bloomTokenCost  Int              @default(0)
   seasonalEventId String?
-  requiresPremium Boolean        @default(false)
+  requiresPremium Boolean          @default(false)
   speciesLocked   String?
-  unlockType      ItemUnlockType @default(PURCHASE)
+  unlockType      ItemUnlockType   @default(PURCHASE)
   imageKey        String
-  isActive        Boolean        @default(true)
-  sortOrder       Int            @default(0)
-  createdAt       DateTime       @default(now())
+  isActive        Boolean          @default(true)
+  sortOrder       Int              @default(0)
+  createdAt       DateTime         @default(now())
   inventory       BuddyInventory[]
 }
 
@@ -884,7 +889,7 @@ model BuddyActivity {
 }
 
 model Quest {
-  id             String     @id
+  id             String               @id
   type           QuestType
   title          String
   description    String
@@ -893,9 +898,9 @@ model Quest {
   rewardItemId   String?
   rewardBadgeId  String?
   expiresAt      DateTime?
-  isActive       Boolean    @default(true)
-  sortOrder      Int        @default(0)
-  createdAt      DateTime   @default(now())
+  isActive       Boolean              @default(true)
+  sortOrder      Int                  @default(0)
+  createdAt      DateTime             @default(now())
   progress       BuddyQuestProgress[]
 }
 
@@ -915,7 +920,7 @@ model BuddyQuestProgress {
 }
 
 model MonthlyChallenge {
-  id             String   @id @default(cuid())
+  id             String                   @id @default(cuid())
   month          Int
   year           Int
   title          String
@@ -923,8 +928,8 @@ model MonthlyChallenge {
   steps          Json
   rewardDewdrops Int
   rewardItemId   String?
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
+  isActive       Boolean                  @default(true)
+  createdAt      DateTime                 @default(now())
   progress       BuddyChallengeProgress[]
 
   @@unique([month, year])

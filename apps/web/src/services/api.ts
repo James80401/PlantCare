@@ -474,18 +474,26 @@ export const diagnosisChatApi = {
     api.get(`/plants/${plantId}/diagnose/conversations`),
   get: (plantId: string, conversationId: string) =>
     api.get(`/plants/${plantId}/diagnose/conversations/${conversationId}`),
-  create: (plantId: string, message?: string, image?: File) => {
+  create: (plantId: string, message?: string, image?: File, requestId?: string) => {
     const form = new FormData();
     if (message) form.append('message', message);
     if (image) form.append('image', image);
+    if (requestId) form.append('requestId', requestId);
     return api.post(`/plants/${plantId}/diagnose/conversations`, form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  sendMessage: (plantId: string, conversationId: string, message?: string, image?: File) => {
+  sendMessage: (
+    plantId: string,
+    conversationId: string,
+    message?: string,
+    image?: File,
+    requestId?: string,
+  ) => {
     const form = new FormData();
     if (message) form.append('message', message);
     if (image) form.append('image', image);
+    if (requestId) form.append('requestId', requestId);
     return api.post(
       `/plants/${plantId}/diagnose/conversations/${conversationId}/messages`,
       form,

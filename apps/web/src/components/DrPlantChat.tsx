@@ -13,6 +13,7 @@ export interface ChatMessage {
   role: string;
   content: string;
   imageUrl?: string | null;
+  source?: string | null;
   createdAt: string;
 }
 
@@ -98,7 +99,11 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
   const [actionLoading, setActionLoading] = useState('');
   const [lastReplyAt, setLastReplyAt] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const lastFailedPayload = useRef<{ text: string; photo: File | null } | null>(null);
+  const lastFailedPayload = useRef<{
+    text: string;
+    photo: File | null;
+    requestId: string;
+  } | null>(null);
 
   const loadConversations = useCallback(() => {
     diagnosisChatApi.list(plantId).then((r) => setConversations(r.data));
@@ -132,7 +137,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
     lastFailedPayload.current = null;
   };
 
-  const sendWithPayload = async (text: string, image?: File) => {
+  const sendWithPayload = async (text: string, image?: File, retryRequestId?: string) => {
     const trimmed = text.trim();
     if (!trimmed && !image) return;
 
@@ -140,11 +145,17 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
     setError('');
     setActionNotice('');
     setActionError('');
-    lastFailedPayload.current = { text: trimmed, photo: image ?? null };
+    const requestId = retryRequestId ?? crypto.randomUUID();
+    lastFailedPayload.current = { text: trimmed, photo: image ?? null, requestId };
 
     try {
       if (!activeId) {
-        const { data } = await diagnosisChatApi.create(plantId, trimmed, image);
+        const { data } = await diagnosisChatApi.create(
+          plantId,
+          trimmed,
+          image,
+          requestId,
+        );
         if (data.id && data.messages) {
           setMessages(data.messages);
           setActiveId(data.id);
@@ -160,6 +171,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
           activeId,
           trimmed,
           image,
+          requestId,
         );
         setMessages((prev) => [...prev, data.userMessage, data.assistantMessage]);
       }
@@ -195,7 +207,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
     if (!last) return;
     setInput(last.text);
     setPhoto(last.photo);
-    void sendWithPayload(last.text, last.photo ?? undefined);
+    void sendWithPayload(last.text, last.photo ?? undefined, last.requestId);
   };
 
   const saveReplyToJournal = async (message: ChatMessage) => {
@@ -438,6 +450,13 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
                   />
                 )}
                 <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                {!isUser && m.source ? (
+                  <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                    {m.source === 'openai'
+                      ? 'AI-assisted guidance'
+                      : 'Rules-based care guidance'}
+                  </p>
+                ) : null}
                 <p
                   className={`text-[10px] mt-1 ${isUser ? 'text-emerald-200' : 'text-gray-400'}`}
                 >

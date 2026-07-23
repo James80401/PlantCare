@@ -1,7 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { OpenAiRequestError, parseOpenAiError } from './openai-errors';
+import {
+  isTransientOpenAiError,
+  OpenAiRequestError,
+  parseOpenAiError,
+} from './openai-errors';
+import {
+  providerMaxRetries,
+  providerTimeoutMs,
+  withBoundedRetry,
+} from '../common/bounded-retry';
 
 export interface StructuredDiagnosis {
   issueName: string;
@@ -52,6 +61,8 @@ export class LlmDiagnosisService {
   private readonly apiKey: string | undefined;
   private readonly model: string;
   private readonly baseUrl: string;
+  private readonly timeoutMs: number;
+  private readonly maxRetries: number;
 
   constructor(private config: ConfigService) {
     this.apiKey = this.config.get<string>('OPENAI_API_KEY')?.trim();
@@ -59,6 +70,8 @@ export class LlmDiagnosisService {
     this.baseUrl = (
       this.config.get<string>('OPENAI_BASE_URL', 'https://api.openai.com/v1') ?? ''
     ).replace(/\/$/, '');
+    this.timeoutMs = providerTimeoutMs(this.config);
+    this.maxRetries = providerMaxRetries(this.config);
   }
 
   getModelName(): string {
@@ -97,22 +110,27 @@ export class LlmDiagnosisService {
     }
 
     try {
-      const { data } = await axios.post(
-        `${this.baseUrl}/chat/completions`,
-        {
-          model: this.model,
-          temperature: 0.5,
-          max_tokens: options.maxTokens ?? 1500,
-          ...(options.jsonMode ? { response_format: { type: 'json_object' } } : {}),
-          messages,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 90000,
-        },
+      const { data } = await withBoundedRetry(
+        () =>
+          axios.post(
+            `${this.baseUrl}/chat/completions`,
+            {
+              model: this.model,
+              temperature: 0.5,
+              max_tokens: options.maxTokens ?? 1500,
+              ...(options.jsonMode ? { response_format: { type: 'json_object' } } : {}),
+              messages,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+              },
+              timeout: this.timeoutMs,
+            },
+          ),
+        isTransientOpenAiError,
+        this.maxRetries,
       );
 
       const raw = data.choices?.[0]?.message?.content;

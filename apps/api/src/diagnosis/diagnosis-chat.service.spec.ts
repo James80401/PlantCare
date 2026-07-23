@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DiagnosisChatService } from './diagnosis-chat.service';
+import { OpenAiRequestError } from './openai-errors';
 
 describe('DiagnosisChatService actions', () => {
   function createService(
@@ -64,6 +65,7 @@ describe('DiagnosisChatService actions', () => {
       {
         assertPlantIntentOrThrow: jest.fn().mockResolvedValue(undefined),
         reserveCall: jest.fn().mockResolvedValue(undefined),
+        completeCall: jest.fn().mockResolvedValue(undefined),
       } as never,
       recommendations as never,
     );
@@ -350,5 +352,177 @@ describe('DiagnosisChatService actions', () => {
         service.getGuidedContextQuestions('stranger', 'plant-1', 'conv-1'),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
+  });
+});
+
+describe('DiagnosisChatService delivery truth', () => {
+  function createDeliveryService(
+    options: {
+      providerError?: OpenAiRequestError;
+      cachedMessages?: Array<Record<string, unknown>>;
+    } = {},
+  ) {
+    const createdMessages: Array<Record<string, unknown>> = [];
+    const prisma = {
+      plant: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'plant-1',
+          userId: 'user-1',
+          garden: null,
+          shares: [],
+          nickname: 'Fern',
+          location: 'Office',
+          potSize: 'MEDIUM',
+          species: {
+            commonName: 'Fern',
+            scientificName: 'Nephrolepis exaltata',
+            wateringFreqDays: 7,
+            sunlight: 'Indirect',
+            toxicity: null,
+            careNotes: null,
+          },
+        }),
+      },
+      diagnosisConversation: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'conv-1',
+          plantId: 'plant-1',
+          userId: 'user-1',
+          messages: [],
+        }),
+        update: jest.fn().mockResolvedValue({ id: 'conv-1' }),
+      },
+      diagnosisMessage: {
+        findMany: jest.fn().mockResolvedValue(options.cachedMessages ?? []),
+        create: jest.fn(({ data }) => {
+          const message = {
+            id: `message-${createdMessages.length + 1}`,
+            createdAt: new Date(),
+            imageUrl: null,
+            source: null,
+            ...data,
+          };
+          createdMessages.push(message);
+          return Promise.resolve(message);
+        }),
+      },
+      journalEntry: { findMany: jest.fn().mockResolvedValue([]) },
+      task: { findMany: jest.fn().mockResolvedValue([]) },
+      taskFeedback: { findMany: jest.fn().mockResolvedValue([]) },
+      diagnosis: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: 'diagnosis-1' }),
+      },
+      $transaction: jest.fn(),
+    };
+    prisma.$transaction.mockImplementation(
+      (callback: (client: typeof prisma) => unknown) => callback(prisma),
+    );
+    const llm = {
+      isAvailable: jest.fn().mockReturnValue(true),
+      getModelName: jest.fn().mockReturnValue('test-model'),
+      chat: options.providerError
+        ? jest.fn().mockRejectedValue(options.providerError)
+        : jest.fn().mockResolvedValue('Use steady moisture and indirect light.'),
+    };
+    const aiUsage = {
+      assertPlantIntentOrThrow: jest.fn().mockResolvedValue(undefined),
+      reserveCall: jest.fn().mockResolvedValue('usage-1'),
+      completeCall: jest.fn().mockResolvedValue(undefined),
+    };
+    const service = new DiagnosisChatService(
+      prisma as never,
+      llm as never,
+      {
+        saveFile: jest.fn(),
+        deleteByUrl: jest.fn(),
+        getUploadDir: jest.fn(),
+      } as never,
+      {
+        getAdviceStatus: jest.fn().mockResolvedValue({
+          cachedAdvice: null,
+          locationLabel: null,
+        }),
+      } as never,
+      { assertImageAllowed: jest.fn() } as never,
+      aiUsage as never,
+      {} as never,
+    );
+    return { service, prisma, llm, aiUsage };
+  }
+
+  it('persists the exchange only after a successful provider result', async () => {
+    const { service, prisma, aiUsage } = createDeliveryService();
+
+    const result = await service.sendMessage(
+      'user-1',
+      'plant-1',
+      'conv-1',
+      'Why are the fronds brown?',
+      undefined,
+      '21bb0dac-0ce4-4fae-aaeb-4bcb03255f34',
+    );
+
+    expect(result.source).toBe('openai');
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(aiUsage.completeCall).toHaveBeenCalledWith('usage-1', 'SUCCEEDED');
+  });
+
+  it('preserves a provider rate-limit error and writes no messages', async () => {
+    const { service, prisma, aiUsage } = createDeliveryService({
+      providerError: new OpenAiRequestError(
+        'OpenAI rate limit hit.',
+        'rate_limited',
+        429,
+      ),
+    });
+
+    await expect(
+      service.sendMessage(
+        'user-1',
+        'plant-1',
+        'conv-1',
+        'Why are the fronds brown?',
+      ),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'AI_PROVIDER_RATE_LIMITED' }),
+    });
+    expect(prisma.diagnosisMessage.create).not.toHaveBeenCalled();
+    expect(aiUsage.completeCall).toHaveBeenCalledWith(
+      'usage-1',
+      'FAILED',
+      'rate_limited',
+    );
+  });
+
+  it('returns an existing exchange for a repeated request key', async () => {
+    const cachedMessages = [
+      {
+        id: 'user-message',
+        role: 'user',
+        content: 'Why are the fronds brown?',
+        source: null,
+      },
+      {
+        id: 'assistant-message',
+        role: 'assistant',
+        content: 'Check humidity.',
+        source: 'openai',
+      },
+    ];
+    const { service, prisma, llm } = createDeliveryService({ cachedMessages });
+
+    const result = await service.sendMessage(
+      'user-1',
+      'plant-1',
+      'conv-1',
+      'Why are the fronds brown?',
+      undefined,
+      '21bb0dac-0ce4-4fae-aaeb-4bcb03255f34',
+    );
+
+    expect(result.userMessage.id).toBe('user-message');
+    expect(llm.chat).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });

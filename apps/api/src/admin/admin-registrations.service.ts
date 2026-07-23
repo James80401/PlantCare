@@ -145,13 +145,21 @@ export class AdminRegistrationsService {
     const [totalCalls, lastHourCalls, last24HourCalls, offTopicBlocks, rateLimitBlocks, latest] =
       await Promise.all([
         this.prisma.aiUsageEvent.count({
-          where: { userId, status: 'ALLOWED' },
+          where: { userId, status: { in: ['ALLOWED', 'SUCCEEDED'] } },
         }),
         this.prisma.aiUsageEvent.count({
-          where: { userId, status: 'ALLOWED', createdAt: { gte: oneHourAgo } },
+          where: {
+            userId,
+            status: { in: ['ALLOWED', 'SUCCEEDED'] },
+            createdAt: { gte: oneHourAgo },
+          },
         }),
         this.prisma.aiUsageEvent.count({
-          where: { userId, status: 'ALLOWED', createdAt: { gte: dayAgo } },
+          where: {
+            userId,
+            status: { in: ['ALLOWED', 'SUCCEEDED'] },
+            createdAt: { gte: dayAgo },
+          },
         }),
         this.prisma.aiUsageEvent.count({
           where: { userId, status: 'BLOCKED_OFF_TOPIC' },

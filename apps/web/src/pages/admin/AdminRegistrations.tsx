@@ -123,6 +123,9 @@ type AdminObservability = {
 type AdminAiWindow = {
   total: number;
   allowed: number;
+  succeeded: number;
+  failed: number;
+  fallback: number;
   blocked: number;
   promptChars: number;
   imageCount: number;

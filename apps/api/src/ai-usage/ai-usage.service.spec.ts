@@ -15,7 +15,8 @@ describe('AiUsageService', () => {
       },
       aiUsageEvent: {
         count: jest.fn().mockResolvedValue(options.count ?? 0),
-        create: jest.fn().mockResolvedValue({}),
+        create: jest.fn().mockResolvedValue({ id: 'usage-1' }),
+        update: jest.fn().mockResolvedValue({ id: 'usage-1' }),
       },
     };
     const config = {
@@ -91,7 +92,10 @@ describe('AiUsageService', () => {
       });
       expect(prisma.aiUsageEvent.count).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ feature: 'diagnosis', status: 'ALLOWED' }),
+          where: expect.objectContaining({
+            feature: 'diagnosis',
+            status: { in: ['ALLOWED', 'RESERVED', 'SUCCEEDED'] },
+          }),
         }),
       );
       expect(prisma.user.update).not.toHaveBeenCalled();
@@ -120,11 +124,15 @@ describe('AiUsageService', () => {
         .mockResolvedValueOnce(4)
         .mockResolvedValueOnce(0);
 
-      await service.reserveCall({ feature: 'diagnosis', userId: 'user-1' });
+      const reservationId = await service.reserveCall({
+        feature: 'diagnosis',
+        userId: 'user-1',
+      });
 
+      expect(reservationId).toBe('usage-1');
       expect(prisma.aiUsageEvent.count).toHaveBeenCalledTimes(2);
       expect(prisma.aiUsageEvent.create).toHaveBeenLastCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ status: 'ALLOWED' }) }),
+        expect.objectContaining({ data: expect.objectContaining({ status: 'RESERVED' }) }),
       );
     });
 
@@ -137,8 +145,24 @@ describe('AiUsageService', () => {
       // skipped entirely for premium accounts.
       expect(prisma.aiUsageEvent.count).toHaveBeenCalledTimes(1);
       expect(prisma.aiUsageEvent.create).toHaveBeenLastCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ status: 'ALLOWED' }) }),
+        expect.objectContaining({ data: expect.objectContaining({ status: 'RESERVED' }) }),
       );
+    });
+  });
+
+  it('records provider outcomes against the reservation', async () => {
+    const { service, prisma } = createService();
+    prisma.aiUsageEvent.count.mockResolvedValue(0);
+
+    const reservationId = await service.reserveCall({
+      feature: 'progress_check',
+      userId: 'user-1',
+    });
+    await service.completeCall(reservationId, 'FAILED', 'timeout');
+
+    expect(prisma.aiUsageEvent.update).toHaveBeenCalledWith({
+      where: { id: 'usage-1' },
+      data: { status: 'FAILED', reason: 'timeout' },
     });
   });
 });

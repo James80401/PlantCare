@@ -39,6 +39,7 @@ describe('DiagnosisService', () => {
       {
         assertPlantIntentOrThrow: jest.fn().mockResolvedValue(undefined),
         reserveCall: jest.fn().mockResolvedValue(undefined),
+        completeCall: jest.fn().mockResolvedValue(undefined),
       } as never,
     );
 
@@ -179,6 +180,7 @@ describe('DiagnosisService.diagnose shared-plant access', () => {
       {
         assertPlantIntentOrThrow: jest.fn().mockResolvedValue(undefined),
         reserveCall: jest.fn().mockResolvedValue(undefined),
+        completeCall: jest.fn().mockResolvedValue(undefined),
       } as never,
     );
     return { service, prisma };
@@ -225,7 +227,7 @@ describe('DiagnosisService.diagnose shared-plant access', () => {
   });
 });
 
-describe('DiagnosisService.diagnose parallelization', () => {
+describe('DiagnosisService.diagnose provider ordering', () => {
   function makeFile(): Express.Multer.File {
     return {
       buffer: Buffer.from([0xff, 0xd8, 0xff]),
@@ -299,6 +301,7 @@ describe('DiagnosisService.diagnose parallelization', () => {
     const aiUsage = {
       assertPlantIntentOrThrow: jest.fn().mockResolvedValue(undefined),
       reserveCall: jest.fn().mockResolvedValue(undefined),
+      completeCall: jest.fn().mockResolvedValue(undefined),
     };
     const service = new DiagnosisService(
       prisma as never,
@@ -311,15 +314,15 @@ describe('DiagnosisService.diagnose parallelization', () => {
     return { service, prisma, upload, llm, imageModeration };
   }
 
-  it('runs moderation in parallel with the OpenAI diagnose call', async () => {
+  it('finishes moderation before calling the diagnosis provider', async () => {
     const { service, llm, imageModeration } = makeService({ moderationDelayMs: 100, modelDelayMs: 100 });
     const t0 = Date.now();
     await service.diagnose('user-1', 'plant-1', makeFile(), 'yellow leaves');
     const elapsed = Date.now() - t0;
     expect(llm.diagnose).toHaveBeenCalled();
     expect(imageModeration.assertImageAllowed).toHaveBeenCalled();
-    // Two ~100ms calls in parallel → total well under 200ms. Allow generous slack for CI.
-    expect(elapsed).toBeLessThan(180);
+    // Moderation and diagnosis are sequential, so both delays must be observed.
+    expect(elapsed).toBeGreaterThanOrEqual(180);
   });
 
   it('throws BadRequest and does NOT persist the diagnosis when moderation rejects', async () => {

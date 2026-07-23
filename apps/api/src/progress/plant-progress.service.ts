@@ -9,10 +9,23 @@ import { PlantMilestonesService } from '../milestones/plant-milestones.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RecommendationsService } from '../recommendations/recommendations.service';
 import { UploadService } from '../upload/upload.service';
+import {
+  providerMaxRetries,
+  providerTimeoutMs,
+  withBoundedRetry,
+} from '../common/bounded-retry';
+import {
+  isTransientOpenAiError,
+  mayUseRulesFallback,
+  OpenAiRequestError,
+  openAiHttpException,
+  parseOpenAiError,
+} from '../diagnosis/openai-errors';
 import { CreatePlantProgressDto } from './dto/create-plant-progress.dto';
 import { UpdatePlantProgressDto } from './dto/update-plant-progress.dto';
 
 type ProgressAnalysis = {
+  source: 'openai' | 'rules';
   summary: string;
   adviceNeeded: boolean;
   advice: string;
@@ -77,6 +90,8 @@ export class PlantProgressService {
   private readonly apiKey: string | undefined;
   private readonly model: string;
   private readonly baseUrl: string;
+  private readonly timeoutMs: number;
+  private readonly maxRetries: number;
 
   constructor(
     private prisma: PrismaService,
@@ -92,6 +107,8 @@ export class PlantProgressService {
     this.baseUrl = (
       this.config.get<string>('OPENAI_BASE_URL', 'https://api.openai.com/v1') ?? ''
     ).replace(/\/$/, '');
+    this.timeoutMs = providerTimeoutMs(this.config);
+    this.maxRetries = providerMaxRetries(this.config);
   }
 
   async findAll(userId: string, plantId: string) {
@@ -309,8 +326,9 @@ export class PlantProgressService {
     if (!this.apiKey) return fallback;
 
     const prompt = this.buildProgressPrompt(input.plant, input.dto, input.previousEntries, Boolean(input.imageBase64));
+    let reservationId: string | undefined;
     try {
-      await this.aiUsage.reserveCall({
+      reservationId = await this.aiUsage.reserveCall({
         feature: 'progress_check',
         userId: input.userId,
         plantId: input.plantId,
@@ -326,36 +344,69 @@ export class PlantProgressService {
         });
       }
 
-      const { data } = await axios.post(
-        `${this.baseUrl}/chat/completions`,
-        {
-          model: this.model,
-          temperature: 0.35,
-          max_tokens: 800,
-          response_format: { type: 'json_object' },
-          messages: [
+      const { data } = await withBoundedRetry(
+        () =>
+          axios.post(
+            `${this.baseUrl}/chat/completions`,
             {
-              role: 'system',
-              content:
-                'You are Dr. Plant, an expert horticulturist. Analyze plant progress check-ins only. Be practical, cautious, and concise. Respond only with JSON.',
+              model: this.model,
+              temperature: 0.35,
+              max_tokens: 800,
+              response_format: { type: 'json_object' },
+              messages: [
+                {
+                  role: 'system',
+                  content:
+                    'You are Dr. Plant, an expert horticulturist. Analyze plant progress check-ins only. Be practical, cautious, and concise. Respond only with JSON.',
+                },
+                { role: 'user', content },
+              ],
             },
-            { role: 'user', content },
-          ],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 60000,
-        },
+            {
+              headers: {
+                Authorization: `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+              },
+              timeout: this.timeoutMs,
+            },
+          ),
+        isTransientOpenAiError,
+        this.maxRetries,
       );
 
       const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? '{}');
-      return this.normalizeAnalysis(parsed, fallback);
+      const analysis = this.normalizeAnalysis(parsed, fallback);
+      await this.aiUsage.completeCall(reservationId, 'SUCCEEDED');
+      return analysis;
     } catch (err) {
-      this.logger.warn(`Progress analysis fallback used: ${err}`);
-      return fallback;
+      if (err instanceof SyntaxError) {
+        await this.aiUsage.completeCall(
+          reservationId,
+          'FALLBACK',
+          'invalid structured provider response',
+        );
+        this.logger.warn('Progress analysis fallback used: invalid provider response');
+        return fallback;
+      }
+      const providerError =
+        err instanceof OpenAiRequestError
+          ? err
+          : axios.isAxiosError(err)
+            ? parseOpenAiError(err)
+            : null;
+      if (providerError && mayUseRulesFallback(providerError)) {
+        await this.aiUsage.completeCall(reservationId, 'FALLBACK', providerError.code);
+        this.logger.warn(`Progress analysis fallback used: ${providerError.code}`);
+        return fallback;
+      }
+      await this.aiUsage.completeCall(
+        reservationId,
+        'FAILED',
+        providerError?.code ??
+          (err instanceof Error ? err.message.slice(0, 240) : 'unknown error'),
+      );
+      if (providerError) throw openAiHttpException(providerError);
+      throw err;
     }
   }
 
@@ -434,6 +485,7 @@ export class PlantProgressService {
       Math.max(3, Number(raw.nextCheckInDays) || fallback.nextCheckInDays),
     );
     return {
+      source: 'openai',
       summary:
         typeof raw.summary === 'string' && raw.summary.trim()
           ? raw.summary.trim().slice(0, 900)
@@ -476,6 +528,7 @@ export class PlantProgressService {
     ].filter(Boolean) as string[];
 
     return {
+      source: 'rules',
       summary: previousEntries.length
         ? `This check-in has the plant looking ${latest}. Compared with the recent history, keep watching for repeated changes rather than reacting to one isolated snapshot.`
         : `First progress check-in saved. The plant is currently marked ${latest}, giving Dr. Plant a baseline for future health and growth trends.`,

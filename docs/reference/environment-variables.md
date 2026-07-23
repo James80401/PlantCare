@@ -37,6 +37,8 @@
 | `OPENAI_MODEL` | Generation model for diagnosis/chat | `gpt-4.1-mini` |
 | `OPENAI_MODERATION_MODEL` | Vision model for image moderation verdicts | `gpt-4o-mini` |
 | `OPENAI_BASE_URL` | API base URL (override for proxies/gateways) | `https://api.openai.com/v1` |
+| `OPENAI_TIMEOUT_MS` | Bounded timeout used by existing OpenAI integrations | `60000` |
+| `OPENAI_MAX_RETRIES` | Transient retries for existing OpenAI integrations (maximum 3) | `2` |
 | `AI_RATE_LIMIT_WINDOW_MINUTES` | Sliding window for per-user AI call count | `60` |
 | `AI_RATE_LIMIT_MAX_CALLS` | Allowed AI calls per window before pausing | `30` |
 | `AI_RATE_LIMIT_PAUSE_HOURS` | Pause duration once the limit trips | `12` |
