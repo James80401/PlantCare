@@ -38,6 +38,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
       ENABLE_PLANT_BUDDY: ${ENABLE_PLANT_BUDDY:-false}
+      ENABLE_PREMIUM_BILLING: ${ENABLE_PREMIUM_BILLING:-false}
       SEED_DEMO_DATA: 'false'
       ALL_USERS_PREMIUM: ${ALL_USERS_PREMIUM:-true}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -67,6 +68,7 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3001/api/v1}
+        VITE_ENABLE_PREMIUM_BILLING: ${VITE_ENABLE_PREMIUM_BILLING:-false}
     restart: unless-stopped
     depends_on:
       api:

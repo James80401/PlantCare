@@ -35,6 +35,8 @@ const required = [
   'FRONTEND_URL',
   'CORS_ORIGINS',
   'VITE_API_BASE_URL',
+  'ENABLE_PREMIUM_BILLING',
+  'VITE_ENABLE_PREMIUM_BILLING',
 ];
 for (const key of required) {
   const value = vars[key]?.trim();
@@ -75,7 +77,13 @@ if (isTrue('ENABLE_PLANT_BUDDY')) {
 if (isTrue('ENABLE_SWAGGER')) {
   errors.push('ENABLE_SWAGGER must remain false during the improvement roadmap');
 }
+if (isTrue('ENABLE_PREMIUM_BILLING') !== isTrue('VITE_ENABLE_PREMIUM_BILLING')) {
+  errors.push(
+    'ENABLE_PREMIUM_BILLING and VITE_ENABLE_PREMIUM_BILLING must agree',
+  );
+}
 if (isTrue('ENABLE_PREMIUM_BILLING')) {
+  errors.push('Premium billing must remain disabled during the improvement roadmap');
   const stripeKeys = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_ID_PREMIUM'];
   for (const key of stripeKeys) {
     if (!vars[key]?.trim()) errors.push(`${key} is required when Premium billing is enabled`);

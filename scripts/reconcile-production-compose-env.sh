@@ -69,6 +69,7 @@ fi
 
 append_if_missing ENABLE_PLANT_BUDDY false
 append_if_missing ENABLE_PREMIUM_BILLING false
+append_if_missing VITE_ENABLE_PREMIUM_BILLING false
 append_if_missing SEED_DEMO_DATA false
 append_if_missing APP_VERSION "$(node -p "require('./package.json').version || '0.0.0'")"
 

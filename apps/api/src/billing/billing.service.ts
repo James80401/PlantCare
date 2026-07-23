@@ -1,9 +1,20 @@
-import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PlanTier, SubscriptionStatus } from '@prisma/client';
 import Stripe from 'stripe';
 import { PrismaService } from '../prisma/prisma.service';
-import { effectivePlanTier, premiumPriceLabel, premiumTrialDays } from '../config/premium-policy';
+import {
+  effectivePlanTier,
+  premiumBillingEnabled,
+  premiumPriceLabel,
+  premiumTrialDays,
+} from '../config/premium-policy';
 import { freePlanLimits, IDENTIFY_WINDOW_DAYS } from './billing-limits';
 
 @Injectable()
@@ -20,6 +31,7 @@ export class BillingService {
   }
 
   async createCheckoutSession(userId: string, email: string) {
+    this.assertBillingEnabled();
     if (!this.stripe) {
       throw new ServiceUnavailableException('Stripe is not configured');
     }
@@ -57,6 +69,7 @@ export class BillingService {
   }
 
   async createPortalSession(userId: string) {
+    this.assertBillingEnabled();
     if (!this.stripe) {
       throw new ServiceUnavailableException('Stripe is not configured');
     }
@@ -108,6 +121,7 @@ export class BillingService {
     const identifyCount = user.identifyCountResetAt <= now ? 0 : user.identifyCountThisMonth;
 
     return {
+      billingEnabled: premiumBillingEnabled(this.config),
       planTier,
       isPremium: planTier === PlanTier.PREMIUM,
       subscription: user.subscriptions[0] ?? null,
@@ -119,7 +133,11 @@ export class BillingService {
       },
       priceLabel: premiumPriceLabel(this.config),
       trialDays: premiumTrialDays(this.config),
-      canManageSubscription: Boolean(this.stripe && user.stripeCustomerId),
+      canManageSubscription: Boolean(
+        premiumBillingEnabled(this.config) &&
+          this.stripe &&
+          user.stripeCustomerId,
+      ),
     };
   }
 
@@ -166,18 +184,28 @@ export class BillingService {
     return { canceled };
   }
 
-  async handleWebhook(rawBody: Buffer, signature: string) {
-    if (!this.stripe) return;
+  async handleWebhook(rawBody: Buffer | undefined, signature?: string) {
+    this.assertBillingEnabled();
+    if (!this.stripe) {
+      throw new ServiceUnavailableException('Stripe is not configured');
+    }
 
     const secret = this.config.get<string>('STRIPE_WEBHOOK_SECRET');
-    if (!secret) return;
+    if (!secret) {
+      throw new ServiceUnavailableException(
+        'Stripe webhook verification is not configured',
+      );
+    }
+    if (!rawBody?.length || !signature?.trim()) {
+      throw new BadRequestException('Missing Stripe webhook signature or body');
+    }
 
     let event: Stripe.Event;
     try {
       event = this.stripe.webhooks.constructEvent(rawBody, signature, secret);
     } catch (err) {
       this.logger.warn(`Webhook signature failed: ${err}`);
-      return;
+      throw new BadRequestException('Invalid Stripe webhook signature');
     }
 
     if (event.type === 'checkout.session.completed') {
@@ -202,6 +230,7 @@ export class BillingService {
     if (event.type === 'invoice.payment_failed') {
       await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
     }
+    return { received: true };
   }
 
   /**
@@ -259,5 +288,11 @@ export class BillingService {
     if (status === 'trialing') return SubscriptionStatus.TRIALING;
     if (status === 'canceled') return SubscriptionStatus.CANCELED;
     return SubscriptionStatus.PAST_DUE;
+  }
+
+  private assertBillingEnabled(): void {
+    if (!premiumBillingEnabled(this.config)) {
+      throw new NotFoundException('Premium billing is not enabled');
+    }
   }
 }

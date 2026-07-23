@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatApiErrorMessage } from '../utils/apiError';
 
 type BillingStatus = {
+  billingEnabled: boolean;
   planTier: 'FREE' | 'PREMIUM';
   isPremium: boolean;
   subscription: { status: string; planName: string; createdAt: string } | null;
