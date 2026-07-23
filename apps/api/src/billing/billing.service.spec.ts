@@ -1,9 +1,16 @@
-import { BadRequestException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PlanTier, SubscriptionStatus } from '@prisma/client';
 import { BillingService } from './billing.service';
 
 describe('BillingService', () => {
-  function createService(stripe?: Record<string, unknown>) {
+  function createService(
+    stripe?: Record<string, unknown>,
+    billingEnabled = true,
+  ) {
     const prisma = {
       user: {
         findUnique: jest.fn().mockResolvedValue({
@@ -32,6 +39,8 @@ describe('BillingService', () => {
           STRIPE_PRICE_ID_PREMIUM: 'price_123',
           PREMIUM_PRICE_LABEL: '$4.99/month',
           PREMIUM_TRIAL_DAYS: '14',
+          ENABLE_PREMIUM_BILLING: String(billingEnabled),
+          STRIPE_WEBHOOK_SECRET: 'whsec_test',
         };
         return values[key] ?? fallback;
       }),
@@ -47,6 +56,7 @@ describe('BillingService', () => {
     const { service } = createService();
 
     await expect(service.getStatus('user-1')).resolves.toMatchObject({
+      billingEnabled: true,
       planTier: PlanTier.FREE,
       isPremium: false,
       usage: { plants: 4, identifications: 2 },
@@ -63,6 +73,24 @@ describe('BillingService', () => {
     await expect(service.createCheckoutSession('user-1', 'user@example.com')).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
+  });
+
+  it('keeps checkout, portal, and webhooks hidden behind the server gate', async () => {
+    const { service } = createService(undefined, false);
+
+    await expect(
+      service.createCheckoutSession('user-1', 'user@example.com'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.createPortalSession('user-1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    await expect(
+      service.handleWebhook(Buffer.from('{}'), 'sig_test'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.getStatus('user-1')).resolves.toMatchObject({
+      billingEnabled: false,
+      canManageSubscription: false,
+    });
   });
 
   it('cancels every live Stripe subscription before account deletion', async () => {
@@ -142,6 +170,8 @@ describe('BillingService', () => {
     });
     expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
+        success_url: 'https://drplant.app/subscription?success=1',
+        cancel_url: 'https://drplant.app/subscription?canceled=1',
         subscription_data: expect.objectContaining({ trial_period_days: 14 }),
       }),
     );
@@ -159,6 +189,10 @@ describe('BillingService', () => {
 
     await expect(service.createPortalSession('user-1')).resolves.toEqual({
       url: 'https://billing.stripe.test/session',
+    });
+    expect(stripe.billingPortal.sessions.create).toHaveBeenCalledWith({
+      customer: 'cus_123',
+      return_url: 'https://drplant.app/garden/subscription',
     });
   });
 
@@ -261,11 +295,7 @@ describe('BillingService', () => {
         }),
       },
     };
-    const { service, prisma, config } = createService(stripe);
-    config.get.mockImplementation(
-      (key: string, fallback?: string) =>
-        (key === 'STRIPE_WEBHOOK_SECRET' ? 'whsec_test' : fallback) as string,
-    );
+    const { service, prisma } = createService(stripe);
 
     await service.handleWebhook(Buffer.from('{}'), 'sig_test');
 
@@ -273,6 +303,73 @@ describe('BillingService', () => {
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       data: { planTier: PlanTier.FREE },
+    });
+  });
+
+  it('rejects an invalid webhook signature', async () => {
+    const stripe = {
+      webhooks: {
+        constructEvent: jest.fn(() => {
+          throw new Error('No signatures found');
+        }),
+      },
+    };
+    const { service } = createService(stripe);
+
+    await expect(
+      service.handleWebhook(Buffer.from('{}'), 'bad-signature'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('fails closed when webhook verification is not configured', async () => {
+    const stripe = {
+      webhooks: { constructEvent: jest.fn() },
+    };
+    const { service, config } = createService(stripe);
+    config.get.mockImplementation((key: string, fallback?: string) => {
+      if (key === 'ENABLE_PREMIUM_BILLING') return 'true';
+      if (key === 'STRIPE_WEBHOOK_SECRET') return '';
+      return fallback ?? '';
+    });
+
+    await expect(
+      service.handleWebhook(Buffer.from('{}'), 'sig_test'),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(stripe.webhooks.constructEvent).not.toHaveBeenCalled();
+  });
+
+  it('applies repeated subscription events without creating duplicates', async () => {
+    const subscription = {
+      id: 'sub_repeat',
+      status: 'active',
+      metadata: { userId: 'user-1' },
+      ended_at: null,
+    };
+    const stripe = {
+      webhooks: {
+        constructEvent: jest.fn().mockReturnValue({
+          type: 'customer.subscription.updated',
+          data: { object: subscription },
+        }),
+      },
+    };
+    const { service, prisma } = createService(stripe);
+    prisma.subscription.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'subscription-row-1' });
+
+    await expect(
+      service.handleWebhook(Buffer.from('{}'), 'sig_test'),
+    ).resolves.toEqual({ received: true });
+    await expect(
+      service.handleWebhook(Buffer.from('{}'), 'sig_test'),
+    ).resolves.toEqual({ received: true });
+
+    expect(prisma.subscription.create).toHaveBeenCalledTimes(1);
+    expect(prisma.subscription.update).toHaveBeenCalledTimes(1);
+    expect(prisma.subscription.update).toHaveBeenCalledWith({
+      where: { id: 'subscription-row-1' },
+      data: expect.objectContaining({ stripeId: 'sub_repeat' }),
     });
   });
 

@@ -5,6 +5,13 @@ export function allUsersPremium(config: ConfigService): boolean {
   return config.get<string>('ALL_USERS_PREMIUM')?.trim().toLowerCase() === 'true';
 }
 
+export function premiumBillingEnabled(config: ConfigService): boolean {
+  return (
+    config.get<string>('ENABLE_PREMIUM_BILLING', 'false').trim().toLowerCase() ===
+    'true'
+  );
+}
+
 export function effectivePlanTier(config: ConfigService, planTier: PlanTier): PlanTier {
   return allUsersPremium(config) ? PlanTier.PREMIUM : planTier;
 }

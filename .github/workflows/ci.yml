@@ -28,6 +28,7 @@ jobs:
       - run: npx prisma db push
       - run: npm run db:seed
       - run: npm run typecheck
+      - run: npm run test:production-config
       - run: npm run test:media-audit
       - run: npm run media:audit
       - run: npm run test -w @plant-care/api

@@ -43,8 +43,8 @@ export class BillingController {
   @Post('webhook')
   webhook(
     @Req() req: RawBodyRequest<Request>,
-    @Headers('stripe-signature') signature: string,
+    @Headers('stripe-signature') signature?: string,
   ) {
-    return this.billingService.handleWebhook(req.rawBody as Buffer, signature);
+    return this.billingService.handleWebhook(req.rawBody, signature);
   }
 }
