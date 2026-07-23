@@ -7,7 +7,7 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes, randomUUID } from 'crypto';
@@ -445,7 +445,10 @@ export class AuthService implements OnModuleInit {
       { ...payload, jti: randomUUID() },
       {
         secret: this.config.get<string>('JWT_REFRESH_SECRET', 'dev-refresh-secret'),
-        expiresIn: this.config.get<string>('JWT_REFRESH_EXPIRES_IN', '30d'),
+        expiresIn: this.config.get<string>(
+          'JWT_REFRESH_EXPIRES_IN',
+          '30d',
+        ) as JwtSignOptions['expiresIn'],
       },
     );
 

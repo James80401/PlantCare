@@ -294,13 +294,23 @@ describe('NotificationsService', () => {
   });
 
   describe('sendRecommendationReminders', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-01-15T13:00:00.000Z'));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     const baseUser = {
       id: 'user-1',
       email: 'a@example.com',
       notifyPush: true,
       quietHoursStart: null,
       quietHoursEnd: null,
-      reminderHour: new Date().getHours(),
+      reminderHour: 13,
+      timezone: 'UTC',
     };
 
     it('queries only ACTIVE, unnotified, HIGH/MEDIUM-priority recommendations that are not snoozed', async () => {
@@ -365,7 +375,7 @@ describe('NotificationsService', () => {
     });
 
     it("does not push outside the user's reminder hour, and leaves notifiedAt unset", async () => {
-      const offHour = (new Date().getHours() + 1) % 24;
+      const offHour = (baseUser.reminderHour + 1) % 24;
       recommendationFindMany.mockResolvedValue([
         {
           id: 'rec-1',

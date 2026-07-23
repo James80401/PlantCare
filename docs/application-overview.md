@@ -56,7 +56,7 @@ flowchart TB
 | Payments | Stripe (optional) |
 | AI | OpenAI (Dr. Plant), Hugging Face fallback |
 | Testing | Jest (API), Vitest + Testing Library (web) |
-| CI | GitHub Actions (Node 20) in [.github/](../.github/) |
+| CI | GitHub Actions (Node 22) in [.github/](../.github/) |
 
 ---
 

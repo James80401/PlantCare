@@ -34,7 +34,7 @@ Swagger (when API is running): `http://localhost:3001/api/docs`
 
 ### 1. Prerequisites
 
-- **Node.js 20+** (22+ recommended for Capacitor CLI)
+- **Node.js 22** (the supported runtime for the API, web tooling, and Capacitor CLI)
 - **npm** (workspaces at repo root)
 - **Git**
 - Optional: **Docker Desktop** for staging stack and Postgres

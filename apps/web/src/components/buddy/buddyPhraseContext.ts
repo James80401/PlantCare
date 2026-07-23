@@ -46,11 +46,11 @@ export function buildBuddyPhraseContext(
   apiGreeting?: string,
   now: Date = new Date(),
 ): BuddyPhraseContext {
-  const weatherRainHint =
-    Boolean(apiGreeting) &&
-    (apiGreeting.includes('rain') ||
+  const weatherRainHint = apiGreeting
+    ? apiGreeting.includes('rain') ||
       apiGreeting.includes('🌧') ||
-      apiGreeting.includes('indoor plant checks'));
+      apiGreeting.includes('indoor plant checks')
+    : false;
 
   return {
     name: buddy.name,

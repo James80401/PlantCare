@@ -94,7 +94,7 @@ sudo ufw enable
 ```
 
 - [ ] **C3.** Install **Docker** and **Docker Compose** (follow Docker’s official Ubuntu install guide if not preinstalled).
-- [ ] **C4.** Install **Git** and **Node 20+** (for `npm run production:*` scripts on server):
+- [ ] **C4.** Install **Git** and **Node 22** (for `npm run production:*` scripts on server):
 
 ```bash
 sudo apt install -y git

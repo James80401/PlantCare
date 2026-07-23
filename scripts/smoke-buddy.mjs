@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
 const base = process.env.API_URL || 'http://localhost:3001/api/v1';
+const expectHidden = process.env.EXPECT_BUDDY_HIDDEN === '1';
 
 async function api(method, path, body, token) {
   const headers = { 'Content-Type': 'application/json' };
@@ -27,6 +28,15 @@ await prisma.$disconnect();
 const login = await api('POST', '/auth/login', { email, password });
 if (!login.data.accessToken) throw new Error('login failed');
 const token = login.data.accessToken;
+
+if (expectHidden) {
+  const hidden = await api('GET', '/buddy', null, token);
+  if (hidden.status !== 404) {
+    throw new Error(`expected Buddy to be hidden with 404, received ${hidden.status}`);
+  }
+  console.log('Buddy API is correctly hidden');
+  process.exit(0);
+}
 
 const create = await api('POST', '/buddy', { name: 'Sprout', speciesId: 'monstera', trait: 'RESILIENT' }, token);
 if (create.status >= 400) throw new Error(`create buddy ${create.status}`);

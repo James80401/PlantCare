@@ -620,7 +620,11 @@ export interface GardenDetailPlant {
   nickname?: string | null;
   imageUrl?: string | null;
   location?: string | null;
-  species: { commonName: string; scientificName?: string | null };
+  species: {
+    commonName: string;
+    scientificName?: string | null;
+    defaultImageUrl?: string | null;
+  };
   needsAttention: boolean;
   nextTask?: { taskType: string; dueDate: string } | null;
 }

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AxiosResponse } from 'axios';
 import AddPlantWizard from './AddPlantWizard';
 import { plantsApi, speciesApi, gardensApi } from '../services/api';
 
@@ -57,6 +58,10 @@ function renderWizard() {
   );
 }
 
+function axiosResponse<T>(data: T): AxiosResponse<T> {
+  return { data } as AxiosResponse<T>;
+}
+
 describe('AddPlantWizard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -68,8 +73,8 @@ describe('AddPlantWizard', () => {
       configurable: true,
       value: vi.fn(),
     });
-    vi.mocked(gardensApi.summaries).mockResolvedValue({
-      data: [
+    vi.mocked(gardensApi.summaries).mockResolvedValue(
+      axiosResponse([
         {
           id: 'garden-1',
           name: 'Kitchen plants',
@@ -82,9 +87,11 @@ describe('AddPlantWizard', () => {
           urgentAlerts: 0,
           status: 'No plants yet',
         },
-      ],
-    });
-    vi.mocked(plantsApi.upload).mockResolvedValue({ data: { url: '/uploads/plant.jpg' } });
+      ]),
+    );
+    vi.mocked(plantsApi.upload).mockResolvedValue(
+      axiosResponse({ url: '/uploads/plant.jpg' }),
+    );
   });
 
   it('separates photo identification from name search on the first screen', async () => {
@@ -99,7 +106,7 @@ describe('AddPlantWizard', () => {
   });
 
   it('guides manual search before and after no-result queries', async () => {
-    vi.mocked(speciesApi.search).mockResolvedValue({ data: [] });
+    vi.mocked(speciesApi.search).mockResolvedValue(axiosResponse([]));
 
     renderWizard();
     fireEvent.click(await screen.findByRole('button', { name: 'Search by name' }));
@@ -116,8 +123,8 @@ describe('AddPlantWizard', () => {
   });
 
   it('frames external photo matches as provisional before confirmation', async () => {
-    vi.mocked(plantsApi.identify).mockResolvedValue({
-      data: {
+    vi.mocked(plantsApi.identify).mockResolvedValue(
+      axiosResponse({
         confidence: 0.46,
         externalMatch: {
           provider: 'plantnet',
@@ -127,8 +134,8 @@ describe('AddPlantWizard', () => {
           confidence: 0.46,
           integrationStatus: 'requires_confirmation',
         },
-      },
-    });
+      }),
+    );
 
     renderWizard();
     fireEvent.click(await screen.findByRole('button', { name: 'Mock Take or upload a photo' }));
@@ -140,8 +147,8 @@ describe('AddPlantWizard', () => {
   });
 
   it('makes optional details clear after selecting a searched species', async () => {
-    vi.mocked(speciesApi.search).mockResolvedValue({
-      data: [
+    vi.mocked(speciesApi.search).mockResolvedValue(
+      axiosResponse([
         {
           id: 'species-1',
           commonName: 'Monstera',
@@ -149,8 +156,8 @@ describe('AddPlantWizard', () => {
           sunlight: 'Bright indirect light',
           wateringFreqDays: 7,
         },
-      ],
-    });
+      ]),
+    );
 
     renderWizard();
     fireEvent.click(await screen.findByRole('button', { name: 'Search by name' }));

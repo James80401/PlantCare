@@ -864,11 +864,9 @@ export default function AddPlantWizard() {
           <Button type="submit" fullWidth disabled={loading || imageUploading}>
             {loading ? 'Saving…' : imageUploading ? 'Uploading photo...' : 'Save plant'}
           </Button>
-          {step !== 'photo' && (
-            <Button type="button" variant="ghost" fullWidth onClick={() => setStep('photo')}>
-              ← Start over
-            </Button>
-          )}
+          <Button type="button" variant="ghost" fullWidth onClick={() => setStep('photo')}>
+            ← Start over
+          </Button>
         </form>
       )}
     </div>

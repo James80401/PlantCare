@@ -1,13 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
 
-const LINKS = [
+const LINKS: ReadonlyArray<{ to: string; label: string; exact?: boolean }> = [
   { to: '/garden/buddy', label: 'Home', exact: true },
   { to: '/garden/buddy/activities', label: 'Activities' },
   { to: '/garden/buddy/quests', label: 'Quests' },
   { to: '/garden/buddy/style', label: 'Style' },
   { to: '/garden/buddy/town', label: 'Town' },
   { to: '/garden/buddy/journey', label: 'Journey' },
-] as const;
+];
 
 export default function BuddySubNav() {
   const { pathname } = useLocation();

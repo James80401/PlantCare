@@ -6,6 +6,7 @@ import { resolve } from 'path';
 const apiBase = process.env.API_URL || 'http://localhost:3001/api/v1';
 const authFile = resolve(__dirname, '.uat-auth.json');
 const isStaging = process.env.STAGING_E2E === '1';
+const buddyEnabled = process.env.UAT_ENABLE_PLANT_BUDDY === '1';
 
 function stagingPsql(query: string) {
   const docker = process.env.DOCKER_BIN || 'docker';
@@ -79,21 +80,23 @@ async function main() {
   const species = await speciesRes.json();
   const speciesId = species?.[0]?.id;
 
-  const buddyRes = await fetch(`${apiBase}/buddy`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      name: 'UAT Buddy',
-      speciesId: 'monstera',
-      trait: 'RESILIENT',
-    }),
-  });
-  if (!buddyRes.ok && buddyRes.status !== 409) {
-    const errBody = await buddyRes.text();
-    throw new Error(`E2E setup: buddy create failed (${buddyRes.status}) ${errBody}`);
+  if (buddyEnabled) {
+    const buddyRes = await fetch(`${apiBase}/buddy`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: 'UAT Buddy',
+        speciesId: 'monstera',
+        trait: 'RESILIENT',
+      }),
+    });
+    if (!buddyRes.ok && buddyRes.status !== 409) {
+      const errBody = await buddyRes.text();
+      throw new Error(`E2E setup: buddy create failed (${buddyRes.status}) ${errBody}`);
+    }
   }
 
   let plantId: string | undefined;

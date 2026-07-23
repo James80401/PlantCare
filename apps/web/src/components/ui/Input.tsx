@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import { useId } from 'react';
 import { cn } from '../../lib/cn';
 import { FormError } from '../a11y/FormError';
@@ -57,7 +57,7 @@ export function Textarea({
   id,
   rows = 4,
   ...props
-}: InputHTMLAttributes<HTMLTextAreaElement> & { label?: string; error?: string }) {
+}: TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string; error?: string }) {
   const autoId = useId();
   const inputId = id || `textarea-${autoId}`;
   const errorId = error ? `${inputId}-error` : undefined;

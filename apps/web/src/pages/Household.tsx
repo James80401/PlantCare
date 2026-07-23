@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -12,7 +12,6 @@ import { useInterval } from '../hooks/useInterval';
 
 export default function Household() {
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
   const [gardens, setGardens] = useState<GardenSummary[]>([]);
   const [myPlants, setMyPlants] = useState<Array<{ id: string; nickname?: string | null; species: { commonName: string } }>>([]);
   const [loading, setLoading] = useState(true);

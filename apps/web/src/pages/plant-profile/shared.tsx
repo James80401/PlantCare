@@ -6,14 +6,13 @@ import { HelpButton } from '../../components/ui/HelpButton';
 import type { HelpTopicKey } from '../../content/helpTopics';
 import { resolveApiAssetUrl } from '../../utils/apiAssets';
 import { trackEvent } from '../../utils/analytics';
-import { careSectionToneClasses, getCareSectionMeta } from '../../utils/careGuideSections';
 import {
   countTimelineByType,
   filterTimelineEvents,
   type TimelineFilter,
 } from '../../utils/plantTimeline';
 import { skipReasonLabel } from '../../utils/taskFeedback';
-import { formatGuideBody, taskTypeLabel } from '../../utils/tasks';
+import { taskTypeLabel } from '../../utils/tasks';
 import type { CareDetailLevel, CareOverviewSection, PlantRecord, TimelineEvent } from './types';
 
 const TIMELINE_FILTERS: Array<{ key: TimelineFilter; label: string }> = [

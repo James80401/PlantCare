@@ -4,7 +4,7 @@
 
 ## API Docker
 
-`apps/api/Dockerfile` — multi-stage Node 20 build.
+`apps/api/Dockerfile` — multi-stage Node 22 build.
 
 ## Database
 

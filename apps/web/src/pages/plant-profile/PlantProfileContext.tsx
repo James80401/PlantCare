@@ -9,20 +9,18 @@ import {
   type ReactNode,
 } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { format } from 'date-fns';
 import { PLANT_LOCATIONS } from '../../constants/plantLocations';
 import { useTasksInRange } from '../../hooks/useTasksInRange';
 import { plantsApi, journalApi, diagnosisApi } from '../../services/api';
 import { Skeleton } from '../../components/ui/Skeleton';
 import type { TaskCompleteFeedback, TaskSkipFeedback } from '../../utils/taskFeedback';
-import { taskTypeLabel } from '../../utils/tasks';
 import { mapTimelineFromApi } from '../../utils/plantTimeline';
 import { appendJournalPrompt } from './shared';
 import type { CareOverview, PlantRecord, TimelineEvent } from './types';
 
 interface PlantProfileContextValue {
   id: string;
-  plant: PlantRecord | null;
+  plant: PlantRecord;
   plantLabel: string;
   species: PlantRecord;
   tasks: PlantRecord[];

@@ -2,10 +2,8 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation, type To } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { CareRoundCard, careRoundKey } from '../components/tasks/CareRoundCard';
-import { TaskTypeIcon } from '../components/tasks/TaskTypeIcon';
 import {
   useDashboard,
-  type DashboardAttention,
   type DashboardHealthStory,
 } from '../hooks/useDashboard';
 import { useDashboardTaskActions } from '../hooks/useDashboardTaskActions';
@@ -15,13 +13,11 @@ import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
 import BuddyDashboardPanel from '../components/buddy/BuddyDashboardPanel';
 import SeasonalBanner from '../components/buddy/SeasonalBanner';
 import {
-  findNextTaskForPlant,
   getOverdueTasks,
   getPendingTasks,
   getSeasonalTip,
   getSuggestedAction,
   getTodayTasks,
-  type DashboardPlant,
 } from '../utils/dashboard';
 import { FormError } from '../components/a11y/FormError';
 import { StatusMessage } from '../components/a11y/StatusMessage';
@@ -39,10 +35,8 @@ import { taskTypeLabel } from '../utils/tasks';
 import { plantDrPlantPath } from './plant-profile/constants';
 import {
   isDiagnosisAttentionReason,
-  isProfilePhotoAttentionReason,
-  plantProfileDetailsPath,
 } from '../utils/gardenPaths';
-import { resolveApiAssetUrl, resolveApiThumbnailUrl } from '../utils/apiAssets';
+import { resolveApiThumbnailUrl } from '../utils/apiAssets';
 import { formatMeasurementValues } from '../utils/journalMeasurements';
 
 const BUDDY_ENABLED = import.meta.env.VITE_ENABLE_PLANT_BUDDY === 'true';
@@ -173,7 +167,6 @@ export default function Dashboard() {
   const metrics = dash?.metrics;
   const healthStory = dash?.healthStory;
   const careSummary = dash?.careSummary;
-  const attentionSummary = dash?.attentionSummary;
   const plantCount = metrics?.totalPlants ?? plants.length;
   const dueTodayCount = careSummary?.counts.dueToday ?? metrics?.dueToday ?? todayTasks.length;
   const overdueCount = careSummary?.counts.overdue ?? metrics?.overdue ?? overdueTasks.length;
@@ -273,9 +266,6 @@ export default function Dashboard() {
     [milestones],
   );
   const gardenScore = dash?.engagement.score ?? gardenWellness.score;
-  const needsAttentionCount =
-    attentionSummary?.counts.needsAttention ??
-    attentionItems.filter((item) => item.priority !== 'info').length;
   const dashboardLoading = dashLoading;
   const gardensLoading = dashLoading || gardenSummariesLoading;
   const seasonalTip = getSeasonalTip(plants.length, currentDate);
@@ -1107,7 +1097,6 @@ function PriorityCareSection({
     </section>
   );
 }
-
 function DashboardDisclosure({
   id,
   eyebrow,
@@ -1270,62 +1259,6 @@ function ScheduleSuggestionCard({
   );
 }
 
-function AttentionItemCard({
-  item,
-  plant,
-}: {
-  item: DashboardAttention;
-  plant?: DashboardPlant;
-}) {
-  const toneClasses = {
-    urgent: 'border-red-100 bg-red-50 text-red-900',
-    warning: 'border-amber-100 bg-amber-50 text-amber-950',
-    info: 'border-emerald-100 bg-emerald-50 text-emerald-950',
-  };
-  const isDiagnosis = isDiagnosisAttentionReason(item.reason);
-  const needsPhoto = isProfilePhotoAttentionReason(item.reason);
-  const primaryTo = isDiagnosis
-    ? plantDrPlantPath(item.plantId)
-    : needsPhoto
-      ? plantProfileDetailsPath(item.plantId)
-      : `/garden/plants/${item.plantId}`;
-  const primaryLabel = isDiagnosis
-    ? 'Ask Dr. Plant'
-    : needsPhoto
-      ? 'Add photo'
-      : 'Open plant';
-
-  return (
-    <article
-      className={`min-w-0 rounded-2xl border p-3 transition hover:-translate-y-0.5 hover:shadow-sm ${toneClasses[item.priority]}`}
-    >
-      <div className="flex gap-3">
-        {plant ? <PlantThumb plant={plant} size="sm" /> : null}
-        <div className="min-w-0 flex-1">
-          <p className="break-words font-semibold">{item.plantName}</p>
-          <p className="mt-0.5 break-words text-xs opacity-80">{item.reason}</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Link
-              to={primaryTo}
-              className="inline-flex min-h-9 items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-emerald-900 hover:bg-white"
-            >
-              {primaryLabel}
-            </Link>
-            {isDiagnosis ? (
-              <Link
-                to={`/garden/plants/${item.plantId}`}
-                className="inline-flex min-h-9 items-center rounded-full px-3 py-1 text-xs font-semibold opacity-80 hover:opacity-100"
-              >
-                Profile
-              </Link>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
-
 function SuggestionCard({
   title,
   body,
@@ -1348,102 +1281,5 @@ function SuggestionCard({
         <span className="truncate">{actionLabel}</span>
       </Link>
     </article>
-  );
-}
-
-function PlantCard({
-  plant,
-  tasks,
-  sharedMeta,
-}: {
-  plant: DashboardPlant;
-  tasks: TaskItem[];
-  sharedMeta?: { gardenName: string; role: string };
-}) {
-  const next = findNextTaskForPlant(plant, tasks);
-  const name = plant.nickname || plant.species.commonName;
-  const plantTasks = tasks.filter((task) => task.plant.id === plant.id);
-  const overdueCount = getOverdueTasks(plantTasks).length;
-
-  return (
-    <article className="group min-w-0 overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
-      <div className="flex gap-3 p-3 sm:gap-4 sm:p-4">
-        <Link to={`/garden/plants/${plant.id}`} className="flex min-w-0 flex-1 gap-3 sm:gap-4">
-          <PlantThumb plant={plant} size="lg" />
-          <div className="min-w-0 flex-1">
-            <h3 className="break-words font-semibold leading-snug text-emerald-950">{name}</h3>
-            <p className="truncate text-sm text-gray-500">{plant.species.commonName}</p>
-            {sharedMeta ? (
-              <span className="mt-1 inline-block max-w-full truncate rounded-full bg-sky-100 px-2 py-0.5 text-[0.65rem] font-semibold text-sky-900">
-                Shared · {sharedMeta.gardenName}
-              </span>
-            ) : null}
-            <div className="mt-3 space-y-1.5 text-xs text-gray-600">
-              {next ? (
-                <p className="flex min-w-0 items-center gap-1.5 font-medium text-emerald-800">
-                  <TaskTypeIcon taskType={next.taskType} className="h-3.5 w-3.5 shrink-0" />
-                  <span className="min-w-0 break-words">
-                    Next: {taskTypeLabel(next.taskType)} on {format(parseISO(next.dueDate), 'MMM d')}
-                  </span>
-                </p>
-              ) : (
-                <p className="font-medium text-amber-700">No upcoming task found</p>
-              )}
-              {plant.location && <p>Location: {plant.location}</p>}
-              {plant.species.sunlight && <p>Light: {plant.species.sunlight}</p>}
-            </div>
-          </div>
-        </Link>
-        <div className="flex max-w-24 shrink-0 flex-col items-end gap-1 sm:max-w-28">
-          {plant.unresolvedDiagnosis ? (
-            <Link
-              to={plantDrPlantPath(plant.id)}
-              className="rounded-full bg-rose-100 px-2 py-1 text-[0.65rem] font-semibold text-rose-900 hover:bg-rose-200"
-            >
-              Health check
-            </Link>
-          ) : null}
-          {overdueCount > 0 && (
-            <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
-              {overdueCount} late
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center justify-between gap-3 border-t border-emerald-50 px-4 pb-3 pt-2">
-        <Link
-          to={plantDrPlantPath(plant.id)}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-emerald-800 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-900"
-        >
-          <span aria-hidden>🩺</span>
-          Ask Dr. Plant
-        </Link>
-        <p className="hidden text-right text-[0.65rem] text-gray-500 sm:block">Symptoms, photos, follow-ups</p>
-      </div>
-    </article>
-  );
-}
-
-function PlantThumb({ plant, size }: { plant: DashboardPlant; size: 'sm' | 'lg' }) {
-  const dimensions = size === 'sm' ? 'h-12 w-12 rounded-xl text-xl' : 'h-16 w-16 rounded-2xl text-2xl sm:h-20 sm:w-20 sm:text-3xl';
-  const imageUrl = resolveApiThumbnailUrl(
-    plant.imageUrl ?? plant.species.defaultImageUrl ?? null,
-    160,
-  );
-
-  return (
-    <div className={`${dimensions} flex shrink-0 items-center justify-center overflow-hidden bg-emerald-100`}>
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt=""
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          loading="lazy"
-          decoding="async"
-        />
-      ) : (
-        <span aria-hidden>🌿</span>
-      )}
-    </div>
   );
 }

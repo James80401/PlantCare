@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 ARG VITE_API_BASE_URL=http://localhost:3001/api/v1
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
@@ -6,7 +6,7 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 COPY package.json package-lock.json* ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
-RUN npm install --workspace=@plant-care/web --include-workspace-root
+RUN npm ci --workspace=@plant-care/web --include-workspace-root
 COPY packages/shared ./packages/shared/
 COPY apps/web ./apps/web/
 RUN npm run build -w @plant-care/shared && npm run build -w @plant-care/web

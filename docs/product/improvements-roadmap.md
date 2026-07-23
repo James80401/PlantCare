@@ -17,6 +17,14 @@ Supporting evidence:
 - [Release evidence template](../operations/release-evidence-template.md)
 - [UAT checklist](uat-checklist.md)
 
+## Current execution status
+
+| Phase | State | Evidence |
+|---|---|---|
+| 0 - source of truth | Complete | Canonical roadmap, baseline, and release-evidence template committed in `94dc86c`. |
+| 1 - engineering truth | CI confirmation pending | Local clean install, zero-error typecheck, 400 API tests, 184 web tests, builds, docs, private SEO, Docker builds, and zero-vulnerability audit pass. |
+| 2-8 | Queued | Work begins only after the preceding release-safety gate is recorded. |
+
 ## Release policy
 
 Release safety leads the work. Buddy, paid Premium, public indexing/marketing,

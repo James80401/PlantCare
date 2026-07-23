@@ -3,6 +3,7 @@ import { resolve } from 'path';
 import { expect, test } from '@playwright/test';
 
 const authFile = resolve(__dirname, '.uat-auth.json');
+const buddyEnabled = process.env.UAT_ENABLE_PLANT_BUDDY === '1';
 
 function loadAuth() {
   return JSON.parse(readFileSync(authFile, 'utf8')) as {
@@ -125,6 +126,7 @@ test.describe('UAT checklist — authenticated flows', () => {
   });
 
   test('plant buddy home and activities load', async ({ page }) => {
+    test.skip(!buddyEnabled, 'Plant Buddy remains gated in the default build');
     await page.goto('/garden/buddy');
     await expect(page.getByRole('heading', { name: 'UAT Buddy' })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/Plant Buddy/i).first()).toBeVisible();

@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import { resolve } from 'path';
 import { UploadService } from './upload.service';
 
 jest.mock('fs', () => ({
@@ -65,7 +66,9 @@ describe('UploadService', () => {
 
       await service.deleteByUrl('/uploads/leaf-abc123.jpg');
 
-      expect(fs.unlinkSync).toHaveBeenCalledWith('/srv/plantcare/uploads/leaf-abc123.jpg');
+      expect(fs.unlinkSync).toHaveBeenCalledWith(
+        resolve('/srv/plantcare/uploads', 'leaf-abc123.jpg'),
+      );
     });
 
     it('refuses to delete when the last path segment is a traversal escape', async () => {

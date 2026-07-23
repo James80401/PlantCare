@@ -26,7 +26,13 @@ export const TASK_SKIP_REASONS = [
   },
 ] as const;
 
-type TaskSkipReasonOption = (typeof TASK_SKIP_REASONS)[number];
+export type TaskSkipReason = (typeof TASK_SKIP_REASONS)[number]['value'];
+
+interface TaskSkipReasonOption {
+  value: TaskSkipReason;
+  label: string;
+  helper: string;
+}
 
 const GENERAL_TASK_SKIP_REASONS = [
   {
@@ -50,8 +56,6 @@ export const TASK_SKIP_REASONS_BY_TYPE: Partial<Record<string, readonly TaskSkip
   WATER: TASK_SKIP_REASONS,
   CHECK_MOISTURE: TASK_SKIP_REASONS,
 };
-
-export type TaskSkipReason = (typeof TASK_SKIP_REASONS)[number]['value'];
 
 export interface TaskSkipFeedback {
   reason?: TaskSkipReason;

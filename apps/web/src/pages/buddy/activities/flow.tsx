@@ -11,7 +11,7 @@ import HumidityCheckWizard from './HumidityCheckWizard';
 import PlantJournalWizard from './PlantJournalWizard';
 import GenericActivityFlow from './GenericActivityFlow';
 
-const WIZARDS: Record<string, () => JSX.Element> = {
+const WIZARDS: Record<string, () => ReactElement> = {
   WATERING_CHECK: WateringWizard,
   SEASON_CHECK: SeasonCheckWizard,
   PROGRESS_PHOTO: ProgressPhotoWizard,
@@ -48,3 +48,4 @@ export default function BuddyActivityFlowPage() {
 
   return <GenericActivityFlow activityType={activityType} />;
 }
+import type { ReactElement } from 'react';

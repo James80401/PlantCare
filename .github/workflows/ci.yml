@@ -13,27 +13,30 @@ jobs:
       DATABASE_URL: file:./prisma/ci.db
       JWT_SECRET: test-secret
       JWT_REFRESH_SECRET: test-refresh-secret
+      TZ: UTC
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
-      - run: npm install
+      - run: npm ci
       - run: npm run db:generate
       - run: npx prisma db push
       - run: npm run db:seed
+      - run: npm run typecheck
       - run: npm run build -w @plant-care/shared
       - run: npm run test -w @plant-care/api
       - run: npm run build -w @plant-care/api
       - run: npm run test -w @plant-care/web
       - run: npm run build -w @plant-care/web
+      - run: npm run verify:docs
       # Guardrail: a default/private build must be noindex with an empty sitemap.
       - run: npm run assert:seo-private -w @plant-care/web
 
-      - name: Buddy API smoke (live server)
+      - name: Buddy hidden-by-default smoke
         env:
           PORT: 3001
           FRONTEND_URL: http://localhost:5173
@@ -41,6 +44,74 @@ jobs:
         run: |
           node apps/api/dist/main.js &
           echo $! > api.pid
+          trap 'kill $(cat api.pid) 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -sf http://localhost:3001/api/v1/health; then break; fi
+            sleep 2
+          done
+          curl -sf http://localhost:3001/api/v1/health || (echo "API failed to start" && exit 1)
+          EXPECT_BUDDY_HIDDEN=1 API_URL=http://localhost:3001/api/v1 npm run smoke:buddy
+          kill $(cat api.pid) 2>/dev/null || true
+          trap - EXIT
+
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: plantcare
+          POSTGRES_PASSWORD: plantcare-ci
+          POSTGRES_DB: plantcare_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U plantcare -d plantcare_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://plantcare:plantcare-ci@localhost:5432/plantcare_ci
+      JWT_SECRET: test-secret
+      JWT_REFRESH_SECRET: test-refresh-secret
+      UPLOAD_DIR: /tmp/plantcare-uploads
+      PORT: 3001
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: mkdir -p "$UPLOAD_DIR"
+      - run: npm run db:generate:postgres
+      - run: npx prisma db push --schema=prisma/schema.postgresql.prisma
+      - run: npm run db:seed
+      - run: npm run build -w @plant-care/shared
+      - run: npm run build -w @plant-care/api
+      - name: PostgreSQL readiness smoke
+        run: |
+          node apps/api/dist/main.js &
+          echo $! > api.pid
+          trap 'kill $(cat api.pid) 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -sf http://localhost:3001/api/v1/health/ready; then break; fi
+            sleep 2
+          done
+          curl -sf http://localhost:3001/api/v1/health/ready
+          kill $(cat api.pid) 2>/dev/null || true
+          trap - EXIT
+
+      - name: Buddy enabled-contract smoke
+        env:
+          PORT: 3001
+          FRONTEND_URL: http://localhost:5173
+          CORS_ORIGIN: http://localhost:5173
+        run: |
+          ENABLE_PLANT_BUDDY=true node apps/api/dist/main.js &
+          echo $! > api.pid
+          trap 'kill $(cat api.pid) 2>/dev/null || true' EXIT
           for i in $(seq 1 45); do
             if curl -sf http://localhost:3001/api/v1/health; then break; fi
             sleep 2
@@ -48,3 +119,4 @@ jobs:
           curl -sf http://localhost:3001/api/v1/health || (echo "API failed to start" && exit 1)
           API_URL=http://localhost:3001/api/v1 npm run smoke:buddy
           kill $(cat api.pid) 2>/dev/null || true
+          trap - EXIT

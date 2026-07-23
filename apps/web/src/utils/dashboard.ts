@@ -18,6 +18,7 @@ export interface DashboardPlant {
     scientificName?: string | null;
     sunlight?: string | null;
     wateringFreqDays: number;
+    defaultImageUrl?: string | null;
   };
   tasks: DashboardTaskPreview[];
   unresolvedDiagnosis?: {
