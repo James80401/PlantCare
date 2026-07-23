@@ -15,4 +15,7 @@ Forecast runs only when you tap **Advise by weather** on the dashboard (once per
 
 ## Delete account
 
-At the bottom of the page, **Delete account and plant data** removes your user and all plant data only after a confirmation dialog and typing `DELETE` (`DELETE /users/me`).
+At the bottom of the page, **Delete account and plant data** opens a protected
+confirmation panel. Enter your current password and confirm the final warning.
+The app cancels any active subscription before removing the account, plant data,
+community content, conversations, and managed photos (`DELETE /users/me`).

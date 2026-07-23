@@ -59,7 +59,7 @@
 | GET | `/me` | Current user profile |
 | PUT | `/me/care-preferences` | Experience level and default light preferences |
 | PUT | `/me/notification-settings` | Channels, quiet hours |
-| DELETE | `/me` | Delete account |
+| DELETE | `/me` | Delete account after current-password confirmation |
 
 Weather routes are under `/users/me/weather/*` — see [api/weather.md](../api/weather.md).
 

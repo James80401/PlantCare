@@ -16,7 +16,7 @@ Dr. Plant delegates specialized work to external APIs. All integrations are **op
 | Perenual | Optional | Species enrichment (cached) |
 | Open-Meteo | Optional | Weather advice (no key) |
 | Stripe | Optional | Premium checkout |
-| S3 / local | Optional | Production image storage |
+| Local media volume | Required for uploads | Production image storage and backups |
 
 Test connectivity: `npm run test:integrations`.
 
@@ -75,7 +75,7 @@ Test connectivity: `npm run test:integrations`.
 ## Storage
 
 - **Dev:** Local `apps/api/uploads/`
-- **Prod:** AWS S3 via `AWS_*`, `S3_BUCKET`
+- **Prod:** Docker volume mounted at `/app/apps/api/uploads` and included in backups
 - **Doc:** [integrations/storage.md](../integrations/storage.md)
 
 ---

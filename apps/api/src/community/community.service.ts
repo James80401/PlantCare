@@ -6,6 +6,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { ReportPostDto } from './dto/report-post.dto';
 import { ResharePostDto } from './dto/reshare-post.dto';
 import { mapCommunityPostsForViewer } from './community.mapper';
+import { UploadService } from '../upload/upload.service';
 
 /** Once a post collects this many distinct reports, it's auto-hidden from
  *  the feed pending review — a lightweight moderation floor with no admin
@@ -87,7 +88,10 @@ const postInclude = (viewerId?: string) => ({
 
 @Injectable()
 export class CommunityService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private upload: UploadService,
+  ) {}
 
   /** Toggles a row in a uniquely-constrained join table (like/follow/block):
    *  delete it if it exists, create it if it doesn't. Returns whether the
@@ -224,6 +228,7 @@ export class CommunityService {
       throw new ForbiddenException('You can only delete your own posts');
     }
     await this.prisma.communityPost.delete({ where: { id: postId } });
+    if (post.imageUrl) await this.upload.deleteByUrl(post.imageUrl).catch(() => {});
     return { deleted: true };
   }
 

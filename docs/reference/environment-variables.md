@@ -67,10 +67,5 @@ See [operations/observability.md](../operations/observability.md). All optional.
 | `TWILIO_AUTH_TOKEN` | SMS |
 | `TWILIO_FROM_NUMBER` | SMS from |
 | `FIREBASE_PROJECT_ID` | Push (planned) |
-| `AWS_ACCESS_KEY_ID` | S3 |
-| `AWS_SECRET_ACCESS_KEY` | S3 |
-| `AWS_REGION` | S3 region |
-| `S3_BUCKET` | Bucket name |
-| `S3_PUBLIC_URL` | Public URL base |
-| `UPLOAD_DIR` | Local uploads path |
+| `UPLOAD_DIR` | Managed local uploads path (include it in backups) |
 | `ALL_USERS_PREMIUM` | Dev: skip Stripe limits |

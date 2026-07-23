@@ -1,11 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { isAdminEmail } from '../config/registration-policy';
 import { UploadService } from '../upload/upload.service';
 import { WeatherService } from '../weather/weather.service';
 import { effectivePlanTier } from '../config/premium-policy';
 import type { UpdateCarePreferencesDto } from './dto/update-care-preferences.dto';
+import { BillingService } from '../billing/billing.service';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +16,7 @@ export class UsersService {
     private upload: UploadService,
     private weather: WeatherService,
     private config: ConfigService,
+    private billing: BillingService,
   ) {}
 
   async getMe(userId: string) {
@@ -266,21 +269,74 @@ export class UsersService {
     };
   }
 
-  async deleteAccount(userId: string) {
-    const plants = await this.prisma.plant.findMany({
-      where: { userId },
-      select: { imageUrl: true, journalEntries: { select: { photoUrl: true } }, diagnoses: { select: { imageUrl: true } } },
+  async deleteAccount(userId: string, password: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
     });
-    for (const plant of plants) {
-      if (plant.imageUrl) await this.upload.deleteByUrl(plant.imageUrl).catch(() => {});
-      for (const j of plant.journalEntries) {
-        if (j.photoUrl) await this.upload.deleteByUrl(j.photoUrl).catch(() => {});
-      }
-      for (const d of plant.diagnoses) {
-        if (d.imageUrl) await this.upload.deleteByUrl(d.imageUrl).catch(() => {});
-      }
+    if (!user) throw new NotFoundException('User not found');
+    if (!(await bcrypt.compare(password, user.passwordHash))) {
+      throw new UnauthorizedException('Password confirmation failed');
     }
-    await this.prisma.user.delete({ where: { id: userId } });
+
+    const [plants, conversations, posts] = await Promise.all([
+      this.prisma.plant.findMany({
+        where: {
+          OR: [{ userId }, { garden: { ownerId: userId } }],
+        },
+        select: {
+          imageUrl: true,
+          journalEntries: { select: { photoUrl: true } },
+          progressEntries: { select: { photoUrl: true } },
+          diagnoses: { select: { imageUrl: true } },
+          diagnosisConversations: {
+            select: { messages: { select: { imageUrl: true } } },
+          },
+        },
+      }),
+      this.prisma.diagnosisConversation.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          messages: { select: { imageUrl: true } },
+        },
+      }),
+      this.prisma.communityPost.findMany({
+        where: { authorId: userId },
+        select: { imageUrl: true },
+      }),
+    ]);
+
+    const mediaUrls = new Set<string>();
+    const remember = (url: string | null | undefined) => {
+      if (url) mediaUrls.add(url);
+    };
+    for (const plant of plants) {
+      remember(plant.imageUrl);
+      plant.journalEntries.forEach((entry) => remember(entry.photoUrl));
+      plant.progressEntries.forEach((entry) => remember(entry.photoUrl));
+      plant.diagnoses.forEach((diagnosis) => remember(diagnosis.imageUrl));
+      plant.diagnosisConversations.forEach((conversation) =>
+        conversation.messages.forEach((message) => remember(message.imageUrl)),
+      );
+    }
+    conversations.forEach((conversation) =>
+      conversation.messages.forEach((message) => remember(message.imageUrl)),
+    );
+    posts.forEach((post) => remember(post.imageUrl));
+
+    await this.billing.stopSubscriptionsForAccountDeletion(userId);
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      await transaction.diagnosisConversation.deleteMany({ where: { userId } });
+      await transaction.user.delete({ where: { id: userId } });
+    });
+    await Promise.all(
+      [...mediaUrls].map((url) => this.upload.deleteByUrl(url).catch(() => {})),
+    );
     return { deleted: true };
   }
 }

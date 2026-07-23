@@ -82,6 +82,10 @@ export default function Settings() {
   const [carePrefsSaved, setCarePrefsSaved] = useState(false);
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState('');
 
   useEffect(() => {
     usersApi.me().then(({ data }) => {
@@ -231,17 +235,20 @@ export default function Settings() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (event: FormEvent) => {
+    event.preventDefault();
     if (!confirm('Delete your account and all plant data? This cannot be undone.')) return;
-    const typed = window.prompt('Type DELETE to permanently delete your account.');
-    if (typed !== 'DELETE') return;
-    setError('');
+    setDeleteAccountError('');
+    setDeletingAccount(true);
     try {
-      await usersApi.deleteAccount();
+      await usersApi.deleteAccount(deletePassword);
       logout();
       navigate('/login');
     } catch (err) {
-      setError(formatApiErrorMessage(err, 'Could not delete account. Try again or contact support.'));
+      setDeleteAccountError(
+        formatApiErrorMessage(err, 'Could not delete account. Try again or contact support.'),
+      );
+      setDeletingAccount(false);
     }
   };
 
@@ -585,13 +592,70 @@ export default function Settings() {
         {exporting ? 'Preparing your data…' : 'Download my data (JSON)'}
       </button>
 
-      <button
-        type="button"
-        onClick={handleDelete}
-        className="w-full border border-red-300 text-red-700 py-2 rounded-lg text-sm"
-      >
-        Delete account and plant data
-      </button>
+      {showDeleteAccount ? (
+        <form
+          onSubmit={handleDelete}
+          className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-3"
+        >
+          <div>
+            <h2 className="font-semibold text-red-900">Permanently delete account</h2>
+            <p className="mt-1 text-sm text-red-800">
+              This removes your plants, care history, conversations, community posts, and managed
+              photos. Enter your current password to continue.
+            </p>
+          </div>
+          <label className="block text-sm">
+            <span className="font-medium text-red-900">Current password</span>
+            <input
+              type="password"
+              autoComplete="current-password"
+              required
+              minLength={8}
+              maxLength={200}
+              value={deletePassword}
+              onChange={(event) => setDeletePassword(event.target.value)}
+              className="mt-1 w-full rounded-lg border border-red-300 px-3 py-2"
+            />
+          </label>
+          {deleteAccountError ? (
+            <p className="text-sm text-red-700" role="alert">
+              {deleteAccountError}
+            </p>
+          ) : null}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              disabled={deletingAccount}
+              onClick={() => {
+                setShowDeleteAccount(false);
+                setDeletePassword('');
+                setDeleteAccountError('');
+              }}
+              className="flex-1 rounded-lg border border-gray-300 bg-white py-2 text-sm text-gray-700 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={deletingAccount || deletePassword.length < 8}
+              className="flex-1 rounded-lg bg-red-700 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {deletingAccount ? 'Deleting account…' : 'Delete permanently'}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteAccountError('');
+            setShowDeleteAccount(true);
+          }}
+          className="w-full border border-red-300 text-red-700 py-2 rounded-lg text-sm"
+        >
+          Delete account and plant data
+        </button>
+      )}
     </div>
   );
 }

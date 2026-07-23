@@ -30,6 +30,8 @@ For stack details, data model, API routes, web screens, and MVP caveats, see the
 
 ## External optional services
 
-OpenAI, SMTP, PlantNet, Perenual, OpenWeather, Stripe, S3 — see [integrations INDEX](../integrations/INDEX.md).
+OpenAI, SMTP, PlantNet, Perenual, OpenWeather, and gated Stripe billing — see
+[integrations INDEX](../integrations/INDEX.md). User uploads remain on the
+backed-up local media volume.
 
 Which features have web UI today: [feature availability](../reference/feature-availability.md).

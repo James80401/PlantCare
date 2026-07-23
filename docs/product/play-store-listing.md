@@ -60,7 +60,7 @@ Declare honestly; adjust if your deployment differs.
 |-----------|------------|---------|---------|
 | Email address | Yes | Account, sign-in | No (unless you use a third-party auth provider) |
 | Name | Optional | Display in app | No |
-| Photos | Yes | Plant/journal/diagnosis | No (stored on your servers / S3) |
+| Photos | Yes | Plant/journal/diagnosis | No (stored on the managed Dr. Plant server volume) |
 | Approximate location | Optional | Weather advice | Sent to weather API provider if enabled |
 | App activity (care tasks) | Yes | Core functionality | No |
 | Device or other IDs | Yes (if push on) | FCM push tokens | Google (Firebase) |

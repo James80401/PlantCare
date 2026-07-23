@@ -220,18 +220,23 @@ export class DiagnosisService {
     });
     detailJson = JSON.stringify({ ...(detail ?? {}), intake, treatmentPlan });
 
-    return this.prisma.diagnosis.create({
-      data: {
-        plantId,
-        imageUrl,
-        symptomsText,
-        resultLabel,
-        confidence,
-        adviceText,
-        source,
-        detailJson,
-      },
-    });
+    try {
+      return await this.prisma.diagnosis.create({
+        data: {
+          plantId,
+          imageUrl,
+          symptomsText,
+          resultLabel,
+          confidence,
+          adviceText,
+          source,
+          detailJson,
+        },
+      });
+    } catch (error) {
+      if (imageUrl) await this.upload.deleteByUrl(imageUrl).catch(() => {});
+      throw error;
+    }
   }
 
   async getRecoverySuggestions(

@@ -23,6 +23,7 @@ COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/package.json ./apps/api/
 COPY --from=builder /app/apps/api/docker-entrypoint.sh ./apps/api/docker-entrypoint.sh
+COPY --from=builder /app/apps/api/scripts/audit-orphan-media.mjs ./apps/api/scripts/audit-orphan-media.mjs
 COPY --from=builder /app/packages/shared ./packages/shared/
 COPY --from=builder /app/prisma ./prisma/
 COPY --from=builder /app/apps/api/src/species ./apps/api/src/species
