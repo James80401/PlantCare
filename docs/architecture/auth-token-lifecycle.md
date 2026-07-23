@@ -25,8 +25,9 @@ table so it can be rotated and revoked. The raw token is never stored.
 
 ## Issuance (`issueTokens`)
 
-On register / login / verify-email / refresh, `issueTokens` mints both tokens and
-writes a `RefreshToken` row:
+On register / login / verify-email / refresh, `issueTokens` mints both tokens,
+writes a `RefreshToken` row, and the controller sets the refresh token in the
+`drplant_refresh` HttpOnly cookie:
 
 ```
 RefreshToken {
@@ -42,16 +43,20 @@ RefreshToken {
 A fresh login starts a **new family** (`familyId`). Every subsequent rotation keeps
 the same `familyId` and links `parentId → child`, forming a chain.
 
-> `parseRefreshExpiryMs` parses `JWT_REFRESH_EXPIRES_IN` (`\d+[smhd]`). An unparseable
+> `refreshTokenLifetimeMs` parses `JWT_REFRESH_EXPIRES_IN` (`\d+[smhd]`). An unparseable
 > value logs a one-time warning and falls back to 30d, so a typo like `7 days` is
 > visible in logs instead of silently diverging the DB expiry from the JWT `exp`.
+
+In production the cookie is `Secure`, `HttpOnly`, `SameSite=None`, and limited
+to `/api/v1/auth`, which supports both the web origin and the existing
+Capacitor origins. Development uses a non-secure `SameSite=Lax` cookie.
 
 ---
 
 ## Rotation (`refresh`)
 
-`POST /auth/refresh` verifies the JWT signature, then looks up the row by token hash
-and walks this decision tree:
+`POST /auth/refresh` reads the cookie, verifies the JWT signature, then looks
+up the row by token hash and walks this decision tree:
 
 ```
 no row found                      → 401 (unrecognized)
@@ -100,8 +105,14 @@ Refresh tokens are invalidated server-side on:
 | Reuse detected | the whole token family | `AuthService.refresh` |
 
 The frontend `AuthContext.logout` calls `POST /auth/logout` (best-effort, with
-`skipAuthRefresh` so a 401 doesn't trigger a refresh loop) before clearing local
-storage.
+`skipAuthRefresh` so a 401 doesn't trigger a refresh loop). Logout clears the
+cookie using the same attributes with which it was set.
+
+During the compatibility release, refresh/logout still accept the former
+`refreshToken` request field and token-issuing responses still include that
+field. Updated clients send credentialed requests and receive the cookie. The
+legacy request/response token is removed after the updated web/native clients
+are deployed.
 
 > **Access-token caveat:** revoking refresh tokens does not invalidate an
 > already-issued *access* token, which stays valid until its own `exp`. Keep
@@ -126,5 +137,7 @@ Set strong secrets in every non-local environment.
 ## Testing
 
 `auth.service.spec.ts` covers the family-revoke-on-replay path and the
-grace-window-allows-concurrent-refresh path. `admin-registrations.service.spec.ts`
+grace-window-allows-concurrent-refresh path. `auth.controller.spec.ts` and
+`refresh-cookie.spec.ts` cover issuance, rotation, legacy fallback, native/web
+origin checks, and cookie attributes. `admin-registrations.service.spec.ts`
 asserts reject/disable revoke all tokens.

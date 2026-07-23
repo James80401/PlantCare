@@ -403,7 +403,7 @@ export class AuthService implements OnModuleInit {
     return createHash('sha256').update(token).digest('hex');
   }
 
-  private parseRefreshExpiryMs(): number {
+  refreshTokenLifetimeMs(): number {
     const DEFAULT_MS = 30 * 24 * 60 * 60 * 1000;
     const raw = this.config.get<string>('JWT_REFRESH_EXPIRES_IN', '30d');
     const match = /^(\d+)\s*([smhd]?)$/i.exec(raw.trim());
@@ -453,7 +453,7 @@ export class AuthService implements OnModuleInit {
     );
 
     const tokenHash = this.hashRefreshToken(refreshToken);
-    const expiresAt = new Date(Date.now() + this.parseRefreshExpiryMs());
+    const expiresAt = new Date(Date.now() + this.refreshTokenLifetimeMs());
     const familyId = rotation?.familyId ?? randomUUID();
 
     await this.prisma.refreshToken.create({
