@@ -14,9 +14,17 @@ Buddy nudges, task reminders, and sunshine alerts use `NotificationsService.send
 **Legacy fallback:** `FCM_SERVER_KEY=your-firebase-server-key`
 ```
 
-4. Restart the API. With no key, pushes are logged to `NotificationLog` as mock entries (same as zero registered devices).
+4. Restart the API. With no credentials, delivery is recorded as
+   `UNCONFIGURED`; with no registered device, it is recorded as `SKIPPED`.
+   Neither state is counted as sent and neither advances the related record's
+   `notifiedAt`.
 
 Invalid FCM tokens are removed automatically after a failed send.
+
+The reminder ledger deduplicates each related record and channel. A successful
+channel is never retried; failed or unavailable channels can be retried without
+resending channels that already succeeded. A short `ATTEMPTING` claim prevents
+overlapping cron executions from delivering the same reminder twice.
 
 ## Client registration
 

@@ -73,6 +73,11 @@ describe('Settings account deletion', () => {
         temperatureUnit: 'F',
         experienceLevel: 'beginner',
         defaultLightLevel: 'medium',
+        notificationCapabilities: {
+          email: { available: true, reason: null },
+          push: { available: true, reason: null },
+          sms: { available: true, reason: null },
+        },
       },
     } as never);
     vi.mocked(usersApi.deleteAccount).mockResolvedValue({
@@ -100,5 +105,53 @@ describe('Settings account deletion', () => {
     );
     expect(logout).toHaveBeenCalled();
     expect(await screen.findByText('Signed out')).toBeInTheDocument();
+  });
+
+  it('disables channels that the server cannot deliver', async () => {
+    vi.mocked(usersApi.me).mockResolvedValueOnce({
+      data: {
+        notifyPush: true,
+        notifyEmail: true,
+        notifySms: false,
+        phone: null,
+        timezone: 'UTC',
+        locationLabel: null,
+        latitude: null,
+        longitude: null,
+        quietHoursStart: null,
+        quietHoursEnd: null,
+        reminderHour: 9,
+        temperatureUnit: 'C',
+        experienceLevel: 'beginner',
+        defaultLightLevel: 'medium',
+        notificationCapabilities: {
+          email: {
+            available: false,
+            reason: 'Email delivery is not configured by the operator.',
+          },
+          push: {
+            available: false,
+            reason: 'Push delivery is not configured by the operator.',
+          },
+          sms: {
+            available: false,
+            reason: 'SMS delivery is not configured by the operator.',
+          },
+        },
+      },
+    } as never);
+
+    renderSettings();
+
+    expect(
+      await screen.findByRole('checkbox', { name: 'Push notifications' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('checkbox', { name: 'Email reminders' }),
+    ).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: 'SMS (Premium)' })).toBeDisabled();
+    expect(
+      screen.getByText('Push delivery is not configured by the operator.'),
+    ).toBeInTheDocument();
   });
 });

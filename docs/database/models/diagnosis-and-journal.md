@@ -16,4 +16,8 @@ Chat threads per plant; messages have `role` (user/assistant), `content`, option
 
 ## NotificationLog / DeviceToken
 
-Audit trail for sent reminders; FCM/device registration for push.
+`NotificationLog` is the per-user, per-channel delivery ledger. It records a
+dedupe key, related entity and ID, provider, attempt time, status
+(`ATTEMPTING`, `SENT`, `FAILED`, `SKIPPED`, or `UNCONFIGURED`), and provider
+error detail. `DeviceToken` stores FCM registrations; invalid tokens are
+removed after provider rejection.

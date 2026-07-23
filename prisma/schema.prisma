@@ -486,15 +486,25 @@ model DiagnosisMessage {
 }
 
 model NotificationLog {
-  id        String              @id @default(cuid())
-  userId    String
-  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  channel   NotificationChannel
-  message   String
-  status    String              @default("sent")
-  createdAt DateTime            @default(now())
+  id            String              @id @default(cuid())
+  userId        String
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel       NotificationChannel
+  message       String
+  status        String              @default("SENT")
+  dedupeKey     String?
+  relatedEntity String?
+  relatedId     String?
+  provider      String?
+  errorCode     String?
+  errorMessage  String?
+  attemptedAt   DateTime            @default(now())
+  createdAt     DateTime            @default(now())
 
+  @@unique([userId, channel, dedupeKey])
   @@index([userId])
+  @@index([status, attemptedAt])
+  @@index([relatedEntity, relatedId])
 }
 
 model DeviceToken {

@@ -225,6 +225,23 @@ export class EmailService implements OnModuleInit {
     });
   }
 
+  async sendNotificationEmail(
+    to: string,
+    subject: string,
+    text: string,
+  ): Promise<SendResult> {
+    const escapedText = text
+      .split('\n')
+      .map((line) => this.escapeHtml(line))
+      .join('<br>');
+    return this.deliver({
+      to,
+      subject,
+      text,
+      html: this.wrapHtml(subject, `<p>${escapedText}</p>`),
+    });
+  }
+
   private static buttonStyle =
     'display:inline-block;padding:12px 28px;background:#047857;color:#fff;text-decoration:none;border-radius:8px;font-weight:600';
 
@@ -243,5 +260,14 @@ export class EmailService implements OnModuleInit {
       `</${d}>`,
       '</body></html>',
     ].join('');
+  }
+
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 }

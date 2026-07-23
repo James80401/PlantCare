@@ -72,7 +72,7 @@ export class AdminObservabilityService {
       }),
       this.prisma.notificationLog.groupBy({
         by: ['channel', 'status'],
-        where: { createdAt: { gte: last30d } },
+        where: { attemptedAt: { gte: last30d } },
         _count: { _all: true },
       }),
       this.prisma.deviceToken.count(),

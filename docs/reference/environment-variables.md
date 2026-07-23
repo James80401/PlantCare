@@ -61,11 +61,9 @@ See [operations/observability.md](../operations/observability.md). All optional.
 | `STRIPE_PRICE_ID_PREMIUM` | Price ID |
 | `PREMIUM_PRICE_LABEL` | Premium price display text |
 | `PREMIUM_TRIAL_DAYS` | Stripe Checkout trial length |
-| `SENDGRID_API_KEY` | Legacy name — use `SMTP_PASS` with Twilio SendGrid API key |
-| `SENDGRID_FROM_EMAIL` | Legacy — use `EMAIL_FROM` |
 | `TWILIO_ACCOUNT_SID` | SMS |
 | `TWILIO_AUTH_TOKEN` | SMS |
 | `TWILIO_FROM_NUMBER` | SMS from |
-| `FIREBASE_PROJECT_ID` | Push (planned) |
+| `FIREBASE_PROJECT_ID` | FCM HTTP v1 project for push delivery |
 | `UPLOAD_DIR` | Managed local uploads path (include it in backups) |
 | `ALL_USERS_PREMIUM` | Dev: skip Stripe limits |

@@ -7,13 +7,42 @@ import {
   RecommendationStatus,
   TaskStatus,
 } from '@prisma/client';
-import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { effectivePlanTier } from '../config/premium-policy';
-import { getLocalHour } from '../weather/weather-cache.util';
+import {
+  getLocalDateKey,
+  getLocalDayStart,
+  getLocalHour,
+} from '../weather/weather-cache.util';
+import { EmailService } from '../email/email.service';
 import { resolveFcmTransport, sendFcmNotification } from './fcm.client';
 import { resolveSmsTransport, sendSmsNotification } from './sms.client';
 import { buildCareReminderPush, type TaskReminderRow } from './task-reminder-copy';
+
+type DeliveryStatus = 'SENT' | 'FAILED' | 'SKIPPED' | 'UNCONFIGURED';
+
+interface DeliveryResult {
+  status: DeliveryStatus;
+  provider: string;
+  errorCode?: string;
+  errorMessage?: string;
+}
+
+interface ReminderUser {
+  id: string;
+  email: string;
+  planTier: PlanTier;
+  notifyEmail: boolean;
+  notifyPush: boolean;
+  notifySms: boolean;
+  phone: string | null;
+  timezone: string | null;
+  reminderHour: number | null;
+  quietHoursStart: number | null;
+  quietHoursEnd: number | null;
+}
+
+const DELIVERY_CLAIM_TTL_MS = 15 * 60 * 1000;
 
 @Injectable()
 export class NotificationsService {
@@ -22,27 +51,30 @@ export class NotificationsService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private email: EmailService,
   ) {}
 
-  isQuietHours(user: {
-    quietHoursStart: number | null;
-    quietHoursEnd: number | null;
-    timezone: string | null;
-  }): boolean {
+  isQuietHours(
+    user: {
+      quietHoursStart: number | null;
+      quietHoursEnd: number | null;
+      timezone: string | null;
+    },
+    now = new Date(),
+  ): boolean {
     if (user.quietHoursStart == null || user.quietHoursEnd == null) return false;
-    const hour = getLocalHour(user.timezone || 'UTC');
+    const hour = getLocalHour(user.timezone || 'UTC', now);
     if (user.quietHoursStart <= user.quietHoursEnd) {
       return hour >= user.quietHoursStart && hour < user.quietHoursEnd;
     }
     return hour >= user.quietHoursStart || hour < user.quietHoursEnd;
   }
 
-  /** Daily reminder digests (tasks, recommendations) fire once, at the user's
-   *  chosen hour in their own timezone (default 9am) — the hourly cron calls
-   *  this to decide whether this run is that user's moment, since notifiedAt
-   *  gating means a skipped hour is simply picked up on a later run. */
-  isReminderHourDue(user: { reminderHour: number | null; timezone: string | null }): boolean {
-    return (user.reminderHour ?? 9) === getLocalHour(user.timezone || 'UTC');
+  isReminderHourDue(
+    user: { reminderHour: number | null; timezone: string | null },
+    now = new Date(),
+  ): boolean {
+    return (user.reminderHour ?? 9) === getLocalHour(user.timezone || 'UTC', now);
   }
 
   async sendDueTaskReminders() {
@@ -55,18 +87,14 @@ export class NotificationsService {
     this.logger.log(`Processed overdue reminders for ${count} users`);
   }
 
-  /** Push-only nudge for active recommendations (e.g. routine plant check-ins) — these
-   *  are softer "worth a look" suggestions, not overdue-care urgency, so unlike tasks
-   *  they don't escalate to email/SMS. Scoped to HIGH/MEDIUM priority so this restores
-   *  reminders for what used to be task-backed check-ins without newly notifying about
-   *  low-priority nudges (soil flush, harvest timing) that were never reminded before. */
   async sendRecommendationReminders() {
     const now = new Date();
     const recommendations = await this.prisma.recommendation.findMany({
       where: {
         status: RecommendationStatus.ACTIVE,
-        notifiedAt: null,
-        priority: { in: [RecommendationPriority.HIGH, RecommendationPriority.MEDIUM] },
+        priority: {
+          in: [RecommendationPriority.HIGH, RecommendationPriority.MEDIUM],
+        },
         OR: [{ snoozedUntil: null }, { snoozedUntil: { lte: now } }],
       },
       include: { user: true },
@@ -74,113 +102,351 @@ export class NotificationsService {
     });
 
     const byUser = new Map<string, typeof recommendations>();
-    for (const rec of recommendations) {
-      if (!byUser.has(rec.userId)) byUser.set(rec.userId, []);
-      byUser.get(rec.userId)!.push(rec);
+    for (const recommendation of recommendations) {
+      if (!byUser.has(recommendation.userId)) byUser.set(recommendation.userId, []);
+      byUser.get(recommendation.userId)!.push(recommendation);
     }
 
-    for (const [userId, userRecs] of byUser) {
-      const user = userRecs[0].user;
-      if (this.isQuietHours(user) || !this.isReminderHourDue(user)) continue;
-
-      if (user.notifyPush) {
-        const { title, body } = this.buildRecommendationPush(userRecs);
-        await this.sendPush(userId, title, body, { tag: 'recommendation', route: '/garden' });
+    let processedUsers = 0;
+    for (const [userId, userRecommendations] of byUser) {
+      const user = userRecommendations[0].user;
+      if (
+        this.isQuietHours(user, now) ||
+        !this.isReminderHourDue(user, now)
+      ) {
+        continue;
       }
 
-      await this.prisma.recommendation.updateMany({
-        where: { id: { in: userRecs.map((r) => r.id) } },
-        data: { notifiedAt: now },
+      const ids = userRecommendations.map((recommendation) => recommendation.id);
+      const logs = await this.prisma.notificationLog.findMany({
+        where: {
+          userId,
+          channel: NotificationChannel.PUSH,
+          relatedEntity: 'recommendation',
+          relatedId: { in: ids },
+        },
+        select: { relatedId: true, status: true },
       });
+      const statusById = new Map(
+        logs.map((log) => [log.relatedId, log.status.toUpperCase()]),
+      );
+      const pending = userRecommendations.filter((recommendation) => {
+        const status = statusById.get(recommendation.id);
+        if (status === 'SENT') return false;
+        return !(recommendation.notifiedAt && status == null);
+      });
+      if (!pending.length) continue;
+
+      const initialCopy = this.buildRecommendationPush(pending);
+      const claimedIds = await this.claimDeliveries({
+        userId,
+        channel: NotificationChannel.PUSH,
+        entities: pending.map((recommendation) => ({
+          id: recommendation.id,
+          dedupeKey: `recommendation:${recommendation.id}`,
+        })),
+        relatedEntity: 'recommendation',
+        message: `[recommendation] ${initialCopy.title}: ${initialCopy.body}`,
+      });
+      const claimed = pending.filter((item) => claimedIds.has(item.id));
+      if (!claimed.length) continue;
+
+      const { title, body } = this.buildRecommendationPush(claimed);
+      const result = user.notifyPush
+        ? await this.sendPush(userId, title, body, {
+            tag: 'recommendation',
+            route: '/garden',
+          })
+        : this.skipped('fcm', 'PREFERENCE_DISABLED', 'Push notifications are disabled.');
+      await this.recordDeliveries({
+        userId,
+        channel: NotificationChannel.PUSH,
+        entities: claimed.map((recommendation) => ({
+          id: recommendation.id,
+          dedupeKey: `recommendation:${recommendation.id}`,
+        })),
+        relatedEntity: 'recommendation',
+        message: `[recommendation] ${title}: ${body}`,
+        result,
+      });
+      if (result.status === 'SENT') {
+        await this.prisma.recommendation.updateMany({
+          where: {
+            id: { in: claimed.map((recommendation) => recommendation.id) },
+          },
+          data: { notifiedAt: now },
+        });
+      }
+      processedUsers += 1;
     }
 
-    this.logger.log(`Processed recommendation reminders for ${byUser.size} users`);
+    this.logger.log(
+      `Processed recommendation reminders for ${processedUsers} users`,
+    );
   }
 
-  private buildRecommendationPush(recs: { title: string }[]): { title: string; body: string } {
-    if (recs.length === 1) {
-      return { title: 'Plant recommendation', body: recs[0].title };
+  private buildRecommendationPush(
+    recommendations: { title: string }[],
+  ): { title: string; body: string } {
+    if (recommendations.length === 1) {
+      return {
+        title: 'Plant recommendation',
+        body: recommendations[0].title,
+      };
     }
-    const lines = recs.slice(0, 3).map((r) => r.title);
-    const extra = recs.length > 3 ? ` +${recs.length - 3} more` : '';
+    const lines = recommendations.slice(0, 3).map((item) => item.title);
+    const extra =
+      recommendations.length > 3
+        ? ` +${recommendations.length - 3} more`
+        : '';
     return {
-      title: `${recs.length} plant recommendations`,
+      title: `${recommendations.length} plant recommendations`,
       body: `${lines.join(', ')}${extra}`,
     };
   }
 
-  private async sendTaskRemindersForWindow(options: { overdue: boolean }): Promise<number> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 2);
-
-    const tasks = await this.prisma.task.findMany({
-      where: {
-        status: TaskStatus.PENDING,
-        notifiedAt: null,
-        dueDate: options.overdue ? { lt: today } : { gte: today, lt: tomorrow },
+  private async sendTaskRemindersForWindow(options: {
+    overdue: boolean;
+  }): Promise<number> {
+    const now = new Date();
+    const users = await this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        planTier: true,
+        notifyEmail: true,
+        notifyPush: true,
+        notifySms: true,
+        phone: true,
+        timezone: true,
+        reminderHour: true,
+        quietHoursStart: true,
+        quietHoursEnd: true,
       },
-      include: {
-        plant: { include: { species: true, user: true } },
-      },
-      orderBy: { dueDate: 'asc' },
     });
 
-    const byUser = new Map<string, typeof tasks>();
-    for (const task of tasks) {
-      const userId = task.plant.userId;
-      if (!byUser.has(userId)) byUser.set(userId, []);
-      byUser.get(userId)!.push(task);
-    }
-
-    for (const [userId, userTasks] of byUser) {
-      const user = userTasks[0].plant.user;
-      if (this.isQuietHours(user) || !this.isReminderHourDue(user)) continue;
-
-      const rows: TaskReminderRow[] = userTasks.map((t) => ({
-        taskType: t.taskType,
-        plantId: t.plantId,
-        dueDate: t.dueDate,
-        plant: {
-          nickname: t.plant.nickname,
-          species: { commonName: t.plant.species.commonName },
-        },
-      }));
-      const push = buildCareReminderPush(rows, { overdue: options.overdue });
-      const emailSubject = options.overdue ? 'Overdue plant care' : 'Plant care due today';
-      const emailBody = userTasks
-        .map(
-          (t) =>
-            `${t.taskType}: ${t.plant.nickname || t.plant.species.commonName} (due ${t.dueDate.toLocaleDateString()})`,
-        )
-        .join('\n');
-
-      if (user.notifyEmail) {
-        await this.sendEmail(user.email, emailSubject, emailBody);
-        await this.log(userId, NotificationChannel.EMAIL, `${emailSubject}\n${emailBody}`);
+    let processedUsers = 0;
+    for (const user of users as ReminderUser[]) {
+      if (
+        this.isQuietHours(user, now) ||
+        !this.isReminderHourDue(user, now)
+      ) {
+        continue;
       }
 
-      if (user.notifyPush) {
-        await this.sendPush(userId, push.title, push.body, {
-          tag: options.overdue ? 'overdue' : 'due',
+      const timezone = user.timezone || 'UTC';
+      const todayStart = getLocalDayStart(timezone, 0, now);
+      const tomorrowStart = getLocalDayStart(timezone, 1, now);
+      const tasks = await this.prisma.task.findMany({
+        where: {
+          status: TaskStatus.PENDING,
+          plant: { userId: user.id },
+          dueDate: options.overdue
+            ? { lt: todayStart }
+            : { gte: todayStart, lt: tomorrowStart },
+        },
+        include: {
+          plant: { include: { species: true } },
+        },
+        orderBy: { dueDate: 'asc' },
+      });
+      if (!tasks.length) continue;
+
+      const ids = tasks.map((task) => task.id);
+      const logs = await this.prisma.notificationLog.findMany({
+        where: {
+          userId: user.id,
+          relatedEntity: 'task',
+          relatedId: { in: ids },
+        },
+        select: { channel: true, relatedId: true, status: true },
+      });
+      const statusByChannelAndId = new Map(
+        logs.map((log) => [
+          `${log.channel}:${log.relatedId}`,
+          log.status.toUpperCase(),
+        ]),
+      );
+      const candidates = tasks.filter((task) => {
+        const hasLedger = logs.some((log) => log.relatedId === task.id);
+        return !(task.notifiedAt && !hasLedger);
+      });
+      if (!candidates.length) continue;
+
+      const sentTaskIds = new Set<string>();
+      for (const channel of [
+        NotificationChannel.EMAIL,
+        NotificationChannel.PUSH,
+        NotificationChannel.SMS,
+      ]) {
+        const pending = candidates.filter(
+          (task) =>
+            statusByChannelAndId.get(`${channel}:${task.id}`) !== 'SENT',
+        );
+        if (!pending.length) continue;
+
+        const initialRows = this.taskReminderRows(pending);
+        const initialPush = buildCareReminderPush(initialRows, {
+          overdue: options.overdue,
+        });
+        const emailSubject = options.overdue
+          ? 'Overdue plant care'
+          : 'Plant care due today';
+        const initialEmailBody = pending
+          .map(
+            (task) =>
+              `${task.taskType}: ${
+                task.plant.nickname || task.plant.species.commonName
+              } (due ${this.formatLocalDate(task.dueDate, timezone)})`,
+          )
+          .join('\n');
+        const initialMessage =
+          channel === NotificationChannel.EMAIL
+            ? `${emailSubject}\n${initialEmailBody}`
+            : `${initialPush.title}: ${initialPush.body}`;
+        const claimedIds = await this.claimDeliveries({
+          userId: user.id,
+          channel,
+          entities: pending.map((task) => ({
+            id: task.id,
+            dedupeKey: `task:${task.id}:care`,
+          })),
+          relatedEntity: 'task',
+          message: initialMessage,
+        });
+        const claimed = pending.filter((task) => claimedIds.has(task.id));
+        if (!claimed.length) continue;
+
+        const rows = this.taskReminderRows(claimed);
+        const push = buildCareReminderPush(rows, {
+          overdue: options.overdue,
+        });
+        const emailBody = claimed
+          .map(
+            (task) =>
+              `${task.taskType}: ${
+                task.plant.nickname || task.plant.species.commonName
+              } (due ${this.formatLocalDate(task.dueDate, timezone)})`,
+          )
+          .join('\n');
+
+        const result = await this.deliverTaskChannel({
+          channel,
+          user,
+          title: channel === NotificationChannel.EMAIL ? emailSubject : push.title,
+          body: channel === NotificationChannel.EMAIL ? emailBody : push.body,
+          overdue: options.overdue,
           route: push.route,
+          taskCount: claimed.length,
+        });
+        const message =
+          channel === NotificationChannel.EMAIL
+            ? `${emailSubject}\n${emailBody}`
+            : `${push.title}: ${push.body}`;
+        await this.recordDeliveries({
+          userId: user.id,
+          channel,
+          entities: claimed.map((task) => ({
+            id: task.id,
+            dedupeKey: `task:${task.id}:care`,
+          })),
+          relatedEntity: 'task',
+          message,
+          result,
+        });
+        if (result.status === 'SENT') {
+          claimed.forEach((task) => sentTaskIds.add(task.id));
+        }
+      }
+
+      if (sentTaskIds.size) {
+        await this.prisma.task.updateMany({
+          where: { id: { in: [...sentTaskIds] } },
+          data: { notifiedAt: now },
         });
       }
+      processedUsers += 1;
+    }
 
-      if (user.notifySms && this.isSmsEligible(user)) {
-        const taskWord = userTasks.length === 1 ? 'plant needs' : 'plants need';
-        const smsBody = `PlantCare: ${userTasks.length} ${taskWord} care${options.overdue ? ' (overdue)' : ' today'}. Open the app for details.`;
-        await this.sendSms(userId, user.phone, smsBody, options.overdue ? 'overdue' : 'due');
+    return processedUsers;
+  }
+
+  private taskReminderRows(
+    tasks: Array<{
+      taskType: string;
+      plantId: string;
+      dueDate: Date;
+      plant: {
+        nickname: string | null;
+        species: { commonName: string };
+      };
+    }>,
+  ): TaskReminderRow[] {
+    return tasks.map((task) => ({
+      taskType: task.taskType,
+      plantId: task.plantId,
+      dueDate: task.dueDate,
+      plant: {
+        nickname: task.plant.nickname,
+        species: { commonName: task.plant.species.commonName },
+      },
+    }));
+  }
+
+  private async deliverTaskChannel(input: {
+    channel: NotificationChannel;
+    user: ReminderUser;
+    title: string;
+    body: string;
+    overdue: boolean;
+    route: string;
+    taskCount: number;
+  }): Promise<DeliveryResult> {
+    const { channel, user } = input;
+    if (channel === NotificationChannel.EMAIL) {
+      if (!user.notifyEmail) {
+        return this.skipped(
+          'smtp',
+          'PREFERENCE_DISABLED',
+          'Email notifications are disabled.',
+        );
       }
+      return this.sendEmail(user.email, input.title, input.body);
+    }
 
-      await this.prisma.task.updateMany({
-        where: { id: { in: userTasks.map((t) => t.id) } },
-        data: { notifiedAt: new Date() },
+    if (channel === NotificationChannel.PUSH) {
+      if (!user.notifyPush) {
+        return this.skipped(
+          'fcm',
+          'PREFERENCE_DISABLED',
+          'Push notifications are disabled.',
+        );
+      }
+      return this.sendPush(user.id, input.title, input.body, {
+        tag: input.overdue ? 'overdue' : 'due',
+        route: input.route,
       });
     }
 
-    return byUser.size;
+    if (!user.notifySms) {
+      return this.skipped(
+        'twilio',
+        'PREFERENCE_DISABLED',
+        'SMS notifications are disabled.',
+      );
+    }
+    if (!this.isSmsEligible(user)) {
+      return this.skipped(
+        'twilio',
+        'PLAN_NOT_ELIGIBLE',
+        'SMS reminders require Premium.',
+      );
+    }
+    const taskWord = input.taskCount === 1 ? 'plant needs' : 'plants need';
+    const smsBody = `Dr. Plant: ${input.taskCount} ${taskWord} care${
+      input.overdue ? ' (overdue)' : ' today'
+    }. Open the app for details.`;
+    return this.sendSms(user.id, user.phone, smsBody);
   }
 
   async registerDevice(userId: string, token: string, platform: string) {
@@ -198,58 +464,140 @@ export class NotificationsService {
     return { removed: result.count };
   }
 
-  private async sendEmail(to: string, subject: string, text: string) {
-    const apiKey = this.config.get<string>('SENDGRID_API_KEY');
-    const from = this.config.get<string>('SENDGRID_FROM_EMAIL', 'noreply@plantcare.app');
-    if (!apiKey) {
-      this.logger.log(`[email mock] To: ${to} - ${subject}: ${text}`);
-      return;
-    }
-    try {
-      await axios.post(
-        'https://api.sendgrid.com/v3/mail/send',
-        {
-          personalizations: [{ to: [{ email: to }] }],
-          from: { email: from },
-          subject,
-          content: [{ type: 'text/plain', value: text }],
-        },
-        { headers: { Authorization: `Bearer ${apiKey}` } },
-      );
-    } catch (err) {
-      this.logger.warn(`SendGrid failed: ${err}`);
-    }
-  }
-
-  async notifyBuddy(userId: string, title: string, body: string, tag = 'buddy') {
+  async notifyBuddy(
+    userId: string,
+    title: string,
+    body: string,
+    tag = 'buddy',
+  ) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return;
-    if (this.isQuietHours(user)) return;
+    if (!user || this.isQuietHours(user)) return;
 
-    if (user.notifyPush) {
-      await this.sendPush(userId, title, body, { tag });
+    const dedupeKey = `buddy:${tag}:${getLocalDateKey(
+      user.timezone || 'UTC',
+    )}`;
+    const existing = await this.prisma.notificationLog.findMany({
+      where: { userId, dedupeKey },
+      select: { channel: true, status: true },
+    });
+    const sentChannels = new Set(
+      existing
+        .filter((row) => row.status.toUpperCase() === 'SENT')
+        .map((row) => row.channel),
+    );
+    const deliveries: Array<{
+      channel: NotificationChannel;
+      result: DeliveryResult;
+    }> = [];
+    const message = `[${tag}] ${title}: ${body}`;
+    const claimChannel = async (channel: NotificationChannel) => {
+      if (sentChannels.has(channel)) return false;
+      const claimed = await this.claimDeliveries({
+        userId,
+        channel,
+        entities: [{ id: tag, dedupeKey }],
+        relatedEntity: 'buddy',
+        message,
+      });
+      return claimed.has(tag);
+    };
+    if (await claimChannel(NotificationChannel.PUSH)) {
+      deliveries.push({
+        channel: NotificationChannel.PUSH,
+        result: user.notifyPush
+          ? await this.sendPush(userId, title, body, { tag })
+          : this.skipped(
+              'fcm',
+              'PREFERENCE_DISABLED',
+              'Push notifications are disabled.',
+            ),
+      });
     }
-    if (user.notifyEmail) {
-      await this.sendEmail(user.email, title, body);
-      await this.log(userId, NotificationChannel.EMAIL, `[${tag}] ${title}: ${body}`);
+    if (await claimChannel(NotificationChannel.EMAIL)) {
+      deliveries.push({
+        channel: NotificationChannel.EMAIL,
+        result: user.notifyEmail
+          ? await this.sendEmail(user.email, title, body)
+          : this.skipped(
+              'smtp',
+              'PREFERENCE_DISABLED',
+              'Email notifications are disabled.',
+            ),
+      });
     }
-    if (user.notifySms && this.isSmsEligible(user)) {
-      await this.sendSms(userId, user.phone, `${title}: ${body}`, tag);
+    if (await claimChannel(NotificationChannel.SMS)) {
+      deliveries.push({
+        channel: NotificationChannel.SMS,
+        result:
+          user.notifySms && this.isSmsEligible(user)
+            ? await this.sendSms(userId, user.phone, `${title}: ${body}`)
+            : this.skipped(
+                'twilio',
+                user.notifySms ? 'PLAN_NOT_ELIGIBLE' : 'PREFERENCE_DISABLED',
+                user.notifySms
+                  ? 'SMS reminders require Premium.'
+                  : 'SMS notifications are disabled.',
+              ),
+      });
+    }
+
+    for (const delivery of deliveries) {
+      await this.recordDeliveries({
+        userId,
+        channel: delivery.channel,
+        entities: [{ id: tag, dedupeKey }],
+        relatedEntity: 'buddy',
+        message,
+        result: delivery.result,
+      });
     }
   }
 
   async hasBuddyNudgeToday(userId: string, tag: string): Promise<boolean> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { timezone: true },
+    });
+    const timezone = user?.timezone || 'UTC';
+    const today = getLocalDayStart(timezone, 0);
     const row = await this.prisma.notificationLog.findFirst({
       where: {
         userId,
         channel: NotificationChannel.PUSH,
-        message: { contains: `[${tag}]` },
-        createdAt: { gte: today },
+        status: { in: ['SENT', 'sent'] },
+        OR: [
+          { dedupeKey: `buddy:${tag}:${getLocalDateKey(timezone)}` },
+          {
+            message: { contains: `[${tag}]` },
+            createdAt: { gte: today },
+          },
+        ],
       },
     });
     return Boolean(row);
+  }
+
+  private async sendEmail(
+    to: string,
+    subject: string,
+    text: string,
+  ): Promise<DeliveryResult> {
+    const result = await this.email.sendNotificationEmail(to, subject, text);
+    if (result.success) return { status: 'SENT', provider: 'smtp' };
+    if (result.skipped) {
+      return {
+        status: 'UNCONFIGURED',
+        provider: 'smtp',
+        errorCode: 'SMTP_NOT_CONFIGURED',
+        errorMessage: result.error,
+      };
+    }
+    return {
+      status: 'FAILED',
+      provider: 'smtp',
+      errorCode: 'SMTP_SEND_FAILED',
+      errorMessage: result.error,
+    };
   }
 
   private async sendPush(
@@ -257,93 +605,273 @@ export class NotificationsService {
     title: string,
     body: string,
     options: string | { tag?: string; route?: string } = 'push',
-  ) {
-    const tag = typeof options === 'string' ? options : (options.tag ?? 'push');
+  ): Promise<DeliveryResult> {
+    const tag =
+      typeof options === 'string' ? options : options.tag ?? 'push';
     const route =
       typeof options === 'string'
         ? this.pushRouteForTag(options)
-        : (options.route ?? this.pushRouteForTag(tag));
-
+        : options.route ?? this.pushRouteForTag(tag);
     const rows = await this.prisma.deviceToken.findMany({ where: { userId } });
-    const message = `${title}: ${body}`;
-    const logTag = `[${tag}] ${message}`;
-
     if (!rows.length) {
-      this.logger.log(`[push mock] ${userId}: ${message}`);
-      await this.log(userId, NotificationChannel.PUSH, logTag);
-      return;
+      return this.skipped(
+        'fcm',
+        'NO_DEVICE_TOKEN',
+        'No registered push device.',
+      );
     }
 
-    const transport = resolveFcmTransport((key) => this.config.get<string>(key));
+    const transport = resolveFcmTransport((key) =>
+      this.config.get<string>(key),
+    );
     if (transport.mode === 'none') {
-      this.logger.log(`[push mock] ${userId} (${rows.length} devices): ${message}`);
-      await this.log(userId, NotificationChannel.PUSH, logTag);
-      return;
+      return {
+        status: 'UNCONFIGURED',
+        provider: 'fcm',
+        errorCode: 'FCM_NOT_CONFIGURED',
+        errorMessage: 'Firebase delivery is not configured.',
+      };
     }
 
     try {
       const result = await sendFcmNotification(
         transport,
-        rows.map((r) => r.token),
+        rows.map((row) => row.token),
         title,
         body,
-        { route, plantId: route.startsWith('/garden/plants/') ? route.split('/').pop()! : '' },
+        {
+          route,
+          plantId: route.startsWith('/garden/plants/')
+            ? route.split('/').pop()!
+            : '',
+        },
       );
       if (result.invalidTokens.length) {
         await this.prisma.deviceToken.deleteMany({
           where: { userId, token: { in: result.invalidTokens } },
         });
-        this.logger.warn(
-          `Removed ${result.invalidTokens.length} invalid FCM token(s) for user ${userId}`,
-        );
       }
-      this.logger.log(
-        `FCM ${transport.mode} sent ${result.sent}/${rows.length} to user ${userId} (${result.failed} failed)`,
-      );
-      await this.log(userId, NotificationChannel.PUSH, logTag);
-    } catch (err) {
-      this.logger.warn(`FCM failed for ${userId}: ${err}`);
-      await this.log(userId, NotificationChannel.PUSH, `${logTag} (FCM error)`);
+      if (result.sent > 0) {
+        return {
+          status: 'SENT',
+          provider: `fcm-${transport.mode}`,
+          ...(result.failed
+            ? {
+                errorCode: 'PARTIAL_FAILURE',
+                errorMessage: `${result.failed} of ${rows.length} device deliveries failed.`,
+              }
+            : {}),
+        };
+      }
+      return {
+        status: 'FAILED',
+        provider: `fcm-${transport.mode}`,
+        errorCode: 'FCM_DELIVERY_FAILED',
+        errorMessage: `No device accepted the notification (${result.failed} failed).`,
+      };
+    } catch (error) {
+      this.logger.warn(`FCM failed for ${userId}: ${error}`);
+      return {
+        status: 'FAILED',
+        provider: `fcm-${transport.mode}`,
+        errorCode: 'FCM_REQUEST_FAILED',
+        errorMessage: this.errorMessage(error),
+      };
     }
   }
 
-  /** SMS is a premium perk (matches the "SMS (Premium)" Settings label) — gated
-   *  server-side, not just hidden in the UI, so API clients can't bypass it. */
   private isSmsEligible(user: { planTier: PlanTier }): boolean {
-    return effectivePlanTier(this.config, user.planTier) === PlanTier.PREMIUM;
+    return (
+      effectivePlanTier(this.config, user.planTier) === PlanTier.PREMIUM
+    );
   }
 
-  private async sendSms(userId: string, phone: string | null | undefined, body: string, tag = 'sms') {
-    const logTag = `[${tag}] ${body}`;
-
+  private async sendSms(
+    userId: string,
+    phone: string | null | undefined,
+    body: string,
+  ): Promise<DeliveryResult> {
     if (!phone) {
-      this.logger.log(`[sms mock] ${userId}: no phone number on file`);
-      await this.log(userId, NotificationChannel.SMS, logTag);
-      return;
+      return this.skipped(
+        'twilio',
+        'NO_PHONE',
+        'No phone number is saved.',
+      );
     }
-
-    const transport = resolveSmsTransport((key) => this.config.get<string>(key));
+    const transport = resolveSmsTransport((key) =>
+      this.config.get<string>(key),
+    );
     if (transport.mode === 'none') {
-      this.logger.log(`[sms mock] ${userId} (${phone}): ${body}`);
-      await this.log(userId, NotificationChannel.SMS, logTag);
-      return;
+      return {
+        status: 'UNCONFIGURED',
+        provider: 'twilio',
+        errorCode: 'TWILIO_NOT_CONFIGURED',
+        errorMessage: 'Twilio delivery is not configured.',
+      };
     }
 
     try {
       const result = await sendSmsNotification(transport, phone, body);
-      if (result.sent) {
-        this.logger.log(`Twilio SMS sent to user ${userId}`);
-        await this.log(userId, NotificationChannel.SMS, logTag);
-      } else {
-        this.logger.warn(
-          `Twilio SMS failed for ${userId}: ${result.errorCode ?? ''} ${result.errorMessage ?? ''}`,
-        );
-        await this.log(userId, NotificationChannel.SMS, `${logTag} (SMS error)`);
-      }
-    } catch (err) {
-      this.logger.warn(`Twilio SMS threw for ${userId}: ${err}`);
-      await this.log(userId, NotificationChannel.SMS, `${logTag} (SMS error)`);
+      if (result.sent) return { status: 'SENT', provider: 'twilio' };
+      return {
+        status: 'FAILED',
+        provider: 'twilio',
+        errorCode: String(result.errorCode ?? 'TWILIO_SEND_FAILED'),
+        errorMessage: result.errorMessage,
+      };
+    } catch (error) {
+      this.logger.warn(`Twilio SMS threw for ${userId}: ${error}`);
+      return {
+        status: 'FAILED',
+        provider: 'twilio',
+        errorCode: 'TWILIO_REQUEST_FAILED',
+        errorMessage: this.errorMessage(error),
+      };
     }
+  }
+
+  private async recordDeliveries(input: {
+    userId: string;
+    channel: NotificationChannel;
+    entities: Array<{ id: string; dedupeKey: string }>;
+    relatedEntity: string;
+    message: string;
+    result: DeliveryResult;
+  }) {
+    const attemptedAt = new Date();
+    await this.prisma.$transaction(
+      input.entities.map((entity) =>
+        this.prisma.notificationLog.upsert({
+          where: {
+            userId_channel_dedupeKey: {
+              userId: input.userId,
+              channel: input.channel,
+              dedupeKey: entity.dedupeKey,
+            },
+          },
+          create: {
+            userId: input.userId,
+            channel: input.channel,
+            dedupeKey: entity.dedupeKey,
+            relatedEntity: input.relatedEntity,
+            relatedId: entity.id,
+            message: input.message,
+            status: input.result.status,
+            provider: input.result.provider,
+            errorCode: input.result.errorCode,
+            errorMessage: input.result.errorMessage,
+            attemptedAt,
+          },
+          update: {
+            message: input.message,
+            status: input.result.status,
+            provider: input.result.provider,
+            errorCode: input.result.errorCode ?? null,
+            errorMessage: input.result.errorMessage ?? null,
+            attemptedAt,
+          },
+        }),
+      ),
+    );
+  }
+
+  private async claimDeliveries(input: {
+    userId: string;
+    channel: NotificationChannel;
+    entities: Array<{ id: string; dedupeKey: string }>;
+    relatedEntity: string;
+    message: string;
+  }): Promise<Set<string>> {
+    const claimed = new Set<string>();
+    for (const entity of input.entities) {
+      const attemptedAt = new Date();
+      const data = {
+        userId: input.userId,
+        channel: input.channel,
+        dedupeKey: entity.dedupeKey,
+        relatedEntity: input.relatedEntity,
+        relatedId: entity.id,
+        message: input.message,
+        status: 'ATTEMPTING',
+        attemptedAt,
+      };
+      try {
+        await this.prisma.notificationLog.create({ data });
+        claimed.add(entity.id);
+        continue;
+      } catch (error) {
+        if (!this.isUniqueConstraintError(error)) throw error;
+      }
+
+      const existing = await this.prisma.notificationLog.findUnique({
+        where: {
+          userId_channel_dedupeKey: {
+            userId: input.userId,
+            channel: input.channel,
+            dedupeKey: entity.dedupeKey,
+          },
+        },
+        select: {
+          id: true,
+          status: true,
+          attemptedAt: true,
+        },
+      });
+      if (!existing || existing.status.toUpperCase() === 'SENT') continue;
+      if (
+        existing.status.toUpperCase() === 'ATTEMPTING' &&
+        attemptedAt.getTime() - existing.attemptedAt.getTime() <
+          DELIVERY_CLAIM_TTL_MS
+      ) {
+        continue;
+      }
+
+      const result = await this.prisma.notificationLog.updateMany({
+        where: {
+          id: existing.id,
+          status: existing.status,
+          attemptedAt: existing.attemptedAt,
+        },
+        data: {
+          ...data,
+          errorCode: null,
+          errorMessage: null,
+          provider: null,
+        },
+      });
+      if (result.count === 1) claimed.add(entity.id);
+    }
+    return claimed;
+  }
+
+  private skipped(
+    provider: string,
+    errorCode: string,
+    errorMessage: string,
+  ): DeliveryResult {
+    return { status: 'SKIPPED', provider, errorCode, errorMessage };
+  }
+
+  private formatLocalDate(value: Date, timezone: string): string {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).format(value);
+  }
+
+  private errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+  }
+
+  private isUniqueConstraintError(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === 'P2002'
+    );
   }
 
   private pushRouteForTag(tag: string): string {
@@ -358,11 +886,5 @@ export class NotificationsService {
       default:
         return '/garden/tasks';
     }
-  }
-
-  private async log(userId: string, channel: NotificationChannel, message: string) {
-    await this.prisma.notificationLog.create({
-      data: { userId, channel, message },
-    });
   }
 }
