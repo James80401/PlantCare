@@ -65,6 +65,68 @@ describe('BillingService', () => {
     );
   });
 
+  it('cancels every live Stripe subscription before account deletion', async () => {
+    const stripe = {
+      subscriptions: {
+        list: jest.fn().mockResolvedValue({
+          data: [
+            { id: 'sub_active', status: 'active' },
+            { id: 'sub_trial', status: 'trialing' },
+            { id: 'sub_done', status: 'canceled' },
+          ],
+        }),
+        cancel: jest.fn().mockResolvedValue({}),
+      },
+    };
+    const { service } = createService(stripe);
+
+    await expect(
+      service.stopSubscriptionsForAccountDeletion('user-1'),
+    ).resolves.toEqual({ canceled: 2 });
+    expect(stripe.subscriptions.cancel).toHaveBeenCalledTimes(2);
+    expect(stripe.subscriptions.cancel).toHaveBeenNthCalledWith(1, 'sub_active');
+    expect(stripe.subscriptions.cancel).toHaveBeenNthCalledWith(2, 'sub_trial');
+  });
+
+  it('paginates Stripe subscriptions so account deletion cannot leave later charges active', async () => {
+    const stripe = {
+      subscriptions: {
+        list: jest
+          .fn()
+          .mockResolvedValueOnce({
+            data: [{ id: 'sub_page_1', status: 'active' }],
+            has_more: true,
+          })
+          .mockResolvedValueOnce({
+            data: [{ id: 'sub_page_2', status: 'past_due' }],
+            has_more: false,
+          }),
+        cancel: jest.fn().mockResolvedValue({}),
+      },
+    };
+    const { service } = createService(stripe);
+
+    await expect(
+      service.stopSubscriptionsForAccountDeletion('user-1'),
+    ).resolves.toEqual({ canceled: 2 });
+
+    expect(stripe.subscriptions.list).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ starting_after: 'sub_page_1' }),
+    );
+    expect(stripe.subscriptions.cancel).toHaveBeenCalledTimes(2);
+  });
+
+  it('blocks account deletion when a Stripe customer exists but billing is unavailable', async () => {
+    const { service } = createService();
+    (service as unknown as { prisma: { user: { findUnique: jest.Mock } } })
+      .prisma.user.findUnique.mockResolvedValue({ stripeCustomerId: 'cus_live' });
+
+    await expect(
+      service.stopSubscriptionsForAccountDeletion('user-1'),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
   it('creates checkout with a fourteen day trial', async () => {
     const stripe = {
       checkout: {

@@ -11,6 +11,6 @@
 | Perenual | [perenual.md](perenual.md) | Species enrich |
 | Hugging Face | [huggingface.md](huggingface.md) | Diagnosis hint |
 | OpenWeather | [weather.md](weather.md) | Settings weather |
-| Storage | [storage.md](storage.md) | S3 or local uploads |
+| Storage | [storage.md](storage.md) | Managed local upload volume |
 
 Test all configured: `npm run test:integrations`

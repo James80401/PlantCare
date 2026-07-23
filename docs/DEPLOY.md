@@ -45,7 +45,8 @@ npm run production:up
 - `FRONTEND_URL`, `CORS_ORIGINS`, and `VITE_API_BASE_URL` must match your public HTTPS URLs
 - Use managed PostgreSQL (RDS, Cloud SQL) or compose `postgres`
 - `FCM_SERVER_KEY` for real push (see [operations/push-notifications.md](operations/push-notifications.md))
-- Configure OpenAI, SMTP, S3, Stripe as needed
+- Configure OpenAI and SMTP as needed; keep Stripe disabled unless explicitly approved
+- Verify the local uploads volume is included in backup and restore procedures
 - Schedule nightly backups: `scripts/backup-production.sh` via cron (see [operations/backups.md](operations/backups.md))
 - Post-deploy: `API_URL=... npm run verify` and `npm run smoke:buddy`
 

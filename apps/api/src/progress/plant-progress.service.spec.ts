@@ -70,7 +70,10 @@ describe('PlantProgressService', () => {
       },
       $transaction: jest.fn((ops) => Promise.all(ops)),
     };
-    const upload = { saveFile: jest.fn().mockResolvedValue('/uploads/progress.jpg') };
+    const upload = {
+      saveFile: jest.fn().mockResolvedValue('/uploads/progress.webp'),
+      deleteByUrl: jest.fn().mockResolvedValue(undefined),
+    };
     const imageModeration = { assertImageAllowed: jest.fn().mockResolvedValue(null) };
     const aiUsage = { reserveCall: jest.fn().mockResolvedValue(null) };
     const config = {
@@ -162,7 +165,9 @@ describe('PlantProgressService', () => {
   });
 
   it('replaces a progress photo after moderation', async () => {
-    const { service, prisma, upload, imageModeration } = createService();
+    const { service, prisma, upload, imageModeration } = createService({
+      entry: makeEntry({ photoUrl: '/uploads/old-progress.webp' }),
+    });
     const file = {
       buffer: Buffer.from('image'),
       mimetype: 'image/jpeg',
@@ -177,18 +182,43 @@ describe('PlantProgressService', () => {
     expect(upload.saveFile).toHaveBeenCalledWith(file);
     expect(prisma.plantProgressEntry.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ photoUrl: '/uploads/progress.jpg' }),
+        data: expect.objectContaining({ photoUrl: '/uploads/progress.webp' }),
       }),
     );
+    expect(upload.deleteByUrl).toHaveBeenCalledWith('/uploads/old-progress.webp');
   });
 
   it('deletes an owned progress entry', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, upload } = createService({
+      entry: makeEntry({ photoUrl: '/uploads/progress.webp' }),
+    });
 
     const result = await service.remove('user-1', 'plant-1', 'entry-1');
 
     expect(result).toEqual({ deleted: true });
     expect(prisma.plantProgressEntry.delete).toHaveBeenCalledWith({ where: { id: 'entry-1' } });
+    expect(upload.deleteByUrl).toHaveBeenCalledWith('/uploads/progress.webp');
+  });
+
+  it('removes a new progress photo and preserves the old one when persistence fails', async () => {
+    const { service, prisma, upload } = createService({
+      entry: makeEntry({ photoUrl: '/uploads/old-progress.webp' }),
+    });
+    prisma.plantProgressEntry.update.mockRejectedValue(
+      new Error('database unavailable'),
+    );
+    const file = {
+      buffer: Buffer.from('image'),
+      mimetype: 'image/jpeg',
+    } as Express.Multer.File;
+
+    await expect(
+      service.update('user-1', 'plant-1', 'entry-1', {}, file),
+    ).rejects.toThrow('database unavailable');
+
+    expect(upload.deleteByUrl).toHaveBeenCalledTimes(1);
+    expect(upload.deleteByUrl).toHaveBeenCalledWith('/uploads/progress.webp');
+    expect(upload.deleteByUrl).not.toHaveBeenCalledWith('/uploads/old-progress.webp');
   });
 
   it('blocks updates when the progress entry is not owned by the user', async () => {

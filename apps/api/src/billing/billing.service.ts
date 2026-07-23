@@ -123,6 +123,49 @@ export class BillingService {
     };
   }
 
+  async stopSubscriptionsForAccountDeletion(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true },
+    });
+    if (!user?.stripeCustomerId) return { canceled: 0 };
+    if (!this.stripe) {
+      throw new ServiceUnavailableException(
+        'Billing must be available before this account can be deleted safely.',
+      );
+    }
+
+    let canceled = 0;
+    let startingAfter: string | undefined;
+    do {
+      const subscriptions = await this.stripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'all',
+        limit: 100,
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
+      });
+      for (const subscription of subscriptions.data) {
+        if (
+          subscription.status === 'canceled' ||
+          subscription.status === 'incomplete_expired'
+        ) {
+          continue;
+        }
+        await this.stripe.subscriptions.cancel(subscription.id);
+        canceled += 1;
+      }
+      startingAfter = subscriptions.has_more
+        ? subscriptions.data.at(-1)?.id
+        : undefined;
+      if (subscriptions.has_more && !startingAfter) {
+        throw new ServiceUnavailableException(
+          'Stripe returned an incomplete subscription page.',
+        );
+      }
+    } while (startingAfter);
+    return { canceled };
+  }
+
   async handleWebhook(rawBody: Buffer, signature: string) {
     if (!this.stripe) return;
 

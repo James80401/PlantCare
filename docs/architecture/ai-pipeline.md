@@ -34,7 +34,7 @@ journal photos, and plant photos — all of which share the same front-door guar
         └─────────────┬──────────────┘
                       │
         ┌─────────────▼──────────────┐
-        │ 4. Persist + save image     │  upload.service.ts (disk/S3) + Prisma
+        │ 4. Persist + save image     │  upload.service.ts (managed disk) + Prisma
         └─────────────────────────────┘
 ```
 
@@ -123,8 +123,9 @@ protect the context window and token cost) to OpenAI.
 ## 4. Persist
 
 After all gates pass, [`UploadService.saveFile`](../../apps/api/src/upload/upload.service.ts)
-writes the image to the local upload dir (dev) or S3 (prod), and the feature row is
-created in the DB.
+decodes, normalizes, and writes the image to the managed local upload volume, and
+the feature row is created in the database. The production volume is included in
+the backup and restore process.
 
 ---
 

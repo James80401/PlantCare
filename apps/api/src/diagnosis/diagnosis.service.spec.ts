@@ -255,7 +255,10 @@ describe('DiagnosisService.diagnose parallelization', () => {
         create: jest.fn().mockResolvedValue({ id: 'd-1' }),
       },
     };
-    const upload = { saveFile: jest.fn().mockResolvedValue('http://up/leaf.jpg') };
+    const upload = {
+      saveFile: jest.fn().mockResolvedValue('/uploads/leaf.webp'),
+      deleteByUrl: jest.fn().mockResolvedValue(undefined),
+    };
     const config = { get: jest.fn() };
     const llm = {
       isAvailable: jest.fn().mockReturnValue(true),
@@ -333,5 +336,16 @@ describe('DiagnosisService.diagnose parallelization', () => {
       service.diagnose('user-1', 'plant-1', makeFile(), 'symptoms'),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(upload.saveFile).not.toHaveBeenCalled();
+  });
+
+  it('deletes a normalized image when diagnosis persistence fails', async () => {
+    const { service, prisma, upload } = makeService();
+    prisma.diagnosis.create.mockRejectedValue(new Error('database unavailable'));
+
+    await expect(
+      service.diagnose('user-1', 'plant-1', makeFile(), 'symptoms'),
+    ).rejects.toThrow('database unavailable');
+
+    expect(upload.deleteByUrl).toHaveBeenCalledWith('/uploads/leaf.webp');
   });
 });

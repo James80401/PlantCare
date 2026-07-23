@@ -589,7 +589,8 @@ export const usersApi = {
   }) => api.put('/users/me/care-preferences', data),
   updateSettings: (data: Record<string, unknown>) =>
     api.put('/users/me/notification-settings', data),
-  deleteAccount: () => api.delete('/users/me'),
+  deleteAccount: (password: string) =>
+    api.delete('/users/me', { data: { password } }),
   exportData: () => api.get('/users/me/export'),
   weatherAdviceStatus: () => api.get('/users/me/weather/advice/status'),
   fetchWeatherAdvice: () => api.post('/users/me/weather/advice', { confirmed: true }),

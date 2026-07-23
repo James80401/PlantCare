@@ -240,7 +240,7 @@ Configured via [.env.example](../.env.example) — app runs without them using m
 | OpenWeather | `OPENWEATHER_API_KEY` | Rain → postpone watering |
 | SMTP | `SMTP_*`, `EMAIL_FROM` | Verification, password reset, reminders |
 | Stripe | `STRIPE_*` | Premium subscription |
-| S3 | `AWS_*`, `S3_*` | Production file uploads (local `UPLOAD_DIR` default) |
+| Local uploads | `UPLOAD_DIR` | Managed user media; backed up with PostgreSQL |
 | Twilio / SendGrid / Firebase | various | SMS, email alt, push hooks |
 
 Docs: [integrations/INDEX.md](integrations/INDEX.md).
@@ -295,6 +295,6 @@ Quick links: [tutorials](tutorials/INDEX.md) · [user guide](user-guide/INDEX.md
 
 ## Summary
 
-Dr. Plant is a **medium-complexity TypeScript SaaS MVP** for plant care management. Its differentiators are not simple reminders but **species-aware scheduling**, **rich care guides**, **weather logic**, and **AI diagnosis**. The codebase separates concerns cleanly (SPA + API + shared types + root Prisma), degrades gracefully without API keys, and includes production paths (Postgres, S3, Stripe, Docker) alongside frictionless SQLite local dev.
+Dr. Plant is a **medium-complexity TypeScript SaaS MVP** for plant care management. Its differentiators are not simple reminders but **species-aware scheduling**, **rich care guides**, **weather logic**, and **AI diagnosis**. The codebase separates concerns cleanly (SPA + API + shared types + root Prisma), degrades gracefully without API keys, and includes production paths (PostgreSQL, a backed-up local upload volume, gated Stripe billing, and Docker) alongside frictionless SQLite local dev.
 
 **Notable caveat for contributors:** premium tier and plan limits are implemented in schema/shared constants but **overridden to PREMIUM** in JWT validation during current MVP — re-enable real gating before shipping paid features.

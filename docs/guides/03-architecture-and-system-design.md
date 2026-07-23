@@ -18,7 +18,7 @@
             │ Prisma                       │ HTTP SDKs
 ┌───────────▼──────────┐    ┌─────────────▼──────────────────┐
 │  SQLite / PostgreSQL  │    │  OpenAI, PlantNet, Perenual,   │
-│                       │    │  Open-Meteo, Stripe, SMTP, S3  │
+│                       │    │  Open-Meteo, Stripe, SMTP      │
 └───────────────────────┘    └────────────────────────────────┘
 ```
 
@@ -45,7 +45,7 @@ Deep dive: [architecture/system-overview.md](../architecture/system-overview.md)
 | **WeatherModule** | `/users/me/weather` | Geocoding, advice cache, per-plant lines |
 | **BillingModule** | `/billing` | Stripe checkout + webhook |
 | **NotificationsModule** | `/devices` + cron | Push token registration, daily reminders |
-| **UploadModule** | (via plants) | Local or S3 image storage |
+| **UploadModule** | (via plants) | Validated local image storage and cleanup |
 | **EmailModule** | (internal) | Nodemailer templates |
 | **PrismaModule** | — | Database client |
 | **HealthController** | `/health` | Liveness |

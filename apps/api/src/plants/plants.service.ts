@@ -208,10 +208,6 @@ export class PlantsService {
     const imageChanged =
       dto.imageUrl !== undefined && dto.imageUrl !== (plant.imageUrl ?? null);
 
-    if (imageChanged && plant.imageUrl && dto.imageUrl !== plant.imageUrl) {
-      await this.upload.deleteByUrl(plant.imageUrl).catch(() => {});
-    }
-
     await this.prisma.plant.update({
       where: { id },
       data: {
@@ -222,6 +218,9 @@ export class PlantsService {
         ...(dto.imageUrl !== undefined ? { imageUrl: dto.imageUrl || null } : {}),
       },
     });
+    if (imageChanged && plant.imageUrl && dto.imageUrl !== plant.imageUrl) {
+      await this.upload.deleteByUrl(plant.imageUrl).catch(() => {});
+    }
 
     const shouldReschedule = locationChanged || potSizeChanged;
     if (shouldReschedule) {
@@ -233,10 +232,29 @@ export class PlantsService {
   }
 
   async remove(userId: string, id: string) {
-    const plant = await this.prisma.plant.findFirst({ where: { id, userId } });
+    const plant = await this.prisma.plant.findFirst({
+      where: { id, userId },
+      include: {
+        journalEntries: { select: { photoUrl: true } },
+        progressEntries: { select: { photoUrl: true } },
+        diagnoses: { select: { imageUrl: true } },
+        diagnosisConversations: {
+          select: { messages: { select: { imageUrl: true } } },
+        },
+      },
+    });
     if (!plant) throw new NotFoundException('Plant not found');
-    if (plant.imageUrl) await this.upload.deleteByUrl(plant.imageUrl).catch(() => {});
     await this.prisma.plant.delete({ where: { id } });
+    const mediaUrls = [
+      plant.imageUrl,
+      ...plant.journalEntries.map((entry) => entry.photoUrl),
+      ...plant.progressEntries.map((entry) => entry.photoUrl),
+      ...plant.diagnoses.map((diagnosis) => diagnosis.imageUrl),
+      ...plant.diagnosisConversations.flatMap((conversation) =>
+        conversation.messages.map((message) => message.imageUrl),
+      ),
+    ].filter((url): url is string => Boolean(url));
+    await Promise.all(mediaUrls.map((url) => this.upload.deleteByUrl(url).catch(() => {})));
     return { deleted: true };
   }
 

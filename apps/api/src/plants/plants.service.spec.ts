@@ -14,6 +14,10 @@ describe('PlantsService', () => {
     approximateAgeMonths: 12,
     imageUrl: 'https://example.com/old.jpg',
     notes: 'Old notes',
+    journalEntries: [],
+    progressEntries: [],
+    diagnoses: [],
+    diagnosisConversations: [],
   };
 
   function createService() {
@@ -33,6 +37,7 @@ describe('PlantsService', () => {
         findFirst: jest.fn().mockResolvedValue(plant),
         create: jest.fn().mockResolvedValue({ ...plant, species: {} }),
         update: jest.fn().mockResolvedValue({ ...plant, nickname: 'Updated' }),
+        delete: jest.fn().mockResolvedValue(plant),
       },
       plantSpecies: {
         findFirst: jest.fn().mockResolvedValue({ id: 'species-1' }),
@@ -72,7 +77,7 @@ describe('PlantsService', () => {
   }
 
   it('updates nickname, pot size, notes, and image for the owner', async () => {
-    const { service, prisma, scheduler } = createService();
+    const { service, prisma, scheduler, upload } = createService();
     const findOne = jest.spyOn(service, 'findOne').mockResolvedValue({
       ...plant,
       species: {},
@@ -99,6 +104,10 @@ describe('PlantsService', () => {
       },
     });
     expect(scheduler.generateTasksForPlant).toHaveBeenCalledWith('plant-1', 'PREMIUM');
+    expect(upload.deleteByUrl).toHaveBeenCalledWith('https://example.com/old.jpg');
+    expect(prisma.plant.update.mock.invocationCallOrder[0]).toBeLessThan(
+      upload.deleteByUrl.mock.invocationCallOrder[0],
+    );
     expect(result.tasksRescheduled).toBe(true);
     findOne.mockRestore();
   });
@@ -124,6 +133,30 @@ describe('PlantsService', () => {
     } as never);
 
     expect(prisma.plant.create).toHaveBeenCalled();
+  });
+
+  it('deletes all managed plant media after the plant record is removed', async () => {
+    const { service, prisma, upload } = createService();
+    prisma.plant.findFirst.mockResolvedValue({
+      ...plant,
+      imageUrl: '/uploads/plant.webp',
+      journalEntries: [{ photoUrl: '/uploads/journal.webp' }],
+      progressEntries: [{ photoUrl: '/uploads/progress.webp' }],
+      diagnoses: [{ imageUrl: '/uploads/diagnosis.webp' }],
+      diagnosisConversations: [
+        { messages: [{ imageUrl: '/uploads/chat.webp' }] },
+      ],
+    });
+
+    await expect(service.remove('user-1', 'plant-1')).resolves.toEqual({
+      deleted: true,
+    });
+
+    expect(prisma.plant.delete).toHaveBeenCalledWith({ where: { id: 'plant-1' } });
+    expect(upload.deleteByUrl).toHaveBeenCalledTimes(5);
+    expect(prisma.plant.delete.mock.invocationCallOrder[0]).toBeLessThan(
+      upload.deleteByUrl.mock.invocationCallOrder[0],
+    );
   });
 
   it('sets gardenId and inherits garden area on the created plant', async () => {

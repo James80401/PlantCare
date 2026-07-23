@@ -141,30 +141,39 @@ export class PlantProgressService {
       photoUrl = await this.upload.saveFile(file);
     }
 
-    await this.completeSourceTaskIfValid(userId, plantId, dto.taskId);
+    let persisted = false;
+    try {
+      await this.completeSourceTaskIfValid(userId, plantId, dto.taskId);
 
-    const entry = await this.prisma.plantProgressEntry.create({
-      data: {
-        plantId,
-        userId,
-        taskId: dto.taskId,
-        photoUrl,
-        overallHealth: dto.overallHealth,
-        growthChange: dto.growthChange,
-        leafCondition: dto.leafCondition,
-        soilMoisture: dto.soilMoisture,
-        pestSigns: dto.pestSigns,
-        recentCare: dto.recentCare,
-        notes: dto.notes?.trim() || undefined,
-        analysisSummary: analysis.summary,
-        adviceText: analysis.advice,
-        storyJson: JSON.stringify(analysis),
-      },
-    });
+      const entry = await this.prisma.plantProgressEntry.create({
+        data: {
+          plantId,
+          userId,
+          taskId: dto.taskId,
+          photoUrl,
+          overallHealth: dto.overallHealth,
+          growthChange: dto.growthChange,
+          leafCondition: dto.leafCondition,
+          soilMoisture: dto.soilMoisture,
+          pestSigns: dto.pestSigns,
+          recentCare: dto.recentCare,
+          notes: dto.notes?.trim() || undefined,
+          analysisSummary: analysis.summary,
+          adviceText: analysis.advice,
+          storyJson: JSON.stringify(analysis),
+        },
+      });
+      persisted = true;
 
-    await this.recommendations.completePlantCheckInForPlant(userId, plantId);
-    await this.syncPlantLifeMilestones(userId, plantId);
-    return entry;
+      await this.recommendations.completePlantCheckInForPlant(userId, plantId);
+      await this.syncPlantLifeMilestones(userId, plantId);
+      return entry;
+    } catch (error) {
+      if (!persisted && photoUrl) {
+        await this.upload.deleteByUrl(photoUrl).catch(() => {});
+      }
+      throw error;
+    }
   }
 
   async update(
@@ -193,59 +202,76 @@ export class PlantProgressService {
     let photoUrl = entry.photoUrl;
     let analysis: ProgressAnalysis | null = null;
 
-    if (dto.removePhoto) photoUrl = null;
-    if (file) photoUrl = await this.upload.saveFile(file);
+    let uploadedPhotoUrl: string | undefined;
+    let updatePersisted = false;
+    try {
+      if (dto.removePhoto) photoUrl = null;
+      if (file) {
+        uploadedPhotoUrl = await this.upload.saveFile(file);
+        photoUrl = uploadedPhotoUrl;
+      }
 
-    if (contentChanged || photoChanged) {
-      const previousEntries = await this.prisma.plantProgressEntry.findMany({
-        where: { plantId, id: { not: entryId } },
-        orderBy: { createdAt: 'desc' },
-        take: 8,
+      if (contentChanged || photoChanged) {
+        const previousEntries = await this.prisma.plantProgressEntry.findMany({
+          where: { plantId, id: { not: entryId } },
+          orderBy: { createdAt: 'desc' },
+          take: 8,
+        });
+        analysis = await this.analyzeProgress({
+          userId,
+          plantId,
+          plant,
+          dto: nextDto,
+          previousEntries,
+          imageBase64: file?.buffer.toString('base64'),
+          imageMimeType: file?.mimetype,
+        });
+      }
+
+      const updated = await this.prisma.plantProgressEntry.update({
+        where: { id: entryId },
+        data: {
+          overallHealth: nextDto.overallHealth,
+          growthChange: nextDto.growthChange || null,
+          leafCondition: nextDto.leafCondition || null,
+          soilMoisture: nextDto.soilMoisture || null,
+          pestSigns: nextDto.pestSigns || null,
+          recentCare: nextDto.recentCare || null,
+          notes: nextDto.notes?.trim() || null,
+          photoUrl,
+          ...(analysis
+            ? {
+                analysisSummary: analysis.summary,
+                adviceText: analysis.advice,
+                storyJson: JSON.stringify(analysis),
+              }
+            : {}),
+        },
       });
-      analysis = await this.analyzeProgress({
-        userId,
-        plantId,
-        plant,
-        dto: nextDto,
-        previousEntries,
-        imageBase64: file?.buffer.toString('base64'),
-        imageMimeType: file?.mimetype,
-      });
+      updatePersisted = true;
+      if (entry.photoUrl && entry.photoUrl !== photoUrl) {
+        await this.upload.deleteByUrl(entry.photoUrl).catch(() => {});
+      }
+      await this.syncPlantLifeMilestones(userId, plantId);
+      return updated;
+    } catch (error) {
+      if (!updatePersisted && uploadedPhotoUrl) {
+        await this.upload.deleteByUrl(uploadedPhotoUrl).catch(() => {});
+      }
+      throw error;
     }
-
-    const updated = await this.prisma.plantProgressEntry.update({
-      where: { id: entryId },
-      data: {
-        overallHealth: nextDto.overallHealth,
-        growthChange: nextDto.growthChange || null,
-        leafCondition: nextDto.leafCondition || null,
-        soilMoisture: nextDto.soilMoisture || null,
-        pestSigns: nextDto.pestSigns || null,
-        recentCare: nextDto.recentCare || null,
-        notes: nextDto.notes?.trim() || null,
-        photoUrl,
-        ...(analysis
-          ? {
-              analysisSummary: analysis.summary,
-              adviceText: analysis.advice,
-              storyJson: JSON.stringify(analysis),
-            }
-          : {}),
-      },
-    });
-    await this.syncPlantLifeMilestones(userId, plantId);
-    return updated;
   }
 
   async remove(userId: string, plantId: string, entryId: string) {
     await this.assertPlant(userId, plantId, { write: true });
     const entry = await this.prisma.plantProgressEntry.findFirst({
       where: { id: entryId, plantId, userId },
-      select: { id: true },
+      select: { id: true, photoUrl: true },
     });
     if (!entry) throw new NotFoundException('Progress check-in not found');
 
     await this.prisma.plantProgressEntry.delete({ where: { id: entryId } });
+    if (entry.photoUrl) await this.upload.deleteByUrl(entry.photoUrl).catch(() => {});
     return { deleted: true };
   }
 

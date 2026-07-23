@@ -19,12 +19,16 @@ describe('JournalService', () => {
       },
     };
 
+    const upload = {
+      saveFile: jest.fn().mockResolvedValue('/uploads/new.webp'),
+      deleteByUrl: jest.fn().mockResolvedValue(undefined),
+    };
     const service = new JournalService(
       prisma as never,
-      {} as never,
+      upload as never,
       { assertImageAllowed: jest.fn().mockResolvedValue(null) } as never,
     );
-    return { service, prisma };
+    return { service, prisma, upload };
   }
 
   it('requires a note or photo when creating', async () => {
@@ -48,12 +52,59 @@ describe('JournalService', () => {
   });
 
   it('deletes a journal entry', async () => {
-    const { service, prisma } = createService();
+    const { service, prisma, upload } = createService({
+      id: 'entry-1',
+      photoUrl: '/uploads/journal.webp',
+    });
 
     const result = await service.remove('user-1', 'plant-1', 'entry-1');
 
     expect(result.deleted).toBe(true);
     expect(prisma.journalEntry.delete).toHaveBeenCalledWith({ where: { id: 'entry-1' } });
+    expect(upload.deleteByUrl).toHaveBeenCalledWith('/uploads/journal.webp');
+  });
+
+  it('deletes a replaced photo only after the updated entry is persisted', async () => {
+    const { service, prisma, upload } = createService({
+      id: 'entry-1',
+      notes: 'Before',
+      photoUrl: '/uploads/old.webp',
+    });
+    const file = {
+      buffer: Buffer.from('image'),
+      mimetype: 'image/jpeg',
+    } as Express.Multer.File;
+
+    await service.update('user-1', 'plant-1', 'entry-1', {}, file);
+
+    expect(prisma.journalEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ photoUrl: '/uploads/new.webp' }) }),
+    );
+    expect(upload.deleteByUrl).toHaveBeenCalledWith('/uploads/old.webp');
+    expect(prisma.journalEntry.update.mock.invocationCallOrder[0]).toBeLessThan(
+      upload.deleteByUrl.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('removes a newly uploaded photo when entry persistence fails', async () => {
+    const { service, prisma, upload } = createService({
+      id: 'entry-1',
+      notes: 'Before',
+      photoUrl: '/uploads/old.webp',
+    });
+    prisma.journalEntry.update.mockRejectedValue(new Error('database unavailable'));
+    const file = {
+      buffer: Buffer.from('image'),
+      mimetype: 'image/jpeg',
+    } as Express.Multer.File;
+
+    await expect(
+      service.update('user-1', 'plant-1', 'entry-1', {}, file),
+    ).rejects.toThrow('database unavailable');
+
+    expect(upload.deleteByUrl).toHaveBeenCalledTimes(1);
+    expect(upload.deleteByUrl).toHaveBeenCalledWith('/uploads/new.webp');
+    expect(upload.deleteByUrl).not.toHaveBeenCalledWith('/uploads/old.webp');
   });
 
   it('rejects updates for missing entries', async () => {

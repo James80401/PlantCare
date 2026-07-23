@@ -1,94 +1,99 @@
+import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { resolve } from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+import sharp from 'sharp';
 import { UploadService } from './upload.service';
 
-jest.mock('fs', () => ({
-  existsSync: jest.fn(() => true),
-  mkdirSync: jest.fn(),
-  writeFileSync: jest.fn(),
-  unlinkSync: jest.fn(),
-}));
-
 describe('UploadService', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
+  let tempDir: string;
+  let service: UploadService;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(process.cwd(), '.test-uploads-'));
+    const config = {
+      get: jest.fn((key: string, fallback?: string | number) =>
+        key === 'UPLOAD_DIR' ? tempDir : fallback,
+      ),
+    } as unknown as ConfigService;
+    service = new UploadService(config);
   });
 
-  it('returns a portable API-relative URL for local uploads', async () => {
-    const config = {
-      get: jest.fn((key: string, fallback?: string | number) => {
-        if (key === 'UPLOAD_DIR') return 'test-uploads';
-        return fallback;
-      }),
-    } as unknown as ConfigService;
-    const service = new UploadService(config);
+  afterEach(async () => {
+    sharp.cache(false);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(tempDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  });
+
+  it('normalizes a real image to WebP and strips embedded metadata', async () => {
+    const input = await sharp({
+      create: {
+        width: 320,
+        height: 240,
+        channels: 3,
+        background: '#15803d',
+      },
+    })
+      .jpeg()
+      .withMetadata({ exif: { IFD0: { Artist: 'private-location-owner' } } })
+      .toBuffer();
 
     const url = await service.saveFile({
-      originalname: 'plant.jpg',
-      buffer: Buffer.from('photo'),
+      originalname: '../../unsafe-name.jpg',
+      mimetype: 'image/jpeg',
+      buffer: input,
     } as Express.Multer.File);
 
-    expect(url).toMatch(/^\/uploads\/.+\.jpg$/);
+    expect(url).toMatch(/^\/uploads\/[0-9a-f-]+\.webp$/);
+    const saved = path.join(tempDir, path.basename(url));
+    await expect(sharp(saved).metadata()).resolves.toMatchObject({
+      format: 'webp',
+      width: 320,
+      height: 240,
+    });
+    expect((await sharp(saved).metadata()).exif).toBeUndefined();
   });
 
-  it('uses the configured public storage URL without duplicate slashes', async () => {
-    const config = {
-      get: jest.fn((key: string, fallback?: string | number) => {
-        if (key === 'UPLOAD_DIR') return 'test-uploads';
-        if (key === 'S3_PUBLIC_URL') return 'https://cdn.example.com/plants/';
-        return fallback;
-      }),
-    } as unknown as ConfigService;
-    const service = new UploadService(config);
-
-    const url = await service.saveFile({
-      originalname: 'plant.png',
-      buffer: Buffer.from('photo'),
-    } as Express.Multer.File);
-
-    expect(url).toMatch(/^https:\/\/cdn\.example\.com\/plants\/.+\.png$/);
+  it('rejects a declared image whose bytes are not an image', async () => {
+    await expect(
+      service.saveFile({
+        originalname: 'not-a-photo.jpg',
+        mimetype: 'image/jpeg',
+        buffer: Buffer.from('<script>alert(1)</script>'),
+      } as Express.Multer.File),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(fs.readdirSync(tempDir).filter((name) => name !== '.thumbnails')).toEqual([]);
   });
 
-  describe('deleteByUrl', () => {
-    function makeService() {
-      const config = {
-        get: jest.fn((key: string, fallback?: string | number) => {
-          if (key === 'UPLOAD_DIR') return '/srv/plantcare/uploads';
-          return fallback;
-        }),
-      } as unknown as ConfigService;
-      return new UploadService(config);
-    }
+  it('deletes a managed file and its generated thumbnails', async () => {
+    const sourcePath = path.join(tempDir, 'leaf-abc123.jpg');
+    await sharp({
+      create: {
+        width: 300,
+        height: 200,
+        channels: 3,
+        background: '#166534',
+      },
+    })
+      .jpeg()
+      .toFile(sourcePath);
+    const thumbnail = await service.getThumbnailPath('/uploads/leaf-abc123.jpg', 160);
 
-    it('deletes a file that lives inside the upload dir', async () => {
-      const service = makeService();
-      const fs = jest.requireMock('fs') as { unlinkSync: jest.Mock };
+    await service.deleteByUrl('/uploads/leaf-abc123.jpg');
 
-      await service.deleteByUrl('/uploads/leaf-abc123.jpg');
+    expect(fs.existsSync(sourcePath)).toBe(false);
+    expect(thumbnail && fs.existsSync(thumbnail)).toBe(false);
+  });
 
-      expect(fs.unlinkSync).toHaveBeenCalledWith(
-        resolve('/srv/plantcare/uploads', 'leaf-abc123.jpg'),
-      );
-    });
+  it('does not delete external, nested, traversal, or empty URLs', async () => {
+    const keep = path.join(tempDir, 'keep.jpg');
+    fs.writeFileSync(keep, 'keep');
 
-    it('refuses to delete when the last path segment is a traversal escape', async () => {
-      const service = makeService();
-      const fs = jest.requireMock('fs') as { unlinkSync: jest.Mock };
+    await service.deleteByUrl('https://example.com/images/keep.jpg');
+    await service.deleteByUrl('/uploads/nested/keep.jpg');
+    await service.deleteByUrl('/uploads/..');
+    await service.deleteByUrl('');
 
-      // '/uploads/..' splits to a final segment of '..', which would resolve outside
-      // the upload dir if joined naively.
-      await service.deleteByUrl('/uploads/..');
-
-      expect(fs.unlinkSync).not.toHaveBeenCalled();
-    });
-
-    it('does nothing for an empty url', async () => {
-      const service = makeService();
-      const fs = jest.requireMock('fs') as { unlinkSync: jest.Mock };
-
-      await service.deleteByUrl('');
-
-      expect(fs.unlinkSync).not.toHaveBeenCalled();
-    });
+    expect(fs.readFileSync(keep, 'utf8')).toBe('keep');
   });
 });

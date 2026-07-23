@@ -41,16 +41,21 @@ export class JournalService {
       photoUrl = await this.upload.saveFile(file);
     }
 
-    return this.prisma.journalEntry.create({
-      data: {
-        plantId,
-        notes: dto.notes,
-        photoUrl,
-        heightCm: dto.heightCm,
-        widthCm: dto.widthCm,
-        leafCount: dto.leafCount,
-      },
-    });
+    try {
+      return await this.prisma.journalEntry.create({
+        data: {
+          plantId,
+          notes: dto.notes,
+          photoUrl,
+          heightCm: dto.heightCm,
+          widthCm: dto.widthCm,
+          leafCount: dto.leafCount,
+        },
+      });
+    } catch (error) {
+      if (photoUrl) await this.upload.deleteByUrl(photoUrl).catch(() => {});
+      throw error;
+    }
   }
 
   async update(
@@ -81,16 +86,26 @@ export class JournalService {
       throw new BadRequestException('Add a note or photo.');
     }
 
-    return this.prisma.journalEntry.update({
-      where: { id: entryId },
-      data: {
-        ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
-        ...(dto.heightCm !== undefined ? { heightCm: dto.heightCm } : {}),
-        ...(dto.widthCm !== undefined ? { widthCm: dto.widthCm } : {}),
-        ...(dto.leafCount !== undefined ? { leafCount: dto.leafCount } : {}),
-        photoUrl,
-      },
-    });
+    let updated;
+    try {
+      updated = await this.prisma.journalEntry.update({
+        where: { id: entryId },
+        data: {
+          ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
+          ...(dto.heightCm !== undefined ? { heightCm: dto.heightCm } : {}),
+          ...(dto.widthCm !== undefined ? { widthCm: dto.widthCm } : {}),
+          ...(dto.leafCount !== undefined ? { leafCount: dto.leafCount } : {}),
+          photoUrl,
+        },
+      });
+    } catch (error) {
+      if (file && photoUrl) await this.upload.deleteByUrl(photoUrl).catch(() => {});
+      throw error;
+    }
+    if (entry.photoUrl && entry.photoUrl !== photoUrl) {
+      await this.upload.deleteByUrl(entry.photoUrl).catch(() => {});
+    }
+    return updated;
   }
 
   async remove(userId: string, plantId: string, entryId: string) {
@@ -101,6 +116,7 @@ export class JournalService {
     if (!entry) throw new NotFoundException('Journal entry not found');
 
     await this.prisma.journalEntry.delete({ where: { id: entryId } });
+    if (entry.photoUrl) await this.upload.deleteByUrl(entry.photoUrl).catch(() => {});
     return { deleted: true };
   }
 

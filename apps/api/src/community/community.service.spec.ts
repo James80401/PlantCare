@@ -1,5 +1,9 @@
 import { CommunityService } from './community.service';
 
+const uploadService = {
+  deleteByUrl: jest.fn().mockResolvedValue(undefined),
+};
+
 describe('CommunityService.listPosts', () => {
   function createService(rows: Array<{ id: string; createdAt: Date; likes: [] }>) {
     const prisma = {
@@ -10,7 +14,7 @@ describe('CommunityService.listPosts', () => {
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
-    return { service: new CommunityService(prisma as never), prisma };
+    return { service: new CommunityService(prisma as never, uploadService as never), prisma };
   }
 
   it('returns nextCursor when more posts exist than the page size', async () => {
@@ -58,6 +62,7 @@ describe('CommunityService author field exposure', () => {
         findMany: jest.fn().mockResolvedValue([]),
         create: jest.fn().mockResolvedValue({ id: 'post-1', author: { id: 'u1', name: 'A' } }),
         findUnique: jest.fn().mockResolvedValue({ id: 'post-1' }),
+        delete: jest.fn().mockResolvedValue({}),
       },
       comment: {
         findMany: jest.fn().mockResolvedValue([]),
@@ -67,7 +72,12 @@ describe('CommunityService author field exposure', () => {
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
-    return { service: new CommunityService(prisma as never), prisma };
+    const upload = { deleteByUrl: jest.fn().mockResolvedValue(undefined) };
+    return {
+      service: new CommunityService(prisma as never, upload as never),
+      prisma,
+      upload,
+    };
   }
 
   it('never selects author.email when listing posts', async () => {
@@ -108,6 +118,27 @@ describe('CommunityService author field exposure', () => {
     const call = prisma.comment.create.mock.calls[0][0];
     expect(call.include.author.select).toEqual({ id: true, name: true });
   });
+
+  it('deletes post media after deleting an owned post', async () => {
+    const { service, prisma, upload } = createService();
+    prisma.communityPost.findUnique.mockResolvedValue({
+      id: 'post-1',
+      authorId: 'user-1',
+      imageUrl: '/uploads/post.webp',
+    });
+
+    await expect(service.deletePost('user-1', 'post-1')).resolves.toEqual({
+      deleted: true,
+    });
+
+    expect(prisma.communityPost.delete).toHaveBeenCalledWith({
+      where: { id: 'post-1' },
+    });
+    expect(upload.deleteByUrl).toHaveBeenCalledWith('/uploads/post.webp');
+    expect(prisma.communityPost.delete.mock.invocationCallOrder[0]).toBeLessThan(
+      upload.deleteByUrl.mock.invocationCallOrder[0],
+    );
+  });
 });
 
 describe('CommunityService.reshare', () => {
@@ -118,7 +149,7 @@ describe('CommunityService.reshare', () => {
         create: jest.fn().mockResolvedValue({ id: 'reshare-1' }),
       },
     };
-    return { service: new CommunityService(prisma as never), prisma };
+    return { service: new CommunityService(prisma as never, uploadService as never), prisma };
   }
 
   it('points a reshare at the original post', async () => {
@@ -166,7 +197,7 @@ describe('CommunityService.reportPost', () => {
         count: jest.fn().mockResolvedValue(overrides.reportCount ?? 1),
       },
     };
-    return { service: new CommunityService(prisma as never), prisma };
+    return { service: new CommunityService(prisma as never, uploadService as never), prisma };
   }
 
   it('records a report and leaves the post visible below the threshold', async () => {
@@ -209,7 +240,7 @@ describe('CommunityService.reportPost', () => {
         count: jest.fn(),
       },
     };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     const result = await service.reportPost('reporter-1', 'post-1', { reason: 'spam' });
 
@@ -227,7 +258,7 @@ describe('CommunityService.toggleBlockUser', () => {
         delete: jest.fn(),
       },
     };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     const result = await service.toggleBlockUser('user-1', 'user-2');
 
@@ -245,7 +276,7 @@ describe('CommunityService.toggleBlockUser', () => {
         delete: jest.fn().mockResolvedValue({}),
       },
     };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     const result = await service.toggleBlockUser('user-1', 'user-2');
 
@@ -255,7 +286,7 @@ describe('CommunityService.toggleBlockUser', () => {
 
   it('refuses to let a user block themselves', async () => {
     const prisma = { blockedUser: { findUnique: jest.fn(), create: jest.fn(), delete: jest.fn() } };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     await expect(service.toggleBlockUser('user-1', 'user-1')).rejects.toThrow(
       'You cannot block yourself',
@@ -269,7 +300,7 @@ describe('CommunityService.listPosts blocking', () => {
       communityPost: { findMany: jest.fn().mockResolvedValue([]) },
       blockedUser: { findMany: jest.fn().mockResolvedValue([{ blockedId: 'blocked-1' }]) },
     };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     await service.listPosts(10, 'viewer-1');
 
@@ -302,7 +333,7 @@ describe('CommunityService.listPosts hides removed originals', () => {
       },
       blockedUser: { findMany: jest.fn().mockResolvedValue([]) },
     };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     const result = await service.listPosts(10, 'viewer-1');
 
@@ -319,7 +350,7 @@ describe('CommunityService.toggleFollow', () => {
         delete: jest.fn(),
       },
     };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     const result = await service.toggleFollow('user-1', 'user-2');
 
@@ -337,7 +368,7 @@ describe('CommunityService.toggleFollow', () => {
         delete: jest.fn().mockResolvedValue({}),
       },
     };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     const result = await service.toggleFollow('user-1', 'user-2');
 
@@ -347,7 +378,7 @@ describe('CommunityService.toggleFollow', () => {
 
   it('refuses to let a user follow themselves', async () => {
     const prisma = { follow: { findUnique: jest.fn(), create: jest.fn(), delete: jest.fn() } };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     await expect(service.toggleFollow('user-1', 'user-1')).rejects.toThrow(
       'You cannot follow yourself',
@@ -362,7 +393,7 @@ describe('CommunityService.listPosts following scope', () => {
       blockedUser: { findMany: jest.fn().mockResolvedValue([]) },
       follow: { findMany: jest.fn().mockResolvedValue([{ followingId: 'followed-1' }]) },
     };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     await service.listPosts(10, 'viewer-1', undefined, 'following');
 
@@ -376,7 +407,7 @@ describe('CommunityService.listPosts following scope', () => {
       blockedUser: { findMany: jest.fn().mockResolvedValue([{ blockedId: 'blocked-1' }]) },
       follow: { findMany: jest.fn().mockResolvedValue([{ followingId: 'followed-1' }]) },
     };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     await service.listPosts(10, 'viewer-1', undefined, 'following');
 
@@ -390,7 +421,7 @@ describe('CommunityService.listPosts following scope', () => {
       blockedUser: { findMany: jest.fn().mockResolvedValue([]) },
       follow: { findMany: jest.fn() },
     };
-    const service = new CommunityService(prisma as never);
+    const service = new CommunityService(prisma as never, uploadService as never);
 
     await service.listPosts(10, 'viewer-1');
 
