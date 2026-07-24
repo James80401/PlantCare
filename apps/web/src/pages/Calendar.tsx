@@ -13,6 +13,7 @@ import {
   startOfWeek,
 } from 'date-fns';
 import TaskRow from '../components/tasks/TaskRow';
+import { TaskActionNotice } from '../components/tasks/TaskActionNotice';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -35,6 +36,7 @@ export default function Calendar() {
     loading,
     tasks,
     animating,
+    actionError,
     handleComplete,
     handleSkip,
     handleSnooze,
@@ -92,6 +94,7 @@ export default function Calendar() {
         description="See what's due each day and tap a day for the full list."
         help="calendar"
       />
+      <TaskActionNotice message={actionError} />
 
       <div className="flex flex-wrap gap-2">
         <Button

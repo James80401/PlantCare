@@ -38,6 +38,11 @@ rollback() {
   echo "Deployment failed; restoring application commit $PREVIOUS_SHA" >&2
   if [ -n "$PREVIOUS_SHA" ] && git cat-file -e "$PREVIOUS_SHA^{commit}" 2>/dev/null; then
     export APP_COMMIT_SHA="$PREVIOUS_SHA"
+    APP_VERSION="$(
+      git show "$PREVIOUS_SHA:package.json" |
+        node -e "let value='';process.stdin.on('data',chunk=>value+=chunk);process.stdin.on('end',()=>console.log(JSON.parse(value).version || '0.0.0'))"
+    )"
+    export APP_VERSION
     if [ "$APPLICATION_CHANGED" = "true" ]; then
       $ROLLBACK_COMPOSE up -d --no-build api web
       rollback_ready=false
@@ -67,6 +72,8 @@ rollback() {
 trap rollback EXIT
 
 export APP_COMMIT_SHA="$DEPLOY_SHA"
+APP_VERSION="$(node -p "require('./package.json').version")"
+export APP_VERSION
 PGUSER="$(grep -E '^POSTGRES_USER=' .env.production 2>/dev/null | cut -d= -f2-)"
 PGDB="$(grep -E '^POSTGRES_DB=' .env.production 2>/dev/null | cut -d= -f2-)"
 

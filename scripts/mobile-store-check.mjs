@@ -7,7 +7,7 @@
  *   npm run mobile:store-check -- --live
  *   VITE_API_BASE_URL=https://api.example.com/api/v1 FRONTEND_URL=https://app.example.com npm run mobile:store-check -- --live
  */
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { loadEnvFile, parseEnvText } from './lib/parse-env.mjs';
@@ -45,7 +45,7 @@ function readApiBaseUrl() {
     const v = loadEnvFile(prodEnv)?.VITE_API_BASE_URL;
     if (v && !/yourdomain/i.test(v)) return v.replace(/\/$/, '');
   }
-  return null;
+  return 'https://api.drplant.app/api/v1';
 }
 
 function readFrontendUrl() {
@@ -57,7 +57,7 @@ function readFrontendUrl() {
     const v = loadEnvFile(prodEnv)?.FRONTEND_URL;
     if (v && !/yourdomain/i.test(v)) return v.replace(/\/$/, '');
   }
-  return null;
+  return 'https://drplant.app';
 }
 
 // Capacitor identity
@@ -88,8 +88,10 @@ const gradle = existsSync(resolve(androidApp, 'build.gradle'))
   : '';
 const versionCode = gradle.match(/versionCode\s+(\d+)/)?.[1];
 const versionName = gradle.match(/versionName\s+"([^"]+)"/)?.[1];
-if (versionCode && versionName) {
+if (versionCode && versionName && Number(versionCode) > 1 && versionName !== '1.0') {
   pass('Version', `${versionName} (${versionCode}) — bump versionCode before each Play upload`);
+} else if (versionCode && versionName) {
+  fail('Version', `${versionName} (${versionCode}) is the initial placeholder release`);
 } else {
   fail('Version', 'Could not read versionCode/versionName from build.gradle');
 }
@@ -108,15 +110,27 @@ if (existsSync(resolve(androidApp, 'google-services.json'))) {
   warn('Firebase Android', 'No google-services.json — push disabled until configured');
 }
 
+const apiBase = readApiBaseUrl();
+
 // Web build baked into native
 if (existsSync(resolve(web, 'dist/index.html'))) {
-  pass('Web bundle', 'apps/web/dist exists — run mobile:sync after web changes');
+  const assetsDir = resolve(web, 'dist/assets');
+  const apiIsBaked =
+    Boolean(apiBase) &&
+    existsSync(assetsDir) &&
+    readdirSync(assetsDir)
+      .filter((name) => name.endsWith('.js'))
+      .some((name) => readFileSync(resolve(assetsDir, name), 'utf8').includes(apiBase));
+  if (apiIsBaked) {
+    pass('Web bundle', `production API baked into dist and ready for mobile:sync`);
+  } else {
+    fail('Web bundle', 'Rebuild with npm run mobile:release:android so the production API is baked in');
+  }
 } else {
   warn('Web bundle', 'No dist/ — run npm run mobile:release:android before generating AAB');
 }
 
 // API URL for mobile build
-const apiBase = readApiBaseUrl();
 if (!apiBase) {
   fail(
     'VITE_API_BASE_URL',

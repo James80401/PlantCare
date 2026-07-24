@@ -163,6 +163,45 @@ describe('PlantsService', () => {
     expect(prisma.plant.create).toHaveBeenCalled();
   });
 
+  it('returns the existing plant when a create request is retried', async () => {
+    const { service, prisma, scheduler } = createService();
+    const findOne = jest
+      .spyOn(service, 'findOne')
+      .mockResolvedValue({ id: 'plant-existing' } as never);
+    prisma.plant.findFirst.mockResolvedValueOnce({ id: 'plant-existing' });
+
+    await expect(
+      service.create('user-1', PlanTier.FREE, {
+        clientRequestId: 'fb323780-c011-4eeb-a35a-171530e9cd1e',
+        gardenId: 'garden-1',
+        speciesId: 'species-1',
+      } as never),
+    ).resolves.toEqual({ id: 'plant-existing' });
+
+    expect(findOne).toHaveBeenCalledWith('user-1', 'plant-existing');
+    expect(prisma.plant.create).not.toHaveBeenCalled();
+    expect(scheduler.generateTasksForPlant).not.toHaveBeenCalled();
+  });
+
+  it('converges on the existing plant when concurrent creates race', async () => {
+    const { service, prisma, scheduler } = createService();
+    jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'plant-winner' } as never);
+    prisma.plant.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'plant-winner' });
+    prisma.plant.create.mockRejectedValue({ code: 'P2002' });
+
+    await expect(
+      service.create('user-1', PlanTier.FREE, {
+        clientRequestId: 'fb323780-c011-4eeb-a35a-171530e9cd1e',
+        gardenId: 'garden-1',
+        speciesId: 'species-1',
+      } as never),
+    ).resolves.toEqual({ id: 'plant-winner' });
+
+    expect(scheduler.generateTasksForPlant).not.toHaveBeenCalled();
+  });
+
   it('deletes all managed plant media after the plant record is removed', async () => {
     const { service, prisma, upload } = createService();
     prisma.plant.findFirst.mockResolvedValue({

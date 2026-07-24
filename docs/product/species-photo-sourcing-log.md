@@ -1,6 +1,6 @@
 # Species Photo Sourcing Log
 
-Last updated: 2026-07-03
+Last updated: 2026-07-23
 
 This log tracks exact reusable-source checks for catalog plants that still lack
 local species photos. It exists so we do not accidentally fill product gaps with
@@ -11,15 +11,41 @@ parent-species photos, nursery/blog images, or restricted-license media.
 | Metric | Count |
 |--------|-------|
 | Catalog species | 447 |
-| Species with verified local reusable photos | 445 |
-| Remaining source gaps | 2 |
+| Species with verified local reusable photos | 447 |
+| Remaining source gaps | 0 |
 
-Remaining gaps:
+Completed sources:
 
 | Common name | Scientific name | Catalog key | Status |
 |-------------|-----------------|-------------|--------|
-| Hoya Mathilde | Hoya mathilde | `seed-hoya-mathilde-hoya-mathilde` | Blocked on exact reusable source |
-| String of Dolphins | Curio peregrinus / x Bacurio delphinatifolius | `seed-string-of-dolphins-curio-peregrinus` | Blocked on exact reusable source |
+| Hoya Mathilde | Hoya mathilde | `seed-hoya-mathilde-hoya-mathilde` | Public-domain [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Hoya_cv_Mathilde.jpg), Emilio Botaniste |
+| String of Dolphins | Curio peregrinus / x Bacurio delphinatifolius | `seed-string-of-dolphins-curio-peregrinus` | CC BY-SA 4.0 [Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Dolphinplant.jpg), Meganesia |
+
+## 2026-07-23 completion review
+
+The exact cultivar and hybrid sources became available through Wikimedia
+Commons. Their manifest records include provider, source page, download URL,
+license, and attribution. Both local files were downloaded through the existing
+catalog photo workflow and the generated attribution document was refreshed.
+
+Commands run:
+
+```powershell
+npm.cmd run species:photos:download
+npm.cmd run species:photos:list-missing
+npm.cmd run species:photos:verify
+npm.cmd run species:photos:audit-licenses
+```
+
+Results:
+
+- `species:photos:list-missing` reported `Missing: 0/447`.
+- The verifier matched all 447 manifest entries to 447 local files.
+- The license audit classified all 447 records as reusable, with no restricted
+  or missing-license records.
+- The generated
+  `apps/api/src/care-guides/photos/species/ATTRIBUTION.md` contains both new
+  attributions.
 
 ## 2026-07-03 source review
 
@@ -59,7 +85,7 @@ Manual exact-source checks:
 - Do not mark these species complete unless both the manifest entry and local
   file pass `npm run species:photos:list-missing`.
 
-## Acceptable ways to close the gaps
+## Acceptable ways to close future gaps
 
 1. Add owned photos taken by the Dr. Plant team or a contractor.
 2. Request direct written permission from a photographer and store the source,
@@ -69,7 +95,7 @@ Manual exact-source checks:
 4. If launch needs zero gaps before source closure, add a designed "photo
    pending" placeholder state instead of a plant lookalike.
 
-## Completion checklist
+## Completion checklist for future additions
 
 When a valid source is found:
 

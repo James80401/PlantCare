@@ -30,7 +30,7 @@ import {
   getOldestPlantAgeDays,
 } from '../utils/engagement';
 import { groupDueTasksIntoCareRounds, type TaskItem } from '../utils/taskGroups';
-import type { SnoozeDays } from '../utils/taskSnooze';
+import { snoozeTasksSequentially, type SnoozeDays } from '../utils/taskSnooze';
 import { taskTypeLabel } from '../utils/tasks';
 import { plantDrPlantPath } from './plant-profile/constants';
 import {
@@ -217,7 +217,7 @@ export default function Dashboard() {
     await refreshAfterTask();
   };
   const snoozeDashboardRoundTasks = async (ids: string[], days: SnoozeDays) => {
-    await Promise.all(ids.map((id) => handleSnooze(id, days)));
+    await snoozeTasksSequentially(ids, days, handleSnooze);
     await refreshAfterTask();
   };
   const engagementContext = useMemo(

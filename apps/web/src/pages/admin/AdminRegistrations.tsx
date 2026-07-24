@@ -66,6 +66,10 @@ type AdminAuditLog = {
 
 type AdminObservability = {
   generatedAt: string;
+  release: {
+    version: string;
+    commit: string;
+  };
   users: {
     total: number;
     approved: number;
@@ -76,6 +80,13 @@ type AdminObservability = {
     new24h: number;
     new30d: number;
     withPlants: number;
+  };
+  activation: {
+    approved: number;
+    withGardens: number;
+    withPlants: number;
+    completedFirstTask: number;
+    usedDiagnosisOrChat: number;
   };
   ai: {
     last24h: AdminAiWindow;
@@ -539,6 +550,9 @@ export default function AdminRegistrations() {
                 <p className="text-sm text-gray-600">
                   User, AI, notification, and admin activity health as of {new Date(observability.generatedAt).toLocaleString()}.
                 </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Release {observability.release.version} · commit {shortId(observability.release.commit)}
+                </p>
               </div>
               <Button type="button" variant="secondary" onClick={() => load()}>
                 Refresh
@@ -550,6 +564,9 @@ export default function AdminRegistrations() {
               <AdminMetric label="Pending approval" value={observability.users.pending} />
               <AdminMetric label="New users 24h" value={observability.users.new24h} />
               <AdminMetric label="Users with plants" value={observability.users.withPlants} />
+              <AdminMetric label="Users with gardens" value={observability.activation.withGardens} />
+              <AdminMetric label="First task completed" value={observability.activation.completedFirstTask} />
+              <AdminMetric label="Diagnosis / chat used" value={observability.activation.usedDiagnosisOrChat} />
               <AdminMetric label="AI calls 24h" value={observability.ai.last24h.total} />
               <AdminMetric label="AI blocked 24h" value={observability.ai.last24h.blocked} />
               <AdminMetric label="AI images 30d" value={observability.ai.last30d.imageCount} />

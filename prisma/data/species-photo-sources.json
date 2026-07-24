@@ -4445,5 +4445,25 @@
     "attribution": "Chhe",
     "sourcePage": "https://commons.wikimedia.org/wiki/File:AloeAristata.jpg",
     "score": 95
+  },
+  "seed-hoya-mathilde-hoya-mathilde": {
+    "commonName": "Hoya Mathilde",
+    "scientificName": "Hoya mathilde",
+    "provider": "Wikimedia Commons",
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Hoya_cv_Mathilde.jpg",
+    "license": "Public domain",
+    "attribution": "Emilio Botaniste",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Hoya_cv_Mathilde.jpg",
+    "score": 100
+  },
+  "seed-string-of-dolphins-curio-peregrinus": {
+    "commonName": "String of Dolphins",
+    "scientificName": "Curio peregrinus",
+    "provider": "Wikimedia Commons",
+    "url": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Dolphinplant.jpg",
+    "license": "CC BY-SA 4.0",
+    "attribution": "Meganesia",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Dolphinplant.jpg",
+    "score": 100
   }
 }

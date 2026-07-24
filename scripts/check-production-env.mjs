@@ -21,6 +21,7 @@ if (!existsSync(envPath)) {
 }
 
 const vars = parseEnvText(readFileSync(envPath, 'utf8'));
+if (process.env.APP_VERSION?.trim()) vars.APP_VERSION = process.env.APP_VERSION.trim();
 const placeholder = /yourdomain|replace-with|change-me|you@example\.com/i;
 const errors = [];
 const warnings = [];
@@ -35,6 +36,7 @@ const required = [
   'FRONTEND_URL',
   'CORS_ORIGINS',
   'VITE_API_BASE_URL',
+  'APP_VERSION',
   'ENABLE_PREMIUM_BILLING',
   'VITE_ENABLE_PREMIUM_BILLING',
 ];
@@ -61,6 +63,13 @@ if (apiBase && (!apiBase.startsWith('https://') || !apiBase.endsWith('/api/v1'))
 }
 if (vars.DATABASE_URL && !vars.DATABASE_URL.startsWith('postgresql://')) {
   errors.push('DATABASE_URL must be a PostgreSQL URL');
+}
+if (
+  vars.APP_VERSION &&
+  (!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(vars.APP_VERSION.trim()) ||
+    vars.APP_VERSION.trim() === '0.0.0')
+) {
+  errors.push('APP_VERSION must be a non-placeholder semantic version');
 }
 
 const corsOrigins = (vars.CORS_ORIGINS || '')

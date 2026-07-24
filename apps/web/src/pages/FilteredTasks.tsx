@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import TaskRow from '../components/tasks/TaskRow';
+import { TaskActionNotice } from '../components/tasks/TaskActionNotice';
 import { useTasksInRange } from '../hooks/useTasksInRange';
 import { trackEvent } from '../utils/analytics';
 import type { TaskCompleteFeedback } from '../utils/taskFeedback';
@@ -34,7 +35,7 @@ const FILTER_META: Record<
 export default function FilteredTasks() {
   const { filter } = useParams<{ filter: string }>();
   const meta = filter ? FILTER_META[filter] : undefined;
-  const { loading, tasks, animating, handleComplete, handleSkip, handleSnooze } = useTasksInRange({
+  const { loading, tasks, animating, actionError, handleComplete, handleSkip, handleSnooze } = useTasksInRange({
     pastDays: 45,
     futureDays: 14,
   });
@@ -54,7 +55,7 @@ export default function FilteredTasks() {
   }, [filter, tasks]);
 
   const onComplete = (id: string, _feedback?: TaskCompleteFeedback) => {
-    trackEvent('TaskCompleted');
+    trackEvent('task_completed');
     handleComplete(id, _feedback);
   };
 
@@ -86,6 +87,7 @@ export default function FilteredTasks() {
           View all tasks by day
         </Link>
       </header>
+      <TaskActionNotice message={actionError} />
 
       {loading ? (
         <p className="py-12 text-center text-gray-500">Loading tasks…</p>

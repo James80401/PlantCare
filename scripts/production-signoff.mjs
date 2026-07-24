@@ -71,6 +71,8 @@ await probeJson(
   (body) =>
     body.commit &&
     body.commit !== 'unknown' &&
+    body.version &&
+    body.version !== '0.0.0' &&
     body.features?.plantBuddy === false &&
     body.features?.premiumBilling === false,
 );

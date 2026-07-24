@@ -19,6 +19,7 @@ const base = {
   FRONTEND_URL: 'https://drplant.app',
   CORS_ORIGINS: 'https://drplant.app,capacitor://localhost',
   VITE_API_BASE_URL: 'https://api.drplant.app/api/v1',
+  APP_VERSION: '1.1.0',
   ENABLE_PLANT_BUDDY: 'false',
   ENABLE_SWAGGER: 'false',
   ENABLE_PREMIUM_BILLING: 'false',
@@ -79,4 +80,11 @@ test('keeps billing disabled throughout the improvement roadmap', () => {
     result.stderr,
     /Premium billing must remain disabled during the improvement roadmap/,
   );
+});
+
+test('rejects a placeholder application version', () => {
+  const result = check({ APP_VERSION: '0.0.0' });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /APP_VERSION must be a non-placeholder semantic version/);
 });

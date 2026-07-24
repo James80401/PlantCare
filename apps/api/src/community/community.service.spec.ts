@@ -53,6 +53,20 @@ describe('CommunityService.listPosts', () => {
     expect(result.hasMore).toBe(false);
     expect(result.nextCursor).toBeNull();
   });
+
+  it('uses a deterministic created-time and id cursor order', async () => {
+    const { service, prisma } = createService([]);
+
+    await service.listPosts(10, 'user-1', 'post-10');
+
+    expect(prisma.communityPost.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cursor: { id: 'post-10' },
+        skip: 1,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      }),
+    );
+  });
 });
 
 describe('CommunityService author field exposure', () => {
@@ -61,6 +75,7 @@ describe('CommunityService author field exposure', () => {
       communityPost: {
         findMany: jest.fn().mockResolvedValue([]),
         create: jest.fn().mockResolvedValue({ id: 'post-1', author: { id: 'u1', name: 'A' } }),
+        findFirst: jest.fn().mockResolvedValue({ id: 'post-1' }),
         findUnique: jest.fn().mockResolvedValue({ id: 'post-1' }),
         delete: jest.fn().mockResolvedValue({}),
       },
@@ -104,7 +119,7 @@ describe('CommunityService author field exposure', () => {
   it('never selects author.email when listing comments', async () => {
     const { service, prisma } = createService();
 
-    await service.listComments('post-1');
+    await service.listComments('user-1', 'post-1');
 
     const call = prisma.comment.findMany.mock.calls[0][0];
     expect(call.include.author.select).toEqual({ id: true, name: true });
@@ -145,9 +160,10 @@ describe('CommunityService.reshare', () => {
   function createService(post: { id: string; hiddenAt: Date | null; originalPostId: string | null }) {
     const prisma = {
       communityPost: {
-        findUnique: jest.fn().mockResolvedValue(post),
+        findFirst: jest.fn().mockResolvedValue(post.hiddenAt ? null : post),
         create: jest.fn().mockResolvedValue({ id: 'reshare-1' }),
       },
+      blockedUser: { findMany: jest.fn().mockResolvedValue([]) },
     };
     return { service: new CommunityService(prisma as never, uploadService as never), prisma };
   }
@@ -339,6 +355,36 @@ describe('CommunityService.listPosts hides removed originals', () => {
 
     expect(result.posts[0].originalPost).toBeNull();
   });
+
+  it('strips an embedded original authored by a blocked user', async () => {
+    const prisma = {
+      communityPost: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'reshare-1',
+            createdAt: new Date(),
+            likes: [] as [],
+            author: { id: 'u2', name: 'B' },
+            species: null,
+            _count: { comments: 0, likes: 0 },
+            originalPost: {
+              id: 'post-1',
+              body: 'blocked content',
+              hiddenAt: null,
+              author: { id: 'blocked-1', name: 'Blocked' },
+              species: null,
+            },
+          },
+        ]),
+      },
+      blockedUser: { findMany: jest.fn().mockResolvedValue([{ blockedId: 'blocked-1' }]) },
+    };
+    const service = new CommunityService(prisma as never, uploadService as never);
+
+    const result = await service.listPosts(10, 'viewer-1');
+
+    expect(result.posts[0].originalPost).toBeNull();
+  });
 });
 
 describe('CommunityService.toggleFollow', () => {
@@ -383,6 +429,81 @@ describe('CommunityService.toggleFollow', () => {
     await expect(service.toggleFollow('user-1', 'user-1')).rejects.toThrow(
       'You cannot follow yourself',
     );
+  });
+
+  it('converges on the stored state when concurrent follows race', async () => {
+    const prisma = {
+      follow: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce({ id: 'follow-1' }),
+        create: jest.fn().mockRejectedValue({ code: 'P2002' }),
+        delete: jest.fn(),
+      },
+    };
+    const service = new CommunityService(prisma as never, uploadService as never);
+
+    await expect(service.toggleFollow('user-1', 'user-2')).resolves.toEqual({
+      following: true,
+    });
+  });
+});
+
+describe('CommunityService comment and like visibility', () => {
+  function createService(options: { visible?: boolean; blockedIds?: string[] } = {}) {
+    const blockedIds = options.blockedIds ?? [];
+    const prisma = {
+      communityPost: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValue(options.visible === false ? null : { id: 'post-1' }),
+      },
+      blockedUser: {
+        findMany: jest.fn().mockResolvedValue(blockedIds.map((blockedId) => ({ blockedId }))),
+      },
+      comment: {
+        findMany: jest.fn().mockResolvedValue([]),
+        create: jest.fn().mockResolvedValue({ id: 'comment-1' }),
+      },
+      postLike: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: 'like-1' }),
+        delete: jest.fn(),
+        count: jest.fn().mockResolvedValue(1),
+      },
+    };
+    return { service: new CommunityService(prisma as never, uploadService as never), prisma };
+  }
+
+  it('does not expose comments for a hidden or blocked post', async () => {
+    const { service, prisma } = createService({ visible: false });
+
+    await expect(service.listComments('viewer-1', 'post-1')).rejects.toThrow(
+      'Post not found',
+    );
+    expect(prisma.comment.findMany).not.toHaveBeenCalled();
+  });
+
+  it('filters comments from authors blocked by the viewer', async () => {
+    const { service, prisma } = createService({ blockedIds: ['blocked-1'] });
+
+    await service.listComments('viewer-1', 'post-1');
+
+    expect(prisma.comment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { postId: 'post-1', authorId: { notIn: ['blocked-1'] } },
+      }),
+    );
+  });
+
+  it('does not allow likes on a hidden or blocked post', async () => {
+    const { service, prisma } = createService({ visible: false });
+
+    await expect(service.toggleLike('viewer-1', 'post-1')).rejects.toThrow(
+      'Post not found',
+    );
+    expect(prisma.postLike.create).not.toHaveBeenCalled();
   });
 });
 

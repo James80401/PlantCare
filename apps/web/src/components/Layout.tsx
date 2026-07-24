@@ -84,6 +84,8 @@ function LayoutShell({
   const [moreOpen, setMoreOpen] = useState(false);
   const desktopMoreMenuRef = useRef<HTMLDivElement>(null);
   const mobileMoreMenuRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const previousRouteRef = useRef(`${location.pathname}${location.search}`);
   const { missing: buddyMissing } = useBuddyCompanion();
   const buddyQuestClaims = useBuddyQuestBadge(BUDDY_ENABLED && Boolean(user) && !buddyMissing);
   const MenuIcon = navIcons.menu;
@@ -114,6 +116,13 @@ function LayoutShell({
   useEffect(() => {
     setMoreOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const route = `${location.pathname}${location.search}`;
+    if (previousRouteRef.current === route) return;
+    previousRouteRef.current = route;
+    mainRef.current?.focus();
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -199,6 +208,7 @@ function LayoutShell({
         </div>
       </header>
       <main
+        ref={mainRef}
         id="main-content"
         tabIndex={-1}
         className="page-garden flex-1 max-w-6xl w-full mx-auto px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:py-6 sm:pb-6 focus:outline-none"

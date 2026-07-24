@@ -12,7 +12,7 @@ export interface BottomSheetProps {
 export function BottomSheet({ open, onClose, title, children }: BottomSheetProps) {
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
-  useDialogA11y(open, onClose);
+  const { dialogRef } = useDialogA11y(open, onClose);
 
   useEffect(() => {
     if (open) sheetRef.current?.focus();
@@ -22,6 +22,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-50 sm:hidden"
       role="dialog"
       aria-modal="true"

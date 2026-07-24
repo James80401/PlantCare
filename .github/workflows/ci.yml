@@ -143,3 +143,55 @@ jobs:
           API_URL=http://localhost:3001/api/v1 npm run smoke:buddy
           kill $(cat api.pid) 2>/dev/null || true
           trap - EXIT
+
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:./prisma/e2e.db
+      JWT_SECRET: e2e-secret
+      JWT_REFRESH_SECRET: e2e-refresh-secret
+      FRONTEND_URL: http://localhost:5173
+      CORS_ORIGIN: http://localhost:5173
+      CORS_ORIGINS: http://localhost:5173
+      AUTH_RATE_LIMIT_MAX: 250
+      TZ: UTC
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run db:generate
+      - run: npx prisma db push
+      - run: npm run db:seed
+      - run: npm run build -w @plant-care/shared
+      - run: npm run uat:e2e
+
+  android:
+    runs-on: ubuntu-latest
+    env:
+      VITE_API_BASE_URL: https://api.drplant.app/api/v1
+      FRONTEND_URL: https://drplant.app
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - run: npm ci
+      - run: npm run mobile:release:android
+      - run: npm run mobile:store-check
+      - name: Build unsigned release bundle
+        working-directory: apps/web/android
+        run: ./gradlew bundleRelease

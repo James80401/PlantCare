@@ -38,11 +38,19 @@ type RawPost = Record<string, unknown> & {
  *    content can't keep circulating through reshares.
  *  - Mirrors likes → likedByMe: strips the raw `followers` probe relation
  *    and exposes a plain `followedByMe` boolean on the post's author. */
-function finalizePosts(posts: RawPost[]): Record<string, unknown>[] {
+function finalizePosts(
+  posts: RawPost[],
+  blockedAuthorIds: string[] = [],
+): Record<string, unknown>[] {
+  const blocked = new Set(blockedAuthorIds);
   return posts.map((post) => {
     const { originalPost, author, ...rest } = post;
     const visibleOriginal =
-      !originalPost || originalPost.hiddenAt
+      !originalPost ||
+      originalPost.hiddenAt ||
+      blocked.has(
+        ((originalPost.author as { id?: string } | null | undefined)?.id ?? ''),
+      )
         ? null
         : (() => {
             const { hiddenAt: _hiddenAt, ...visible } = originalPost;
@@ -107,11 +115,26 @@ export class CommunityService {
   ): Promise<boolean> {
     const existing = await delegate.findUnique({ where });
     if (existing) {
-      await delegate.delete({ where: { id: existing.id } });
-      return false;
+      try {
+        await delegate.delete({ where: { id: existing.id } });
+        return false;
+      } catch (error) {
+        if (!this.isConcurrentRelationError(error)) throw error;
+        return Boolean(await delegate.findUnique({ where }));
+      }
     }
-    await delegate.create({ data });
-    return true;
+    try {
+      await delegate.create({ data });
+      return true;
+    } catch (error) {
+      if (!this.isConcurrentRelationError(error)) throw error;
+      return Boolean(await delegate.findUnique({ where }));
+    }
+  }
+
+  private isConcurrentRelationError(error: unknown) {
+    const code = (error as { code?: string })?.code;
+    return code === 'P2002' || code === 'P2025';
   }
 
   async listPosts(
@@ -141,13 +164,16 @@ export class CommunityService {
         hiddenAt: null,
         ...(Object.keys(authorFilter).length ? { authorId: authorFilter } : {}),
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       include: postInclude(viewerId),
     });
 
     const hasMore = rows.length > take;
     const page = hasMore ? rows.slice(0, take) : rows;
-    const posts = mapCommunityPostsForViewer(finalizePosts(page), viewerId);
+    const posts = mapCommunityPostsForViewer(
+      finalizePosts(page, blockedAuthorIds),
+      viewerId,
+    );
 
     return {
       posts,
@@ -203,11 +229,33 @@ export class CommunityService {
   }
 
   async reshare(userId: string, postId: string, dto: ResharePostDto) {
-    const post = await this.prisma.communityPost.findUnique({ where: { id: postId } });
-    if (!post || post.hiddenAt) throw new NotFoundException('Post not found');
+    const blockedAuthorIds = await this.getBlockedAuthorIds(userId);
+    const post = await this.prisma.communityPost.findFirst({
+      where: {
+        id: postId,
+        hiddenAt: null,
+        ...(blockedAuthorIds.length
+          ? { authorId: { notIn: blockedAuthorIds } }
+          : {}),
+      },
+    });
+    if (!post) throw new NotFoundException('Post not found');
 
     // Reshares always point at the root post, so a chain of reshares never nests.
     const rootPostId = post.originalPostId ?? post.id;
+    if (rootPostId !== post.id) {
+      const root = await this.prisma.communityPost.findFirst({
+        where: {
+          id: rootPostId,
+          hiddenAt: null,
+          ...(blockedAuthorIds.length
+            ? { authorId: { notIn: blockedAuthorIds } }
+            : {}),
+        },
+        select: { id: true },
+      });
+      if (!root) throw new NotFoundException('Post not found');
+    }
 
     const created = await this.prisma.communityPost.create({
       data: {
@@ -276,11 +324,15 @@ export class CommunityService {
     return { blocked };
   }
 
-  async listComments(postId: string) {
-    const post = await this.prisma.communityPost.findUnique({ where: { id: postId } });
-    if (!post) throw new NotFoundException('Post not found');
+  async listComments(userId: string, postId: string) {
+    const blockedAuthorIds = await this.requireVisiblePost(userId, postId);
     return this.prisma.comment.findMany({
-      where: { postId },
+      where: {
+        postId,
+        ...(blockedAuthorIds.length
+          ? { authorId: { notIn: blockedAuthorIds } }
+          : {}),
+      },
       orderBy: { createdAt: 'asc' },
       include: {
         author: { select: { id: true, name: true } },
@@ -289,8 +341,7 @@ export class CommunityService {
   }
 
   async createComment(userId: string, postId: string, dto: CreateCommentDto) {
-    const post = await this.prisma.communityPost.findUnique({ where: { id: postId } });
-    if (!post) throw new NotFoundException('Post not found');
+    await this.requireVisiblePost(userId, postId);
     return this.prisma.comment.create({
       data: {
         postId,
@@ -304,8 +355,7 @@ export class CommunityService {
   }
 
   async toggleLike(userId: string, postId: string) {
-    const post = await this.prisma.communityPost.findUnique({ where: { id: postId } });
-    if (!post) throw new NotFoundException('Post not found');
+    await this.requireVisiblePost(userId, postId);
 
     const liked = await this.toggleRelation(
       this.prisma.postLike,
@@ -314,6 +364,22 @@ export class CommunityService {
     );
     const count = await this.prisma.postLike.count({ where: { postId } });
     return { liked, likeCount: count };
+  }
+
+  private async requireVisiblePost(userId: string, postId: string) {
+    const blockedAuthorIds = await this.getBlockedAuthorIds(userId);
+    const post = await this.prisma.communityPost.findFirst({
+      where: {
+        id: postId,
+        hiddenAt: null,
+        ...(blockedAuthorIds.length
+          ? { authorId: { notIn: blockedAuthorIds } }
+          : {}),
+      },
+      select: { id: true },
+    });
+    if (!post) throw new NotFoundException('Post not found');
+    return blockedAuthorIds;
   }
 
   async deleteComment(userId: string, commentId: string) {

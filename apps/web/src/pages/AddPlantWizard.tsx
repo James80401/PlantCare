@@ -15,98 +15,21 @@ import { CreateGardenForm } from '../components/gardens/CreateGardenForm';
 import { useAuth } from '../context/AuthContext';
 import { trackEvent, trackOnce } from '../utils/analytics';
 import { resolveApiAssetUrl } from '../utils/apiAssets';
-
-interface Species {
-  id: string;
-  commonName: string;
-  scientificName?: string;
-  sunlight?: string;
-  wateringFreqDays?: number;
-  toxicity?: string;
-  discoveryTags?: string[];
-  defaultImageUrl?: string;
-}
-
-interface ExternalSpeciesMatch {
-  provider: 'plantnet' | 'demo';
-  providerMatchId?: string;
-  commonName: string;
-  scientificName?: string;
-  confidence?: number;
-  integrationStatus: 'requires_confirmation';
-  careArchetype?: {
-    id: string;
-    label: string;
-    description: string;
-  };
-}
-
-type Step = 'photo' | 'confirm' | 'search' | 'details';
-
-function normalizeConfidence(confidence: number | undefined) {
-  if (typeof confidence !== 'number' || Number.isNaN(confidence)) return null;
-  const percent = confidence <= 1 ? confidence * 100 : confidence;
-  return Math.max(0, Math.min(100, Math.round(percent)));
-}
-
-function confidenceTone(confidence: number | null) {
-  if (confidence == null) return 'Provider match';
-  if (confidence >= 80) return 'Strong visual match';
-  if (confidence >= 55) return 'Possible visual match';
-  return 'Low-confidence visual match';
-}
-
-function confidenceReviewCopy(confidence: number | null) {
-  if (confidence == null) {
-    return 'Review the name and photo before adding it. Dr. Plant will keep this match marked for review.';
-  }
-  if (confidence >= 80) {
-    return 'This looks likely, but it is still photo identification. Confirm only if the name and image fit your plant.';
-  }
-  if (confidence >= 55) {
-    return 'This is useful as a lead, not a final answer. Search manually if anything feels off.';
-  }
-  return 'This is uncertain. Search manually unless you recognize the plant from the name and photo.';
-}
-
-const PLANT_LIFE_STAGE_OPTIONS = [
-  {
-    value: 'SEED',
-    label: 'Seed',
-    description: 'Not sprouted yet',
-  },
-  {
-    value: 'SPROUT',
-    label: 'Sprout',
-    description: 'First growth just appeared',
-  },
-  {
-    value: 'SEEDLING',
-    label: 'Seedling',
-    description: 'Small, delicate new plant',
-  },
-  {
-    value: 'YOUNG_PLANT',
-    label: 'Young plant',
-    description: 'Actively growing but not fully established',
-  },
-  {
-    value: 'ESTABLISHED',
-    label: 'Established',
-    description: 'Typical store-bought or settled plant',
-  },
-  {
-    value: 'MATURE',
-    label: 'Mature',
-    description: 'Large, older, or long-settled plant',
-  },
-] as const;
+import {
+  confidenceReviewCopy,
+  confidenceTone,
+  normalizeConfidence,
+  PLANT_LIFE_STAGE_OPTIONS,
+  type AddPlantStep,
+  type ExternalSpeciesMatch,
+  type Species,
+} from './add-plant/addPlantModel';
 
 export default function AddPlantWizard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState<Step>('photo');
+  const [step, setStep] = useState<AddPlantStep>('photo');
 
   // Garden-first: a plant must be added into a garden. Resolve the target garden from
   // the ?gardenId= param (when arriving from a Garden Dashboard) or default to the
@@ -148,8 +71,10 @@ export default function AddPlantWizard() {
   const [imageUrl, setImageUrl] = useState('');
   const [identifyPreview, setIdentifyPreview] = useState<string | null>(null);
   const [plantPhotoPreview, setPlantPhotoPreview] = useState<string | null>(null);
+  const [plantPhotoFile, setPlantPhotoFile] = useState<File | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
   const uploadRequestIdRef = useRef(0);
+  const createRequestIdRef = useRef(crypto.randomUUID());
 
   const [error, setError] = useState('');
   const [limitError, setLimitError] = useState<{ message: string; code: string } | null>(null);
@@ -222,6 +147,7 @@ export default function AddPlantWizard() {
   };
 
   const setPlantPhotoFromFile = async (file: File) => {
+    setPlantPhotoFile(file);
     const uploadRequestId = uploadRequestIdRef.current + 1;
     uploadRequestIdRef.current = uploadRequestId;
     setImageUploading(true);
@@ -329,6 +255,7 @@ export default function AddPlantWizard() {
     setLimitError(null);
     try {
       await plantsApi.create({
+        clientRequestId: createRequestIdRef.current,
         gardenId: selectedGardenId,
         speciesId,
         nickname: nickname || undefined,
@@ -340,7 +267,7 @@ export default function AddPlantWizard() {
         notes: notes.trim() || undefined,
         imageUrl: imageUrl || undefined,
       });
-      trackEvent('PlantAdded', { speciesId });
+      trackEvent('plant_added', { speciesId });
       trackOnce('first_plant_added', 'first_plant_added', { speciesId });
       navigate(`/garden/gardens/${selectedGardenId}`);
     } catch (err: unknown) {
@@ -414,6 +341,25 @@ export default function AddPlantWizard() {
     setSelectedGardenId(g.id);
     setShowCreateGarden(false);
   };
+
+  // Do not let the wizard advance before its required garden context is known.
+  // Otherwise a fast interaction can reach Save with no selected garden.
+  if (!gardensLoaded) {
+    return (
+      <div className="mx-auto max-w-lg space-y-5">
+        <PageHeader
+          eyebrow="Grow your garden"
+          title="Add a plant"
+          description="Loading your gardens before we begin."
+        />
+        <Card>
+          <p className="text-sm font-medium text-emerald-900" role="status">
+            Loading gardens…
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   // Garden-first gate: a plant must live in a garden. If the user has none, prompt them
   // to create one before any plant steps.
@@ -859,6 +805,16 @@ export default function AddPlantWizard() {
               onFile={handlePlantPhoto}
               sourceMode="both"
             />
+            {plantPhotoFile && !imageUrl && !imageUploading ? (
+              <Button
+                type="button"
+                variant="secondary"
+                fullWidth
+                onClick={() => void setPlantPhotoFromFile(plantPhotoFile)}
+              >
+                Retry photo upload
+              </Button>
+            ) : null}
           </Card>
 
           <Button type="submit" fullWidth disabled={loading || imageUploading}>

@@ -41,6 +41,7 @@ interface PlantProfileContextValue {
   latestCompleted?: PlantRecord;
   plantPendingFromHook: ReturnType<typeof useTasksInRange>['tasks'];
   animating: ReturnType<typeof useTasksInRange>['animating'];
+  taskActionError: ReturnType<typeof useTasksInRange>['actionError'];
   handleCompleteTask: (taskId: string, feedback?: TaskCompleteFeedback) => Promise<unknown> | unknown;
   handleSkipTask: (taskId: string, feedback?: TaskSkipFeedback) => Promise<unknown> | unknown;
   handleSnooze: ReturnType<typeof useTasksInRange>['handleSnooze'];
@@ -64,6 +65,7 @@ interface PlantProfileContextValue {
   editingJournalId: string | null;
   setEditingJournalId: (id: string | null) => void;
   busyJournalId: string | null;
+  journalSaving: boolean;
   addJournal: (e: FormEvent) => Promise<void>;
   saveJournalEdit: (e: FormEvent) => Promise<void>;
   deleteJournalEntry: (entryId: string) => Promise<void>;
@@ -114,6 +116,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
   const [journalLeafCount, setJournalLeafCount] = useState('');
   const [editingJournalId, setEditingJournalId] = useState<string | null>(null);
   const [busyJournalId, setBusyJournalId] = useState<string | null>(null);
+  const [journalSaving, setJournalSaving] = useState(false);
   const [editingLocation, setEditingLocation] = useState(false);
   const [locationDraft, setLocationDraft] = useState('');
   const [locationSaving, setLocationSaving] = useState(false);
@@ -129,6 +132,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
   const {
     tasks: rangeTasks,
     animating,
+    actionError: taskActionError,
     handleComplete: completeFromHook,
     handleSkip: skipFromHook,
     handleSnooze,
@@ -222,21 +226,25 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
 
   const addJournal = async (e: FormEvent) => {
     e.preventDefault();
-    if (!id || !hasJournalContent) return;
+    if (!id || !hasJournalContent || journalSaving) return;
     setJournalError('');
+    setJournalSaving(true);
     try {
       await journalApi.create(id, journalPayload(), journalPhoto ?? undefined);
       resetJournalForm();
-      void load();
+      await load();
     } catch {
       setJournalError('Could not save journal entry.');
+    } finally {
+      setJournalSaving(false);
     }
   };
 
   const saveJournalEdit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!id || !editingJournalId) return;
+    if (!id || !editingJournalId || journalSaving) return;
     setJournalError('');
+    setJournalSaving(true);
     try {
       await journalApi.update(
         id,
@@ -246,9 +254,11 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
         journalRemovePhoto,
       );
       resetJournalForm();
-      void load();
+      await load();
     } catch {
       setJournalError('Could not update journal entry.');
+    } finally {
+      setJournalSaving(false);
     }
   };
 
@@ -256,10 +266,13 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     if (!id) return;
     if (!window.confirm('Delete this journal entry? This cannot be undone.')) return;
     setBusyJournalId(entryId);
+    setJournalError('');
     try {
       await journalApi.remove(id, entryId);
       if (editingJournalId === entryId) resetJournalForm();
-      void load();
+      await load();
+    } catch {
+      setJournalError('Could not delete journal entry. It is still in your timeline.');
     } finally {
       setBusyJournalId(null);
     }
@@ -450,6 +463,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
       latestCompleted,
       plantPendingFromHook,
       animating,
+      taskActionError,
       handleCompleteTask,
       handleSkipTask,
       handleSnooze,
@@ -476,6 +490,7 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
         else resetJournalForm();
       },
       busyJournalId,
+      journalSaving,
       addJournal,
       saveJournalEdit,
       deleteJournalEntry,
@@ -519,12 +534,14 @@ export function PlantProfileProvider({ children }: { children: ReactNode }) {
     timelineEvents,
     editingJournalId,
     busyJournalId,
+    journalSaving,
     updatingDiagnosisId,
     followUpCreatingId,
     sharingPlant,
     photoCompareUrls,
     plantPendingFromHook,
     animating,
+    taskActionError,
     navigate,
     load,
     startEditJournal,

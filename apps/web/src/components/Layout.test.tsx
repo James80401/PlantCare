@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -117,6 +117,18 @@ describe('Layout mobile navigation', () => {
     expect(activeDesktopLink).toHaveClass('focus-visible:ring-2');
     expect(activeMobileLink).toHaveAttribute('aria-current', 'page');
     expect(activeMobileLink).toHaveClass('focus-visible:ring-2');
+  });
+
+  it('moves focus to the main region after client-side route changes', async () => {
+    renderLayout();
+    const desktopNav = screen.getByRole('navigation', { name: 'Main' });
+
+    fireEvent.click(within(desktopNav).getByRole('link', { name: 'Settings' }));
+
+    expect(await screen.findByText('Settings content')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(document.activeElement).toBe(document.getElementById('main-content')),
+    );
   });
 
   it('announces More as the current section for secondary routes', () => {

@@ -2,9 +2,9 @@
 
 > **Date:** 2026-07-23
 >
-> **Candidate commit:** `9535ee2`
+> **Main commit:** `f0c946d83c9f29e663605d3802da13951c974845`
 >
-> **State:** required CI complete; production deployment evidence pending merge
+> **State:** complete and deployed
 
 ## Side-effect-free read contracts
 
@@ -46,6 +46,11 @@ accounts, and called the running API:
 After warm-up, the 100-plant fixture measured **22.3 ms p95 across 20
 requests**, below the 750 ms gate. Its 36,110-byte response is below the 250 KB
 gate. Fixture records are deleted after the check even when the gate fails.
+
+[Main CI run 30055670756](https://github.com/James80401/PlantCare/actions/runs/30055670756)
+passed after merge. The exact main SHA then passed the automated production
+deployment, migrations, readiness, and non-mutating sign-off in
+[deploy run 30055808149](https://github.com/James80401/PlantCare/actions/runs/30055808149).
 
 ## Client request safety and local verification
 

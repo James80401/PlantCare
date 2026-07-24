@@ -14,7 +14,7 @@ provider gates instead of pretending the local catalog already covers everything
 | Area | Baseline |
 |------|----------|
 | Local species catalog | 447 species |
-| Species photos | 445 local species photos; 2 catalog rows still need reusable photo sourcing/review |
+| Species photos | 447 local species photos; reusable source/license coverage is complete |
 | Task types | 12 shipped care task types |
 | Diagnosis storage | `Diagnosis.detailJson` stores forward-compatible structured data |
 | Dr. Plant context | Uses care baseline, tasks, diagnoses, journal, weather, and feedback context |
@@ -100,15 +100,17 @@ provider gates instead of pretending the local catalog already covers everything
 - Added focused API and web regression tests for progress entry management and health-check task routing.
 - Persisted per-plant Plant Life milestones for baseline check-ins, three check-ins, progress photos, new growth, stable streaks, and recovery signals.
 
-## Next implementation batch
+## Remaining follow-up
 
-1. Remaining photo cleanup:
-   - Hoya Mathilde and String of Dolphins still need exact truly reusable photo sources.
-   - Re-checked exact iNaturalist taxon results, reusable-license iNaturalist observations, Wikimedia Commons exact searches, and the automated missing-photo resolver on 2026-07-03; the full source review and closure checklist live in [species-photo-sourcing-log.md](species-photo-sourcing-log.md).
-   - Checked iNaturalist and Wikimedia Commons for exact Hoya Mathilde/Hoya mathilde, Curio peregrinus, Senecio peregrinus, String of Dolphins, and `× Bacurio delphinatifolius`; no acceptable CC0/CC-BY/CC-BY-SA exact-match image was found.
-   - The automated Commons resolver briefly matched String of Dolphins to a non-plant "String Figures" file; resolver title matching is now stricter to prevent that false positive.
-   - Aloe Aristata has a verified public-domain Wikimedia Commons photo.
-   - Re-run `npm run species:photos:list-missing` and `npm run species:photos:verify` after each source pass.
+1. Photo maintenance:
+   - All 447 catalog species now have verified reusable local photos.
+   - Exact Wikimedia Commons sources closed Hoya Mathilde and String of
+     Dolphins on 2026-07-23; the source/license trail and earlier rejected
+     candidates remain in
+     [species-photo-sourcing-log.md](species-photo-sourcing-log.md).
+   - Keep running `npm run species:photos:list-missing`,
+     `npm run species:photos:verify`, and
+     `npm run species:photos:audit-licenses` after catalog changes.
 
 2. Guide UX polish:
    - Contextual treatment-plan links and compact "Ask Dr. Plant about this" care-card actions are shipped.

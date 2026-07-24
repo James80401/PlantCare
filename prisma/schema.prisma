@@ -284,6 +284,7 @@ model CareGuideImage {
 model Plant {
   id                     String                  @id @default(cuid())
   userId                 String
+  clientRequestId        String?
   user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   gardenId               String
   garden                 Garden                  @relation("GardenPlants", fields: [gardenId], references: [id], onDelete: Cascade)
@@ -308,6 +309,7 @@ model Plant {
   milestones             PlantMilestone[]
   recommendations        Recommendation[]
 
+  @@unique([userId, clientRequestId])
   @@index([userId])
   @@index([userId, createdAt])
   @@index([gardenId])
@@ -575,18 +577,20 @@ model PlantShare {
 }
 
 model CareInvite {
-  id         String    @id @default(cuid())
-  gardenId   String
-  garden     Garden    @relation(fields: [gardenId], references: [id], onDelete: Cascade)
-  email      String?
-  token      String    @unique
-  role       String
-  expiresAt  DateTime
-  acceptedAt DateTime?
-  createdAt  DateTime  @default(now())
+  id               String    @id @default(cuid())
+  gardenId         String
+  garden           Garden    @relation(fields: [gardenId], references: [id], onDelete: Cascade)
+  email            String?
+  token            String    @unique
+  role             String
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  acceptedByUserId String?
+  createdAt        DateTime  @default(now())
 
   @@index([gardenId])
   @@index([email])
+  @@index([acceptedByUserId])
 }
 
 model CommunityPost {
@@ -610,6 +614,7 @@ model CommunityPost {
 
   @@index([authorId])
   @@index([createdAt])
+  @@index([createdAt, id])
   @@index([hiddenAt, createdAt])
   @@index([originalPostId])
 }
@@ -662,6 +667,7 @@ model Comment {
   createdAt DateTime      @default(now())
 
   @@index([postId])
+  @@index([postId, createdAt])
 }
 
 model PostLike {

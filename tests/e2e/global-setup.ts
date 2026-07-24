@@ -1,9 +1,9 @@
 import { execSync } from 'child_process';
-import { PrismaClient } from '@prisma/client';
+import { PlanTier, PrismaClient } from '@prisma/client';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
+import { apiBase, refreshCookieFrom } from './auth-helpers';
 
-const apiBase = process.env.API_URL || 'http://localhost:3001/api/v1';
 const authFile = resolve(__dirname, '.uat-auth.json');
 const isStaging = process.env.STAGING_E2E === '1';
 const buddyEnabled = process.env.UAT_ENABLE_PLANT_BUDDY === '1';
@@ -29,7 +29,7 @@ async function main() {
   const reg = await regRes.json();
 
   let token = reg.accessToken as string | undefined;
-  let refreshToken = reg.refreshToken as string | undefined;
+  let refreshCookie = refreshCookieFrom(regRes);
 
   if (reg.requiresVerification) {
     if (isStaging) {
@@ -52,7 +52,7 @@ async function main() {
     });
     const login = await loginRes.json();
     token = login.accessToken;
-    refreshToken = login.refreshToken;
+    refreshCookie = refreshCookieFrom(loginRes);
   }
 
   if (!token) {
@@ -127,7 +127,14 @@ async function main() {
     userId = me?.id;
   } else {
     const prisma = new PrismaClient();
-    const userRow = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    // The two browser projects share this disposable fixture and intentionally
+    // create several plants. Keep that state from coupling E2E to the free-plan
+    // cap while billing itself remains disabled.
+    const userRow = await prisma.user.update({
+      where: { email },
+      data: { planTier: PlanTier.PREMIUM },
+      select: { id: true },
+    });
     userId = userRow?.id;
     await prisma.$disconnect();
   }
@@ -138,7 +145,7 @@ async function main() {
       email,
       password,
       accessToken: token,
-      refreshToken,
+      refreshCookie,
       gardenId,
       plantId,
       userId,

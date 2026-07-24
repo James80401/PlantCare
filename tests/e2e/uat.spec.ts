@@ -1,6 +1,11 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { expect, test } from '@playwright/test';
+import {
+  apiBase,
+  refreshCookieFrom,
+  seedRefreshCookie,
+} from './auth-helpers';
 
 const authFile = resolve(__dirname, '.uat-auth.json');
 const buddyEnabled = process.env.UAT_ENABLE_PLANT_BUDDY === '1';
@@ -8,7 +13,7 @@ const buddyEnabled = process.env.UAT_ENABLE_PLANT_BUDDY === '1';
 function loadAuth() {
   return JSON.parse(readFileSync(authFile, 'utf8')) as {
     accessToken: string;
-    refreshToken?: string;
+    refreshCookie: string;
     email?: string;
     gardenId?: string;
     plantId?: string;
@@ -16,19 +21,47 @@ function loadAuth() {
 }
 
 async function seedAuth(page: import('@playwright/test').Page) {
-  const { accessToken, refreshToken } = loadAuth();
-  await page.addInitScript(
-    ({ accessToken, refreshToken }) => {
-      localStorage.setItem('accessToken', accessToken);
-      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-    },
-    { accessToken, refreshToken: refreshToken ?? '' },
-  );
+  const { email, password } = loadAuth();
+  const loginRes = await fetch(`${apiBase}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!loginRes.ok) {
+    throw new Error(`E2E login failed (${loginRes.status}): ${await loginRes.text()}`);
+  }
+  await seedRefreshCookie(page, refreshCookieFrom(loginRes));
 }
 
 async function openAddPlantSearch(page: import('@playwright/test').Page) {
   await page.goto('/garden/plants/new');
-  await page.getByRole('button', { name: /Search by name instead/i }).click();
+  await page.getByRole('button', { name: /Search by name/i }).click();
+}
+
+async function savePlantAndGetId(
+  page: import('@playwright/test').Page,
+  plantName: RegExp,
+) {
+  const createResponse = page.waitForResponse(
+    (response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'POST' && url.pathname === '/api/v1/plants';
+    },
+    { timeout: 30_000 },
+  );
+  await page.getByRole('button', { name: /Save plant/i }).click();
+  const response = await createResponse;
+  expect(response.status()).toBe(201);
+  await expect(page).toHaveURL(/\/garden\/gardens\/[^/]+$/, { timeout: 15_000 });
+  const plantLink = page
+    .locator('main a[href^="/garden/plants/"]')
+    .filter({ hasText: plantName })
+    .first();
+  await expect(plantLink).toBeVisible({ timeout: 10_000 });
+  const href = await plantLink.getAttribute('href');
+  const plantId = href?.match(/^\/garden\/plants\/([^/]+)/)?.[1];
+  if (!plantId) throw new Error(`Could not resolve the newly saved ${plantName} plant`);
+  return plantId;
 }
 
 async function expectNoHorizontalScroll(page: import('@playwright/test').Page) {
@@ -49,7 +82,7 @@ test.describe('UAT checklist — authenticated flows', () => {
   test('household and community pages load', async ({ page }) => {
     await page.goto('/garden/household');
     await expect(page.getByRole('heading', { name: 'Household', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Create$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Create household/i })).toBeVisible();
     await page.goto('/garden/community');
     await expect(page.getByRole('heading', { name: /Plant tips & wins/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Share with community/i })).toBeVisible();
@@ -65,7 +98,7 @@ test.describe('UAT checklist — authenticated flows', () => {
 
     const card = page.locator('li').filter({ hasText: note });
     await card.getByRole('button', { name: /Like \(\d+\)/i }).click();
-    await expect(card.getByRole('button', { name: /♥ Liked/i })).toBeVisible();
+    await expect(card.getByRole('button', { name: /Liked \(\d+\)/i })).toBeVisible();
 
     await card.getByRole('button', { name: /View comments/i }).click();
     await card.getByPlaceholder(/Add a comment/i).fill('E2E comment');
@@ -85,7 +118,11 @@ test.describe('UAT checklist — authenticated flows', () => {
   test('dashboard loads with metrics and navigation', async ({ page }) => {
     await page.goto('/garden');
     await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible();
-    await expect(page.getByText('Garden score')).toBeVisible();
+    if ((page.viewportSize()?.width ?? 0) < 640) {
+      await expect(page.getByRole('navigation', { name: /Dashboard quick stats/i })).toBeVisible();
+    } else {
+      await expect(page.getByRole('link', { name: /Garden score/i })).toBeVisible();
+    }
     await expect(page.getByRole('heading', { name: /Weather advice/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /Browse/i }).first()).toBeVisible();
     await expectNoHorizontalScroll(page);
@@ -95,13 +132,13 @@ test.describe('UAT checklist — authenticated flows', () => {
     await page.goto('/garden');
     await expect(page.locator('main#main-content')).toBeVisible();
     await expect(page.getByRole('link', { name: /Skip to main content/i })).toBeAttached();
-    await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: /Main|Primary/ })).toBeVisible();
     await page.goto('/garden/tasks');
-    await expect(page.getByRole('heading', { name: /Care tasks/i })).toBeVisible();
-    const snooze = page.getByRole('button', { name: /^Snooze$/i }).first();
+    await expect(page.getByRole('heading', { name: /Garden care rounds/i })).toBeVisible();
+    const snooze = page.getByRole('button', { name: /Snooze care for/i }).first();
     if (await snooze.isVisible()) {
       await snooze.click();
-      await expect(page.getByRole('region', { name: /Snooze options/i })).toBeVisible();
+      await expect(page.getByRole('button', { name: /^Tomorrow$/i })).toBeVisible();
     }
   });
 
@@ -112,15 +149,14 @@ test.describe('UAT checklist — authenticated flows', () => {
       await openAddPlantSearch(page);
       await page.getByLabel(/Species name/i).fill('pothos');
       await page.getByRole('button', { name: /Pothos/i }).first().click();
-      await page.getByRole('button', { name: /Save plant/i }).click();
-      await page.waitForURL(/\/garden\/plants\/[^/]+/);
-      plantId = page.url().match(/\/garden\/plants\/([^/]+)/)?.[1]!;
+      plantId = await savePlantAndGetId(page, /Pothos/i);
     }
     await page.goto(`/garden/plants/${plantId}/health#dr-plant`);
     await expect(page.getByRole('heading', { name: /^Dr\. Plant$/i })).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.locator('#dr-plant')).toBeVisible();
+    await page.getByPlaceholder(/Ask Dr\. Plant/i).fill('How is this plant doing?');
     await expect(page.getByRole('button', { name: /^Send$/i })).toBeEnabled();
     await expectNoHorizontalScroll(page);
   });
@@ -173,11 +209,10 @@ test.describe('UAT checklist — authenticated flows', () => {
     await openAddPlantSearch(page);
     await page.getByLabel(/Species name/i).fill('monstera');
     await page.getByRole('button', { name: /Monstera/i }).first().click();
-    await page.getByRole('button', { name: /Save plant/i }).click();
-    await page.waitForURL(/\/garden\/plants\//);
+    await savePlantAndGetId(page, /Monstera/i);
 
     await page.goto('/garden/tasks');
-    await expect(page.getByRole('heading', { name: /Care tasks/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Garden care rounds/i })).toBeVisible();
     await expect(page.locator('body')).toContainText(/Water|Fertilize|Mist|Check/i);
     await expectNoHorizontalScroll(page);
   });
@@ -186,25 +221,19 @@ test.describe('UAT checklist — authenticated flows', () => {
     await openAddPlantSearch(page);
     await page.getByLabel(/Species name/i).fill('snake');
     await page.getByRole('button', { name: /Snake Plant/i }).first().click();
-    await page.getByRole('button', { name: /Save plant/i }).click();
-    await page.waitForURL((url) => {
-      const match = url.pathname.match(/^\/garden\/plants\/([^/]+)/);
-      const id = match?.[1];
-      return Boolean(id && id !== 'new' && id !== 'browse');
-    });
-    const plantId = page.url().match(/\/garden\/plants\/([^/]+)/)?.[1]!;
+    const plantId = await savePlantAndGetId(page, /Snake Plant/i);
     await page.goto(`/garden/plants/${plantId}/health`);
     await expect(page.getByRole('heading', { name: /^Dr\. Plant$/i })).toBeVisible({
       timeout: 15_000,
     });
-    await page.getByText(/One-shot diagnosis/i).click();
     await expect(page.getByRole('button', { name: /Run diagnosis/i })).toBeVisible();
     await page.getByLabel(/What are you seeing/i).fill('Yellow leaves and wet soil');
     await page.getByRole('button', { name: /Run diagnosis/i }).click();
-    await expect(page.getByText(/Treatment plan/i)).toBeVisible({ timeout: 15_000 });
-    await page.getByRole('button', { name: /Remind in 3 days/i }).click();
-    await page.goto('/garden/tasks');
-    await expect(page.getByText(/Health check/i).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Treatment plan/i).first()).toBeVisible({ timeout: 15_000 });
+    await page.getByRole('button', { name: /Schedule follow-up in 3 days/i }).click();
+    await expect(page.getByText(/already on your task list/i)).toBeVisible({
+      timeout: 10_000,
+    });
     await expectNoHorizontalScroll(page);
   });
 
@@ -212,18 +241,13 @@ test.describe('UAT checklist — authenticated flows', () => {
     await openAddPlantSearch(page);
     await page.getByLabel(/Species name/i).fill('snake');
     await page.getByRole('button', { name: /Snake Plant/i }).first().click();
-    await page.getByRole('button', { name: /Save plant/i }).click();
-    await page.waitForURL((url) => {
-      const match = url.pathname.match(/^\/garden\/plants\/([^/]+)/);
-      const id = match?.[1];
-      return Boolean(id && id !== 'new' && id !== 'browse');
-    });
-    const plantId = page.url().match(/\/garden\/plants\/([^/]+)/)?.[1]!;
+    const plantId = await savePlantAndGetId(page, /Snake Plant/i);
 
     await page.goto(`/garden/plants/${plantId}/overview`);
     await expect(page.getByRole('link', { name: /Overview/i })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Care', exact: true })).toBeVisible();
     await page.goto(`/garden/plants/${plantId}/journal`);
+    await page.getByRole('button', { name: /\+ Add a note/i }).click();
     await page
       .getByPlaceholder(/Add a note about growth/i)
       .fill('E2E journal note');
@@ -241,7 +265,10 @@ test.describe('UAT checklist — authenticated flows', () => {
 
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
-    const user = await prisma.user.findUnique({ where: { email: auth.email } });
+    const user = await prisma.user.findUnique({
+      where: { email: auth.email },
+      select: { id: true },
+    });
     const overdue = new Date();
     overdue.setDate(overdue.getDate() - 3);
     if (user) {
@@ -253,9 +280,8 @@ test.describe('UAT checklist — authenticated flows', () => {
     await prisma.$disconnect();
 
     await page.goto('/garden');
-    const overdueCard = page.locator('.text-rose-50, .text-rose-900').filter({ hasText: /overdue/i });
-    await expect(page.getByText('Overdue', { exact: true })).toBeVisible();
-    await expect(overdueCard.first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Catch up gently/i })).toBeVisible();
+    await expect(page.getByText(/\d+ overdue care item/i)).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
 
@@ -268,7 +294,10 @@ test.describe('UAT checklist — authenticated flows', () => {
 
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
-    const user = await prisma.user.findUnique({ where: { email: auth.email } });
+    const user = await prisma.user.findUnique({
+      where: { email: auth.email },
+      select: { id: true },
+    });
     const future = new Date();
     future.setDate(future.getDate() + 30);
     if (user) {
@@ -280,10 +309,10 @@ test.describe('UAT checklist — authenticated flows', () => {
     await prisma.$disconnect();
 
     await page.goto('/garden');
-    await expect(page.getByRole('heading', { name: /Log a quick observation/i })).toBeVisible({
+    await expect(page.getByRole('heading', { name: /^All caught up$/i })).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByText('Nothing due right now')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Ask Dr\. Plant/i })).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
 
@@ -309,19 +338,36 @@ test.describe('UAT checklist — authenticated flows', () => {
     await openAddPlantSearch(page);
     await page.getByLabel(/Species name/i).fill('snake');
     await page.getByRole('button', { name: /Snake Plant/i }).first().click();
-    await page.getByRole('button', { name: /Save plant/i }).click();
-    await page.waitForURL(/\/garden\/plants\//);
+    const plantId = await savePlantAndGetId(page, /Snake Plant/i);
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    await prisma.task.updateMany({
+      where: { plantId, status: 'PENDING' },
+      data: { dueDate: new Date() },
+    });
+    await prisma.$disconnect();
 
     await page.goto('/garden/tasks');
-    const snoozeBtn = page.getByRole('button', { name: /^Snooze$/i }).first();
+    const snoozeBtn = page.getByRole('button', { name: /Snooze care for/i }).first();
     await expect(snoozeBtn).toBeVisible({ timeout: 10_000 });
+    const snoozeStatuses: number[] = [];
+    page.on('response', (response) => {
+      if (/\/tasks\/[^/]+\/snooze(?:\?|$)/.test(response.url())) {
+        snoozeStatuses.push(response.status());
+      }
+    });
     await snoozeBtn.click();
     await page.getByRole('button', { name: /^Tomorrow$/i }).click();
+    await expect(snoozeBtn).toBeDisabled();
+    await expect(snoozeBtn).toBeEnabled({ timeout: 30_000 });
+    expect(snoozeStatuses.length).toBeGreaterThan(0);
+    expect(snoozeStatuses.every((status) => status >= 200 && status < 300)).toBe(true);
     await expect(snoozeBtn).not.toHaveAttribute('aria-expanded', 'true');
   });
 
   test('schedule explanation modal opens from tasks', async ({ page }) => {
     await page.goto('/garden/tasks');
+    await page.getByRole('button', { name: /^Details$/i }).first().click();
     const why = page.getByRole('button', { name: /Why this date/i }).first();
     await expect(why).toBeVisible();
     await why.click();
@@ -335,7 +381,7 @@ test.describe('UAT checklist — public auth', () => {
   test('password reset page accepts token from email flow', async ({ page }) => {
     const email = `uat-reset-${Date.now()}@plantcare.test`;
     const password = 'password123';
-    const reg = await fetch('http://localhost:3001/api/v1/auth/register', {
+    const reg = await fetch(`${apiBase}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, name: 'Reset UAT' }),
@@ -348,7 +394,7 @@ test.describe('UAT checklist — public auth', () => {
       await prisma.$disconnect();
     }
 
-    const forgot = await fetch('http://localhost:3001/api/v1/auth/forgot-password', {
+    const forgot = await fetch(`${apiBase}/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -381,14 +427,18 @@ test.describe('UAT checklist — public auth', () => {
     await page.getByRole('button', { name: /^Sign in$/i }).click();
     await page.waitForURL(/\/garden/, { timeout: 15_000 });
     const token = await page.evaluate(() => localStorage.getItem('accessToken'));
-    if (token) await page.goto('/garden');
+    expect(token).toBeNull();
     await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible({ timeout: 15_000 });
   });
 
-  test('landing page links to register and login', async ({ page }) => {
+  test('private entry keeps sign-in and registration reachable without home loops', async ({
+    page,
+  }) => {
     await page.goto('/');
     await expect(page.getByRole('link', { name: /Sign in|Log in/i }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /Register|Get started/i }).first()).toBeVisible();
+    await page.goto('/register');
+    await expect(page.getByRole('heading', { name: /Create.*account/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Back to home/i })).toHaveCount(0);
   });
 
   test('register form submits to garden or verification message', async ({ page }) => {
@@ -409,27 +459,31 @@ test.describe('UAT checklist — mobile layout', () => {
 
   test('empty garden state and bottom nav padding', async ({ page }) => {
     const email = `uat-empty-${Date.now()}@plantcare.test`;
-    const reg = await fetch('http://localhost:3001/api/v1/auth/register', {
+    const regRes = await fetch(`${apiBase}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: 'password123', name: 'Empty Garden' }),
-    }).then((r) => r.json());
+    });
+    const reg = await regRes.json();
 
     let token = reg.accessToken;
+    let refreshCookie = refreshCookieFrom(regRes);
     if (reg.requiresVerification) {
       const { PrismaClient } = await import('@prisma/client');
       const prisma = new PrismaClient();
       await prisma.user.update({ where: { email }, data: { emailVerified: true } });
       await prisma.$disconnect();
-      const login = await fetch('http://localhost:3001/api/v1/auth/login', {
+      const loginRes = await fetch(`${apiBase}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: 'password123' }),
-      }).then((r) => r.json());
+      });
+      const login = await loginRes.json();
       token = login.accessToken;
+      refreshCookie = refreshCookieFrom(loginRes);
     }
 
-    await fetch('http://localhost:3001/api/v1/gardens', {
+    await fetch(`${apiBase}/gardens`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -438,11 +492,10 @@ test.describe('UAT checklist — mobile layout', () => {
       body: JSON.stringify({ name: 'Empty Mobile Garden', location: 'Indoor' }),
     });
 
-    await page.addInitScript((t) => localStorage.setItem('accessToken', t), token);
+    await seedRefreshCookie(page, refreshCookie);
     await page.goto('/garden');
-    await expect(
-      page.getByText(/Build your first care plan|Add your first plant/i).first(),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /\+? Add plant/i }).first()).toBeVisible();
     await expectNoHorizontalScroll(page);
 
     const contentPad = await page.locator('.page-garden').first().evaluate((el) => {
@@ -477,7 +530,9 @@ test.describe('Demo seed account', () => {
     await page.getByRole('button', { name: /Sign in/i }).click();
     await page.waitForURL(/\/garden/, { timeout: 20_000 });
     await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible();
-    await expect(page.getByText(/Window Snake|Shelf Pothos/i).first()).toBeVisible({
+    await expect(
+      page.locator('p:visible').filter({ hasText: /Window Snake|Shelf Pothos/i }).first(),
+    ).toBeVisible({
       timeout: 10_000,
     });
     await expectNoHorizontalScroll(page);

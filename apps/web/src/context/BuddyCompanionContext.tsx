@@ -106,7 +106,7 @@ export function BuddyCompanionProvider({ children }: { children: ReactNode }) {
         trackedJourneyCompleteId.current !== next.id
       ) {
         trackedJourneyCompleteId.current = next.id;
-        trackEvent('BuddyJourneyCompleted', { biomeId: next.biomeId });
+        trackEvent('buddy_journey_completed', { biomeId: next.biomeId });
       }
     } catch {
       /* keep last journey snapshot */

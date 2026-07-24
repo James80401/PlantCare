@@ -1024,10 +1024,14 @@ function JournalForm() {
 
       <button
         type="submit"
-        disabled={!hasContent}
+        disabled={!hasContent || ctx.journalSaving}
         className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-emerald-800 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isEditing ? 'Save changes' : 'Save journal entry'}
+        {ctx.journalSaving
+          ? 'Saving...'
+          : isEditing
+            ? 'Save changes'
+            : 'Save journal entry'}
       </button>
     </form>
   );

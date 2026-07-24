@@ -30,14 +30,12 @@ export default function Register() {
           result.message ||
             'Check your email to verify your account before signing in.',
         );
-        trackEvent('UserSignedUp');
         trackEvent('signup_complete', {
           requiresVerification: result.requiresVerification,
           requiresAdminApproval: result.requiresAdminApproval,
         });
         return;
       }
-      trackEvent('UserSignedUp');
       trackEvent('signup_complete', {
         requiresVerification: false,
         requiresAdminApproval: false,
@@ -63,9 +61,6 @@ export default function Register() {
         </>
       }
     >
-      <Link to="/" className="text-sm font-medium text-emerald-700 hover:underline">
-        ← Back to home
-      </Link>
       {success ? (
         <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900 space-y-2">
           <p>{success}</p>

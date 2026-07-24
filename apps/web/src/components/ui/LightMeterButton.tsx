@@ -32,7 +32,7 @@ export function LightMeterButton({ onApply, className }: LightMeterButtonProps) 
     setLevel(null);
     setError('');
   };
-  const { titleId, initialFocusRef } = useDialogA11y(open, close);
+  const { titleId, dialogRef, initialFocusRef } = useDialogA11y(open, close);
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
@@ -60,6 +60,7 @@ export function LightMeterButton({ onApply, className }: LightMeterButtonProps) 
       </button>
       {open ? (
         <div
+          ref={dialogRef}
           className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"

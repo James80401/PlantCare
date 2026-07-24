@@ -211,6 +211,16 @@ describe('GardensService members & invites', () => {
     });
   });
 
+  it('does not duplicate removal activity when the member is already gone', async () => {
+    const { service, prisma } = makeService('OWNER', 'owner-1');
+    prisma.gardenMember.deleteMany.mockResolvedValue({ count: 0 });
+
+    await expect(service.removeMember('owner-1', 'g1', 'member-2')).resolves.toEqual({
+      removed: false,
+    });
+    expect(prisma.activityEvent.create).not.toHaveBeenCalled();
+  });
+
   it('refuses to remove the garden owner', async () => {
     const { service } = makeService('OWNER', 'owner-1');
     await expect(service.removeMember('owner-1', 'g1', 'owner-1')).rejects.toMatchObject({
@@ -223,5 +233,133 @@ describe('GardensService members & invites', () => {
     await expect(service.removeMember('cg-1', 'g1', 'member-2')).rejects.toMatchObject({
       status: 403,
     });
+  });
+});
+
+describe('GardensService.acceptInvite idempotency', () => {
+  const garden = { id: 'g1', name: 'Shared home', members: [], plants: [] };
+
+  function makeService(
+    inviteOverrides: Partial<{
+      acceptedAt: Date | null;
+      acceptedByUserId: string | null;
+      email: string | null;
+    }> = {},
+  ) {
+    const invite = {
+      id: 'invite-1',
+      gardenId: 'g1',
+      token: 'invite-token',
+      role: 'CAREGIVER',
+      email: 'member@example.com',
+      expiresAt: new Date(Date.now() + 86_400_000),
+      acceptedAt: null,
+      acceptedByUserId: null,
+      createdAt: new Date(),
+      ...inviteOverrides,
+    };
+    const transaction = jest.fn(
+      async (_work: (tx: unknown) => unknown): Promise<unknown> => undefined,
+    );
+    const prisma = {
+      careInvite: {
+        findUnique: jest.fn().mockResolvedValue(invite),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'member-1',
+          email: 'member@example.com',
+        }),
+      },
+      gardenMember: {
+        findUnique: jest.fn().mockResolvedValue(null),
+        upsert: jest.fn().mockResolvedValue({}),
+      },
+      garden: {
+        findUnique: jest.fn().mockResolvedValue(garden),
+      },
+      activityEvent: {
+        create: jest.fn().mockResolvedValue({}),
+      },
+      $transaction: transaction,
+    };
+    transaction.mockImplementation(
+      async (work: (tx: unknown) => unknown): Promise<unknown> => work(prisma),
+    );
+    return {
+      service: new GardensService(prisma as never, {} as never),
+      prisma,
+    };
+  }
+
+  it('claims an invite atomically and records one acceptance', async () => {
+    const { service, prisma } = makeService();
+
+    await expect(
+      service.acceptInvite('member-1', { token: 'invite-token' }),
+    ).resolves.toEqual(garden);
+
+    expect(prisma.careInvite.updateMany).toHaveBeenCalledWith({
+      where: { id: 'invite-1', acceptedAt: null },
+      data: {
+        acceptedAt: expect.any(Date),
+        acceptedByUserId: 'member-1',
+      },
+    });
+    expect(prisma.gardenMember.upsert).toHaveBeenCalledTimes(1);
+    expect(prisma.activityEvent.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns the same garden when the accepting user retries the token', async () => {
+    const { service, prisma } = makeService({
+      acceptedAt: new Date(),
+      acceptedByUserId: 'member-1',
+    });
+
+    await expect(
+      service.acceptInvite('member-1', { token: 'invite-token' }),
+    ).resolves.toEqual(garden);
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.gardenMember.upsert).not.toHaveBeenCalled();
+    expect(prisma.activityEvent.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects reuse of an accepted token by another user', async () => {
+    const { service, prisma } = makeService({
+      acceptedAt: new Date(),
+      acceptedByUserId: 'member-1',
+    });
+
+    await expect(
+      service.acceptInvite('intruder-1', { token: 'invite-token' }),
+    ).rejects.toMatchObject({ status: 404 });
+    expect(prisma.garden.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('converges safely when two acceptance requests race', async () => {
+    const { service, prisma } = makeService();
+    prisma.careInvite.updateMany.mockResolvedValue({ count: 0 });
+    prisma.careInvite.findUnique
+      .mockResolvedValueOnce({
+        id: 'invite-1',
+        gardenId: 'g1',
+        token: 'invite-token',
+        role: 'CAREGIVER',
+        email: 'member@example.com',
+        expiresAt: new Date(Date.now() + 86_400_000),
+        acceptedAt: null,
+        acceptedByUserId: null,
+        createdAt: new Date(),
+      })
+      .mockResolvedValueOnce({ acceptedByUserId: 'member-1' });
+
+    await expect(
+      service.acceptInvite('member-1', { token: 'invite-token' }),
+    ).resolves.toEqual(garden);
+
+    expect(prisma.gardenMember.upsert).not.toHaveBeenCalled();
+    expect(prisma.activityEvent.create).not.toHaveBeenCalled();
   });
 });

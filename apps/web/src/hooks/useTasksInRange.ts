@@ -22,6 +22,7 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [animating, setAnimating] = useState<TaskAnimMap>({});
+  const [actionError, setActionError] = useState('');
 
   const load = useCallback(() => {
     const from = new Date();
@@ -56,6 +57,7 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
     kind: 'completing' | 'skipping',
     apiCall: () => Promise<{ data: TaskItem }>,
   ) => {
+    setActionError('');
     setAnimating((a) => ({ ...a, [id]: kind }));
     try {
       const { data } = await apiCall();
@@ -66,6 +68,11 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
       patchTask(id, { status: data.status, completedAt: data.completedAt });
       return true;
     } catch {
+      setActionError(
+        kind === 'completing'
+          ? 'Could not complete that task. Your task list was restored.'
+          : 'Could not skip that task. Your task list was restored.',
+      );
       await load();
       return false;
     } finally {
@@ -82,6 +89,7 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
   };
 
   const handleBulkComplete = async (ids: string[]) => {
+    setActionError('');
     const uniqueIds = [...new Set(ids)];
     setAnimating((current) => ({
       ...current,
@@ -97,6 +105,7 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
         ),
       );
     } catch {
+      setActionError('Could not complete that care round. Your task list was restored.');
       await load();
     } finally {
       setAnimating((current) => {
@@ -112,12 +121,14 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
   };
 
   const handleSnooze = async (id: string, days: 1 | 3 | 7) => {
+    setActionError('');
     setAnimating((a) => ({ ...a, [id]: 'snoozing' }));
     try {
       const { data } = await tasksApi.snooze(id, days);
       await new Promise((r) => setTimeout(r, SNOOZE_ANIM_MS));
       patchTask(id, { dueDate: data.dueDate });
     } catch {
+      setActionError('Could not snooze that task. Your task list was restored.');
       await load();
     } finally {
       setAnimating((a) => {
@@ -132,6 +143,7 @@ export function useTasksInRange(options: UseTasksInRangeOptions = {}) {
     tasks,
     loading,
     animating,
+    actionError,
     summary,
     dayGroups: groupTasksByDay(tasks),
     load,

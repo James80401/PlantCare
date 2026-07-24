@@ -64,7 +64,7 @@ export default function TaskInstructionsModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [guide, setGuide] = useState<Instructions | null>(null);
-  const { initialFocusRef } = useDialogA11y(true, onClose);
+  const { dialogRef, initialFocusRef } = useDialogA11y(true, onClose);
 
   useEffect(() => {
     setLoading(true);
@@ -80,6 +80,7 @@ export default function TaskInstructionsModal({
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       role="dialog"
       aria-modal="true"

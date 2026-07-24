@@ -25,7 +25,7 @@ export default function TaskScheduleExplanationModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [explanation, setExplanation] = useState<ScheduleExplanation | null>(null);
-  const { titleId, initialFocusRef } = useDialogA11y(true, onClose);
+  const { titleId, dialogRef, initialFocusRef } = useDialogA11y(true, onClose);
 
   useEffect(() => {
     setLoading(true);
@@ -39,6 +39,7 @@ export default function TaskScheduleExplanationModal({
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"

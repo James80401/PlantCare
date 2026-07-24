@@ -16,6 +16,8 @@ vi.mock('../services/api', () => ({
 const list = vi.mocked(tasksApi.list);
 const snooze = vi.mocked(tasksApi.snooze);
 const bulkComplete = vi.mocked(tasksApi.bulkComplete);
+const complete = vi.mocked(tasksApi.complete);
+const skip = vi.mocked(tasksApi.skip);
 
 function task(id: string, status: string, dueDate: string) {
   return {
@@ -32,6 +34,8 @@ describe('useTasksInRange', () => {
     list.mockReset();
     snooze.mockReset();
     bulkComplete.mockReset();
+    complete.mockReset();
+    skip.mockReset();
   });
 
   it('marks a whole care round complete from one bulk request', async () => {
@@ -114,5 +118,27 @@ describe('useTasksInRange', () => {
 
     // The failed optimistic update falls back to a fresh load.
     expect(list).toHaveBeenCalledTimes(2);
+    expect(result.current.actionError).toBe(
+      'Could not snooze that task. Your task list was restored.',
+    );
+  });
+
+  it('restores a failed care round and exposes a visible failure message', async () => {
+    list.mockResolvedValue({
+      data: [task('t1', 'PENDING', '2026-05-01T00:00:00.000Z')],
+    } as never);
+    bulkComplete.mockRejectedValue(new Error('offline'));
+
+    const { result } = renderHook(() => useTasksInRange());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.handleBulkComplete(['t1']);
+    });
+
+    expect(result.current.tasks[0].status).toBe('PENDING');
+    expect(result.current.actionError).toBe(
+      'Could not complete that care round. Your task list was restored.',
+    );
   });
 });
