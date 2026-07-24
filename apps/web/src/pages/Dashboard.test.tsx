@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { addDays, format } from 'date-fns';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Dashboard from './Dashboard';
@@ -68,12 +69,12 @@ describe('Dashboard', () => {
 
     expect(await screen.findByRole('link', { name: /My Gardens: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Garden score: 91/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Care areas: 1/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Care areas: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Gardens ready: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Completed: 4/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Today care: 1 due/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Late care: 1 overdue/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Care type summary: 1 area/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Care type summary: 2 areas/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Show details/i })).toHaveAttribute(
       'aria-expanded',
       'false',
@@ -275,7 +276,5 @@ function dashboardTask(
 }
 
 function dateOffset(offsetDays: number) {
-  const date = new Date();
-  date.setDate(date.getDate() + offsetDays);
-  return date.toISOString().slice(0, 10);
+  return format(addDays(new Date(), offsetDays), 'yyyy-MM-dd');
 }
