@@ -183,7 +183,9 @@ export class PlantProgressService {
       persisted = true;
 
       await this.recommendations.completePlantCheckInForPlant(userId, plantId);
+      await this.recommendations.refreshPlant(userId, plantId);
       await this.syncPlantLifeMilestones(userId, plantId);
+      await this.recommendations.refreshPlant(userId, plantId);
       return entry;
     } catch (error) {
       if (!persisted && photoUrl) {

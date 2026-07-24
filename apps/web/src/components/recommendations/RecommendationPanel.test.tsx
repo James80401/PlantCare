@@ -15,6 +15,7 @@ vi.mock('../../services/api', () => ({
     snooze: vi.fn().mockResolvedValue({}),
     dismiss: vi.fn().mockResolvedValue({}),
     convertToTask: vi.fn().mockResolvedValue({}),
+    refresh: vi.fn().mockResolvedValue({ data: [] }),
   },
 }));
 
@@ -155,6 +156,31 @@ describe('RecommendationPanel', () => {
     expect(
       screen.getByText('No extra recommendations right now. Keep up with your care tasks.'),
     ).toBeInTheDocument();
+  });
+
+  it('refreshes plant guidance only after an explicit user action', async () => {
+    const onChanged = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <RecommendationPanel
+          recommendations={[]}
+          onChanged={onChanged}
+          refreshPlantId="plant-1"
+        />
+      </MemoryRouter>,
+    );
+
+    expect(recommendationsApi.refresh).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh guidance' }));
+
+    await waitFor(() => {
+      expect(recommendationsApi.refresh).toHaveBeenCalledWith('plant-1');
+      expect(onChanged).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Guidance refreshed from the latest plant activity.',
+    );
   });
 
   it('explains that dismiss only closes the current recommendation cycle', async () => {

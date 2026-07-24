@@ -5,6 +5,7 @@ import { RecommendationsService } from '../recommendations/recommendations.servi
 import { SchedulerService } from '../scheduler/scheduler.service';
 import { WeatherService } from '../weather/weather.service';
 import { PlantMilestonesService } from '../milestones/plant-milestones.service';
+import { GardensService } from '../gardens/gardens.service';
 import {
   buildAttention,
   buildWeekPreview,
@@ -35,11 +36,10 @@ export class DashboardService {
     private weather: WeatherService,
     private plantMilestones: PlantMilestonesService,
     private recommendations: RecommendationsService,
+    private gardens: GardensService,
   ) {}
 
   async getDashboard(userId: string, from?: string, to?: string) {
-    await this.scheduler.autoPostponeOutdoorWateringFromWeather(userId);
-
     const now = new Date();
     const fromDate = from ? new Date(from) : addDays(startOfDay(now), -45);
     const toDate = to ? new Date(to) : addDays(startOfDay(now), 14);
@@ -54,6 +54,7 @@ export class DashboardService {
       recentDiagnoses,
       openDiagnosisCount,
       recommendations,
+      gardenSummaries,
     ] = await Promise.all([
       this.prisma.user.findUnique({
         where: { id: userId },
@@ -61,7 +62,12 @@ export class DashboardService {
       }),
       this.prisma.plant.findMany({
         where: { userId },
-        include: {
+        select: {
+          id: true,
+          nickname: true,
+          imageUrl: true,
+          createdAt: true,
+          location: true,
           species: {
             select: {
               commonName: true,
@@ -84,17 +90,29 @@ export class DashboardService {
           },
         },
         orderBy: { createdAt: 'desc' },
+        take: 100,
       }),
       this.prisma.garden.findMany({
         where: {
           OR: [{ ownerId: userId }, { members: { some: { userId } } }],
         },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          ownerId: true,
           members: { select: { userId: true, role: true } },
           plants: {
-            include: {
+            take: 100,
+            select: {
+              canComplete: true,
               plant: {
-                include: {
+                select: {
+                  id: true,
+                  userId: true,
+                  nickname: true,
+                  imageUrl: true,
+                  createdAt: true,
+                  location: true,
                   species: {
                     select: {
                       commonName: true,
@@ -110,16 +128,30 @@ export class DashboardService {
           },
         },
         orderBy: { createdAt: 'desc' },
+        take: 50,
       }),
       this.prisma.task.findMany({
         where: {
           plant: { userId },
           dueDate: { gte: fromDate, lte: toDate },
         },
-        include: {
-          plant: { include: { species: true } },
+        select: {
+          id: true,
+          taskType: true,
+          dueDate: true,
+          completedAt: true,
+          status: true,
+          plant: {
+            select: {
+              id: true,
+              nickname: true,
+              imageUrl: true,
+              species: { select: { commonName: true } },
+            },
+          },
         },
         orderBy: { dueDate: 'asc' },
+        take: 500,
       }),
       this.prisma.diagnosis.findMany({
         where: {
@@ -177,7 +209,8 @@ export class DashboardService {
       this.prisma.diagnosis.count({
         where: { plant: { userId }, resolved: false },
       }),
-      this.recommendations.refreshForUser(userId, now),
+      this.recommendations.listForUser(userId, { now }),
+      this.gardens.getSummaries(userId),
     ]);
 
     const taskRows = tasks as TaskLike[];
@@ -205,7 +238,7 @@ export class DashboardService {
       ? this.summarizeWeather(weatherStatus.cachedAdvice, weatherStatus.locationLabel)
       : null;
 
-    const milestones = await this.plantMilestones.syncAndListForUser(userId, {
+    const milestones = await this.plantMilestones.listForUser(userId, {
       plantCount,
       plantCreatedAts: plants.map((p) => p.createdAt),
       completedInRange,
@@ -249,7 +282,7 @@ export class DashboardService {
       },
       careSummary,
       plants: plants.map((p) => mapDashboardPlant(p)),
-      sharedPlants: mapSharedPlantsForUser(gardens, userId),
+      sharedPlants: mapSharedPlantsForUser(gardens, userId).slice(0, 100),
       pendingTasks: pendingTaskRows.map((t) => mapDashboardTask(t)),
       todayTasks: todayTaskRows.map((t) => mapDashboardTask(t)),
       attention,
@@ -258,6 +291,7 @@ export class DashboardService {
       weekSummary,
       scheduleSuggestions,
       recommendations,
+      gardenSummaries,
       healthStory: {
         openDiagnosisCount,
         recentJournal: recentJournalEntries.map((entry) =>

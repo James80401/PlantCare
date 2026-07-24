@@ -39,6 +39,7 @@
     "media:audit": "node apps/api/scripts/audit-orphan-media.mjs",
     "test:media-audit": "node --test apps/api/scripts/audit-orphan-media.spec.mjs",
     "test:production-config": "node --test scripts/check-production-env.spec.mjs",
+    "test:dashboard-performance": "node scripts/check-dashboard-performance.mjs",
     "build": "npm run build -w @plant-care/shared && npm run build -w @plant-care/api && npm run build -w @plant-care/web",
     "mobile:copy": "npm run mobile:copy -w @plant-care/web",
     "mobile:sync": "npm run mobile:sync -w @plant-care/web",

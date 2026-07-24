@@ -84,6 +84,7 @@ describe('PlantProgressService', () => {
     };
     const recommendations = {
       completePlantCheckInForPlant: jest.fn().mockResolvedValue({ count: 1 }),
+      refreshPlant: jest.fn().mockResolvedValue([]),
     };
     const milestones = {
       syncPlantLifeMilestones: jest.fn().mockResolvedValue(undefined),

@@ -7,9 +7,19 @@ import { SchedulerModule } from '../scheduler/scheduler.module';
 import { SpeciesModule } from '../species/species.module';
 import { UploadModule } from '../upload/upload.module';
 import { WeatherModule } from '../weather/weather.module';
+import { RecommendationsModule } from '../recommendations/recommendations.module';
+import { PlantMilestonesModule } from '../milestones/plant-milestones.module';
 
 @Module({
-  imports: [CareGuidesModule, SchedulerModule, SpeciesModule, UploadModule, WeatherModule],
+  imports: [
+    CareGuidesModule,
+    SchedulerModule,
+    SpeciesModule,
+    UploadModule,
+    WeatherModule,
+    RecommendationsModule,
+    PlantMilestonesModule,
+  ],
   controllers: [PlantsController],
   providers: [PlantsService, PlantNetService],
   exports: [PlantsService],

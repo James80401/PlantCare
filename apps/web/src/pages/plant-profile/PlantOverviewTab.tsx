@@ -163,6 +163,7 @@ export default function PlantOverviewTab() {
             description="Useful plant-specific guidance that is not urgent enough to be a care task."
             recommendations={recommendations}
             onChanged={loadRecommendations}
+            refreshPlantId={ctx.id}
             emptyText="No plant-specific recommendations right now."
           />
         </div>

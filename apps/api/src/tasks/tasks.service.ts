@@ -26,8 +26,6 @@ export class TasksService {
       ? new Date(to)
       : new Date(fromDate.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    await this.scheduler.autoPostponeOutdoorWateringFromWeather(userId);
-
     return this.prisma.task.findMany({
       where: {
         dueDate: { gte: fromDate, lte: toDate },

@@ -309,6 +309,7 @@ model Plant {
   recommendations        Recommendation[]
 
   @@index([userId])
+  @@index([userId, createdAt])
   @@index([gardenId])
 }
 
@@ -345,7 +346,9 @@ model Task {
 
   @@index([dueDate, status])
   @@index([plantId])
+  @@index([plantId, status, dueDate])
   @@index([gardenId, status])
+  @@index([gardenId, status, dueDate])
   @@index([sourceDiagnosisId])
 }
 
@@ -394,6 +397,7 @@ model Recommendation {
 
   @@unique([userId, sourceKey])
   @@index([userId, status, priority])
+  @@index([userId, status, snoozedUntil, priority])
   @@index([plantId, status])
   @@index([gardenId, status])
   @@index([lastRefreshedAt])
@@ -412,6 +416,7 @@ model JournalEntry {
   updatedAt DateTime @default(now()) @updatedAt
 
   @@index([plantId])
+  @@index([plantId, createdAt])
 }
 
 model PlantProgressEntry {
@@ -457,6 +462,7 @@ model Diagnosis {
 
   @@index([plantId])
   @@index([plantId, resolved])
+  @@index([plantId, resolved, createdAt])
 }
 
 model DiagnosisConversation {
@@ -604,6 +610,7 @@ model CommunityPost {
 
   @@index([authorId])
   @@index([createdAt])
+  @@index([hiddenAt, createdAt])
   @@index([originalPostId])
 }
 

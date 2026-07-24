@@ -7,7 +7,7 @@ import {
   type DashboardHealthStory,
 } from '../hooks/useDashboard';
 import { useDashboardTaskActions } from '../hooks/useDashboardTaskActions';
-import { tasksApi, gardensApi, type GardenSummaryCard } from '../services/api';
+import { tasksApi, type GardenSummaryCard } from '../services/api';
 import { GardenCard } from '../components/gardens/GardenCard';
 import { WeatherAdvicePanel } from '../components/weather/WeatherAdvicePanel';
 import BuddyDashboardPanel from '../components/buddy/BuddyDashboardPanel';
@@ -63,26 +63,9 @@ export default function Dashboard() {
   const { data: dash, loading: dashLoading, error: dashError, reload: reloadDash } =
     useDashboard();
 
-  const [gardenSummaries, setGardenSummaries] = useState<GardenSummaryCard[]>([]);
-  const [gardenSummariesLoading, setGardenSummariesLoading] = useState(true);
-  const [gardenSummariesError, setGardenSummariesError] = useState('');
-
-  const loadGardenSummaries = () => {
-    setGardenSummariesError('');
-    setGardenSummariesLoading(true);
-    gardensApi
-      .summaries()
-      .then(({ data }) => setGardenSummaries(data))
-      .catch(() => {
-        setGardenSummaries([]);
-        setGardenSummariesError('Could not load garden summaries.');
-      })
-      .finally(() => setGardenSummariesLoading(false));
-  };
-
-  useEffect(() => {
-    loadGardenSummaries();
-  }, []);
+  const gardenSummaries: GardenSummaryCard[] = dash?.gardenSummaries ?? [];
+  const gardenSummariesLoading = dashLoading;
+  const gardenSummariesError = dashError;
 
   const refreshAfterTask = async () => {
     await reloadDash();
@@ -350,7 +333,7 @@ export default function Dashboard() {
             </p>
             <button
               type="button"
-              onClick={loadGardenSummaries}
+              onClick={() => void reloadDash()}
               className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-amber-900 ring-1 ring-amber-200 hover:bg-amber-50"
             >
               Retry summaries
@@ -575,9 +558,16 @@ export default function Dashboard() {
       </header>
 
       {dashError ? (
-        <FormError className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-rose-700">
-          {dashError}
-        </FormError>
+        <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-rose-700">
+          <FormError>{dashError}</FormError>
+          <button
+            type="button"
+            onClick={() => void reloadDash()}
+            className="mt-2 inline-flex min-h-10 items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-rose-800 ring-1 ring-rose-200 hover:bg-rose-50"
+          >
+            Retry dashboard
+          </button>
+        </div>
       ) : null}
 
       {!dashboardLoading ? (
@@ -909,7 +899,9 @@ function CompactDashboardFocus({
       helper: 'types',
       to: '/garden/tasks',
       tone: dueCareAreas > 0 ? 'bg-amber-50 text-amber-950' : 'bg-white/10 text-emerald-50',
-      ariaLabel: `Care type summary: ${dueCareAreas} areas`,
+      ariaLabel: `Care type summary: ${dueCareAreas} ${
+        dueCareAreas === 1 ? 'area' : 'areas'
+      }`,
     },
     {
       label: 'Done',

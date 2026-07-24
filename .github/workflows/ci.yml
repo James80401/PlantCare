@@ -123,6 +123,7 @@ jobs:
             sleep 2
           done
           curl -sf http://localhost:3001/api/v1/health/ready
+          API_URL=http://localhost:3001/api/v1 npm run test:dashboard-performance
           kill $(cat api.pid) 2>/dev/null || true
           trap - EXIT
 

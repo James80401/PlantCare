@@ -24,6 +24,8 @@ import { CreatePlantDto } from './dto/create-plant.dto';
 import { ConfirmExternalSpeciesDto } from './dto/confirm-external-species.dto';
 import { UpdatePlantDto } from './dto/update-plant.dto';
 import { buildPlantTimeline } from './plant-timeline.builder';
+import { RecommendationsService } from '../recommendations/recommendations.service';
+import { PlantMilestonesService } from '../milestones/plant-milestones.service';
 
 @Injectable()
 export class PlantsService {
@@ -37,10 +39,11 @@ export class PlantsService {
     private weather: WeatherService,
     private config: ConfigService,
     private imageModeration: ImageModerationService,
+    private recommendations: RecommendationsService,
+    private milestones: PlantMilestonesService,
   ) {}
 
   async findAll(userId: string) {
-    await this.scheduler.autoPostponeOutdoorWateringFromWeather(userId);
     const rows = await this.prisma.plant.findMany({
       where: { userId },
       include: {
@@ -73,7 +76,6 @@ export class PlantsService {
 
   async findOne(userId: string, id: string) {
     const weatherStatus = await this.weather.getAdviceStatus(userId);
-    await this.scheduler.autoPostponeOutdoorWateringFromWeather(userId);
 
     const plant = await this.prisma.plant.findFirst({
       where: { id },
@@ -176,6 +178,10 @@ export class PlantsService {
     });
 
     await this.scheduler.generateTasksForPlant(plant.id, currentPlanTier);
+    await Promise.all([
+      this.recommendations.refreshPlant(userId, plant.id),
+      this.milestones.syncEngagementForUser(userId),
+    ]);
     return this.findOne(userId, plant.id);
   }
 
@@ -226,6 +232,7 @@ export class PlantsService {
     if (shouldReschedule) {
       await this.scheduler.generateTasksForPlant(id, planTier);
     }
+    await this.recommendations.refreshPlant(userId, id);
 
     const updated = await this.findOne(userId, id);
     return { ...updated, tasksRescheduled: shouldReschedule };
