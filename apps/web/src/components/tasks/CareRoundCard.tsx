@@ -6,6 +6,8 @@ import { taskTypeLabel } from '../../utils/tasks';
 import { resolveApiThumbnailUrl } from '../../utils/apiAssets';
 import { SNOOZE_OPTIONS, type SnoozeDays } from '../../utils/taskSnooze';
 import type { CareTypeRound, PlantCareRoundItem } from '../../utils/taskGroups';
+import TaskInstructionsLink from '../TaskInstructionsLink';
+import TaskScheduleExplanationLink from '../TaskScheduleExplanationLink';
 
 export function careRoundKey(gardenId: string, taskType: string) {
   return `${gardenId}:${taskType}`;
@@ -127,10 +129,12 @@ function CarePlantRow({
   onSnooze: (days: SnoozeDays) => void;
 }) {
   const [snoozeOpen, setSnoozeOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const label = item.plant.nickname || item.plant.species.commonName;
   const imageUrl = resolveApiThumbnailUrl(item.plant.imageUrl, 96);
   const overdueCount = countOverdue(item);
   const taskSummary = describePlantStop(item);
+  const representativeTask = item.tasks[0];
 
   return (
     <li className="flex flex-wrap items-center gap-3 px-4 py-3">
@@ -161,7 +165,15 @@ function CarePlantRow({
           </p>
         ) : null}
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setDetailsOpen((open) => !open)}
+          className="flex min-h-11 items-center justify-center rounded-full border border-gray-200 bg-white px-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50"
+          aria-expanded={detailsOpen}
+        >
+          {detailsOpen ? 'Hide details' : 'Details'}
+        </button>
         <button
           type="button"
           onClick={() => setSnoozeOpen((open) => !open)}
@@ -199,6 +211,31 @@ function CarePlantRow({
               </button>
             ))}
           </div>
+        </div>
+      ) : null}
+      {detailsOpen && representativeTask ? (
+        <div
+          role="region"
+          aria-label={`Care details for ${label}`}
+          className="basis-full rounded-2xl border border-gray-100 bg-gray-50/70 p-3 sm:ml-14"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <TaskInstructionsLink
+              taskId={representativeTask.id}
+              taskType={representativeTask.taskType}
+              plantLabel={label}
+            />
+            <TaskScheduleExplanationLink
+              taskId={representativeTask.id}
+              taskType={representativeTask.taskType}
+              plantLabel={label}
+            />
+          </div>
+          {item.tasks.length > 1 ? (
+            <p className="mt-2 text-xs text-gray-600">
+              Guidance is shown for the oldest reminder in this folded care stop.
+            </p>
+          ) : null}
         </div>
       ) : null}
     </li>

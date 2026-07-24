@@ -5,6 +5,7 @@
 import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { loadEnvFile } from './lib/parse-env.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const web = resolve(root, 'apps/web');
@@ -54,13 +55,19 @@ if (existsSync(gServices)) {
 }
 
 const envPath = resolve(root, '.env');
-if (existsSync(envPath)) {
-  const envText = readFileSync(envPath, 'utf8');
+const productionEnvPath = resolve(root, '.env.production');
+const configuredEnv = {
+  ...(existsSync(envPath) ? loadEnvFile(envPath) : {}),
+  ...(existsSync(productionEnvPath) ? loadEnvFile(productionEnvPath) : {}),
+  ...process.env,
+};
+if (existsSync(envPath) || existsSync(productionEnvPath) || process.env.FIREBASE_PROJECT_ID) {
   const hasV1 =
-    /FIREBASE_PROJECT_ID=.+/.test(envText) &&
-    (/GOOGLE_APPLICATION_CREDENTIALS=.+/.test(envText) ||
-      /FIREBASE_CLIENT_EMAIL=.+/.test(envText));
-  const hasLegacy = /FCM_SERVER_KEY=.+/.test(envText);
+    Boolean(configuredEnv.FIREBASE_PROJECT_ID) &&
+    (Boolean(configuredEnv.GOOGLE_APPLICATION_CREDENTIALS) ||
+      (Boolean(configuredEnv.FIREBASE_CLIENT_EMAIL) &&
+        Boolean(configuredEnv.FIREBASE_PRIVATE_KEY)));
+  const hasLegacy = Boolean(configuredEnv.FCM_SERVER_KEY);
   if (hasV1) {
     pass('API FCM', 'HTTP v1 credentials in .env');
   } else if (hasLegacy) {
@@ -69,7 +76,7 @@ if (existsSync(envPath)) {
     fail('API FCM', 'Set FIREBASE_PROJECT_ID + service account or FCM_SERVER_KEY in .env');
   }
 } else {
-  fail('API FCM', 'No .env — copy .env.example');
+  fail('API FCM', 'No local or production environment configuration was found');
 }
 
 for (const c of checks) {

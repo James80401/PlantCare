@@ -155,27 +155,48 @@ export class PlantsService {
   }
 
   async create(userId: string, planTier: PlanTier, dto: CreatePlantDto) {
+    if (dto.clientRequestId) {
+      const existing = await this.prisma.plant.findFirst({
+        where: { userId, clientRequestId: dto.clientRequestId },
+        select: { id: true },
+      });
+      if (existing) return this.findOne(userId, existing.id);
+    }
+
     const currentPlanTier = await this.planTierForUser(userId, planTier);
     await this.assertCanCreatePlant(userId, currentPlanTier);
     const gardenArea = await this.assertCanEditGarden(userId, dto.gardenId);
     await this.perenual.getOrFetchById(dto.speciesId);
 
-    const plant = await this.prisma.plant.create({
-      data: {
-        userId,
-        gardenId: dto.gardenId,
-        speciesId: dto.speciesId,
-        nickname: dto.nickname,
-        location: gardenArea,
-        potSize: dto.potSize,
-        lifeStage: dto.lifeStage ?? PlantLifeStage.ESTABLISHED,
-        approximateAgeMonths: dto.approximateAgeMonths,
-        datePlanted: dto.datePlanted ? new Date(dto.datePlanted) : undefined,
-        imageUrl: dto.imageUrl,
-        notes: dto.notes,
-      },
-      include: { species: true },
-    });
+    let plant: { id: string };
+    try {
+      plant = await this.prisma.plant.create({
+        data: {
+          userId,
+          clientRequestId: dto.clientRequestId,
+          gardenId: dto.gardenId,
+          speciesId: dto.speciesId,
+          nickname: dto.nickname,
+          location: gardenArea,
+          potSize: dto.potSize,
+          lifeStage: dto.lifeStage ?? PlantLifeStage.ESTABLISHED,
+          approximateAgeMonths: dto.approximateAgeMonths,
+          datePlanted: dto.datePlanted ? new Date(dto.datePlanted) : undefined,
+          imageUrl: dto.imageUrl,
+          notes: dto.notes,
+        },
+        include: { species: true },
+      });
+    } catch (error) {
+      if (dto.clientRequestId && (error as { code?: string })?.code === 'P2002') {
+        const existing = await this.prisma.plant.findFirst({
+          where: { userId, clientRequestId: dto.clientRequestId },
+          select: { id: true },
+        });
+        if (existing) return this.findOne(userId, existing.id);
+      }
+      throw error;
+    }
 
     await this.scheduler.generateTasksForPlant(plant.id, currentPlanTier);
     await Promise.all([

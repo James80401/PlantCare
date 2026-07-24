@@ -42,8 +42,8 @@ export class CommunityController {
   }
 
   @Get('posts/:id/comments')
-  listComments(@Param('id') postId: string) {
-    return this.community.listComments(postId);
+  listComments(@CurrentUser() user: JwtPayload, @Param('id') postId: string) {
+    return this.community.listComments(user.sub, postId);
   }
 
   @Post('posts/:id/comments')

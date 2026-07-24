@@ -103,5 +103,33 @@ describe('shared task access', () => {
       expect(userCanViewPlantTasks('stranger', homePlant)).toBe(false);
       expect(userCanCompletePlantTask('stranger', homePlant)).toBe(false);
     });
+
+    it.each([
+      ['owner', true, true, true],
+      ['caregiver', true, true, true],
+      ['viewer', true, false, false],
+      ['invited-not-accepted', false, false, false],
+      ['removed-member', false, false, false],
+      ['cross-account-user', false, false, false],
+    ])(
+      'enforces the full household matrix for %s',
+      (userId, canView, canComplete, canJournal) => {
+        const matrixPlant = {
+          userId: 'owner',
+          garden: {
+            members: [
+              { userId: 'owner', role: 'OWNER' },
+              { userId: 'caregiver', role: 'CAREGIVER' },
+              { userId: 'viewer', role: 'VIEWER' },
+            ],
+          },
+          shares: [],
+        };
+
+        expect(userCanViewPlantTasks(userId, matrixPlant)).toBe(canView);
+        expect(userCanCompletePlantTask(userId, matrixPlant)).toBe(canComplete);
+        expect(userCanJournalPlant(userId, matrixPlant)).toBe(canJournal);
+      },
+    );
   });
 });

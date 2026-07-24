@@ -491,7 +491,7 @@ species created through hybrid long-tail identification.
 Current baseline from the intelligence tracker:
 
 - 447 local species.
-- 445 local species photos.
+- 447 local, license-verified species photos (complete catalog coverage).
 - 2 rows still need exact reusable photo sourcing/review.
 - Catalog verifier enforces 400+ species.
 
@@ -1597,7 +1597,8 @@ Major shipped intelligence work:
 
 Known remaining/future areas:
 
-- Final exact reusable photos for Hoya Mathilde and String of Dolphins.
+- Maintain complete, license-verified local photo coverage when the catalog
+  changes (447/447 verified as of 2026-07-23).
 - Optional guide UX polish based on analytics.
 - Bulk external-species review actions only if review volume justifies them.
 - Broader Buddy integration tests and mobile layout pass.

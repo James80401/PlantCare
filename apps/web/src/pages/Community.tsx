@@ -312,6 +312,9 @@ export default function Community() {
   const [posting, setPosting] = useState(false);
   const [scope, setScope] = useState<'all' | 'following'>('all');
   const [reportingPostId, setReportingPostId] = useState<string | null>(null);
+  const [pendingLikes, setPendingLikes] = useState<Set<string>>(() => new Set());
+  const [pendingFollows, setPendingFollows] = useState<Set<string>>(() => new Set());
+  const [pendingBlocks, setPendingBlocks] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (!imageFile) {
@@ -409,11 +412,54 @@ export default function Community() {
   };
 
   const handleLike = async (postId: string) => {
+    if (pendingLikes.has(postId)) return;
+    const previous = posts.find((post) => post.id === postId);
+    if (!previous) return;
+    setPendingLikes((current) => new Set(current).add(postId));
+    setPosts((current) =>
+      current.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              likedByMe: !post.likedByMe,
+              _count: {
+                comments: post._count?.comments ?? 0,
+                likes: Math.max(
+                  0,
+                  (post._count?.likes ?? 0) + (post.likedByMe ? -1 : 1),
+                ),
+              },
+            }
+          : post,
+      ),
+    );
     try {
-      await communityApi.toggleLike(postId);
-      await load();
+      const { data } = await communityApi.toggleLike(postId);
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                likedByMe: data.liked,
+                _count: {
+                  comments: post._count?.comments ?? 0,
+                  likes: data.likeCount,
+                },
+              }
+            : post,
+        ),
+      );
     } catch (err) {
+      setPosts((current) =>
+        current.map((post) => (post.id === postId ? previous : post)),
+      );
       setError(formatApiErrorMessage(err, 'Could not update like.'));
+    } finally {
+      setPendingLikes((current) => {
+        const next = new Set(current);
+        next.delete(postId);
+        return next;
+      });
     }
   };
 
@@ -427,21 +473,78 @@ export default function Community() {
   };
 
   const handleBlock = async (authorId: string, authorName: string) => {
+    if (pendingBlocks.has(authorId)) return;
     if (!confirm(`Block ${authorName}? You will no longer see their posts.`)) return;
+    const previous = posts;
+    setPendingBlocks((current) => new Set(current).add(authorId));
+    setPosts((current) => current.filter((post) => post.author?.id !== authorId));
     try {
-      await communityApi.toggleBlockUser(authorId);
-      await load();
+      const { data } = await communityApi.toggleBlockUser(authorId);
+      if (!data.blocked) await load();
     } catch (err) {
+      setPosts(previous);
       setError(formatApiErrorMessage(err, 'Could not block this user.'));
+    } finally {
+      setPendingBlocks((current) => {
+        const next = new Set(current);
+        next.delete(authorId);
+        return next;
+      });
     }
   };
 
   const handleFollow = async (authorId: string) => {
+    if (pendingFollows.has(authorId)) return;
+    const previousFollowing = posts.find(
+      (post) => post.author?.id === authorId,
+    )?.author?.followedByMe;
+    setPendingFollows((current) => new Set(current).add(authorId));
+    setPosts((current) =>
+      current.map((post) =>
+        post.author?.id === authorId
+          ? {
+              ...post,
+              author: {
+                ...post.author,
+                followedByMe: !post.author.followedByMe,
+              },
+            }
+          : post,
+      ),
+    );
     try {
-      await communityApi.toggleFollow(authorId);
-      await load();
+      const { data } = await communityApi.toggleFollow(authorId);
+      setPosts((current) =>
+        current.map((post) =>
+          post.author?.id === authorId
+            ? {
+                ...post,
+                author: { ...post.author, followedByMe: data.following },
+              }
+            : post,
+        ),
+      );
     } catch (err) {
+      setPosts((current) =>
+        current.map((post) =>
+          post.author?.id === authorId
+            ? {
+                ...post,
+                author: {
+                  ...post.author,
+                  followedByMe: Boolean(previousFollowing),
+                },
+              }
+            : post,
+        ),
+      );
       setError(formatApiErrorMessage(err, 'Could not update follow status.'));
+    } finally {
+      setPendingFollows((current) => {
+        const next = new Set(current);
+        next.delete(authorId);
+        return next;
+      });
     }
   };
 
@@ -597,6 +700,7 @@ export default function Community() {
                     <button
                       type="button"
                       onClick={() => handleFollow(post.author!.id)}
+                      disabled={pendingFollows.has(post.author.id)}
                       className={`inline-flex min-h-9 shrink-0 items-center rounded-full px-3 py-1 text-xs font-semibold transition ${
                         post.author.followedByMe
                           ? 'border border-emerald-200 text-emerald-800 hover:bg-emerald-50'
@@ -604,7 +708,11 @@ export default function Community() {
                       }`}
                       aria-pressed={Boolean(post.author.followedByMe)}
                     >
-                      {post.author.followedByMe ? 'Following' : 'Follow'}
+                      {pendingFollows.has(post.author.id)
+                        ? 'Updating…'
+                        : post.author.followedByMe
+                          ? 'Following'
+                          : 'Follow'}
                     </button>
                   ) : null}
                 </div>
@@ -635,12 +743,18 @@ export default function Community() {
                   <button
                     type="button"
                     onClick={() => handleLike(post.id)}
+                    disabled={pendingLikes.has(post.id)}
                     className={`inline-flex min-h-11 items-center text-xs font-semibold ${
                       post.likedByMe ? 'text-rose-700' : 'text-emerald-800 hover:underline'
                     }`}
                     aria-pressed={Boolean(post.likedByMe)}
                   >
-                    {post.likedByMe ? 'Liked' : 'Like'} ({post._count?.likes ?? 0})
+                    {pendingLikes.has(post.id)
+                      ? 'Updating'
+                      : post.likedByMe
+                        ? 'Liked'
+                        : 'Like'}{' '}
+                    ({post._count?.likes ?? 0})
                   </button>
                   <span className="text-xs text-gray-500">
                     {post._count?.comments ?? 0} comments

@@ -62,6 +62,26 @@ function axiosResponse<T>(data: T): AxiosResponse<T> {
   return { data } as AxiosResponse<T>;
 }
 
+async function selectMonstera() {
+  vi.mocked(speciesApi.search).mockResolvedValue(
+    axiosResponse([
+      {
+        id: 'species-1',
+        commonName: 'Monstera',
+        scientificName: 'Monstera deliciosa',
+        sunlight: 'Bright indirect light',
+        wateringFreqDays: 7,
+      },
+    ]),
+  );
+  fireEvent.click(await screen.findByRole('button', { name: 'Search by name' }));
+  fireEvent.change(screen.getByLabelText('Species name'), {
+    target: { value: 'monstera' },
+  });
+  await waitFor(() => expect(screen.getByText('Monstera')).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', { name: /Monstera/i }));
+}
+
 describe('AddPlantWizard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -147,28 +167,50 @@ describe('AddPlantWizard', () => {
   });
 
   it('makes optional details clear after selecting a searched species', async () => {
-    vi.mocked(speciesApi.search).mockResolvedValue(
-      axiosResponse([
-        {
-          id: 'species-1',
-          commonName: 'Monstera',
-          scientificName: 'Monstera deliciosa',
-          sunlight: 'Bright indirect light',
-          wateringFreqDays: 7,
-        },
-      ]),
-    );
-
     renderWizard();
-    fireEvent.click(await screen.findByRole('button', { name: 'Search by name' }));
-    fireEvent.change(screen.getByLabelText('Species name'), {
-      target: { value: 'monstera' },
-    });
-
-    await waitFor(() => expect(screen.getByText('Monstera')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /Monstera/i }));
+    await selectMonstera();
 
     expect(screen.getByText('Only garden and species are required.')).toBeInTheDocument();
     expect(screen.getByText(/can all be added later/i)).toBeInTheDocument();
+  });
+
+  it('retains the selected photo and offers a retry after upload failure', async () => {
+    vi.mocked(plantsApi.upload)
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce(axiosResponse({ url: '/uploads/retried.jpg' }));
+
+    renderWizard();
+    await selectMonstera();
+    fireEvent.click(screen.getByRole('button', { name: 'Mock Add a photo for your garden' }));
+
+    const retry = await screen.findByRole('button', { name: 'Retry photo upload' });
+    const firstFile = vi.mocked(plantsApi.upload).mock.calls[0][0];
+    fireEvent.click(retry);
+
+    await waitFor(() => expect(plantsApi.upload).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(plantsApi.upload).mock.calls[1][0]).toBe(firstFile);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'Retry photo upload' }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  it('reuses one idempotency key when saving is retried', async () => {
+    vi.mocked(plantsApi.create).mockRejectedValue(new Error('network'));
+
+    renderWizard();
+    await selectMonstera();
+    fireEvent.click(screen.getByRole('button', { name: 'Save plant' }));
+    await waitFor(() => expect(plantsApi.create).toHaveBeenCalledTimes(1));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save plant' }));
+    await waitFor(() => expect(plantsApi.create).toHaveBeenCalledTimes(2));
+
+    const firstRequest = vi.mocked(plantsApi.create).mock.calls[0][0];
+    const secondRequest = vi.mocked(plantsApi.create).mock.calls[1][0];
+    expect(firstRequest.clientRequestId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+    expect(secondRequest.clientRequestId).toBe(firstRequest.clientRequestId);
   });
 });

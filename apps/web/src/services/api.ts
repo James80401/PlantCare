@@ -821,7 +821,7 @@ export const gardensApi = {
 export const buddyApi = {
   create: async (data: { name: string; speciesId: string; trait: BuddyTrait }) => {
     const res = await api.post<BuddyState>('/buddy', data);
-    trackEvent('BuddyCreated', { speciesId: data.speciesId, trait: data.trait });
+    trackEvent('buddy_created', { speciesId: data.speciesId, trait: data.trait });
     return res;
   },
   get: () => api.get<BuddyState>('/buddy'),
@@ -839,7 +839,7 @@ export const buddyApi = {
   shopInventory: () => api.get('/buddy/shop/inventory'),
   shopPurchase: async (itemId: string) => {
     const res = await api.post('/buddy/shop/purchase', { itemId });
-    trackEvent('BuddyShopPurchase', { itemId });
+    trackEvent('buddy_shop_purchase', { itemId });
     return res;
   },
   listSpecies: () => api.get('/buddy/species'),
@@ -863,7 +863,7 @@ export const buddyApi = {
       '/buddy/journey/start',
       biomeId ? { biomeId } : {},
     );
-    trackEvent('BuddyJourneyStarted', { biomeId: biomeId ?? res.data.journey?.biomeId });
+    trackEvent('buddy_journey_started', { biomeId: biomeId ?? res.data.journey?.biomeId });
     return res;
   },
   respondDiscovery: (journeyId: string, choice: number) =>
@@ -897,7 +897,7 @@ export const buddyApi = {
       };
       buddy: BuddyState | null;
     }>('/buddy/activities/complete', data);
-    trackEvent('BuddyActivityCompleted', {
+    trackEvent('buddy_activity_completed', {
       activityType: data.activityType,
       tasksCompleted: res.data.activity.tasksCompleted,
     });
@@ -906,7 +906,7 @@ export const buddyApi = {
   getQuests: () => api.get('/buddy/quests'),
   claimQuest: async (questId: string) => {
     const res = await api.post(`/buddy/quests/${questId}/claim`);
-    trackEvent('BuddyQuestClaimed', { questId });
+    trackEvent('buddy_quest_claimed', { questId });
     return res;
   },
   listFriends: () => api.get('/buddy/social/friends'),

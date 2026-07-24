@@ -358,10 +358,29 @@ export class GardensService {
   async acceptInvite(userId: string, dto: AcceptInviteDto) {
     const invite = await this.prisma.careInvite.findUnique({
       where: { token: dto.token },
-      include: { garden: true },
     });
-    if (!invite || invite.acceptedAt) {
-      throw new NotFoundException('Invite not found');
+    if (!invite) throw new NotFoundException('Invite not found');
+
+    const inviteGardenInclude = {
+      members: { include: { user: { select: { id: true, name: true, email: true } } } },
+      plants: { include: { plant: { include: { species: true } } } },
+    } as const;
+
+    if (invite.acceptedAt) {
+      const acceptedByThisUser =
+        invite.acceptedByUserId === userId ||
+        (!invite.acceptedByUserId &&
+          Boolean(
+            await this.prisma.gardenMember.findUnique({
+              where: { gardenId_userId: { gardenId: invite.gardenId, userId } },
+              select: { userId: true },
+            }),
+          ));
+      if (!acceptedByThisUser) throw new NotFoundException('Invite not found');
+      return this.prisma.garden.findUnique({
+        where: { id: invite.gardenId },
+        include: inviteGardenInclude,
+      });
     }
     if (invite.expiresAt < new Date()) {
       throw new BadRequestException('Invite has expired');
@@ -373,14 +392,28 @@ export class GardensService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      const claim = await tx.careInvite.updateMany({
+        where: { id: invite.id, acceptedAt: null },
+        data: { acceptedAt: new Date(), acceptedByUserId: userId },
+      });
+      if (claim.count === 0) {
+        const accepted = await tx.careInvite.findUnique({
+          where: { id: invite.id },
+          select: { acceptedByUserId: true },
+        });
+        if (accepted?.acceptedByUserId !== userId) {
+          throw new NotFoundException('Invite not found');
+        }
+        return tx.garden.findUnique({
+          where: { id: invite.gardenId },
+          include: inviteGardenInclude,
+        });
+      }
+
       await tx.gardenMember.upsert({
         where: { gardenId_userId: { gardenId: invite.gardenId, userId } },
         create: { gardenId: invite.gardenId, userId, role: invite.role },
         update: { role: invite.role },
-      });
-      await tx.careInvite.update({
-        where: { id: invite.id },
-        data: { acceptedAt: new Date() },
       });
       await this.logActivity(tx, {
         gardenId: invite.gardenId,
@@ -390,10 +423,7 @@ export class GardensService {
       });
       return tx.garden.findUnique({
         where: { id: invite.gardenId },
-        include: {
-          members: { include: { user: { select: { id: true, name: true, email: true } } } },
-          plants: { include: { plant: { include: { species: true } } } },
-        },
+        include: inviteGardenInclude,
       });
     });
   }
@@ -452,7 +482,10 @@ export class GardensService {
     if (garden.ownerId === memberUserId) {
       throw new BadRequestException('The garden owner cannot be removed.');
     }
-    await this.prisma.gardenMember.deleteMany({ where: { gardenId, userId: memberUserId } });
+    const result = await this.prisma.gardenMember.deleteMany({
+      where: { gardenId, userId: memberUserId },
+    });
+    if (result.count === 0) return { removed: false };
     await this.logActivity(this.prisma, {
       gardenId,
       actorId: userId,

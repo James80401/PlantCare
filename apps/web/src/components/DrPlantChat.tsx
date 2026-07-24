@@ -7,6 +7,14 @@ import { formatApiErrorMessage } from '../utils/apiError';
 import { DR_PLANT_HASH } from '../utils/gardenPaths';
 import { taskTypeLabel } from '../utils/tasks';
 import { resolveApiAssetUrl } from '../utils/apiAssets';
+import {
+  GUIDED_FOLLOW_UPS,
+  isOpenAiSetupError,
+  type ChatActionDraft,
+  type ChatRecoverySuggestion,
+  type ConversationListItem,
+  type GuidedContextResponse,
+} from './dr-plant/chatModel';
 
 export interface ChatMessage {
   id: string;
@@ -17,73 +25,9 @@ export interface ChatMessage {
   createdAt: string;
 }
 
-interface ConversationListItem {
-  id: string;
-  title: string | null;
-  updatedAt: string;
-  _count: { messages: number };
-  messages?: Array<{ role: string; content: string; createdAt: string }>;
-}
-
 interface DrPlantChatProps {
   plantId: string;
   plantName?: string;
-}
-
-interface ChatRecoverySuggestion {
-  key: string;
-  label: string;
-  taskType: string;
-  dueInDays: number;
-  alreadyScheduled: boolean;
-}
-
-interface ChatActionDraft {
-  key: string;
-  kind: 'recommendation' | 'task';
-  title: string;
-  body: string;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  actionLabel?: string;
-  actionPath?: string;
-  taskType?: string;
-  dueInDays?: number;
-}
-
-interface GuidedContextQuestion {
-  id: string;
-  label: string;
-  prompt: string;
-  type: 'single' | 'text';
-  options?: string[];
-}
-
-interface GuidedContextResponse {
-  title: string;
-  summary: string;
-  questions: GuidedContextQuestion[];
-}
-
-const GUIDED_FOLLOW_UPS = [
-  {
-    label: '7-day recovery plan',
-    prompt:
-      'Create a simple 7-day recovery plan for this plant with what to watch, what to avoid, and when to check back.',
-  },
-  {
-    label: 'Compare progress',
-    prompt:
-      'Based on the latest symptoms and photos in this thread, tell me what would count as improving, unchanged, or worse.',
-  },
-  {
-    label: 'Care task ideas',
-    prompt:
-      'Suggest any care tasks I should add for this plant and explain which ones are urgent versus optional.',
-  },
-];
-
-function isOpenAiSetupError(message: string) {
-  return /openai|api key|billing/i.test(message);
 }
 
 export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPlantChatProps) {
@@ -104,18 +48,69 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
     photo: File | null;
     requestId: string;
   } | null>(null);
+  const activePlantRef = useRef(plantId);
+  const conversationsRequestRef = useRef(0);
+  const threadRequestRef = useRef(0);
 
-  const loadConversations = useCallback(() => {
-    diagnosisChatApi.list(plantId).then((r) => setConversations(r.data));
+  useEffect(() => {
+    activePlantRef.current = plantId;
+    conversationsRequestRef.current += 1;
+    threadRequestRef.current += 1;
+    setConversations([]);
+    setActiveId(null);
+    setMessages([]);
+    setInput('');
+    setPhoto(null);
+    setLoading(false);
+    setError('');
+    setActionNotice('');
+    setActionError('');
+    setActionLoading('');
+    setLastReplyAt(null);
+    lastFailedPayload.current = null;
+  }, [plantId]);
+
+  const loadConversations = useCallback(async () => {
+    const requestId = ++conversationsRequestRef.current;
+    try {
+      const { data } = await diagnosisChatApi.list(plantId);
+      if (
+        activePlantRef.current === plantId &&
+        conversationsRequestRef.current === requestId
+      ) {
+        setConversations(data);
+      }
+    } catch {
+      if (
+        activePlantRef.current === plantId &&
+        conversationsRequestRef.current === requestId
+      ) {
+        setError('Could not load previous Dr. Plant conversations.');
+      }
+    }
   }, [plantId]);
 
   const loadThread = useCallback(
-    (conversationId: string) => {
+    async (conversationId: string) => {
+      const requestId = ++threadRequestRef.current;
       setActiveId(conversationId);
       setError('');
-      diagnosisChatApi.get(plantId, conversationId).then((r) => {
-        setMessages(r.data.messages ?? []);
-      });
+      try {
+        const { data } = await diagnosisChatApi.get(plantId, conversationId);
+        if (
+          activePlantRef.current === plantId &&
+          threadRequestRef.current === requestId
+        ) {
+          setMessages(data.messages ?? []);
+        }
+      } catch {
+        if (
+          activePlantRef.current === plantId &&
+          threadRequestRef.current === requestId
+        ) {
+          setError('Could not load that Dr. Plant conversation.');
+        }
+      }
     },
     [plantId],
   );
@@ -146,6 +141,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
     setActionNotice('');
     setActionError('');
     const requestId = retryRequestId ?? crypto.randomUUID();
+    const requestPlantId = plantId;
     lastFailedPayload.current = { text: trimmed, photo: image ?? null, requestId };
 
     try {
@@ -156,6 +152,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
           image,
           requestId,
         );
+        if (activePlantRef.current !== requestPlantId) return;
         if (data.id && data.messages) {
           setMessages(data.messages);
           setActiveId(data.id);
@@ -173,6 +170,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
           image,
           requestId,
         );
+        if (activePlantRef.current !== requestPlantId) return;
         setMessages((prev) => [...prev, data.userMessage, data.assistantMessage]);
       }
       setInput('');
@@ -182,6 +180,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
       trackOnce('first_dr_plant_message', 'first_dr_plant_message', { plantId });
       loadConversations();
     } catch (err: unknown) {
+      if (activePlantRef.current !== requestPlantId) return;
       setError(
         formatApiErrorMessage(
           err,
@@ -189,7 +188,7 @@ export default function DrPlantChat({ plantId, plantName = 'this plant' }: DrPla
         ),
       );
     } finally {
-      setLoading(false);
+      if (activePlantRef.current === requestPlantId) setLoading(false);
     }
   };
 

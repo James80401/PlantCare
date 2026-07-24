@@ -4,13 +4,14 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { SkeletonTaskRows } from '../components/ui/Skeleton';
 import { useTasksInRange } from '../hooks/useTasksInRange';
 import { CareRoundCard, careRoundKey, countOverdue } from '../components/tasks/CareRoundCard';
+import { TaskActionNotice } from '../components/tasks/TaskActionNotice';
 import { groupDueTasksIntoCareRounds } from '../utils/taskGroups';
 import type { SnoozeDays } from '../utils/taskSnooze';
 
 export default function Tasks() {
   const [searchParams] = useSearchParams();
   const selectedGardenId = searchParams.get('garden');
-  const { loading, tasks, animating, handleBulkComplete, handleSnooze } = useTasksInRange({
+  const { loading, tasks, animating, actionError, handleBulkComplete, handleSnooze } = useTasksInRange({
     pastDays: 3650,
     futureDays: 45,
   });
@@ -79,6 +80,7 @@ export default function Tasks() {
         description="Work by garden and care type. One tap completes a plant; the large check completes the whole round."
         help="tasks"
       />
+      <TaskActionNotice message={actionError} />
 
       {selectedGardenId ? (
         <Link to="/garden/tasks" className="text-sm font-semibold text-emerald-700 hover:underline">

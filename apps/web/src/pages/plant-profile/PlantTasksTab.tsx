@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import TaskRow from '../../components/tasks/TaskRow';
+import { TaskActionNotice } from '../../components/tasks/TaskActionNotice';
 import TaskScheduleExplanationLink from '../../components/TaskScheduleExplanationLink';
 import {
   completeReasonLabel,
@@ -31,6 +32,7 @@ export default function PlantTasksTab() {
       description="Upcoming care actions for this plant. Open care steps before completing unfamiliar tasks."
       help="plant-tasks"
     >
+      <TaskActionNotice message={ctx.taskActionError} />
       {ctx.plantPendingFromHook.length ? (
         <ul className="space-y-2">
           {ctx.plantPendingFromHook.map((task) => (

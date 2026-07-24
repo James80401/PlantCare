@@ -1,5 +1,6 @@
 {
   "name": "plant-care",
+  "version": "1.1.0",
   "private": true,
   "engines": {
     "node": ">=22 <23",
@@ -69,7 +70,7 @@
     "production:down": "docker compose -f docker-compose.production.yml down",
     "cloudflare:tier-f:dry-run": "node scripts/apply-cloudflare-tier-f.mjs",
     "cloudflare:tier-f:apply": "node scripts/apply-cloudflare-tier-f.mjs --apply --purge",
-    "mobile:release:android": "npm run build -w @plant-care/web && npm run mobile:sync -w @plant-care/web && npm run mobile:android"
+    "mobile:release:android": "node scripts/build-android-release.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.0",

@@ -14,17 +14,16 @@ type EventName =
   | 'recommendation_snooze'
   | 'recommendation_dismiss'
   | 'recommendation_task_convert'
-  | 'UserSignedUp'
-  | 'PlantAdded'
-  | 'TaskCompleted'
-  | 'DiagnoseSubmitted'
-  | 'UpgradeToPremium'
-  | 'BuddyCreated'
-  | 'BuddyActivityCompleted'
-  | 'BuddyShopPurchase'
-  | 'BuddyJourneyStarted'
-  | 'BuddyJourneyCompleted'
-  | 'BuddyQuestClaimed';
+  | 'plant_added'
+  | 'task_completed'
+  | 'diagnosis_submitted'
+  | 'premium_upgrade'
+  | 'buddy_created'
+  | 'buddy_activity_completed'
+  | 'buddy_shop_purchase'
+  | 'buddy_journey_started'
+  | 'buddy_journey_completed'
+  | 'buddy_quest_claimed';
 
 export function trackEvent(name: EventName, props?: Record<string, unknown>) {
   if (typeof window !== 'undefined') {

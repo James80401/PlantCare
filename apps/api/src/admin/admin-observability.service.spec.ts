@@ -31,7 +31,11 @@ describe('AdminObservabilityService', () => {
           .mockResolvedValueOnce(0)
           .mockResolvedValueOnce(2)
           .mockResolvedValueOnce(1)
-          .mockResolvedValueOnce(2),
+          .mockResolvedValueOnce(2)
+          .mockResolvedValueOnce(2)
+          .mockResolvedValueOnce(1)
+          .mockResolvedValueOnce(1)
+          .mockResolvedValueOnce(1),
         findMany: jest
           .fn()
           .mockResolvedValueOnce(users)
@@ -103,7 +107,12 @@ describe('AdminObservabilityService', () => {
       },
     };
     const config = {
-      get: jest.fn((key: string) => (key === 'ADMIN_EMAILS' ? 'admin@example.com' : undefined)),
+      get: jest.fn((key: string, fallback?: string) => {
+        if (key === 'ADMIN_EMAILS') return 'admin@example.com';
+        if (key === 'APP_VERSION') return '1.1.0';
+        if (key === 'APP_COMMIT_SHA') return 'abc123';
+        return fallback;
+      }),
     };
     return { service: new AdminObservabilityService(prisma as never, config as never), prisma };
   }
@@ -133,6 +142,14 @@ describe('AdminObservabilityService', () => {
     );
     expect(overview.notifications.activeDeviceTokens).toBe(4);
     expect(overview.audit.failures30d).toBe(1);
+    expect(overview.activation).toEqual({
+      approved: 1,
+      withGardens: 2,
+      withPlants: 1,
+      completedFirstTask: 1,
+      usedDiagnosisOrChat: 1,
+    });
+    expect(overview.release).toEqual({ version: '1.1.0', commit: 'abc123' });
 
     expect(prisma.user.count).toHaveBeenCalledWith({
       where: { accountApprovalStatus: AccountApprovalStatus.APPROVED },

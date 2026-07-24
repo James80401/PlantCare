@@ -36,7 +36,7 @@ export function HelpButton({ topic, className }: HelpButtonProps) {
   const [open, setOpen] = useState(false);
   const content = HELP_TOPICS[topic];
   const close = () => setOpen(false);
-  const { titleId, initialFocusRef } = useDialogA11y(open, close);
+  const { titleId, dialogRef, initialFocusRef } = useDialogA11y(open, close);
 
   return (
     <>
@@ -53,6 +53,7 @@ export function HelpButton({ topic, className }: HelpButtonProps) {
       </button>
       {open ? (
         <div
+          ref={dialogRef}
           className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"

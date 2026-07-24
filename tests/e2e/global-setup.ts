@@ -2,8 +2,8 @@ import { execSync } from 'child_process';
 import { PrismaClient } from '@prisma/client';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
+import { apiBase, refreshCookieFrom } from './auth-helpers';
 
-const apiBase = process.env.API_URL || 'http://localhost:3001/api/v1';
 const authFile = resolve(__dirname, '.uat-auth.json');
 const isStaging = process.env.STAGING_E2E === '1';
 const buddyEnabled = process.env.UAT_ENABLE_PLANT_BUDDY === '1';
@@ -29,7 +29,7 @@ async function main() {
   const reg = await regRes.json();
 
   let token = reg.accessToken as string | undefined;
-  let refreshToken = reg.refreshToken as string | undefined;
+  let refreshCookie = refreshCookieFrom(regRes);
 
   if (reg.requiresVerification) {
     if (isStaging) {
@@ -52,7 +52,7 @@ async function main() {
     });
     const login = await loginRes.json();
     token = login.accessToken;
-    refreshToken = login.refreshToken;
+    refreshCookie = refreshCookieFrom(loginRes);
   }
 
   if (!token) {
@@ -138,7 +138,7 @@ async function main() {
       email,
       password,
       accessToken: token,
-      refreshToken,
+      refreshCookie,
       gardenId,
       plantId,
       userId,

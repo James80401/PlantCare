@@ -25,6 +25,10 @@ export class AdminObservabilityService {
       verifiedUsers,
       newUsers24h,
       newUsers30d,
+      usersWithGardens,
+      usersWithPlants,
+      usersWithCompletedTask,
+      usersWithDiagnosisOrChat,
       users,
       ai30d,
       ai24h,
@@ -44,6 +48,21 @@ export class AdminObservabilityService {
       this.prisma.user.count({ where: { emailVerified: true } }),
       this.prisma.user.count({ where: { createdAt: { gte: last24h } } }),
       this.prisma.user.count({ where: { createdAt: { gte: last30d } } }),
+      this.prisma.user.count({ where: { gardenMemberships: { some: {} } } }),
+      this.prisma.user.count({ where: { plants: { some: {} } } }),
+      this.prisma.user.count({
+        where: {
+          plants: { some: { tasks: { some: { status: 'DONE' } } } },
+        },
+      }),
+      this.prisma.user.count({
+        where: {
+          OR: [
+            { plants: { some: { diagnoses: { some: {} } } } },
+            { plants: { some: { diagnosisConversations: { some: {} } } } },
+          ],
+        },
+      }),
       this.prisma.user.findMany({
         select: {
           id: true,
@@ -124,10 +143,12 @@ export class AdminObservabilityService {
     });
 
     const adminUsers = users.filter((user) => isAdminEmail(this.config, user.email)).length;
-    const usersWithPlants = users.filter((user) => user._count.plants > 0).length;
-
     return {
       generatedAt: now.toISOString(),
+      release: {
+        version: this.config.get<string>('APP_VERSION', '0.0.0'),
+        commit: this.config.get<string>('APP_COMMIT_SHA', 'unknown'),
+      },
       windows: {
         last24h: last24h.toISOString(),
         last30d: last30d.toISOString(),
@@ -142,6 +163,13 @@ export class AdminObservabilityService {
         new24h: newUsers24h,
         new30d: newUsers30d,
         withPlants: usersWithPlants,
+      },
+      activation: {
+        approved: approvedUsers,
+        withGardens: usersWithGardens,
+        withPlants: usersWithPlants,
+        completedFirstTask: usersWithCompletedTask,
+        usedDiagnosisOrChat: usersWithDiagnosisOrChat,
       },
       ai: {
         last24h: summarizeAiGroups(ai24h),

@@ -2677,3 +2677,14 @@ Wildreturn, some rights reserved (CC BY)
 - Chhe
 - https://commons.wikimedia.org/wiki/File:AloeAristata.jpg
 
+## Hoya Mathilde
+- Scientific: *Hoya mathilde*
+- License: Public domain
+- Emilio Botaniste
+- https://commons.wikimedia.org/wiki/File:Hoya_cv_Mathilde.jpg
+
+## String of Dolphins
+- Scientific: *Curio peregrinus*
+- License: CC BY-SA 4.0
+- Meganesia
+- https://commons.wikimedia.org/wiki/File:Dolphinplant.jpg

@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  IsUUID,
   Max,
   MaxLength,
   Min,
@@ -12,6 +13,10 @@ import {
 import { PlantLifeStage, PotSize } from '@prisma/client';
 
 export class CreatePlantDto {
+  @IsOptional()
+  @IsUUID()
+  clientRequestId?: string;
+
   @IsString()
   gardenId!: string;
 

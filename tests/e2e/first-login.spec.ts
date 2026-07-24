@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
-
-const apiBase = process.env.API_URL || 'http://localhost:3001/api/v1';
+import {
+  apiBase,
+  refreshCookieFrom,
+  seedRefreshCookie,
+} from './auth-helpers';
 
 async function registerVerifiedUser(email: string, password: string) {
   const regRes = await fetch(`${apiBase}/auth/register`, {
@@ -11,6 +14,7 @@ async function registerVerifiedUser(email: string, password: string) {
   const reg = await regRes.json();
 
   let token = reg.accessToken as string | undefined;
+  let refreshCookie = refreshCookieFrom(regRes);
   if (reg.requiresVerification) {
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
@@ -23,12 +27,13 @@ async function registerVerifiedUser(email: string, password: string) {
     });
     const login = await loginRes.json();
     token = login.accessToken;
+    refreshCookie = refreshCookieFrom(loginRes);
   }
 
   if (!token) {
     throw new Error(`Onboarding E2E: no access token (${JSON.stringify(reg)})`);
   }
-  return token;
+  return { token, refreshCookie };
 }
 
 test.describe('First login', () => {
@@ -37,15 +42,13 @@ test.describe('First login', () => {
   test('new user lands in the garden without an onboarding wizard', async ({ page }) => {
     const email = `uat-first-login-${Date.now()}@plantcare.test`;
     const password = 'password123';
-    const token = await registerVerifiedUser(email, password);
+    const { refreshCookie } = await registerVerifiedUser(email, password);
 
-    await page.addInitScript((t) => localStorage.setItem('accessToken', t), token);
+    await seedRefreshCookie(page, refreshCookie);
     await page.goto('/garden');
 
     await expect(page).not.toHaveURL(/\/garden\/onboarding/);
     await expect(page.getByRole('heading', { name: /Hi,/i })).toBeVisible({ timeout: 15_000 });
-    await expect(
-      page.getByText(/Create your first garden|Build your first care plan|Add your first plant/i).first(),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Add your first plant/i })).toBeVisible();
   });
 });

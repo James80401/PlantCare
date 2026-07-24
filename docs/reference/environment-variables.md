@@ -11,6 +11,7 @@
 | `JWT_EXPIRES_IN` | Access token TTL (also the post-revocation exposure window) | `7d` |
 | `JWT_REFRESH_SECRET` | Refresh token signing | `dev-refresh-secret` |
 | `JWT_REFRESH_EXPIRES_IN` | Refresh TTL + DB `RefreshToken.expiresAt`; format `\d+[smhd]`, unparseable ⇒ warns + 30d | `30d` |
+| `AUTH_RATE_LIMIT_MAX` | Login/registration attempts per IP per 15 minutes | `10` |
 | `PORT` | API port | `3001` |
 | `FRONTEND_URL` | Links in emails | — |
 | `CORS_ORIGIN` | Allowed browser origin | — |
