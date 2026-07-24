@@ -342,6 +342,25 @@ export default function AddPlantWizard() {
     setShowCreateGarden(false);
   };
 
+  // Do not let the wizard advance before its required garden context is known.
+  // Otherwise a fast interaction can reach Save with no selected garden.
+  if (!gardensLoaded) {
+    return (
+      <div className="mx-auto max-w-lg space-y-5">
+        <PageHeader
+          eyebrow="Grow your garden"
+          title="Add a plant"
+          description="Loading your gardens before we begin."
+        />
+        <Card>
+          <p className="text-sm font-medium text-emerald-900" role="status">
+            Loading gardens…
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   // Garden-first gate: a plant must live in a garden. If the user has none, prompt them
   // to create one before any plant steps.
   if (gardensLoaded && gardens.length === 0) {

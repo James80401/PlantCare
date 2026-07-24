@@ -34,6 +34,6 @@ export class UploadController {
       'Cache-Control': 'public, max-age=31536000, immutable',
       'Content-Type': 'image/webp',
     });
-    return response.sendFile(thumbnailPath);
+    return response.sendFile(thumbnailPath, { dotfiles: 'allow' });
   }
 }
