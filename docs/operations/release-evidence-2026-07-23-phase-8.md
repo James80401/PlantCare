@@ -4,7 +4,8 @@
 >
 > **Candidate branch:** `codex/phase-6-existing-ux`
 >
-> **State:** implementation and automated release gates complete; deploy pending
+> **State:** automated implementation and production deployment complete;
+> external/manual release gates remain
 
 ## Operational visibility
 
@@ -39,11 +40,18 @@
 - [Candidate CI run 30063024797](https://github.com/James80401/PlantCare/actions/runs/30063024797)
   passed `test`, PostgreSQL migration/schema/performance verification, the
   complete desktop/mobile E2E job, and the Java 21 Android release-bundle job.
+- [Protected-main CI run 30063415020](https://github.com/James80401/PlantCare/actions/runs/30063415020)
+  repeated all four required jobs successfully for merge commit `6bcdd78`.
+- [Exact-SHA production deploy 30063569324](https://github.com/James80401/PlantCare/actions/runs/30063569324)
+  deployed `6bcdd78dfa6e869b3722424c6010d6223d98a7e3`. The workflow verified
+  database and upload backup checksums, applied
+  `20260723230000_existing_workflow_idempotency`, synchronized catalog counts,
+  reached healthy API/database containers, and passed non-mutating health,
+  release-identity/feature-gate, readiness, CORS, web-content, security-header,
+  and production-Swagger probes.
 
 ## Remaining final evidence
 
-- Record the protected-main result, exact-SHA production deployment, and
-  non-mutating live sign-off.
 - Legal approval, FCM credentials, the signed closed-track device scenario, and
   the manual accessibility matrix remain explicit release blockers and are not
   represented as complete.

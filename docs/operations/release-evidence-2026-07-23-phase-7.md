@@ -36,6 +36,8 @@
 - The `android` job passed in
   [candidate CI run 30063024797](https://github.com/James80401/PlantCare/actions/runs/30063024797),
   including the Java 21 Gradle release bundle.
+- The same Android release gate passed on protected `main` in
+  [CI run 30063415020](https://github.com/James80401/PlantCare/actions/runs/30063415020).
 - The local push preflight passes 4/5. The client Firebase file is present
   locally, but the API FCM service-account tuple or legacy server key is not
   available in the operator environment.
