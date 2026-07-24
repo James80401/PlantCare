@@ -34,6 +34,14 @@ describe('PlantsService', () => {
       },
       plant: {
         count: jest.fn().mockResolvedValue(0),
+        findMany: jest.fn().mockResolvedValue([
+          {
+            ...plant,
+            species: { commonName: 'Fern' },
+            tasks: [],
+            diagnoses: [],
+          },
+        ]),
         findFirst: jest.fn().mockResolvedValue(plant),
         create: jest.fn().mockResolvedValue({ ...plant, species: {} }),
         update: jest.fn().mockResolvedValue({ ...plant, nickname: 'Updated' }),
@@ -71,10 +79,30 @@ describe('PlantsService', () => {
       {} as never,
       { get: jest.fn() } as never,
       { assertImageAllowed: jest.fn().mockResolvedValue(null) } as never,
+      { refreshPlant: jest.fn().mockResolvedValue([]) } as never,
+      { syncEngagementForUser: jest.fn().mockResolvedValue([]) } as never,
     );
 
     return { service, prisma, scheduler, upload };
   }
+
+  it('lists plants without triggering write-side maintenance', async () => {
+    const { service, prisma, scheduler } = createService();
+
+    const result = await service.findAll('user-1');
+
+    expect(result).toHaveLength(1);
+    expect(prisma.plant.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'user-1' },
+        orderBy: { createdAt: 'desc' },
+      }),
+    );
+    expect(prisma.plant.create).not.toHaveBeenCalled();
+    expect(prisma.plant.update).not.toHaveBeenCalled();
+    expect(prisma.plant.delete).not.toHaveBeenCalled();
+    expect(scheduler.generateTasksForPlant).not.toHaveBeenCalled();
+  });
 
   it('updates nickname, pot size, notes, and image for the owner', async () => {
     const { service, prisma, scheduler, upload } = createService();

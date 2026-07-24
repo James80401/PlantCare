@@ -33,12 +33,14 @@ export function RecommendationPanel({
   description = 'Helpful next steps that are useful, but not urgent care tasks.',
   recommendations,
   onChanged,
+  refreshPlantId,
   emptyText = 'Dr. Plant will surface gentle suggestions here when there is a useful next step.',
 }: {
   title?: string;
   description?: string;
   recommendations: RecommendationItem[];
   onChanged: () => Promise<void> | void;
+  refreshPlantId?: string;
   emptyText?: string;
 }) {
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -82,6 +84,20 @@ export function RecommendationPanel({
     }
   };
 
+  const refreshGuidance = async () => {
+    setBusyId('refresh');
+    setMessage(null);
+    try {
+      await recommendationsApi.refresh(refreshPlantId);
+      await onChanged();
+      setMessage({ tone: 'success', text: 'Guidance refreshed from the latest plant activity.' });
+    } catch {
+      setMessage({ tone: 'error', text: 'Could not refresh guidance. Try again.' });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <section className="min-w-0 rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm shadow-emerald-900/5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -92,11 +108,21 @@ export function RecommendationPanel({
           <h2 className="mt-1 text-lg font-semibold text-emerald-950 font-display">{title}</h2>
           <p className="mt-1 text-sm leading-6 text-gray-600">{description}</p>
         </div>
-        {recommendations.length > 0 ? (
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100">
-            {recommendations.length} open
-          </span>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {recommendations.length > 0 ? (
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-100">
+              {recommendations.length} open
+            </span>
+          ) : null}
+          <button
+            type="button"
+            disabled={busyId !== null}
+            onClick={() => void refreshGuidance()}
+            className={`inline-flex min-h-10 items-center justify-center rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-200 hover:bg-emerald-50 disabled:opacity-50 ${actionFocusClass}`}
+          >
+            {busyId === 'refresh' ? 'Refreshing…' : 'Refresh guidance'}
+          </button>
+        </div>
       </div>
 
       {message ? (

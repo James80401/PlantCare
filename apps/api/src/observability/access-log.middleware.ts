@@ -30,6 +30,7 @@ export function accessLogMiddleware(req: Request, res: Response, next: NextFunct
       path,
       statusCode: res.statusCode,
       durationMs: Date.now() - start,
+      responseBytes: parseContentLength(res.getHeader('content-length')),
       userId,
     });
     if (res.statusCode >= 500) logger.error(line);
@@ -37,4 +38,9 @@ export function accessLogMiddleware(req: Request, res: Response, next: NextFunct
   });
 
   next();
+}
+
+function parseContentLength(value: number | string | string[] | undefined) {
+  const parsed = Number.parseInt(Array.isArray(value) ? value[0] : String(value ?? ''), 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }

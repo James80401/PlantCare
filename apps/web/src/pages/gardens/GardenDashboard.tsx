@@ -277,10 +277,6 @@ function GardenFocusSections({
   onRecommendationsChanged: () => Promise<void> | void;
 }) {
   const hasAttention = attentionPlants.length > 0;
-  const hasRecommendations =
-    recommendationsLoading || recommendationsError || recommendations.length > 0;
-
-  if (!hasAttention && !hasRecommendations) return null;
 
   return (
     <section className="grid gap-3 lg:grid-cols-2" aria-label={`${garden.name} guidance`}>
@@ -299,42 +295,47 @@ function GardenFocusSections({
         </GardenDisclosure>
       ) : null}
 
-      {hasRecommendations ? (
-        <GardenDisclosure
-          eyebrow="Recommendations"
-          title="Recommendations"
-          summary={
-            recommendationsLoading
-              ? 'Loading optional guidance for this garden.'
-              : recommendationsError
-                ? recommendationsError
-                : `${recommendations.length} optional recommendation${recommendations.length === 1 ? '' : 's'} for this garden.`
-          }
-          countLabel={
-            recommendationsLoading
-              ? 'Loading'
-              : `${recommendations.length} rec${recommendations.length === 1 ? '' : 's'}`
-          }
-        >
-          {recommendationsLoading ? (
-            <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-              Loading this garden's recommendations...
-            </p>
-          ) : recommendationsError ? (
-            <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-800">
-              {recommendationsError}
-            </p>
-          ) : (
-            <RecommendationPanel
-              title={`${garden.name} recommendation details`}
-              description="Useful guidance for plants in this garden. Critical care tasks stay in Tasks."
-              recommendations={recommendations}
-              onChanged={onRecommendationsChanged}
-              emptyText="No recommendations for this garden right now."
-            />
-          )}
-        </GardenDisclosure>
-      ) : null}
+      <GardenDisclosure
+        eyebrow="Recommendations"
+        title="Recommendations"
+        summary={
+          recommendationsLoading
+            ? 'Loading optional guidance for this garden.'
+            : recommendationsError
+              ? recommendationsError
+              : `${recommendations.length} optional recommendation${recommendations.length === 1 ? '' : 's'} for this garden.`
+        }
+        countLabel={
+          recommendationsLoading
+            ? 'Loading'
+            : `${recommendations.length} rec${recommendations.length === 1 ? '' : 's'}`
+        }
+      >
+        {recommendationsLoading ? (
+          <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            Loading this garden's recommendations...
+          </p>
+        ) : recommendationsError ? (
+          <div className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <p>{recommendationsError}</p>
+            <button
+              type="button"
+              onClick={() => void onRecommendationsChanged()}
+              className="mt-2 min-h-10 rounded-full bg-white px-3 py-1.5 text-xs font-semibold ring-1 ring-rose-200"
+            >
+              Retry recommendations
+            </button>
+          </div>
+        ) : (
+          <RecommendationPanel
+            title={`${garden.name} recommendation details`}
+            description="Useful guidance for plants in this garden. Critical care tasks stay in Tasks."
+            recommendations={recommendations}
+            onChanged={onRecommendationsChanged}
+            emptyText="No recommendations for this garden right now."
+          />
+        )}
+      </GardenDisclosure>
     </section>
   );
 }

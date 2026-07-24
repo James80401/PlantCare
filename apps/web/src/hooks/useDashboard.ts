@@ -1,5 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
-import { dashboardApi, type RecommendationItem } from '../services/api';
+import axios from 'axios';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  dashboardApi,
+  type GardenSummaryCard,
+  type RecommendationItem,
+} from '../services/api';
 import type { DashboardPlant } from '../utils/dashboard';
 import type { SharedPlantView } from '../utils/household';
 import type { TaskItem } from '../utils/taskGroups';
@@ -121,6 +126,7 @@ export interface DashboardPayload {
   };
   plants: DashboardPlant[];
   sharedPlants: SharedPlantView[];
+  gardenSummaries: GardenSummaryCard[];
   careSummary?: DashboardCareSummary;
   pendingTasks: TaskItem[];
   todayTasks: TaskItem[];
@@ -157,18 +163,52 @@ export function useDashboard() {
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const requestSequence = useRef(0);
+  const activeController = useRef<AbortController | null>(null);
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
+    const sequence = ++requestSequence.current;
+    activeController.current?.abort();
+    const controller = new AbortController();
+    activeController.current = controller;
     setError('');
-    return dashboardApi
-      .get()
-      .then((r) => setData(r.data))
-      .catch((err) => setError(formatApiErrorMessage(err, 'Could not load your dashboard.')))
-      .finally(() => setLoading(false));
+    setLoading(true);
+
+    try {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const response = await dashboardApi.get(
+            undefined,
+            undefined,
+            controller.signal,
+          );
+          if (sequence === requestSequence.current) setData(response.data);
+          return;
+        } catch (caught) {
+          if (controller.signal.aborted || axios.isCancel(caught)) return;
+          const transient =
+            axios.isAxiosError(caught) &&
+            (!caught.response || caught.response.status >= 500);
+          if (attempt === 0 && transient) continue;
+          if (sequence === requestSequence.current) {
+            setError(
+              formatApiErrorMessage(
+                caught,
+                'Could not load your dashboard.',
+              ),
+            );
+          }
+          return;
+        }
+      }
+    } finally {
+      if (sequence === requestSequence.current) setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    load();
+    void load();
+    return () => activeController.current?.abort();
   }, [load]);
 
   return { data, loading, error, reload: load };

@@ -58,6 +58,42 @@ describe('TasksService', () => {
     return { service, prisma, scheduler, tx };
   }
 
+  it('lists tasks without performing maintenance writes', async () => {
+    const prisma = {
+      task: {
+        findMany: jest.fn().mockResolvedValue([]),
+        create: jest.fn(),
+        update: jest.fn(),
+        updateMany: jest.fn(),
+        delete: jest.fn(),
+      },
+    };
+    const scheduler = {
+      onTaskCompleted: jest.fn(),
+      autoPostponeOutdoorWateringFromWeather: jest.fn(),
+    };
+    const service = new TasksService(
+      prisma as never,
+      scheduler as never,
+      {} as never,
+      { emit: jest.fn() } as never,
+    );
+
+    await service.findForUser(
+      'user-1',
+      '2026-05-01T00:00:00.000Z',
+      '2026-05-31T23:59:59.000Z',
+    );
+
+    expect(prisma.task.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.task.create).not.toHaveBeenCalled();
+    expect(prisma.task.update).not.toHaveBeenCalled();
+    expect(prisma.task.updateMany).not.toHaveBeenCalled();
+    expect(prisma.task.delete).not.toHaveBeenCalled();
+    expect(scheduler.onTaskCompleted).not.toHaveBeenCalled();
+    expect(scheduler.autoPostponeOutdoorWateringFromWeather).not.toHaveBeenCalled();
+  });
+
   it('skips a task without requiring feedback', async () => {
     const { service, scheduler, tx } = createService();
 

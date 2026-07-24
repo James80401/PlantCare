@@ -237,8 +237,8 @@ export const speciesApi = {
 };
 
 export const dashboardApi = {
-  get: (from?: string, to?: string) =>
-    api.get('/dashboard', { params: { from, to } }),
+  get: (from?: string, to?: string, signal?: AbortSignal) =>
+    api.get('/dashboard', { params: { from, to }, signal }),
 };
 
 export interface RecommendationItem {
@@ -270,6 +270,10 @@ export interface RecommendationItem {
 export const recommendationsApi = {
   list: (plantId?: string) =>
     api.get<RecommendationItem[]>('/recommendations', { params: { plantId } }),
+  refresh: (plantId?: string) =>
+    api.post<RecommendationItem[]>('/recommendations/refresh', undefined, {
+      params: { plantId },
+    }),
   done: (id: string) => api.patch(`/recommendations/${id}/done`),
   snooze: (id: string) => api.patch(`/recommendations/${id}/snooze`),
   dismiss: (id: string) => api.patch(`/recommendations/${id}/dismiss`),

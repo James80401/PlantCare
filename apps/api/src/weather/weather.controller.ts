@@ -4,13 +4,17 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { WeatherService } from './weather.service';
 import { FetchWeatherAdviceDto } from './dto/fetch-weather-advice.dto';
+import { SchedulerService } from '../scheduler/scheduler.service';
 
 @ApiTags('weather')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('users/me/weather')
 export class WeatherController {
-  constructor(private weather: WeatherService) {}
+  constructor(
+    private weather: WeatherService,
+    private scheduler: SchedulerService,
+  ) {}
 
   @Get('advice/status')
   adviceStatus(@CurrentUser() user: JwtPayload) {
@@ -18,13 +22,15 @@ export class WeatherController {
   }
 
   @Post('advice')
-  fetchAdvice(
+  async fetchAdvice(
     @CurrentUser() user: JwtPayload,
     @Body() body: FetchWeatherAdviceDto,
   ) {
-    return this.weather.fetchPlantAdvice(user.sub, {
+    const advice = await this.weather.fetchPlantAdvice(user.sub, {
       confirmed: body?.confirmed === true,
     });
+    await this.scheduler.autoPostponeOutdoorWateringFromWeather(user.sub);
+    return advice;
   }
 
   @Get('locations')

@@ -13,6 +13,11 @@ export class RecommendationsController {
 
   @Get()
   findAll(@CurrentUser() user: JwtPayload, @Query('plantId') plantId?: string) {
+    return this.recommendations.listForUser(user.sub, { plantId });
+  }
+
+  @Post('refresh')
+  refresh(@CurrentUser() user: JwtPayload, @Query('plantId') plantId?: string) {
     if (plantId) return this.recommendations.refreshPlant(user.sub, plantId);
     return this.recommendations.refreshForUser(user.sub);
   }

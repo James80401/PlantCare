@@ -96,6 +96,7 @@ export class GardensService {
         _count: { select: { invites: true, activity: true } },
       },
       orderBy: { createdAt: 'desc' },
+      take: 50,
     });
   }
 

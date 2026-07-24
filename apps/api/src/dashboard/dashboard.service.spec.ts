@@ -1,10 +1,15 @@
 import { DashboardService } from './dashboard.service';
+import {
+  buildDashboardPlantFixture,
+  DASHBOARD_FIXTURE_SIZES,
+} from './dashboard-performance.fixture';
 
 describe('DashboardService', () => {
   const userId = 'user-1';
   const now = new Date('2026-06-03T12:00:00.000Z');
 
   function createService() {
+    const writeOperation = jest.fn();
     const user = { name: 'Maya Green' };
     const plants = [
       {
@@ -184,15 +189,27 @@ describe('DashboardService', () => {
     const prisma = {
       user: {
         findUnique: jest.fn().mockResolvedValue(user),
+        create: writeOperation,
+        update: writeOperation,
+        delete: writeOperation,
       },
       plant: {
         findMany: jest.fn().mockResolvedValue(plants),
+        create: writeOperation,
+        update: writeOperation,
+        delete: writeOperation,
       },
       garden: {
         findMany: jest.fn().mockResolvedValue(gardens),
+        create: writeOperation,
+        update: writeOperation,
+        delete: writeOperation,
       },
       task: {
         findMany: jest.fn().mockResolvedValue(tasks),
+        create: writeOperation,
+        update: writeOperation,
+        delete: writeOperation,
       },
       diagnosis: {
         findMany: jest
@@ -200,9 +217,15 @@ describe('DashboardService', () => {
           .mockResolvedValueOnce(unresolvedDiagnoses)
           .mockResolvedValueOnce(recentDiagnoses),
         count: jest.fn().mockResolvedValue(2),
+        create: writeOperation,
+        update: writeOperation,
+        delete: writeOperation,
       },
       journalEntry: {
         findMany: jest.fn().mockResolvedValue(recentJournalEntries),
+        create: writeOperation,
+        update: writeOperation,
+        delete: writeOperation,
       },
     };
     const scheduler = {
@@ -224,14 +247,33 @@ describe('DashboardService', () => {
       }),
     };
     const plantMilestones = {
-      syncAndListForUser: jest.fn().mockResolvedValue([
+      syncEngagementForUser: jest.fn(),
+      listForUser: jest.fn().mockResolvedValue([
         { id: 'first_plant', title: 'First plant', unlocked: true },
       ]),
     };
     const recommendations = {
-      refreshForUser: jest.fn().mockResolvedValue([
+      refreshForUser: jest.fn(),
+      listForUser: jest.fn().mockResolvedValue([
         { id: 'rec-1', title: 'Check in on Monsty', priority: 'MEDIUM' },
       ]),
+    };
+    const gardenSummaries = [
+      {
+        id: 'garden-owned',
+        name: 'My Garden',
+        location: 'Indoor',
+        isOwner: true,
+        plantCount: 2,
+        memberCount: 1,
+        tasksDueToday: 1,
+        overdue: 1,
+        urgentAlerts: 1,
+        status: 'Needs attention',
+      },
+    ];
+    const gardensService = {
+      getSummaries: jest.fn().mockResolvedValue(gardenSummaries),
     };
     const service = new DashboardService(
       prisma as never,
@@ -239,9 +281,19 @@ describe('DashboardService', () => {
       weather as never,
       plantMilestones as never,
       recommendations as never,
+      gardensService as never,
     );
 
-    return { service, prisma, scheduler, weather, plantMilestones, recommendations };
+    return {
+      service,
+      prisma,
+      scheduler,
+      weather,
+      plantMilestones,
+      recommendations,
+      gardensService,
+      writeOperation,
+    };
   }
 
   beforeEach(() => {
@@ -258,12 +310,13 @@ describe('DashboardService', () => {
 
     const result = await service.getDashboard(userId);
 
-    expect(scheduler.autoPostponeOutdoorWateringFromWeather).toHaveBeenCalledWith(userId);
+    expect(scheduler.autoPostponeOutdoorWateringFromWeather).not.toHaveBeenCalled();
     expect(Object.keys(result).sort()).toEqual([
       'attention',
       'attentionSummary',
       'careSummary',
       'engagement',
+      'gardenSummaries',
       'greeting',
       'healthStory',
       'metrics',
@@ -310,6 +363,7 @@ describe('DashboardService', () => {
     expect(result.recommendations).toEqual([
       { id: 'rec-1', title: 'Check in on Monsty', priority: 'MEDIUM' },
     ]);
+    expect(result.gardenSummaries).toHaveLength(1);
     expect(result.weekPreview).toHaveLength(7);
     expect(result.weekPreview[0]).toMatchObject({ label: 'Today', count: 1 });
     expect(result.weekSummary).toEqual({
@@ -404,7 +458,7 @@ describe('DashboardService', () => {
       completedInRange: 1,
       milestones: [{ id: 'first_plant', title: 'First plant', unlocked: true }],
     });
-    expect(plantMilestones.syncAndListForUser).toHaveBeenCalledWith(userId, {
+    expect(plantMilestones.listForUser).toHaveBeenCalledWith(userId, {
       plantCount: 2,
       plantCreatedAts: [new Date('2026-01-10T12:00:00.000Z'), new Date('2026-03-01T12:00:00.000Z')],
       completedInRange: 1,
@@ -443,6 +497,53 @@ describe('DashboardService', () => {
       }),
     );
   });
+
+  it('keeps dashboard reads bounded and free of mutation queries', async () => {
+    const {
+      service,
+      prisma,
+      scheduler,
+      plantMilestones,
+      recommendations,
+      writeOperation,
+    } = createService();
+
+    await service.getDashboard(userId);
+
+    expect(prisma.plant.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        take: 100,
+        select: expect.objectContaining({
+          id: true,
+          species: expect.any(Object),
+          tasks: expect.objectContaining({ take: 1 }),
+          diagnoses: expect.objectContaining({ take: 1 }),
+        }),
+      }),
+    );
+    expect(prisma.task.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 500, select: expect.any(Object) }),
+    );
+    expect(recommendations.listForUser).toHaveBeenCalledWith(userId, { now });
+    expect(recommendations.refreshForUser).not.toHaveBeenCalled();
+    expect(plantMilestones.syncEngagementForUser).not.toHaveBeenCalled();
+    expect(scheduler.autoPostponeOutdoorWateringFromWeather).not.toHaveBeenCalled();
+    expect(writeOperation).not.toHaveBeenCalled();
+  });
+
+  it.each(DASHBOARD_FIXTURE_SIZES)(
+    'keeps the %i-plant fixture contract within its response budget',
+    async (plantCount) => {
+      const { service, prisma } = createService();
+      prisma.plant.findMany.mockResolvedValueOnce(buildDashboardPlantFixture(plantCount));
+
+      const result = await service.getDashboard(userId);
+      const responseBytes = Buffer.byteLength(JSON.stringify(result));
+
+      expect(result.plants).toHaveLength(plantCount);
+      if (plantCount === 100) expect(responseBytes).toBeLessThanOrEqual(250 * 1024);
+    },
+  );
 
   it('summarizes a calm garden without task or diagnosis focus', async () => {
     const { service, prisma } = createService();

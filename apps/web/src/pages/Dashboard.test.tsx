@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Dashboard from './Dashboard';
 
 const mockUseDashboard = vi.fn();
-const mockSummaries = vi.fn();
 const mockSyncTasks = vi.fn();
 
 vi.mock('../hooks/useDashboard', () => ({
@@ -23,9 +22,6 @@ vi.mock('../hooks/useDashboardTaskActions', () => ({
 }));
 
 vi.mock('../services/api', () => ({
-  gardensApi: {
-    summaries: () => mockSummaries(),
-  },
   tasksApi: {
     applyScheduleSuggestion: vi.fn(),
   },
@@ -58,7 +54,6 @@ function renderDashboard() {
 describe('Dashboard', () => {
   beforeEach(() => {
     mockUseDashboard.mockReset();
-    mockSummaries.mockReset();
     mockSyncTasks.mockReset();
   });
 
@@ -69,23 +64,16 @@ describe('Dashboard', () => {
       error: '',
       reload: vi.fn(),
     });
-    mockSummaries.mockResolvedValue({
-      data: [
-        { id: 'garden-1', name: 'Kitchen herbs', tasksDueToday: 1, overdue: 0 },
-        { id: 'garden-2', name: 'Porch plants', tasksDueToday: 0, overdue: 2 },
-      ],
-    });
-
     renderDashboard();
 
     expect(await screen.findByRole('link', { name: /My Gardens: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Garden score: 91/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Care areas: 2/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Care areas: 1/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Gardens ready: 2/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Completed: 4/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Today care: 1 due/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Late care: 1 overdue/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Care type summary: 2 areas/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Care type summary: 1 area/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Show details/i })).toHaveAttribute(
       'aria-expanded',
       'false',
@@ -109,10 +97,6 @@ describe('Dashboard', () => {
       error: '',
       reload: vi.fn(),
     });
-    mockSummaries.mockResolvedValue({
-      data: [{ id: 'garden-1', name: 'Kitchen herbs', tasksDueToday: 1, overdue: 0 }],
-    });
-
     renderDashboard();
 
     expect(await screen.findByText('Kitchen herbs')).toBeInTheDocument();
@@ -126,45 +110,37 @@ describe('Dashboard', () => {
     expect(screen.queryByRole('heading', { name: 'Needs attention' })).not.toBeInTheDocument();
   });
 
-  it('surfaces dashboard load failures as an alert while garden summaries can still render', async () => {
+  it('surfaces dashboard load failures as an alert', async () => {
     mockUseDashboard.mockReturnValue({
       data: null,
       loading: false,
       error: 'Could not load your dashboard.',
       reload: vi.fn(),
     });
-    mockSummaries.mockResolvedValue({
-      data: [{ id: 'garden-1', name: 'Kitchen herbs', tasksDueToday: 0, overdue: 0 }],
-    });
-
     renderDashboard();
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load your dashboard.');
-    await waitFor(() => expect(screen.getByText('Kitchen herbs')).toBeInTheDocument());
   });
 
-  it('keeps the dashboard usable when garden summaries fail and retries that request', async () => {
+  it('keeps prior dashboard data usable when a refresh fails and retries the dashboard', async () => {
+    const reload = vi.fn();
     mockUseDashboard.mockReturnValue({
       data: dashboardPayload(),
       loading: false,
-      error: '',
-      reload: vi.fn(),
+      error: 'Could not refresh your dashboard.',
+      reload,
     });
-    mockSummaries
-      .mockRejectedValueOnce(new Error('network down'))
-      .mockResolvedValueOnce({
-        data: [{ id: 'garden-1', name: 'Kitchen herbs', tasksDueToday: 0, overdue: 0 }],
-      });
 
     renderDashboard();
 
-    expect(await screen.findByText('Garden summaries are unavailable')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not refresh your dashboard.',
+    );
     expect(screen.getByRole('region', { name: /Catch up gently/i })).toBeInTheDocument();
+    expect(screen.getByText('Kitchen herbs')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Retry summaries' }));
-
-    await waitFor(() => expect(screen.getByText('Kitchen herbs')).toBeInTheDocument());
-    expect(mockSummaries).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry dashboard' }));
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
   });
 });
 
@@ -203,6 +179,32 @@ function dashboardPayload() {
       },
     ],
     sharedPlants: [],
+    gardenSummaries: [
+      {
+        id: 'garden-1',
+        name: 'Kitchen herbs',
+        location: 'Indoor',
+        isOwner: true,
+        plantCount: 1,
+        memberCount: 1,
+        tasksDueToday: 1,
+        overdue: 0,
+        urgentAlerts: 0,
+        status: 'Care due today',
+      },
+      {
+        id: 'garden-2',
+        name: 'Porch plants',
+        location: 'Outdoor',
+        isOwner: true,
+        plantCount: 1,
+        memberCount: 1,
+        tasksDueToday: 0,
+        overdue: 2,
+        urgentAlerts: 0,
+        status: 'Care waiting',
+      },
+    ],
     pendingTasks: [
       dashboardTask('task-overdue', 'plant-1', 'Mint', 'WATER', dateOffset(-1)),
       dashboardTask('task-today', 'plant-2', 'Fern', 'PRUNE', dateOffset(0)),

@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import { addDays, format, startOfDay, subDays } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   buildMilestoneDtos,
@@ -10,6 +12,7 @@ import {
   PLANT_LIFE_MILESTONE_DEFS,
   PLANT_MILESTONE_DEFS,
 } from './plant-milestone.defs';
+import { TaskCompletedEvent } from '../tasks/events/task-completed.event';
 
 type PlantLifeProgressSnapshot = {
   overallHealth: string;
@@ -59,6 +62,65 @@ export class PlantMilestonesService {
     );
 
     return buildMilestoneDtos(persisted, snapshot);
+  }
+
+  async listForUser(
+    userId: string,
+    snapshot: MilestoneEngagementSnapshot,
+  ): Promise<PlantMilestoneDto[]> {
+    const rows = await this.prisma.plantMilestone.findMany({
+      where: { userId },
+      select: { milestoneKey: true, unlockedAt: true },
+    });
+    return buildMilestoneDtos(
+      new Map(rows.map((row) => [row.milestoneKey, row.unlockedAt] as const)),
+      snapshot,
+    );
+  }
+
+  async syncEngagementForUser(userId: string) {
+    const since = subDays(startOfDay(new Date()), 45);
+    const [plants, completions] = await Promise.all([
+      this.prisma.plant.findMany({
+        where: { userId },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'asc' },
+        take: 100,
+      }),
+      this.prisma.task.findMany({
+        where: {
+          plant: { userId },
+          status: 'DONE',
+          completedAt: { gte: since },
+        },
+        select: { completedAt: true },
+        orderBy: { completedAt: 'desc' },
+        take: 500,
+      }),
+    ]);
+    const completionDays = new Set(
+      completions
+        .filter((task) => task.completedAt)
+        .map((task) => format(startOfDay(task.completedAt!), 'yyyy-MM-dd')),
+    );
+    let streak = 0;
+    let day = startOfDay(new Date());
+    if (!completionDays.has(format(day, 'yyyy-MM-dd'))) day = addDays(day, -1);
+    while (completionDays.has(format(day, 'yyyy-MM-dd'))) {
+      streak += 1;
+      day = addDays(day, -1);
+    }
+    return this.syncAndListForUser(userId, {
+      plantCount: plants.length,
+      plantCreatedAts: plants.map((plant) => plant.createdAt),
+      completedInRange: completions.length,
+      streak,
+    });
+  }
+
+  @OnEvent('task.completed')
+  async handleTaskCompleted(event: TaskCompletedEvent) {
+    await this.syncEngagementForUser(event.userId);
   }
 
   async syncPlantLifeMilestones(

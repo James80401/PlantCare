@@ -5,9 +5,16 @@ import { SchedulerModule } from '../scheduler/scheduler.module';
 import { WeatherModule } from '../weather/weather.module';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
+import { GardensModule } from '../gardens/gardens.module';
 
 @Module({
-  imports: [SchedulerModule, WeatherModule, PlantMilestonesModule, RecommendationsModule],
+  imports: [
+    SchedulerModule,
+    WeatherModule,
+    PlantMilestonesModule,
+    RecommendationsModule,
+    GardensModule,
+  ],
   controllers: [DashboardController],
   providers: [DashboardService],
   exports: [DashboardService],
