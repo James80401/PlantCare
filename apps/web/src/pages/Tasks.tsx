@@ -6,7 +6,7 @@ import { useTasksInRange } from '../hooks/useTasksInRange';
 import { CareRoundCard, careRoundKey, countOverdue } from '../components/tasks/CareRoundCard';
 import { TaskActionNotice } from '../components/tasks/TaskActionNotice';
 import { groupDueTasksIntoCareRounds } from '../utils/taskGroups';
-import type { SnoozeDays } from '../utils/taskSnooze';
+import { snoozeTasksSequentially, type SnoozeDays } from '../utils/taskSnooze';
 
 export default function Tasks() {
   const [searchParams] = useSearchParams();
@@ -69,7 +69,7 @@ export default function Tasks() {
 
   const snoozeGroup = async (key: string, ids: string[], days: SnoozeDays) => {
     setBusyGroup(key);
-    await Promise.all(ids.map((id) => handleSnooze(id, days)));
+    await snoozeTasksSequentially(ids, days, handleSnooze);
     setBusyGroup(null);
   };
 

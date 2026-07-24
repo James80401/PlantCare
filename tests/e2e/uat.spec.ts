@@ -341,8 +341,18 @@ test.describe('UAT checklist — authenticated flows', () => {
     await page.goto('/garden/tasks');
     const snoozeBtn = page.getByRole('button', { name: /Snooze care for/i }).first();
     await expect(snoozeBtn).toBeVisible({ timeout: 10_000 });
+    const snoozeStatuses: number[] = [];
+    page.on('response', (response) => {
+      if (/\/tasks\/[^/]+\/snooze(?:\?|$)/.test(response.url())) {
+        snoozeStatuses.push(response.status());
+      }
+    });
     await snoozeBtn.click();
     await page.getByRole('button', { name: /^Tomorrow$/i }).click();
+    await expect(snoozeBtn).toBeDisabled();
+    await expect(snoozeBtn).toBeEnabled({ timeout: 30_000 });
+    expect(snoozeStatuses.length).toBeGreaterThan(0);
+    expect(snoozeStatuses.every((status) => status >= 200 && status < 300)).toBe(true);
     await expect(snoozeBtn).not.toHaveAttribute('aria-expanded', 'true');
   });
 
