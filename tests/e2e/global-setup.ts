@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { PrismaClient } from '@prisma/client';
+import { PlanTier, PrismaClient } from '@prisma/client';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { apiBase, refreshCookieFrom } from './auth-helpers';
@@ -127,7 +127,14 @@ async function main() {
     userId = me?.id;
   } else {
     const prisma = new PrismaClient();
-    const userRow = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    // The two browser projects share this disposable fixture and intentionally
+    // create several plants. Keep that state from coupling E2E to the free-plan
+    // cap while billing itself remains disabled.
+    const userRow = await prisma.user.update({
+      where: { email },
+      data: { planTier: PlanTier.PREMIUM },
+      select: { id: true },
+    });
     userId = userRow?.id;
     await prisma.$disconnect();
   }

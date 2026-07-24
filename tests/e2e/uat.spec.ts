@@ -42,8 +42,17 @@ async function savePlantAndGetId(
   page: import('@playwright/test').Page,
   plantName: RegExp,
 ) {
+  const createResponse = page.waitForResponse(
+    (response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'POST' && url.pathname === '/api/v1/plants';
+    },
+    { timeout: 30_000 },
+  );
   await page.getByRole('button', { name: /Save plant/i }).click();
-  await page.waitForURL((url) => /^\/garden\/gardens\/[^/]+$/.test(url.pathname));
+  const response = await createResponse;
+  expect(response.status()).toBe(201);
+  await expect(page).toHaveURL(/\/garden\/gardens\/[^/]+$/, { timeout: 15_000 });
   const plantLink = page
     .locator('main a[href^="/garden/plants/"]')
     .filter({ hasText: plantName })
