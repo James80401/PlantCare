@@ -63,6 +63,8 @@ The complete local gate also passes:
   `test`, `postgres`, `e2e`, and `android` all passed. The E2E job ran the same
   48 enabled scenarios against a clean CI database; the Android job produced an
   unsigned release bundle with Java 21.
+- [Protected-main CI run 30063415020](https://github.com/James80401/PlantCare/actions/runs/30063415020)
+  repeated all four required jobs successfully for merge commit `6bcdd78`.
 
 The grouped task experience now exposes the existing care-instruction and
 schedule-explanation dialogs through its Details disclosure; desktop and
