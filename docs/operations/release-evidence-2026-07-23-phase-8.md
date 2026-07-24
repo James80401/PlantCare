@@ -4,7 +4,7 @@
 >
 > **Candidate branch:** `codex/phase-6-existing-ux`
 >
-> **State:** implementation and local release gates complete; CI/deploy pending
+> **State:** implementation and automated release gates complete; deploy pending
 
 ## Operational visibility
 
@@ -29,16 +29,21 @@
   feature-gate, and PostgreSQL performance checks and adds an Android
   release-bundle job.
 
-## Remaining final evidence
+## Automated evidence
 
-- Local release evidence is green: `verify:ci` passes with 460 API and 202 web
+- Local release evidence is green: `verify:ci` passes with 461 API and 203 web
   tests, desktop/mobile Playwright passes 48 enabled scenarios, the dependency
   audit reports zero vulnerabilities, documentation links pass, Android
   release build/sync passes, store preflight passes 10/10, and catalog/license
   verification passes.
-- Record the branch/main CI result, PostgreSQL migration rehearsal, Java 21
-  Android bundle result, exact-SHA production deployment, and non-mutating
-  live sign-off.
+- [Candidate CI run 30063024797](https://github.com/James80401/PlantCare/actions/runs/30063024797)
+  passed `test`, PostgreSQL migration/schema/performance verification, the
+  complete desktop/mobile E2E job, and the Java 21 Android release-bundle job.
+
+## Remaining final evidence
+
+- Record the protected-main result, exact-SHA production deployment, and
+  non-mutating live sign-off.
 - Legal approval, FCM credentials, the signed closed-track device scenario, and
   the manual accessibility matrix remain explicit release blockers and are not
   represented as complete.

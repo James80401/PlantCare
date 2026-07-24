@@ -4,7 +4,7 @@
 >
 > **Candidate branch:** `codex/phase-6-existing-ux`
 >
-> **State:** implementation and local verification complete; branch CI pending
+> **State:** implementation and automated verification complete
 
 ## Reliability and consistency
 
@@ -49,7 +49,7 @@ and the refactored helpers pass.
 
 The complete local gate also passes:
 
-- `npm run verify:ci`: zero TypeScript errors, 460 API tests, 202 web tests,
+- `npm run verify:ci`: zero TypeScript errors, 461 API tests, 203 web tests,
   shared/API/web builds, production-configuration checks, media-audit tests,
   documentation links, and private-indexing guards.
 - Playwright: 48 desktop/mobile scenarios passed. Four intentional
@@ -59,6 +59,10 @@ The complete local gate also passes:
 - Species catalog: 447 entries; 447 reusable manifest entries and local photo
   files; zero restricted, unclear, missing, or unlicensed entries.
 - `npm audit --audit-level=high`: zero vulnerabilities.
+- [Candidate CI run 30063024797](https://github.com/James80401/PlantCare/actions/runs/30063024797):
+  `test`, `postgres`, `e2e`, and `android` all passed. The E2E job ran the same
+  48 enabled scenarios against a clean CI database; the Android job produced an
+  unsigned release bundle with Java 21.
 
 The grouped task experience now exposes the existing care-instruction and
 schedule-explanation dialogs through its Details disclosure; desktop and

@@ -33,6 +33,9 @@
 - `npm run mobile:store-check` passes 10/10 locally after the release build.
 - CI now uses Node 22 and Java 21 to run the release bundle/sync, store
   preflight, and Gradle `bundleRelease`.
+- The `android` job passed in
+  [candidate CI run 30063024797](https://github.com/James80401/PlantCare/actions/runs/30063024797),
+  including the Java 21 Gradle release bundle.
 - The local push preflight passes 4/5. The client Firebase file is present
   locally, but the API FCM service-account tuple or legacy server key is not
   available in the operator environment.
@@ -42,7 +45,7 @@
 - Supply server FCM credentials and record a 5/5 push preflight plus real
   delivery.
 - The workstation has no configured JDK, so local Gradle `bundleRelease` cannot
-  run. The Java 21 CI job is the automated bundle-build authority.
+  run; the successful Java 21 CI job is the automated bundle-build authority.
 - Generate/sign and upload the AAB through Google Play closed testing, then
   verify login, refresh, upload, Dr. Plant, task actions, notification
   permission/delivery, and deep link on a tester device.
